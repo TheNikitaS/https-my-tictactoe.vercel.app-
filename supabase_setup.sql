@@ -49,4 +49,16 @@ to anon, authenticated
 using (true)
 with check (true);
 
-alter publication supabase_realtime add table public.shared_app_states;
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'shared_app_states'
+  ) then
+    alter publication supabase_realtime add table public.shared_app_states;
+  end if;
+end
+$$;
