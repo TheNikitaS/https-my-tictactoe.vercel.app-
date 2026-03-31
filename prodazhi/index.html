@@ -241,6 +241,7 @@
     </div>
   </div>
 
+  <script src="../shared/supabase-sync.js"></script>
   <script>
     // =========================
     // 1) CONFIG: Columns A:AN (40 columns)
@@ -296,6 +297,8 @@
     // =========================
     const LS_KEY = "LIGHT_SALES_APP_V2";
     const LS_BACKUP_KEY = "LIGHT_SALES_APP_V2_BACKUP";
+    const cloudAppId = "sales-tracker";
+    let syncManager = null;
 
     function structuredCloneSafe(obj) {
       return JSON.parse(JSON.stringify(obj));
@@ -311,6 +314,27 @@
       out[35] = null; // Цикл сделки / дней
       out[38] = null; // Дней в производстве
       return out;
+    }
+
+    function createDefaultState() {
+      return {
+        refs: structuredCloneSafe(DEFAULT_REFS),
+        orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r) })),
+        payouts: {}
+      };
+    }
+
+    function normalizeImportedState(state) {
+      const nextState = state && typeof state === "object" ? structuredCloneSafe(state) : {};
+      nextState.refs = nextState.refs || structuredCloneSafe(DEFAULT_REFS);
+      nextState.orders = Array.isArray(nextState.orders) ? nextState.orders : [];
+      nextState.payouts = nextState.payouts || {};
+      nextState.orders = nextState.orders.map(o => ({
+        id: o.id || crypto.randomUUID(),
+        hidden: !!o.hidden,
+        cells: normalizeRow(o.cells || [])
+      }));
+      return nextState;
     }
 
     function loadState() {
@@ -374,6 +398,9 @@
       saveTimer = setTimeout(() => {
         try {
           saveState(STATE);
+          if (syncManager) {
+            syncManager.scheduleSave();
+          }
           dirty = false;
           setSaveUI("saved", "Сохранено");
           setTimeout(() => {
@@ -391,6 +418,12 @@
       try {
         if (saveTimer) clearTimeout(saveTimer);
         saveState(STATE);
+        if (syncManager) {
+          syncManager.forceSave().catch((error) => {
+            console.error("Cloud save failed", error);
+            setSaveUI("dirty", "РћС€РёР±РєР° РѕР±Р»Р°С‡РЅРѕРіРѕ СЃРѕС…СЂР°РЅРµРЅРёСЏ");
+          });
+        }
         dirty = false;
         setSaveUI("saved","Сохранено");
         setTimeout(() => { if (!dirty) setSaveUI("idle","Готово"); }, 1200);
@@ -412,6 +445,7 @@
     // Before unload
     window.addEventListener("beforeunload", () => {
       try { saveState(STATE); } catch {}
+      setupCloudSync();
     });
 
     // =========================
@@ -615,6 +649,52 @@
     // 7) App State
     // =========================
     let STATE = loadState();
+
+    function applyRemoteState(nextState) {
+      STATE = normalizeImportedState(nextState);
+      saveState(STATE);
+      buildHead();
+      refreshEmployeeSelects();
+      renderOrders();
+      renderSalary();
+      dirty = false;
+      setSaveUI("saved", "РћР±РЅРѕРІР»РµРЅРѕ РёР· РѕР±Р»Р°РєР°");
+      setTimeout(() => { if (!dirty) setSaveUI("idle","Р“РѕС‚РѕРІРѕ"); }, 1200);
+    }
+
+    async function setupCloudSync() {
+      if (!window.createSharedSupabaseSync) {
+        setSaveUI("dirty", "РћР±Р»Р°РєРѕ РЅРµ Р·Р°РіСЂСѓР·РёР»РѕСЃСЊ");
+        return;
+      }
+
+      syncManager = window.createSharedSupabaseSync({
+        appId: cloudAppId,
+        getState: () => structuredCloneSafe(STATE),
+        applyState: (nextState) => applyRemoteState(nextState),
+        persistLocal: (nextState) => saveState(normalizeImportedState(nextState)),
+        pollMs: 3000,
+        saveDebounceMs: 400,
+        onStatus: (status, detail) => {
+          if (status === "connecting") setSaveUI("idle", "РџРѕРґРєР»СЋС‡РµРЅРёРµ Рє РѕР±Р»Р°РєСѓ...");
+          if (status === "saving") setSaveUI("dirty", "РЎРёРЅС…СЂРѕРЅРёР·Р°С†РёСЏ...");
+          if (status === "remote") setSaveUI("saved", "РћР±РЅРѕРІР»РµРЅРѕ РёР· РѕР±Р»Р°РєР°");
+          if (status === "warn") console.warn("Cloud sync warning", detail);
+          if (status === "error") {
+            console.error("Cloud sync error", detail);
+            setSaveUI("dirty", "РћС€РёР±РєР° РѕР±Р»Р°РєР°");
+          }
+          if (status === "idle" && !dirty) setSaveUI("idle", "Р“РѕС‚РѕРІРѕ");
+        }
+      });
+
+      try {
+        await syncManager.init();
+      } catch (error) {
+        console.error("Failed to initialize cloud sync", error);
+        setSaveUI("dirty", "РўР°Р±Р»РёС†Р° Supabase РµС‰Рµ РЅРµ РЅР°СЃС‚СЂРѕРµРЅР°");
+      }
+    }
 
     // =========================
     // 8) UI: Orders table
@@ -1179,16 +1259,7 @@
         const imported = JSON.parse(text);
         // minimal validation
         if (!imported || typeof imported !== "object") throw new Error("bad json");
-        imported.refs = imported.refs || structuredCloneSafe(DEFAULT_REFS);
-        imported.orders = imported.orders || [];
-        imported.payouts = imported.payouts || {};
-        imported.orders = imported.orders.map(o => ({
-          id: o.id || crypto.randomUUID(),
-          hidden: !!o.hidden,
-          cells: normalizeRow(o.cells || [])
-        }));
-
-        STATE = imported;
+        STATE = normalizeImportedState(imported);
         forceSaveNow(false);
         refreshEmployeeSelects();
         renderOrders();
@@ -1205,7 +1276,13 @@
       if (!confirm("Сбросить всё? Это удалит данные из браузера.")) return;
       localStorage.removeItem(LS_KEY);
       localStorage.removeItem(LS_BACKUP_KEY);
-      STATE = loadState();
+      STATE = createDefaultState();
+      saveState(STATE);
+      if (syncManager) {
+        syncManager.forceSave().catch((error) => {
+          console.error("Cloud reset failed", error);
+        });
+      }
       buildHead();
       refreshEmployeeSelects();
       renderOrders();
@@ -1227,6 +1304,7 @@
       setSaveUI("idle","Готово");
     }
     init();
+    setupCloudSync();
   </script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

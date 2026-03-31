@@ -28,6 +28,7 @@
         .notes-card { height: calc(100vh - 300px); }
         #client-offer, #notes { width: 100%; }
         .read-only { background-color: #f1f1f1; border: 0; }
+        .sync-status { padding: 0.35rem 0.75rem; color: #6c757d; font-size: 0.85rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
     </style>
 </head>
 <body>
@@ -35,6 +36,7 @@
     <div id="tabs-container">
         <button class="btn btn-sm btn-primary" onclick="addTab()">+ Новая вывеска</button>
     </div>
+    <div id="sync-status" class="sync-status">Онлайн: подключение...</div>
     <div class="row mt-2">
         <div class="col-lg-8">
              <div class="card mb-3 summary-card">
@@ -84,6 +86,7 @@
     </div>
 </div>
 
+<script src="../shared/supabase-sync.js"></script>
 <script>
 const db = [
     { category: 'Материалы', subcategory: 'Неон', id: '750621', name: 'Гибкий неон LP... (белый 6000K)', cost: 200.655, unit: 'м', power: 10 },
@@ -166,20 +169,99 @@ const db = [
 
 let state = {};
 const sessionKey = 'partnerCalculator_vFinal_Corrected';
+const cloudAppId = 'part-calculator';
+let syncManager = null;
+let suppressCloudSync = false;
 
-function init() {
+function createDefaultState() {
+    return { activeTabId: 'tab1', tabs: [{ id: 'tab1', name: 'Вывеска 1', data: {} }], nextTabNum: 2 };
+}
+
+function cloneState(value) {
+    return JSON.parse(JSON.stringify(value));
+}
+
+function persistLocalState(nextState = state) {
+    localStorage.setItem(sessionKey, JSON.stringify(nextState));
+}
+
+function setSyncStatus(text, isError = false) {
+    const el = document.getElementById('sync-status');
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = isError ? '#c0392b' : '#6c757d';
+}
+
+function applyRemoteState(nextState) {
+    suppressCloudSync = true;
+    try {
+        state = nextState && typeof nextState === 'object' ? nextState : createDefaultState();
+        persistLocalState(state);
+        renderTabs();
+        renderCalculator();
+        loadActiveTabData();
+        attachGlobalListeners();
+    } finally {
+        suppressCloudSync = false;
+    }
+}
+
+async function setupCloudSync() {
+    if (!window.createSharedSupabaseSync) {
+        setSyncStatus('Онлайн: скрипт синхронизации не загрузился', true);
+        return;
+    }
+
+    syncManager = window.createSharedSupabaseSync({
+        appId: cloudAppId,
+        getState: () => cloneState(state),
+        applyState: (nextState) => applyRemoteState(nextState),
+        persistLocal: (nextState) => persistLocalState(nextState),
+        pollMs: 3000,
+        saveDebounceMs: 700,
+        onStatus: (status, detail) => {
+            if (status === 'connecting') setSyncStatus('Онлайн: подключение...');
+            if (status === 'dirty') setSyncStatus('Онлайн: есть локальные изменения...');
+            if (status === 'saving') setSyncStatus('Онлайн: синхронизация...');
+            if (status === 'saved') setSyncStatus('Онлайн: сохранено');
+            if (status === 'remote') setSyncStatus('Онлайн: обновлено из облака');
+            if (status === 'idle') setSyncStatus('Онлайн: синхронизация активна');
+            if (status === 'warn') console.warn('Cloud sync warning:', detail);
+            if (status === 'error') {
+                console.error('Cloud sync error:', detail);
+                setSyncStatus('Онлайн: ошибка синхронизации', true);
+            }
+        }
+    });
+
+    try {
+        await syncManager.init();
+    } catch (error) {
+        console.error('Failed to initialize cloud sync:', error);
+        setSyncStatus('Онлайн: таблица Supabase еще не настроена', true);
+    }
+}
+
+async function init() {
     const savedState = localStorage.getItem(sessionKey);
     if (savedState) { state = JSON.parse(savedState); } 
     else { state = { activeTabId: 'tab1', tabs: [{ id: 'tab1', name: 'Вывеска 1', data: {} }], nextTabNum: 2 }; }
+    if (!savedState) {
+        state = createDefaultState();
+    }
     renderTabs();
     renderCalculator();
     loadActiveTabData();
     attachGlobalListeners();
+    await setupCloudSync();
 }
 
 function saveState() {
     saveActiveTabData();
-    localStorage.setItem(sessionKey, JSON.stringify(state));
+    persistLocalState();
+    if (syncManager && !suppressCloudSync) {
+        syncManager.scheduleSave();
+    }
 }
 
 function renderTabs() {
@@ -406,7 +488,7 @@ function calculate() {
     saveState();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => { init(); });
 </script>
 </body>
 </html>
