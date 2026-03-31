@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Продажи ЛАЙТ — Заказы + ЗП</title>
+  <title>Продажи ЛАЙТ — Заказы + ЗП + ЛИД</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
     body { background:#f4f6f9; }
@@ -62,7 +62,7 @@
   <div class="app-header d-flex flex-wrap align-items-center justify-content-between gap-2">
     <div>
       <div class="fw-bold">Продажи ЛАЙТ</div>
-      <div class="small-note">Заказы (A:AN) + расчёт ЗП по “Дата сдачи заказа” (AN) • всё сохраняется в браузере</div>
+      <div class="small-note">Заказы (A:AN) + расчёт ЗП по “Дата сдачи заказа” (AN) + вкладка ЛИД • всё сохраняется в браузере</div>
       <div class="save-indicator mt-1">
         <span class="dot" id="saveDot"></span>
         <span id="saveText">Готово</span>
@@ -84,6 +84,7 @@
     <ul class="nav nav-tabs" id="tabs">
       <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabOrders" type="button">Заказы</button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSalary" type="button">ЗП</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLead" type="button">ЛИД</button></li>
     </ul>
 
     <div class="tab-content">
@@ -205,6 +206,87 @@
           </div>
         </div>
       </div>
+
+      <!-- LEAD TAB -->
+      <div class="tab-pane fade" id="tabLead">
+        <div class="table-wrap mt-3">
+          <div class="row g-3 align-items-end">
+            <div class="col-12 col-md-3">
+              <label class="form-label mb-1">Месяц</label>
+              <input type="month" class="form-control form-control-sm" id="leadMonth" />
+            </div>
+            <div class="col-12 col-md-3">
+              <label class="form-label mb-1">Дата</label>
+              <input type="date" class="form-control form-control-sm" id="leadDate" />
+            </div>
+            <div class="col-12 col-md-6">
+              <div class="small-note">
+                Менеджер вручную заполняет только этапы <b>Зая</b>, <b>Диз</b> и <b>КП</b>.
+                Этапы <b>Счёт</b> и <b>Заказ</b> считаются автоматически из вкладки “Заказы”.
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-3 mt-1">
+            <div class="col-12 col-xl-7">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+                  <div class="fw-bold">День по каналам</div>
+                  <div class="small-note" id="leadDailySubtitle">Выбери дату</div>
+                </div>
+                <div class="table-responsive mt-2">
+                  <table class="table table-bordered table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Канал</th>
+                        <th class="right nowrap">Зая</th>
+                        <th class="right nowrap">Диз</th>
+                        <th class="right nowrap">КП</th>
+                        <th class="right nowrap">Счёт</th>
+                        <th class="right nowrap">Заказ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="leadDailyBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-12 col-xl-5">
+              <div class="p-3 rounded-3 bg-light h-100">
+                <div class="fw-bold">Итог месяца</div>
+                <div class="small-note">Короткая сводка по выбранному месяцу</div>
+                <div class="row g-2 mt-1" id="leadSummaryCards"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-3 bg-light mt-3">
+            <div class="fw-bold">Конверсия по каналам</div>
+            <div class="small-note">Месячные метрики без огромной ежедневной матрицы</div>
+            <div class="table-responsive mt-2">
+              <table class="table table-bordered table-sm align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th>Канал</th>
+                    <th class="right nowrap">Зая</th>
+                    <th class="right nowrap">Диз</th>
+                    <th class="right nowrap">КП</th>
+                    <th class="right nowrap">Счёт</th>
+                    <th class="right nowrap">Заказ</th>
+                    <th class="right nowrap">Зая→Диз</th>
+                    <th class="right nowrap">Диз→КП</th>
+                    <th class="right nowrap">КП→Счёт</th>
+                    <th class="right nowrap">Счёт→Заказ</th>
+                    <th class="right nowrap">Доля заказов</th>
+                  </tr>
+                </thead>
+                <tbody id="leadMonthBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -237,6 +319,29 @@
         <div class="modal-footer">
           <button class="btn btn-primary btn-sm" id="btnRefsSave" data-bs-dismiss="modal">Сохранить справочники</button>
           <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modalAssemblyTeam" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title fw-bold" id="assemblyModalTitle">Доп. сборщики</div>
+            <div class="small-note" id="assemblyModalSubtitle">Добавь дополнительных сборщиков и их отдельную ЗП по заказу</div>
+          </div>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div id="assemblyTeamList" class="d-flex flex-column gap-2"></div>
+          <button class="btn btn-outline-primary btn-sm mt-3" id="btnAssemblyAdd">+ Добавить сборщика</button>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" data-bs-dismiss="modal">Готово</button>
         </div>
       </div>
     </div>
@@ -305,6 +410,36 @@
       return JSON.parse(JSON.stringify(obj));
     }
 
+    function normalizeAssemblyTeam(items) {
+      if (!Array.isArray(items)) return [];
+      return items.map(item => ({
+        id: item?.id || crypto.randomUUID(),
+        name: typeof item?.name === "string" ? item.name : "",
+        sum: item?.sum ?? ""
+      }));
+    }
+
+    function normalizeLeadJournal(entries) {
+      const out = {};
+      if (!entries || typeof entries !== "object") return out;
+      Object.entries(entries).forEach(([dateKey, channels]) => {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey || ""))) return;
+        if (!channels || typeof channels !== "object") return;
+        const nextChannels = {};
+        Object.entries(channels).forEach(([channel, metrics]) => {
+          const channelName = String(channel || "").trim();
+          if (!channelName) return;
+          nextChannels[channelName] = {
+            inquiry: metrics?.inquiry ?? 0,
+            design: metrics?.design ?? 0,
+            proposal: metrics?.proposal ?? 0
+          };
+        });
+        if (Object.keys(nextChannels).length) out[dateKey] = nextChannels;
+      });
+      return out;
+    }
+
     function normalizeRow(row40) {
       const out = new Array(40).fill(null);
       for (let i=0;i<40;i++) out[i] = (row40[i] === undefined ? null : row40[i]);
@@ -320,8 +455,9 @@
     function createDefaultState() {
       return {
         refs: structuredCloneSafe(DEFAULT_REFS),
-        orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r) })),
-        payouts: {}
+        orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r), assemblyTeam: [] })),
+        payouts: {},
+        leadJournal: {}
       };
     }
 
@@ -330,10 +466,12 @@
       nextState.refs = nextState.refs || structuredCloneSafe(DEFAULT_REFS);
       nextState.orders = Array.isArray(nextState.orders) ? nextState.orders : [];
       nextState.payouts = nextState.payouts || {};
+      nextState.leadJournal = normalizeLeadJournal(nextState.leadJournal);
       nextState.orders = nextState.orders.map(o => ({
         id: o.id || crypto.randomUUID(),
         hidden: !!o.hidden,
-        cells: normalizeRow(o.cells || [])
+        cells: normalizeRow(o.cells || []),
+        assemblyTeam: normalizeAssemblyTeam(o.assemblyTeam)
       }));
       return nextState;
     }
@@ -343,8 +481,9 @@
       if (!raw) {
         return {
           refs: structuredCloneSafe(DEFAULT_REFS),
-          orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r) })),
-          payouts: {} // ключи выплат
+          orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r), assemblyTeam: [] })),
+          payouts: {}, // ключи выплат
+          leadJournal: {}
         };
       }
       try {
@@ -352,19 +491,22 @@
         state.refs = state.refs || structuredCloneSafe(DEFAULT_REFS);
         state.orders = state.orders || [];
         state.payouts = state.payouts || {};
+        state.leadJournal = normalizeLeadJournal(state.leadJournal);
         // normalize orders
         state.orders = state.orders.map(o => ({
           id: o.id || crypto.randomUUID(),
           hidden: !!o.hidden,
-          cells: normalizeRow(o.cells || [])
+          cells: normalizeRow(o.cells || []),
+          assemblyTeam: normalizeAssemblyTeam(o.assemblyTeam)
         }));
         return state;
       } catch (e) {
         console.warn("Bad state, fallback to seed", e);
         return {
           refs: structuredCloneSafe(DEFAULT_REFS),
-          orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r) })),
-          payouts: {}
+          orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r), assemblyTeam: [] })),
+          payouts: {},
+          leadJournal: {}
         };
       }
     }
@@ -505,6 +647,198 @@
       return Math.round(n).toLocaleString("ru-RU");
     }
 
+    function formatDateKeyLocal(date) {
+      return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
+    }
+
+    function normalizeDateKey(v) {
+      if (isEmpty(v)) return "";
+      const raw = String(v).trim();
+      if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.slice(0,10);
+      const parsed = parseDateTime(v);
+      if (!parsed || parsed.type !== "datetime") return "";
+      return formatDateKeyLocal(parsed.value);
+    }
+
+    function formatPercent(part, whole) {
+      if (!whole) return "—";
+      return `${(part / whole * 100).toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;
+    }
+
+    function createLeadStats() {
+      return { inquiry: 0, design: 0, proposal: 0, invoice: 0, order: 0 };
+    }
+
+    function getLeadChannels() {
+      const ordered = [];
+      const seen = new Set();
+      const push = (value) => {
+        const channel = String(value || "").trim();
+        if (!channel || channel === "Нет" || seen.has(channel)) return;
+        seen.add(channel);
+        ordered.push(channel);
+      };
+
+      (STATE.refs["Канал лида"] || []).forEach(push);
+      Object.values(STATE.leadJournal || {}).forEach(byChannel => {
+        Object.keys(byChannel || {}).forEach(push);
+      });
+      STATE.orders.forEach(order => push(order.cells[23]));
+      return ordered;
+    }
+
+    function getLeadManualMetrics(dateKey, channel) {
+      const base = STATE.leadJournal?.[dateKey]?.[channel] || {};
+      return {
+        inquiry: Math.max(0, Math.floor(toNumber(base.inquiry))),
+        design: Math.max(0, Math.floor(toNumber(base.design))),
+        proposal: Math.max(0, Math.floor(toNumber(base.proposal)))
+      };
+    }
+
+    function setLeadManualMetric(dateKey, channel, metric, value) {
+      STATE.leadJournal = STATE.leadJournal || {};
+      STATE.leadJournal[dateKey] = STATE.leadJournal[dateKey] || {};
+      STATE.leadJournal[dateKey][channel] = STATE.leadJournal[dateKey][channel] || { inquiry: 0, design: 0, proposal: 0 };
+      STATE.leadJournal[dateKey][channel][metric] = Math.max(0, Math.floor(toNumber(value)));
+
+      const current = STATE.leadJournal[dateKey][channel];
+      if (!current.inquiry && !current.design && !current.proposal) {
+        delete STATE.leadJournal[dateKey][channel];
+      }
+      if (!Object.keys(STATE.leadJournal[dateKey]).length) {
+        delete STATE.leadJournal[dateKey];
+      }
+    }
+
+    function getLeadStatsForMonth(yearMonth, selectedDate) {
+      const channels = getLeadChannels();
+      const monthStats = {};
+      const dailyStats = {};
+      const ensure = (map, channel) => {
+        if (!map[channel]) map[channel] = createLeadStats();
+        return map[channel];
+      };
+
+      channels.forEach(channel => {
+        monthStats[channel] = createLeadStats();
+        dailyStats[channel] = createLeadStats();
+      });
+
+      Object.entries(STATE.leadJournal || {}).forEach(([dateKey, byChannel]) => {
+        if (!dateKey.startsWith(`${yearMonth}-`)) return;
+        Object.keys(byChannel || {}).forEach(channel => {
+          const manual = getLeadManualMetrics(dateKey, channel);
+          const monthBucket = ensure(monthStats, channel);
+          monthBucket.inquiry += manual.inquiry;
+          monthBucket.design += manual.design;
+          monthBucket.proposal += manual.proposal;
+
+          if (dateKey === selectedDate) {
+            const dayBucket = ensure(dailyStats, channel);
+            dayBucket.inquiry += manual.inquiry;
+            dayBucket.design += manual.design;
+            dayBucket.proposal += manual.proposal;
+          }
+        });
+      });
+
+      STATE.orders.forEach(order => {
+        const channel = String(order.cells[23] || "").trim();
+        if (!channel || channel === "Нет") return;
+
+        const invoiceDate = normalizeDateKey(order.cells[32]);
+        if (invoiceDate && invoiceDate.startsWith(`${yearMonth}-`)) {
+          ensure(monthStats, channel).invoice += 1;
+          if (invoiceDate === selectedDate) ensure(dailyStats, channel).invoice += 1;
+        }
+
+        const orderDate = normalizeDateKey(order.cells[33]);
+        if (orderDate && orderDate.startsWith(`${yearMonth}-`)) {
+          ensure(monthStats, channel).order += 1;
+          if (orderDate === selectedDate) ensure(dailyStats, channel).order += 1;
+        }
+      });
+
+      return { channels, monthStats, dailyStats };
+    }
+
+    function getOrderById(orderId) {
+      return STATE.orders.find(order => order.id === orderId) || null;
+    }
+
+    function getAssemblyTeam(order) {
+      if (!Array.isArray(order.assemblyTeam)) order.assemblyTeam = [];
+      return order.assemblyTeam;
+    }
+
+    function hasExtraAssemblyMembers(order) {
+      return getAssemblyTeam(order).some(item => String(item?.name || "").trim() || !isEmpty(item?.sum));
+    }
+
+    function makeAssemblerPayoutToken(key) {
+      return `ASSEMBLER::${key}`;
+    }
+
+    function getAssemblerAssignments(order) {
+      const hasExtras = hasExtraAssemblyMembers(order);
+      const rows = [{
+        employee: order.cells[18],
+        sum: order.cells[19],
+        role: "Сборщик",
+        payoutToken: hasExtras ? makeAssemblerPayoutToken("PRIMARY") : "Сборщик",
+        legacyToken: "Сборщик"
+      }];
+
+      getAssemblyTeam(order).forEach(item => {
+        rows.push({
+          employee: item.name,
+          sum: item.sum,
+          role: "Сборщик",
+          payoutToken: makeAssemblerPayoutToken(item.id || crypto.randomUUID()),
+          legacyToken: null
+        });
+      });
+
+      return rows;
+    }
+
+    function getOrderSalaryAssignments(order) {
+      return [
+        {
+          employee: order.cells[15],
+          sum: order.cells[16],
+          role: "Дизайнер",
+          payoutToken: "Дизайнер",
+          legacyToken: "Дизайнер"
+        },
+        ...getAssemblerAssignments(order),
+        {
+          employee: order.cells[21],
+          sum: order.cells[22],
+          role: "Монтажник",
+          payoutToken: "Монтажник",
+          legacyToken: "Монтажник"
+        }
+      ];
+    }
+
+    function getOrderSearchEmployees(order) {
+      return getOrderSalaryAssignments(order)
+        .map(item => String(item.employee || "").trim())
+        .filter(Boolean);
+    }
+
+    function getAssemblyExtraSummary(order) {
+      const extraRows = getAssemblyTeam(order).filter(item => String(item?.name || "").trim() || !isEmpty(item?.sum));
+      if (!extraRows.length) return "";
+      return extraRows.map(item => `${item.name || "Без имени"} — ${formatMoney(toNumber(item.sum))} ₽`).join(", ");
+    }
+
+    function getAssemblyTotalSum(order) {
+      return getAssemblerAssignments(order).reduce((sum, item) => sum + toNumber(item.sum), 0);
+    }
+
     // Excel DAYS returns integer difference between dates ignoring time.
     function daysDiffExcelStyle(a, b) {
       if (!a || !b) return null;
@@ -634,16 +968,29 @@
     // =========================
     // 6) Payout tracking
     // =========================
-    function payoutKey(orderId, role, periodKey) {
-      return `${orderId}::${role}::${periodKey}`;
+    function payoutKey(orderId, payoutToken, periodKey) {
+      return `${orderId}::${payoutToken}::${periodKey}`;
     }
-    function isPaid(orderId, role, periodKey) {
-      return !!STATE.payouts[payoutKey(orderId, role, periodKey)];
+    function legacyPayoutKey(orderId, legacyToken, periodKey) {
+      return legacyToken ? `${orderId}::${legacyToken}::${periodKey}` : "";
     }
-    function setPaid(orderId, role, periodKey, val) {
-      const k = payoutKey(orderId, role, periodKey);
-      if (val) STATE.payouts[k] = true;
-      else delete STATE.payouts[k];
+    function isPaid(orderId, payoutToken, periodKey, legacyToken = payoutToken) {
+      if (STATE.payouts[payoutKey(orderId, payoutToken, periodKey)]) return true;
+      const oldKey = legacyPayoutKey(orderId, legacyToken, periodKey);
+      return oldKey ? !!STATE.payouts[oldKey] : false;
+    }
+    function setPaid(orderId, payoutToken, periodKey, val, legacyToken = payoutToken) {
+      const nextKey = payoutKey(orderId, payoutToken, periodKey);
+      const oldKey = legacyPayoutKey(orderId, legacyToken, periodKey);
+      if (val) STATE.payouts[nextKey] = true;
+      else delete STATE.payouts[nextKey];
+
+      if (!val && oldKey) {
+        delete STATE.payouts[oldKey];
+      }
+      if (val && legacyToken && legacyToken === payoutToken) {
+        STATE.payouts[oldKey] = true;
+      }
     }
 
     // =========================
@@ -776,7 +1123,7 @@
         if (q) {
           const hay = [
             order.cells[0], order.cells[1], order.cells[6], order.cells[7], order.cells[2],
-            order.cells[15], order.cells[18], order.cells[21]
+            ...getOrderSearchEmployees(order)
           ].map(x => String(x||"").toLowerCase()).join(" | ");
           if (!hay.includes(q)) return;
         }
@@ -786,6 +1133,7 @@
 
         const statusVal = String(order.cells[2] || "");
         if (statusVal === "Отмена") tr.classList.add("row-cancel");
+        const salaryAssignments = getOrderSalaryAssignments(order);
 
         // hide checkbox
         const tdHide = document.createElement("td");
@@ -801,11 +1149,7 @@
         tr.appendChild(tdHide);
 
         // salary columns mapping for order view
-        const salaryCols = new Map([
-          ["ЗП Дизайнен", { role:"Дизайнер", empIdx:15, sumIdx:16 }],
-          ["ЗП сборщика", { role:"Сборщик", empIdx:18, sumIdx:19 }],
-          ["ЗП Монтажника", { role:"Монтажник", empIdx:21, sumIdx:22 }]
-        ]);
+        const salaryCols = new Set(["ЗП Дизайнен","ЗП сборщика","ЗП Монтажника"]);
 
         for (let i=0; i<COLUMNS.length; i++) {
           const colName = COLUMNS[i];
@@ -819,6 +1163,103 @@
             span.className = "nowrap";
             span.textContent = (val===null || val===undefined) ? "" : String(val);
             td.appendChild(span);
+            tr.appendChild(td);
+            continue;
+          }
+
+          if (colName === "Имя сборщика") {
+            const wrap = document.createElement("div");
+            wrap.className = "d-flex flex-column gap-1";
+
+            const topRow = document.createElement("div");
+            topRow.className = "d-flex gap-1 align-items-center";
+
+            const sel = document.createElement("select");
+            sel.className = `form-select form-select-sm cell-select ${colClass(colName)}`;
+            const opts = STATE.refs["Сборщик"] || [];
+            sel.innerHTML = `<option value=""></option>` + opts.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+            sel.value = order.cells[i] ?? "";
+            sel.classList.toggle("filled", !sel.value || sel.value.trim()==="" ? false : true);
+            sel.addEventListener("change", () => {
+              order.cells[i] = sel.value;
+              sel.classList.toggle("filled", !sel.value || sel.value.trim()==="" ? false : true);
+              markDirtyAndAutosave();
+              renderOrders();
+            });
+
+            const btnTeam = document.createElement("button");
+            btnTeam.type = "button";
+            btnTeam.className = "btn btn-outline-secondary btn-sm nowrap";
+            const extraCount = getAssemblyTeam(order).filter(item => String(item?.name || "").trim() || !isEmpty(item?.sum)).length;
+            btnTeam.textContent = extraCount ? `Доп. +${extraCount}` : "Доп.";
+            btnTeam.addEventListener("click", () => openAssemblyTeamModal(order.id));
+
+            topRow.appendChild(sel);
+            topRow.appendChild(btnTeam);
+            wrap.appendChild(topRow);
+
+            const extraSummary = getAssemblyExtraSummary(order);
+            if (extraSummary) {
+              const note = document.createElement("div");
+              note.className = "small-note";
+              note.textContent = `Доп. сборщики: ${extraSummary}`;
+              wrap.appendChild(note);
+            }
+
+            td.appendChild(wrap);
+            tr.appendChild(td);
+            continue;
+          }
+
+          if (colName === "ЗП сборщика") {
+            const wrap = document.createElement("div");
+            wrap.className = "d-flex flex-column gap-1";
+            const inp = document.createElement("input");
+            const val = order.cells[i];
+            inp.className = `form-control form-control-sm ${colClass(colName)}`;
+            inp.type = "text";
+            inp.value = val ?? "";
+            inp.classList.toggle("filled", inp.value.trim() !== "");
+
+            inp.addEventListener("input", () => {
+              order.cells[i] = inp.value;
+              inp.classList.toggle("filled", inp.value.trim() !== "");
+              markDirtyAndAutosave();
+            });
+
+            inp.addEventListener("blur", () => {
+              order.cells[i] = inp.value;
+              markDirtyAndAutosave();
+              renderOrders();
+            });
+
+            const shipped = order.cells[39];
+            const assemblerAssignments = salaryAssignments.filter(item => item.role === "Сборщик")
+              .filter(item => {
+                const employee = String(item.employee || "").trim();
+                return employee && employee !== "Нет" && toNumber(item.sum) > 0;
+              });
+
+            inp.classList.remove("to-pay","paid");
+            if (!isEmpty(shipped) && assemblerAssignments.length) {
+              const pKey = salaryPeriodKey(shipped);
+              if (pKey) {
+                const paidCount = assemblerAssignments.filter(item => isPaid(order.id, item.payoutToken, pKey, item.legacyToken)).length;
+                inp.classList.toggle("paid", paidCount === assemblerAssignments.length);
+                inp.classList.toggle("to-pay", paidCount < assemblerAssignments.length);
+              }
+            }
+
+            wrap.appendChild(inp);
+
+            if (assemblerAssignments.length > 1 || hasExtraAssemblyMembers(order)) {
+              const totalNote = document.createElement("div");
+              totalNote.className = "small-note";
+              totalNote.textContent = `Итого по сборке: ${formatMoney(getAssemblyTotalSum(order))} ₽`;
+              wrap.appendChild(totalNote);
+            }
+
+            td.appendChild(wrap);
             tr.appendChild(td);
             continue;
           }
@@ -921,18 +1362,23 @@
           // Salary highlight in Orders tab
           if (salaryCols.has(colName)) {
             const shipped = order.cells[39]; // Дата сдачи заказа
-            const info = salaryCols.get(colName);
-            const emp = String(order.cells[info.empIdx] || "");
-            const sum = toNumber(order.cells[info.sumIdx]);
+            const relevantAssignments = salaryAssignments.filter(item => {
+              if (colName === "ЗП Дизайнен") return item.role === "Дизайнер";
+              if (colName === "ЗП Монтажника") return item.role === "Монтажник";
+              return item.role === "Сборщик";
+            }).filter(item => {
+              const employee = String(item.employee || "").trim();
+              return employee && employee !== "Нет" && toNumber(item.sum) > 0;
+            });
 
             inp.classList.remove("to-pay","paid");
 
-            if (!isEmpty(shipped) && sum > 0 && emp && emp !== "Нет") {
+            if (!isEmpty(shipped) && relevantAssignments.length) {
               const pKey = salaryPeriodKey(shipped);
               if (pKey) {
-                const paid = isPaid(order.id, info.role, pKey);
-                inp.classList.toggle("to-pay", !paid);
-                inp.classList.toggle("paid", paid);
+                const paidCount = relevantAssignments.filter(item => isPaid(order.id, item.payoutToken, pKey, item.legacyToken)).length;
+                inp.classList.toggle("paid", paidCount === relevantAssignments.length);
+                inp.classList.toggle("to-pay", paidCount < relevantAssignments.length);
               }
             }
           }
@@ -960,6 +1406,8 @@
 
         ordersBody.appendChild(tr);
       });
+
+      renderLead();
     }
 
     // =========================
@@ -1045,6 +1493,98 @@
     }
 
     // =========================
+    // 9.5) Assembly team modal
+    // =========================
+    const assemblyModalEl = document.getElementById("modalAssemblyTeam");
+    const assemblyModalTitle = document.getElementById("assemblyModalTitle");
+    const assemblyModalSubtitle = document.getElementById("assemblyModalSubtitle");
+    const assemblyTeamList = document.getElementById("assemblyTeamList");
+    const btnAssemblyAdd = document.getElementById("btnAssemblyAdd");
+    let activeAssemblyOrderId = null;
+
+    function getAssemblyModalInstance() {
+      return window.bootstrap ? window.bootstrap.Modal.getOrCreateInstance(assemblyModalEl) : null;
+    }
+
+    function renderAssemblyTeamModal() {
+      const order = getOrderById(activeAssemblyOrderId);
+      if (!order) {
+        assemblyTeamList.innerHTML = `<div class="small-note">Заказ не найден.</div>`;
+        return;
+      }
+
+      assemblyModalTitle.textContent = `Доп. сборщики: ${order.cells[0] || "без номера"} • ${order.cells[1] || "без названия"}`;
+      assemblyModalSubtitle.textContent = "Основной сборщик и его ЗП остаются в строке заказа. Здесь добавляются только дополнительные участники и их отдельная ЗП.";
+
+      const team = getAssemblyTeam(order);
+      assemblyTeamList.innerHTML = team.length ? "" : `<div class="small-note">Пока нет доп. сборщиков. Основной сборщик остаётся в таблице заказа.</div>`;
+
+      team.forEach(member => {
+        const row = document.createElement("div");
+        row.className = "d-flex flex-wrap gap-2 align-items-center";
+
+        const select = document.createElement("select");
+        select.className = "form-select form-select-sm";
+        select.style.maxWidth = "260px";
+        const opts = STATE.refs["Сборщик"] || [];
+        select.innerHTML = `<option value=""></option>` + opts.map(value => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`).join("");
+        select.value = member.name || "";
+        select.addEventListener("change", () => {
+          member.name = select.value;
+          markDirtyAndAutosave();
+          renderOrders();
+          refreshEmployeeSelects();
+          renderSalary();
+          renderAssemblyTeamModal();
+        });
+
+        const amount = document.createElement("input");
+        amount.type = "number";
+        amount.step = "1";
+        amount.min = "0";
+        amount.className = "form-control form-control-sm";
+        amount.style.maxWidth = "180px";
+        amount.placeholder = "ЗП, ₽";
+        amount.value = isEmpty(member.sum) ? "" : String(member.sum);
+        amount.addEventListener("input", () => {
+          member.sum = amount.value;
+          markDirtyAndAutosave();
+        });
+        amount.addEventListener("blur", () => {
+          member.sum = amount.value;
+          markDirtyAndAutosave();
+          renderOrders();
+          renderSalary();
+          renderAssemblyTeamModal();
+        });
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "btn btn-outline-danger btn-sm";
+        remove.textContent = "Удалить";
+        remove.addEventListener("click", () => {
+          order.assemblyTeam = getAssemblyTeam(order).filter(item => item.id !== member.id);
+          markDirtyAndAutosave();
+          renderOrders();
+          refreshEmployeeSelects();
+          renderSalary();
+          renderAssemblyTeamModal();
+        });
+
+        row.appendChild(select);
+        row.appendChild(amount);
+        row.appendChild(remove);
+        assemblyTeamList.appendChild(row);
+      });
+    }
+
+    function openAssemblyTeamModal(orderId) {
+      activeAssemblyOrderId = orderId;
+      renderAssemblyTeamModal();
+      getAssemblyModalInstance()?.show();
+    }
+
+    // =========================
     // 10) Salary computation & UI
     // =========================
     const salaryEmployee = document.getElementById("salaryEmployee");
@@ -1064,7 +1604,10 @@
         (STATE.refs[k]||[]).forEach(v => { if (v && v !== "Нет") set.add(v); });
       });
       STATE.orders.forEach(o => {
-        [o.cells[15], o.cells[18], o.cells[21]].forEach(x => { if (x && x !== "Нет") set.add(String(x)); });
+        getOrderSalaryAssignments(o).forEach(item => {
+          const employee = String(item.employee || "").trim();
+          if (employee && employee !== "Нет") set.add(employee);
+        });
       });
       return Array.from(set).sort((a,b)=>a.localeCompare(b,"ru"));
     }
@@ -1095,10 +1638,12 @@
 
       if (filterEmployee && employee !== filterEmployee) return;
 
-      const paid = isPaid(payload.orderId, payload.role, periodKey);
+      const payoutToken = payload.payoutToken || payload.role;
+      const legacyToken = Object.prototype.hasOwnProperty.call(payload, "legacyToken") ? payload.legacyToken : payload.role;
+      const paid = isPaid(payload.orderId, payoutToken, periodKey, legacyToken);
       if (options.unpaidOnly && paid) return;
 
-      rows.push({ ...payload, employee, sum, paid });
+      rows.push({ ...payload, employee, sum, paid, payoutToken, legacyToken });
     }
 
     function computeSalaryRowsFor(emp, yearMonth, half, options = {}) {
@@ -1116,33 +1661,17 @@
         if (key !== targetKey) return;
 
         const orderName = `${o.cells[0]||""} • ${o.cells[1]||""}`.trim();
-
-        // Designer
-        pushSalaryRow(rows, targetKey, filterEmployee, options, {
-          orderId: o.id,
-          date: shipped,
-          order: orderName,
-          employee: o.cells[15],
-          role: "Дизайнер",
-          sum: o.cells[16]
-        });
-        // Assembler
-        pushSalaryRow(rows, targetKey, filterEmployee, options, {
-          orderId: o.id,
-          date: shipped,
-          order: orderName,
-          employee: o.cells[18],
-          role: "Сборщик",
-          sum: o.cells[19]
-        });
-        // Installer
-        pushSalaryRow(rows, targetKey, filterEmployee, options, {
-          orderId: o.id,
-          date: shipped,
-          order: orderName,
-          employee: o.cells[21],
-          role: "Монтажник",
-          sum: o.cells[22]
+        getOrderSalaryAssignments(o).forEach(item => {
+          pushSalaryRow(rows, targetKey, filterEmployee, options, {
+            orderId: o.id,
+            date: shipped,
+            order: orderName,
+            employee: item.employee,
+            role: item.role,
+            sum: item.sum,
+            payoutToken: item.payoutToken,
+            legacyToken: item.legacyToken
+          });
         });
       });
 
@@ -1206,7 +1735,7 @@
             return `
               <tr>
                 <td class="text-center">
-                  <input type="checkbox" class="paycheck" data-oid="${r.orderId}" data-role="${r.role}" data-period="${periodKey}" ${r.paid ? "checked":""}>
+                  <input type="checkbox" class="paycheck" data-oid="${r.orderId}" data-token="${escapeHtml(r.payoutToken)}" data-legacy="${escapeHtml(r.legacyToken || "")}" data-period="${periodKey}" ${r.paid ? "checked":""}>
                 </td>
                 <td class="nowrap">${formatDate(r.date)}</td>
                 <td>${escapeHtml(r.order)}</td>
@@ -1223,12 +1752,154 @@
 
       document.querySelectorAll(".paycheck").forEach(cb => {
         cb.addEventListener("change", () => {
-          setPaid(cb.dataset.oid, cb.dataset.role, cb.dataset.period, cb.checked);
+          setPaid(cb.dataset.oid, cb.dataset.token, cb.dataset.period, cb.checked, cb.dataset.legacy || null);
           markDirtyAndAutosave();
           renderOrders();
           renderSalary();
         });
       });
+    }
+
+    // =========================
+    // 10.5) Lead UI
+    // =========================
+    const leadMonthInput = document.getElementById("leadMonth");
+    const leadDateInput = document.getElementById("leadDate");
+    const leadDailySubtitle = document.getElementById("leadDailySubtitle");
+    const leadDailyBody = document.getElementById("leadDailyBody");
+    const leadSummaryCards = document.getElementById("leadSummaryCards");
+    const leadMonthBody = document.getElementById("leadMonthBody");
+
+    function ensureLeadFilters() {
+      const now = new Date();
+      if (!leadMonthInput.value) {
+        leadMonthInput.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      }
+
+      const [year, month] = leadMonthInput.value.split("-").map(value => parseInt(value, 10));
+      if (!year || !month) return;
+
+      const maxDay = new Date(year, month, 0).getDate();
+      leadDateInput.min = `${leadMonthInput.value}-01`;
+      leadDateInput.max = `${leadMonthInput.value}-${String(maxDay).padStart(2,"0")}`;
+
+      if (!leadDateInput.value || !leadDateInput.value.startsWith(`${leadMonthInput.value}-`)) {
+        const todayKey = formatDateKeyLocal(now);
+        leadDateInput.value = todayKey.startsWith(`${leadMonthInput.value}-`) ? todayKey : leadDateInput.min;
+      }
+    }
+
+    function renderLead() {
+      ensureLeadFilters();
+
+      const yearMonth = leadMonthInput.value;
+      const selectedDate = leadDateInput.value;
+      if (!yearMonth || !selectedDate) return;
+
+      const { channels, monthStats, dailyStats } = getLeadStatsForMonth(yearMonth, selectedDate);
+      if (!channels.length) {
+        leadDailySubtitle.textContent = "Нет каналов лида";
+        leadDailyBody.innerHTML = `<tr><td colspan="6" class="muted">Добавь каналы лида в справочниках.</td></tr>`;
+        leadSummaryCards.innerHTML = "";
+        leadMonthBody.innerHTML = `<tr><td colspan="11" class="muted">Нет данных по каналам.</td></tr>`;
+        return;
+      }
+
+      const totalDaily = createLeadStats();
+      leadDailySubtitle.textContent = `Дата: ${formatDate(selectedDate)}. Этапы “Счёт” и “Заказ” подтягиваются автоматически из вкладки “Заказы”.`;
+      leadDailyBody.innerHTML = channels.map(channel => {
+        const day = dailyStats[channel] || createLeadStats();
+        totalDaily.inquiry += day.inquiry;
+        totalDaily.design += day.design;
+        totalDaily.proposal += day.proposal;
+        totalDaily.invoice += day.invoice;
+        totalDaily.order += day.order;
+
+        return `
+          <tr>
+            <td>${escapeHtml(channel)}</td>
+            <td class="p-1"><input type="number" min="0" step="1" class="form-control form-control-sm right" data-lead-channel="${escapeHtml(channel)}" data-lead-metric="inquiry" value="${day.inquiry || ""}"></td>
+            <td class="p-1"><input type="number" min="0" step="1" class="form-control form-control-sm right" data-lead-channel="${escapeHtml(channel)}" data-lead-metric="design" value="${day.design || ""}"></td>
+            <td class="p-1"><input type="number" min="0" step="1" class="form-control form-control-sm right" data-lead-channel="${escapeHtml(channel)}" data-lead-metric="proposal" value="${day.proposal || ""}"></td>
+            <td class="right nowrap"><b>${day.invoice || 0}</b></td>
+            <td class="right nowrap"><b>${day.order || 0}</b></td>
+          </tr>
+        `;
+      }).join("") + `
+        <tr class="table-secondary fw-bold">
+          <td>Всего</td>
+          <td class="right nowrap">${totalDaily.inquiry}</td>
+          <td class="right nowrap">${totalDaily.design}</td>
+          <td class="right nowrap">${totalDaily.proposal}</td>
+          <td class="right nowrap">${totalDaily.invoice}</td>
+          <td class="right nowrap">${totalDaily.order}</td>
+        </tr>
+      `;
+
+      leadDailyBody.querySelectorAll("input[data-lead-metric]").forEach(input => {
+        input.addEventListener("change", () => {
+          setLeadManualMetric(selectedDate, input.dataset.leadChannel, input.dataset.leadMetric, input.value);
+          markDirtyAndAutosave();
+          renderLead();
+        });
+      });
+
+      const totalMonth = createLeadStats();
+      const totalOrders = channels.reduce((sum, channel) => sum + (monthStats[channel]?.order || 0), 0);
+      leadMonthBody.innerHTML = channels.map(channel => {
+        const month = monthStats[channel] || createLeadStats();
+        totalMonth.inquiry += month.inquiry;
+        totalMonth.design += month.design;
+        totalMonth.proposal += month.proposal;
+        totalMonth.invoice += month.invoice;
+        totalMonth.order += month.order;
+
+        return `
+          <tr>
+            <td>${escapeHtml(channel)}</td>
+            <td class="right nowrap">${month.inquiry}</td>
+            <td class="right nowrap">${month.design}</td>
+            <td class="right nowrap">${month.proposal}</td>
+            <td class="right nowrap">${month.invoice}</td>
+            <td class="right nowrap">${month.order}</td>
+            <td class="right nowrap">${formatPercent(month.design, month.inquiry)}</td>
+            <td class="right nowrap">${formatPercent(month.proposal, month.design)}</td>
+            <td class="right nowrap">${formatPercent(month.invoice, month.proposal)}</td>
+            <td class="right nowrap">${formatPercent(month.order, month.invoice)}</td>
+            <td class="right nowrap">${formatPercent(month.order, totalOrders)}</td>
+          </tr>
+        `;
+      }).join("") + `
+        <tr class="table-secondary fw-bold">
+          <td>Всего</td>
+          <td class="right nowrap">${totalMonth.inquiry}</td>
+          <td class="right nowrap">${totalMonth.design}</td>
+          <td class="right nowrap">${totalMonth.proposal}</td>
+          <td class="right nowrap">${totalMonth.invoice}</td>
+          <td class="right nowrap">${totalMonth.order}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.design, totalMonth.inquiry)}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.proposal, totalMonth.design)}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.invoice, totalMonth.proposal)}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.order, totalMonth.invoice)}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.order, totalOrders)}</td>
+        </tr>
+      `;
+
+      const cards = [
+        ["Заявки", totalMonth.inquiry],
+        ["Дизайны", totalMonth.design],
+        ["КП", totalMonth.proposal],
+        ["Счета", totalMonth.invoice],
+        ["Заказы", totalMonth.order]
+      ];
+      leadSummaryCards.innerHTML = cards.map(([label, value]) => `
+        <div class="col-6 col-md-4">
+          <div class="border rounded-3 p-2 bg-white h-100">
+            <div class="small-note">${label}</div>
+            <div class="fw-bold fs-5">${value}</div>
+          </div>
+        </div>
+      `).join("");
     }
 
     // =========================
@@ -1239,7 +1910,7 @@
       // defaults
       empty[3] = new Date().toISOString().slice(0,10); // date only
       empty[2] = (STATE.refs["Статус"]||[])[0] || "";
-      STATE.orders.unshift({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(empty) });
+      STATE.orders.unshift({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(empty), assemblyTeam: [] });
       markDirtyAndAutosave();
       renderOrders();
     });
@@ -1259,6 +1930,25 @@
     document.getElementById("searchInput").addEventListener("input", renderOrders);
     document.getElementById("toggleShowHidden").addEventListener("change", renderOrders);
     document.getElementById("statusFilter").addEventListener("change", renderOrders);
+    leadMonthInput.addEventListener("change", renderLead);
+    leadDateInput.addEventListener("change", renderLead);
+
+    btnAssemblyAdd.addEventListener("click", () => {
+      const order = getOrderById(activeAssemblyOrderId);
+      if (!order) return;
+      getAssemblyTeam(order).push({ id: crypto.randomUUID(), name: "", sum: "" });
+      markDirtyAndAutosave();
+      renderOrders();
+      refreshEmployeeSelects();
+      renderSalary();
+      renderAssemblyTeamModal();
+    });
+    assemblyModalEl.addEventListener("hidden.bs.modal", () => {
+      renderOrders();
+      refreshEmployeeSelects();
+      renderSalary();
+      activeAssemblyOrderId = null;
+    });
 
     document.getElementById("btnSalaryShow").addEventListener("click", renderSalary);
 
@@ -1269,7 +1959,7 @@
       if (!ym || !half) return;
       const periodKey = `${ym}_${half}`;
       const rows = computeSalaryRowsFor(emp, ym, half, { unpaidOnly: !emp });
-      rows.forEach(r => setPaid(r.orderId, r.role, periodKey, true));
+      rows.forEach(r => setPaid(r.orderId, r.payoutToken, periodKey, true, r.legacyToken));
       markDirtyAndAutosave();
       renderOrders();
       renderSalary();
@@ -1282,7 +1972,7 @@
       if (!emp || !ym || !half) return;
       const periodKey = `${ym}_${half}`;
       const rows = computeSalaryRowsFor(emp, ym, half);
-      rows.forEach(r => setPaid(r.orderId, r.role, periodKey, false));
+      rows.forEach(r => setPaid(r.orderId, r.payoutToken, periodKey, false, r.legacyToken));
       markDirtyAndAutosave();
       renderOrders();
       renderSalary();
