@@ -2,17 +2,25 @@ $ErrorActionPreference = 'Stop'
 
 $root = $PSScriptRoot
 
+function Get-UnicodeName {
+    param(
+        [int[]]$Codes
+    )
+
+    return -join ($Codes | ForEach-Object { [char]$_ })
+}
+
 $mappings = @(
     @{
-        Source = Join-Path $root 'Мой\calculator.html'
+        Source = Join-Path (Join-Path $root (Get-UnicodeName @(1052,1086,1081))) 'calculator.html'
         Target = Join-Path $root 'moy\index.html'
     },
     @{
-        Source = Join-Path $root 'Парт\Partcalculator.html'
+        Source = Join-Path (Join-Path $root (Get-UnicodeName @(1055,1072,1088,1090))) 'Partcalculator.html'
         Target = Join-Path $root 'part\index.html'
     },
     @{
-        Source = Join-Path $root 'Продажи\orders_light.html'
+        Source = Join-Path (Join-Path $root (Get-UnicodeName @(1055,1088,1086,1076,1072,1078,1080))) 'orders_light.html'
         Target = Join-Path $root 'prodazhi\index.html'
     }
 )
@@ -27,7 +35,7 @@ foreach ($mapping in $mappings) {
     Copy-Item -LiteralPath $mapping.Source -Destination $mapping.Target -Force
 }
 
-& 'C:\Program Files\Git\cmd\git.exe' add README.md .gitignore publish.ps1 moy part prodazhi
+& 'C:\Program Files\Git\cmd\git.exe' add README.md .gitignore index.html publish.ps1 moy part prodazhi
 
 $status = & 'C:\Program Files\Git\cmd\git.exe' status --porcelain
 if (-not $status) {
