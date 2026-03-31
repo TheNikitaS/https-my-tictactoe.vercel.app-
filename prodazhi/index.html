@@ -1,0 +1,1234 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Продажи ЛАЙТ — Заказы + ЗП</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f4f6f9; }
+    .app-header { background:#1f2d3d; color:#fff; padding:12px 16px; border-radius:12px; }
+    .table-wrap { background:#fff; border-radius:12px; padding:12px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+    table { font-size: 12.5px; }
+    th { position: sticky; top: 0; z-index: 2; background:#eef2f6 !important; }
+    td, th { vertical-align: middle; }
+    .cell-input, .cell-select { min-width: 160px; }
+    .cell-narrow { min-width: 120px; }
+    .cell-wide { min-width: 260px; }
+    .muted { color:#6c757d; }
+    .badge-soft { background:#eef2f6; color:#1f2d3d; }
+    .nowrap { white-space: nowrap; }
+    .right { text-align:right; }
+    .small-note { font-size: 12px; color:#6c757d; }
+    .danger-zone { border:1px dashed #dc3545; border-radius:12px; padding:12px; }
+    .hidden-row { opacity:.45; }
+    .sticky-actions { position: sticky; bottom: 0; background: rgba(244,246,249,.92); backdrop-filter: blur(6px); padding:10px; border-radius:12px; }
+    .form-control, .form-select { font-size: 12.5px; }
+
+    /* заполнено */
+    .filled { background: #d1e7dd !important; }      /* green */
+    .to-pay { background: #cfe2ff !important; }      /* blue */
+    .paid { background: #d1e7dd !important; }        /* green */
+    .row-cancel { background: #f8d7da !important; }  /* red-ish */
+    .status-pill { font-weight: 700; border-radius: 10px; padding: 3px 6px; text-align:center; }
+    .status-select { padding-top: 3px; padding-bottom: 3px; }
+
+    /* make cancel row still readable */
+    tr.row-cancel td { background: transparent !important; }
+    tr.row-cancel { outline: 2px solid rgba(220,53,69,.45); }
+
+    /* Save indicator */
+    .save-indicator {
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:4px 10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.18);
+      font-size: 12px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #adb5bd;
+      box-shadow: 0 0 0 2px rgba(255,255,255,.15);
+    }
+    .dot.dirty { background: #ffc107; }
+    .dot.saved { background: #20c997; }
+  </style>
+</head>
+
+<body class="p-3">
+  <div class="app-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div>
+      <div class="fw-bold">Продажи ЛАЙТ</div>
+      <div class="small-note">Заказы (A:AN) + расчёт ЗП по “Дата сдачи заказа” (AN) • всё сохраняется в браузере</div>
+      <div class="save-indicator mt-1">
+        <span class="dot" id="saveDot"></span>
+        <span id="saveText">Готово</span>
+      </div>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <button class="btn btn-light btn-sm" id="btnAddOrder">+ Добавить заказ</button>
+      <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#modalRefs">Справочники (выпадашки)</button>
+
+      <button class="btn btn-outline-light btn-sm" id="btnExportJson">Экспорт JSON</button>
+      <label class="btn btn-outline-light btn-sm mb-0" for="importJsonFile">Импорт JSON</label>
+      <input type="file" id="importJsonFile" accept="application/json" style="display:none" />
+
+      <button class="btn btn-outline-light btn-sm" id="btnReset">Сброс (опасно)</button>
+    </div>
+  </div>
+
+  <div class="mt-3">
+    <ul class="nav nav-tabs" id="tabs">
+      <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabOrders" type="button">Заказы</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSalary" type="button">ЗП</button></li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- ORDERS TAB -->
+      <div class="tab-pane fade show active" id="tabOrders">
+        <div class="table-wrap mt-3">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <div class="input-group input-group-sm" style="max-width:420px;">
+                <span class="input-group-text">Поиск</span>
+                <input class="form-control" id="searchInput" placeholder="номер / название / клиент / телефон / статус / сотрудник..." />
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" role="switch" id="toggleShowHidden">
+                <label class="form-check-label" for="toggleShowHidden">Показывать скрытые</label>
+              </div>
+
+              <select class="form-select form-select-sm" id="statusFilter" style="max-width:260px;">
+                <option value="">Фильтр по статусу: все</option>
+              </select>
+            </div>
+
+            <div class="muted small-note">
+              Метрики считаются автоматически при вводе. ЗП: синий — к выплате, зелёный — выплачено.
+            </div>
+          </div>
+
+          <div class="table-responsive" style="max-height:72vh;">
+            <table class="table table-bordered table-hover table-sm align-middle" id="ordersTable">
+              <thead><tr id="ordersHeadRow"></tr></thead>
+              <tbody id="ordersBody"></tbody>
+            </table>
+          </div>
+
+          <div class="sticky-actions d-flex flex-wrap gap-2 align-items-center justify-content-between mt-2">
+            <div class="small-note">
+              Подсказка: чтобы “убрать” старые — ставь <b>Скрыть</b>. Можно включить “Показывать скрытые”.
+            </div>
+            <div class="d-flex gap-2">
+              <button class="btn btn-primary btn-sm" id="btnSave">Сохранить</button>
+              <button class="btn btn-outline-primary btn-sm" id="btnRecalc">Пересчитать</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SALARY TAB -->
+      <div class="tab-pane fade" id="tabSalary">
+        <div class="table-wrap mt-3">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+              <label class="form-label mb-1">Сотрудник</label>
+              <select class="form-select form-select-sm" id="salaryEmployee"></select>
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label mb-1">Месяц</label>
+              <input type="month" class="form-control form-control-sm" id="salaryMonth" />
+            </div>
+            <div class="col-6 col-md-3">
+              <label class="form-label mb-1">Период</label>
+              <select class="form-select form-select-sm" id="salaryHalf">
+                <option value="H1">1–15</option>
+                <option value="H2">16–конец</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-2 d-grid">
+              <button class="btn btn-primary btn-sm" id="btnSalaryShow">Показать</button>
+            </div>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between mt-3">
+            <div>
+              <div class="fw-bold" id="salaryTitle">ЗП</div>
+              <div class="small-note" id="salarySubtitle">Начисление после заполнения “Дата сдачи заказа” (AN)</div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+              <button class="btn btn-outline-success btn-sm" id="btnMarkAllPaid">Отметить всё выплаченным</button>
+              <button class="btn btn-outline-secondary btn-sm" id="btnUnmarkAllPaid">Снять отметки</button>
+              <div class="badge badge-soft p-2">
+                Итого: <span class="fw-bold" id="salaryTotal">0</span> ₽
+              </div>
+            </div>
+          </div>
+
+          <div class="row g-2 mt-2">
+            <div class="col-12 col-lg-4">
+              <div class="p-3 rounded-3 bg-light">
+                <div class="fw-bold">Разбивка</div>
+                <div class="small-note">Суммы берутся из столбцов ЗП в строке заказа</div>
+                <ul class="mt-2 mb-0 small" id="salaryBreakdown"></ul>
+              </div>
+            </div>
+
+            <div class="col-12 col-lg-8">
+              <div class="table-responsive">
+                <table class="table table-bordered table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th class="nowrap">Выплачено</th>
+                      <th class="nowrap">Дата сдачи</th>
+                      <th>Заказ</th>
+                      <th class="nowrap">Роль</th>
+                      <th class="right nowrap">Сумма, ₽</th>
+                    </tr>
+                  </thead>
+                  <tbody id="salaryRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <hr>
+
+          <div class="small-note">
+            Логика периода: дата 1–15 → “1–15”, 16–конец → “16–конец”. Пример: 13.02.2026 → период 01–15.02.2026.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- REFS MODAL -->
+  <div class="modal fade" id="modalRefs" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title fw-bold">Справочники (выпадающие списки)</div>
+            <div class="small-note">Добавляй / удаляй значения — они сразу появятся в таблице заказов.</div>
+          </div>
+          <button class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+
+        <div class="modal-body">
+          <div class="row g-3" id="refsGrid"></div>
+
+          <hr>
+
+          <div class="danger-zone">
+            <div class="fw-bold text-danger">Внимание</div>
+            <div class="small-note">
+              Удаление значения из справочника не удаляет его из уже заполненных заказов,
+              но оно исчезнет из выпадающего списка для будущего выбора.
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-primary btn-sm" id="btnRefsSave" data-bs-dismiss="modal">Сохранить справочники</button>
+          <button class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // =========================
+    // 1) CONFIG: Columns A:AN (40 columns)
+    // =========================
+    const COLUMNS = [
+      "Номер заказ","Название","Статус","Дата создания","Стоимость заказа","Оплачено","Имя клиента","Телефон","Город","Доставка",
+      "Адрес доставки","Менеджер","Выезд оценщика","Оценщик","Дизайн","Имя дизайнера","ЗП Дизайнен","Сборка заказа","Имя сборщика",
+      "ЗП сборщика","Монтаж стоимость","Имя Монтажника","ЗП Монтажника","Канал лида","Канал","Категория","Время обращения","Время ответа",
+      "Скорость ответа","Отправили дизайнеру","Дизайнер ответил","Скорость ответа","Выставили счёт","Счёт оплачен","Дней на оплату",
+      "Циклс сделки / дней","Начало производства","Окончание производства","Дней в производстве","Дата сдачи заказа"
+    ];
+
+    // =========================
+    // 2) Refs (dropdown lists) — базовые значения (можно менять в UI)
+    // =========================
+    const DEFAULT_REFS = {
+      "Статус": ["Счёт выставлен","Ожидает мастера","Собирается","Ожидает доставки","В доставке","Готово","Отмена"],
+      "Доставка": ["Наша","Самовывоз","СДЭК"],
+      "Менеджер": ["Никита","Наталья"],
+      "Сборщик": ["Сергей Гаврилов","Василиса","Никита","Владимир","Нет"],
+      "Монтажник": ["Суворов А","Наиль","Никита","Дмитрий Амиров","Денис","Вячеслав Полин","Нет"],
+      "Канал лида": ["Авито","ВК","Наш клиент","Нетворкинг","По рекомендации","Сайт","Сообщество"],
+      "Канал": ["ТГ","ВА","Авито","Телефон","ВК","Тенчат","Почта"],
+      "Категория": ["Производство","Магазин","Контурный неон","Гирлянды","Сервис","Рекламация","Индивидуальное решение"],
+      "Дизайнер": ["Наталья","Никита","Нет"],
+      "Оценщики": ["Наиль","Никита","Суворов А","Нет"]
+    };
+
+    // какие столбцы — селекты (выпадашки)
+    const SELECT_BY_COLUMN = {
+      "Статус": "Статус",
+      "Доставка": "Доставка",
+      "Менеджер": "Менеджер",
+      "Имя сборщика": "Сборщик",
+      "Имя Монтажника": "Монтажник",
+      "Канал лида": "Канал лида",
+      "Канал": "Канал",
+      "Категория": "Категория",
+      "Имя дизайнера": "Дизайнер",
+      "Оценщик": "Оценщики"
+    };
+
+    // =========================
+    // 3) Seed orders (минимальные примеры; дальше ты работаешь в интерфейсе)
+    // =========================
+    const SEED_ROWS = [
+      [23023,"BAGGINS","Готово","2024-11-21",46900,46900,"Алексей ","79818929207","Санкт-Петербург","Наша","Мебельная 47к1","Никита",null,null,null,"Наталья",5000,null,"Сергей Гаврилов",3000,null,"Суворов А",2000,"Авито","ТГ","Производство","2026-02-28T15:37","2026-02-28T16:38",null,"12:34:53","12:34:59",null,"2026-02-28","2026-03-01",null,null,"2026-02-20","2026-02-25",null,"2026-02-28"],
+      [22941,"Кофе с собой 60","Счёт выставлен","2024-12-09",16779,0,"Б.Вольчека","+7 931 249-18-15","Санкт-Петербург","Наша","Б028 - Канала Грибоедова наб., 79/23","Никита",null,null,null,"Наталья",2500,null,"Никита",1500,null,"Наиль",2000,"Авито","ВА","Производство","2026-02-28T12:00","2026-02-28T12:15",null,"12:41:00","13:40:00",null,"2026-02-28","",null,null,"","",null,""],
+    ];
+
+    // =========================
+    // 4) Storage
+    // =========================
+    const LS_KEY = "LIGHT_SALES_APP_V2";
+    const LS_BACKUP_KEY = "LIGHT_SALES_APP_V2_BACKUP";
+
+    function structuredCloneSafe(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function normalizeRow(row40) {
+      const out = new Array(40).fill(null);
+      for (let i=0;i<40;i++) out[i] = (row40[i] === undefined ? null : row40[i]);
+      // formula columns
+      out[28] = null; // Скорость ответа (1)
+      out[31] = null; // Скорость ответа (2)
+      out[34] = null; // Дней на оплату
+      out[35] = null; // Цикл сделки / дней
+      out[38] = null; // Дней в производстве
+      return out;
+    }
+
+    function loadState() {
+      const raw = localStorage.getItem(LS_KEY);
+      if (!raw) {
+        return {
+          refs: structuredCloneSafe(DEFAULT_REFS),
+          orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r) })),
+          payouts: {} // ключи выплат
+        };
+      }
+      try {
+        const state = JSON.parse(raw);
+        state.refs = state.refs || structuredCloneSafe(DEFAULT_REFS);
+        state.orders = state.orders || [];
+        state.payouts = state.payouts || {};
+        // normalize orders
+        state.orders = state.orders.map(o => ({
+          id: o.id || crypto.randomUUID(),
+          hidden: !!o.hidden,
+          cells: normalizeRow(o.cells || [])
+        }));
+        return state;
+      } catch (e) {
+        console.warn("Bad state, fallback to seed", e);
+        return {
+          refs: structuredCloneSafe(DEFAULT_REFS),
+          orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r) })),
+          payouts: {}
+        };
+      }
+    }
+
+    function saveState(state) {
+      localStorage.setItem(LS_BACKUP_KEY, localStorage.getItem(LS_KEY) || "");
+      localStorage.setItem(LS_KEY, JSON.stringify(state));
+    }
+
+    // =========================
+    // 4.1) AUTOSAVE (чтобы не терялось на обновлении)
+    // =========================
+    const SAVE_DEBOUNCE_MS = 600;
+    let saveTimer = null;
+    let dirty = false;
+
+    const saveDot = document.getElementById("saveDot");
+    const saveText = document.getElementById("saveText");
+
+    function setSaveUI(mode, text) {
+      // mode: "dirty" | "saved" | "idle"
+      saveDot.classList.remove("dirty","saved");
+      if (mode === "dirty") saveDot.classList.add("dirty");
+      if (mode === "saved") saveDot.classList.add("saved");
+      saveText.textContent = text || (mode === "dirty" ? "Есть изменения…" : mode === "saved" ? "Сохранено" : "Готово");
+    }
+
+    function markDirtyAndAutosave() {
+      dirty = true;
+      setSaveUI("dirty", "Есть изменения…");
+      if (saveTimer) clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => {
+        try {
+          saveState(STATE);
+          dirty = false;
+          setSaveUI("saved", "Сохранено");
+          setTimeout(() => {
+            if (!dirty) setSaveUI("idle","Готово");
+          }, 1200);
+        } catch (e) {
+          console.error("Save failed", e);
+          setSaveUI("dirty", "Ошибка сохранения (см. консоль)");
+        }
+      }, SAVE_DEBOUNCE_MS);
+    }
+
+    // Save immediately (manual)
+    function forceSaveNow(showAlert=false) {
+      try {
+        if (saveTimer) clearTimeout(saveTimer);
+        saveState(STATE);
+        dirty = false;
+        setSaveUI("saved","Сохранено");
+        setTimeout(() => { if (!dirty) setSaveUI("idle","Готово"); }, 1200);
+        if (showAlert) alert("Сохранено ✅");
+      } catch (e) {
+        console.error(e);
+        alert("Ошибка сохранения. Открой консоль (F12) и пришли ошибку.");
+      }
+    }
+
+    // CTRL+S
+    window.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === "s" || e.key === "S")) {
+        e.preventDefault();
+        forceSaveNow(true);
+      }
+    });
+
+    // Before unload
+    window.addEventListener("beforeunload", () => {
+      try { saveState(STATE); } catch {}
+    });
+
+    // =========================
+    // 5) Helpers: parsing / formatting
+    // =========================
+    const isEmpty = (v) => v === null || v === undefined || (typeof v === "string" && v.trim() === "");
+    const toNumber = (v) => {
+      if (isEmpty(v)) return 0;
+      if (typeof v === "number") return v;
+      const s = String(v).replace(/\s+/g,"").replace(",",".");
+      const n = Number(s);
+      return Number.isFinite(n) ? n : 0;
+    };
+
+    // IMPORTANT: No UTC shifting. We store as user input strings.
+    function parseDateTime(v) {
+      if (isEmpty(v)) return null;
+
+      if (typeof v === "string") {
+        const s = v.trim();
+
+        // time-only "HH:mm" or "HH:mm:ss"
+        if (/^\d{1,2}:\d{2}(:\d{2})?$/.test(s)) {
+          return { type:"time", value: s.length === 5 ? (s + ":00") : s };
+        }
+
+        // date-only "YYYY-MM-DD"
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+          const d = new Date(s + "T00:00:00");
+          return isNaN(d.getTime()) ? null : { type:"datetime", value:d };
+        }
+
+        // datetime-local "YYYY-MM-DDTHH:mm"
+        if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(s)) {
+          const d = new Date(s);
+          return isNaN(d.getTime()) ? null : { type:"datetime", value:d };
+        }
+
+        // any other parseable datetime
+        const d = new Date(s);
+        return isNaN(d.getTime()) ? null : { type:"datetime", value:d };
+      }
+
+      if (v instanceof Date) return { type:"datetime", value:v };
+      return null;
+    }
+
+    function formatDate(v) {
+      if (isEmpty(v)) return "";
+      const d = parseDateTime(v);
+      if (!d || d.type !== "datetime") return String(v);
+      return d.value.toLocaleDateString("ru-RU");
+    }
+
+    function formatMoney(n) {
+      return Math.round(n).toLocaleString("ru-RU");
+    }
+
+    // Excel DAYS returns integer difference between dates ignoring time.
+    function daysDiffExcelStyle(a, b) {
+      if (!a || !b) return null;
+      const da = new Date(a); const db = new Date(b);
+      if (isNaN(da.getTime()) || isNaN(db.getTime())) return null;
+      const aDate = new Date(da.getFullYear(), da.getMonth(), da.getDate());
+      const bDate = new Date(db.getFullYear(), db.getMonth(), db.getDate());
+      const ms = aDate - bDate;
+      return Math.round(ms / (24*3600*1000));
+    }
+
+    // time diff in hh:mm:ss
+    function timeDiffStr(a, b) {
+      if (!a || !b) return "";
+      const diffMs = a - b;
+      if (!Number.isFinite(diffMs)) return "";
+      const sign = diffMs < 0 ? "-" : "";
+      const ms = Math.abs(diffMs);
+      const sec = Math.floor(ms/1000);
+      const hh = Math.floor(sec/3600);
+      const mm = Math.floor((sec%3600)/60);
+      const ss = sec%60;
+      return sign + String(hh).padStart(2,"0")+":"+String(mm).padStart(2,"0")+":"+String(ss).padStart(2,"0");
+    }
+
+    // build datetime from same day + time-only string if possible
+    function mergeDateAndTime(dateBase, timeStr) {
+      if (!dateBase || !timeStr) return null;
+      const base = parseDateTime(dateBase);
+      if (!base || base.type !== "datetime") return null;
+      const d = base.value;
+      const [h,m,s] = timeStr.split(":").map(x=>parseInt(x,10));
+      if (![h,m,s].every(Number.isFinite)) return null;
+      return new Date(d.getFullYear(), d.getMonth(), d.getDate(), h, m, s);
+    }
+
+    function normalizeTime(v) {
+      if (!v) return "";
+      const s = String(v).trim();
+      if (/^\d{1,2}:\d{2}$/.test(s)) return s;
+      if (/^\d{1,2}:\d{2}:\d{2}$/.test(s)) return s;
+      return "";
+    }
+
+    function computeFormulas(order) {
+      const c = order.cells;
+
+      // indices:
+      const idxTimeRequest = 26; // Время обращения
+      const idxTimeAnswer  = 27; // Время ответа
+      const idxSpeed1      = 28; // Скорость ответа (formula)
+
+      const idxSentToDesigner = 29; // Отправили дизайнеру (time)
+      const idxDesignerReplied= 30; // Дизайнер ответил (time)
+      const idxSpeed2         = 31; // Скорость ответа (formula)
+
+      const idxInvoice = 32; // Выставили счёт (date)
+      const idxPaid    = 33; // Счёт оплачен (date)
+      const idxDaysPay = 34; // Дней на оплату (formula)
+      const idxCycle   = 35; // Цикл сделки / дней (formula)
+
+      const idxProdStart = 36; // Начало производства (date)
+      const idxProdEnd   = 37; // Окончание производства (date)
+      const idxProdDays  = 38; // Дней в производстве (formula)
+
+      // Speed1: AB - AA (datetime)
+      const tReq = parseDateTime(c[idxTimeRequest]);
+      const tAns = parseDateTime(c[idxTimeAnswer]);
+      if (tReq?.type==="datetime" && tAns?.type==="datetime") {
+        c[idxSpeed1] = timeDiffStr(tAns.value, tReq.value);
+      } else {
+        c[idxSpeed1] = "";
+      }
+
+      // Speed2: AE - AD (time-only). Base date: "Дата создания" if exists else today.
+      const baseDate = c[3] || new Date().toISOString().slice(0,10);
+      const sent = parseDateTime(c[idxSentToDesigner]);
+      const replied = parseDateTime(c[idxDesignerReplied]);
+      let tSent=null, tRep=null;
+
+      if (sent?.type==="time") tSent = mergeDateAndTime(baseDate, sent.value);
+      if (sent?.type==="datetime") tSent = sent.value;
+      if (replied?.type==="time") tRep = mergeDateAndTime(baseDate, replied.value);
+      if (replied?.type==="datetime") tRep = replied.value;
+
+      c[idxSpeed2] = (tSent && tRep) ? timeDiffStr(tRep, tSent) : "";
+
+      // days to pay: DAYS(paid, invoice)
+      const dInv = parseDateTime(c[idxInvoice]);
+      const dPaid = parseDateTime(c[idxPaid]);
+      c[idxDaysPay] = (dInv?.type==="datetime" && dPaid?.type==="datetime")
+        ? daysDiffExcelStyle(dPaid.value, dInv.value)
+        : null;
+
+      // cycle: DAYS(paid, timeRequest)
+      c[idxCycle] = (dPaid?.type==="datetime" && tReq?.type==="datetime")
+        ? daysDiffExcelStyle(dPaid.value, tReq.value)
+        : null;
+
+      // prod days: DAYS(prodEnd, prodStart)
+      const dPS = parseDateTime(c[idxProdStart]);
+      const dPE = parseDateTime(c[idxProdEnd]);
+      c[idxProdDays] = (dPS?.type==="datetime" && dPE?.type==="datetime")
+        ? daysDiffExcelStyle(dPE.value, dPS.value)
+        : null;
+    }
+
+    function salaryPeriodKey(dateStr) {
+      const d = parseDateTime(dateStr);
+      if (!d || d.type !== "datetime") return null;
+      const dt = d.value;
+      const y = dt.getFullYear();
+      const m = String(dt.getMonth()+1).padStart(2,"0");
+      const half = dt.getDate() <= 15 ? "H1" : "H2";
+      return `${y}-${m}_${half}`;
+    }
+
+    function salaryPeriodLabel(yearMonth, half) {
+      const [yStr, mStr] = yearMonth.split("-");
+      const y = parseInt(yStr,10), m = parseInt(mStr,10);
+      const end = new Date(y, m, 0); // last day
+      const endDay = half==="H1" ? 15 : end.getDate();
+      const startDay = half==="H1" ? 1 : 16;
+      return `${String(startDay).padStart(2,"0")}.${String(m).padStart(2,"0")}.${y} — ${String(endDay).padStart(2,"0")}.${String(m).padStart(2,"0")}.${y}`;
+    }
+
+    // =========================
+    // 6) Payout tracking
+    // =========================
+    function payoutKey(orderId, role, periodKey) {
+      return `${orderId}::${role}::${periodKey}`;
+    }
+    function isPaid(orderId, role, periodKey) {
+      return !!STATE.payouts[payoutKey(orderId, role, periodKey)];
+    }
+    function setPaid(orderId, role, periodKey, val) {
+      const k = payoutKey(orderId, role, periodKey);
+      if (val) STATE.payouts[k] = true;
+      else delete STATE.payouts[k];
+    }
+
+    // =========================
+    // 7) App State
+    // =========================
+    let STATE = loadState();
+
+    // =========================
+    // 8) UI: Orders table
+    // =========================
+    const ordersHeadRow = document.getElementById("ordersHeadRow");
+    const ordersBody = document.getElementById("ordersBody");
+
+    function escapeHtml(str) {
+      return String(str).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+    }
+
+    function buildHead() {
+      ordersHeadRow.innerHTML = "";
+      const thHide = document.createElement("th");
+      thHide.textContent = "Скрыть";
+      thHide.className = "nowrap";
+      ordersHeadRow.appendChild(thHide);
+
+      for (const col of COLUMNS) {
+        const th = document.createElement("th");
+        th.textContent = col;
+        th.className = "nowrap";
+        ordersHeadRow.appendChild(th);
+      }
+
+      const thAct = document.createElement("th");
+      thAct.textContent = "Действия";
+      thAct.className = "nowrap";
+      ordersHeadRow.appendChild(thAct);
+    }
+
+    function colClass(name) {
+      const moneyCols = new Set(["Стоимость заказа","Оплачено","ЗП Дизайнен","ЗП сборщика","Монтаж стоимость","ЗП Монтажника"]);
+      const wideCols = new Set(["Адрес доставки","Название","Имя клиента"]);
+      const narrowCols = new Set(["Номер заказ","Город","Телефон","Дата создания","Время обращения","Время ответа","Выставили счёт","Счёт оплачен","Начало производства","Окончание производства","Дата сдачи заказа"]);
+      if (wideCols.has(name)) return "cell-wide";
+      if (moneyCols.has(name) || narrowCols.has(name)) return "cell-narrow";
+      return "cell-input";
+    }
+
+    function isFormulaCol(idx) {
+      return [28,31,34,35,38].includes(idx);
+    }
+
+    function statusClass(status) {
+      const map = {
+        "Счёт выставлен": "bg-info text-dark",
+        "Ожидает мастера": "bg-warning text-dark",
+        "Собирается": "bg-primary text-white",
+        "Ожидает доставки": "bg-warning text-dark",
+        "В доставке": "bg-success text-white",
+        "Готово": "bg-success text-white",
+        "Отмена": "bg-danger text-white"
+      };
+      return map[status] || "";
+    }
+
+    function renderOrders() {
+      // status filter options
+      const statusFilter = document.getElementById("statusFilter");
+      const currentFilter = statusFilter.value || "";
+      statusFilter.innerHTML = `<option value="">Фильтр по статусу: все</option>` +
+        (STATE.refs["Статус"]||[]).map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+      statusFilter.value = currentFilter;
+
+      const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+      const showHidden = document.getElementById("toggleShowHidden").checked;
+      const status = statusFilter.value;
+
+      ordersBody.innerHTML = "";
+
+      STATE.orders.forEach((order, rowIndex) => {
+        computeFormulas(order);
+
+        if (!showHidden && order.hidden) return;
+        if (status && String(order.cells[2]||"") !== status) return;
+
+        if (q) {
+          const hay = [
+            order.cells[0], order.cells[1], order.cells[6], order.cells[7], order.cells[2],
+            order.cells[15], order.cells[18], order.cells[21]
+          ].map(x => String(x||"").toLowerCase()).join(" | ");
+          if (!hay.includes(q)) return;
+        }
+
+        const tr = document.createElement("tr");
+        if (order.hidden) tr.classList.add("hidden-row");
+
+        const statusVal = String(order.cells[2] || "");
+        if (statusVal === "Отмена") tr.classList.add("row-cancel");
+
+        // hide checkbox
+        const tdHide = document.createElement("td");
+        tdHide.className = "text-center";
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = !!order.hidden;
+        cb.addEventListener("change", () => {
+          order.hidden = cb.checked;
+          markDirtyAndAutosave();
+        });
+        tdHide.appendChild(cb);
+        tr.appendChild(tdHide);
+
+        // salary columns mapping for order view
+        const salaryCols = new Map([
+          ["ЗП Дизайнен", { role:"Дизайнер", empIdx:15, sumIdx:16 }],
+          ["ЗП сборщика", { role:"Сборщик", empIdx:18, sumIdx:19 }],
+          ["ЗП Монтажника", { role:"Монтажник", empIdx:21, sumIdx:22 }]
+        ]);
+
+        for (let i=0; i<COLUMNS.length; i++) {
+          const colName = COLUMNS[i];
+          const td = document.createElement("td");
+          td.className = "p-1";
+
+          // formula cols read-only
+          if (isFormulaCol(i)) {
+            const val = order.cells[i];
+            const span = document.createElement("div");
+            span.className = "nowrap";
+            span.textContent = (val===null || val===undefined) ? "" : String(val);
+            td.appendChild(span);
+            tr.appendChild(td);
+            continue;
+          }
+
+          // select cols
+          const refKey = SELECT_BY_COLUMN[colName];
+          if (refKey) {
+            const sel = document.createElement("select");
+            sel.className = `form-select form-select-sm cell-select ${colClass(colName)}`;
+            const opts = STATE.refs[refKey] || [];
+            sel.innerHTML = `<option value=""></option>` + opts.map(v => `<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join("");
+            sel.value = order.cells[i] ?? "";
+            sel.classList.toggle("filled", !sel.value || sel.value.trim()==="" ? false : true);
+
+            if (colName === "Статус") {
+              sel.classList.add("status-select");
+              const cls = statusClass(sel.value);
+              if (cls) sel.className += " " + cls;
+              sel.classList.add("status-pill");
+            }
+
+            sel.addEventListener("change", () => {
+              order.cells[i] = sel.value;
+              sel.classList.toggle("filled", !sel.value || sel.value.trim()==="" ? false : true);
+              // ВАЖНО: сохранить перед перерисовкой
+              markDirtyAndAutosave();
+              renderOrders();
+            });
+
+            td.appendChild(sel);
+            tr.appendChild(td);
+            continue;
+          }
+
+          // inputs
+          const inp = document.createElement("input");
+          inp.className = `form-control form-control-sm ${colClass(colName)}`;
+
+          const val = order.cells[i];
+
+          const dateCols = new Set(["Дата создания","Выставили счёт","Счёт оплачен","Начало производства","Окончание производства","Дата сдачи заказа"]);
+          const dtCols = new Set(["Время обращения","Время ответа"]);
+          const timeCols = new Set(["Отправили дизайнеру","Дизайнер ответил"]);
+
+          if (dateCols.has(colName)) {
+            inp.type = "date";
+            inp.value = val ? String(val).slice(0,10) : "";
+            inp.classList.toggle("filled", inp.value !== "");
+
+            inp.addEventListener("change", () => {
+              order.cells[i] = inp.value || null;
+              computeFormulas(order);
+              markDirtyAndAutosave();
+              renderOrders();
+            });
+
+          } else if (dtCols.has(colName)) {
+            inp.type = "datetime-local";
+            inp.value = val ? String(val).slice(0,16) : "";
+            inp.classList.toggle("filled", inp.value !== "");
+
+            inp.addEventListener("change", () => {
+              order.cells[i] = inp.value || null;
+              computeFormulas(order);
+              markDirtyAndAutosave();
+              renderOrders();
+            });
+
+          } else if (timeCols.has(colName)) {
+            inp.type = "time";
+            inp.step = 1;
+            inp.value = val ? normalizeTime(val) : "";
+            inp.classList.toggle("filled", inp.value !== "");
+
+            inp.addEventListener("change", () => {
+              order.cells[i] = inp.value ? (inp.value.length===5 ? inp.value+":00" : inp.value) : null;
+              computeFormulas(order);
+              markDirtyAndAutosave();
+              renderOrders();
+            });
+
+          } else {
+            inp.type = "text";
+            inp.value = val ?? "";
+            inp.classList.toggle("filled", inp.value.trim() !== "");
+
+            inp.addEventListener("input", () => {
+              order.cells[i] = inp.value;
+              inp.classList.toggle("filled", inp.value.trim() !== "");
+              markDirtyAndAutosave();
+            });
+
+            // дополнительно: если ушёл фокус — точно сохраняем
+            inp.addEventListener("blur", () => {
+              order.cells[i] = inp.value;
+              markDirtyAndAutosave();
+            });
+          }
+
+          // Salary highlight in Orders tab
+          if (salaryCols.has(colName)) {
+            const shipped = order.cells[39]; // Дата сдачи заказа
+            const info = salaryCols.get(colName);
+            const emp = String(order.cells[info.empIdx] || "");
+            const sum = toNumber(order.cells[info.sumIdx]);
+
+            inp.classList.remove("to-pay","paid");
+
+            if (!isEmpty(shipped) && sum > 0 && emp && emp !== "Нет") {
+              const pKey = salaryPeriodKey(shipped);
+              if (pKey) {
+                const paid = isPaid(order.id, info.role, pKey);
+                inp.classList.toggle("to-pay", !paid);
+                inp.classList.toggle("paid", paid);
+              }
+            }
+          }
+
+          td.appendChild(inp);
+          tr.appendChild(td);
+        }
+
+        // actions
+        const tdAct = document.createElement("td");
+        tdAct.className = "nowrap text-center";
+
+        const btnDel = document.createElement("button");
+        btnDel.className = "btn btn-outline-danger btn-sm";
+        btnDel.textContent = "Удалить";
+        btnDel.addEventListener("click", () => {
+          if (!confirm("Удалить заказ?")) return;
+          STATE.orders.splice(rowIndex, 1);
+          markDirtyAndAutosave();
+          renderOrders();
+        });
+
+        tdAct.appendChild(btnDel);
+        tr.appendChild(tdAct);
+
+        ordersBody.appendChild(tr);
+      });
+    }
+
+    // =========================
+    // 9) UI: Refs manager
+    // =========================
+    const refsGrid = document.getElementById("refsGrid");
+
+    function renderRefsModal() {
+      refsGrid.innerHTML = "";
+      Object.keys(DEFAULT_REFS).forEach((key) => {
+        const col = document.createElement("div");
+        col.className = "col-12 col-md-6 col-lg-4";
+
+        const card = document.createElement("div");
+        card.className = "p-3 rounded-3 bg-light h-100";
+
+        const head = document.createElement("div");
+        head.className = "d-flex align-items-center justify-content-between mb-2";
+        head.innerHTML = `<div class="fw-bold">${escapeHtml(key)}</div>
+                          <span class="badge text-bg-secondary">${(STATE.refs[key]||[]).length}</span>`;
+
+        const list = document.createElement("div");
+        list.className = "d-flex flex-column gap-1";
+
+        (STATE.refs[key]||[]).forEach((val, idx) => {
+          const row = document.createElement("div");
+          row.className = "d-flex gap-1";
+          row.innerHTML = `
+            <input class="form-control form-control-sm" value="${escapeHtml(val)}" data-refkey="${escapeHtml(key)}" data-idx="${idx}">
+            <button class="btn btn-outline-danger btn-sm" data-delref="1" data-refkey="${escapeHtml(key)}" data-idx="${idx}">×</button>
+          `;
+          list.appendChild(row);
+        });
+
+        const addRow = document.createElement("div");
+        addRow.className = "d-flex gap-1 mt-2";
+        addRow.innerHTML = `
+          <input class="form-control form-control-sm" placeholder="Добавить..." data-addinput="${escapeHtml(key)}">
+          <button class="btn btn-primary btn-sm" data-addbtn="1" data-refkey="${escapeHtml(key)}">+</button>
+        `;
+
+        card.appendChild(head);
+        card.appendChild(list);
+        card.appendChild(addRow);
+        col.appendChild(card);
+        refsGrid.appendChild(col);
+      });
+
+      // wire events
+      refsGrid.querySelectorAll("button[data-delref]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const k = btn.getAttribute("data-refkey");
+          const idx = parseInt(btn.getAttribute("data-idx"),10);
+          if (!confirm(`Удалить значение из "${k}"?`)) return;
+          STATE.refs[k].splice(idx,1);
+          markDirtyAndAutosave();
+          renderRefsModal();
+        });
+      });
+
+      refsGrid.querySelectorAll("button[data-addbtn]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const k = btn.getAttribute("data-refkey");
+          const inp = refsGrid.querySelector(`input[data-addinput="${CSS.escape(k)}"]`);
+          const v = (inp.value||"").trim();
+          if (!v) return;
+          STATE.refs[k] = STATE.refs[k] || [];
+          if (!STATE.refs[k].includes(v)) STATE.refs[k].push(v);
+          inp.value = "";
+          markDirtyAndAutosave();
+          renderRefsModal();
+        });
+      });
+
+      refsGrid.querySelectorAll("input[data-refkey]").forEach(inp => {
+        inp.addEventListener("input", () => {
+          const k = inp.getAttribute("data-refkey");
+          const idx = parseInt(inp.getAttribute("data-idx"),10);
+          STATE.refs[k][idx] = inp.value;
+          markDirtyAndAutosave();
+        });
+      });
+    }
+
+    // =========================
+    // 10) Salary computation & UI
+    // =========================
+    const salaryEmployee = document.getElementById("salaryEmployee");
+    const salaryMonth = document.getElementById("salaryMonth");
+    const salaryHalf = document.getElementById("salaryHalf");
+    const salaryTitle = document.getElementById("salaryTitle");
+    const salarySubtitle = document.getElementById("salarySubtitle");
+    const salaryTotal = document.getElementById("salaryTotal");
+    const salaryBreakdown = document.getElementById("salaryBreakdown");
+    const salaryRows = document.getElementById("salaryRows");
+
+    function getAllEmployees() {
+      const set = new Set();
+      ["Дизайнер","Сборщик","Монтажник"].forEach(k => {
+        (STATE.refs[k]||[]).forEach(v => { if (v && v !== "Нет") set.add(v); });
+      });
+      STATE.orders.forEach(o => {
+        [o.cells[15], o.cells[18], o.cells[21]].forEach(x => { if (x && x !== "Нет") set.add(String(x)); });
+      });
+      return Array.from(set).sort((a,b)=>a.localeCompare(b,"ru"));
+    }
+
+    function refreshEmployeeSelects() {
+      const employees = getAllEmployees();
+      salaryEmployee.innerHTML = employees.length
+        ? employees.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("")
+        : `<option value="">(нет сотрудников)</option>`;
+
+      const now = new Date();
+      salaryMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+    }
+
+    function computeSalaryRowsFor(emp, yearMonth, half) {
+      const targetKey = `${yearMonth}_${half}`;
+      const rows = [];
+
+      STATE.orders.forEach(o => {
+        computeFormulas(o);
+
+        const shipped = o.cells[39]; // Дата сдачи заказа
+        if (!shipped) return;
+
+        const key = salaryPeriodKey(shipped);
+        if (key !== targetKey) return;
+
+        const orderName = `${o.cells[0]||""} • ${o.cells[1]||""}`.trim();
+
+        // Designer
+        if (String(o.cells[15]||"") === emp) {
+          const sum = toNumber(o.cells[16]);
+          if (sum) rows.push({ orderId:o.id, date: shipped, order: orderName, role:"Дизайнер", sum });
+        }
+        // Assembler
+        if (String(o.cells[18]||"") === emp) {
+          const sum = toNumber(o.cells[19]);
+          if (sum) rows.push({ orderId:o.id, date: shipped, order: orderName, role:"Сборщик", sum });
+        }
+        // Installer
+        if (String(o.cells[21]||"") === emp) {
+          const sum = toNumber(o.cells[22]);
+          if (sum) rows.push({ orderId:o.id, date: shipped, order: orderName, role:"Монтажник", sum });
+        }
+      });
+
+      rows.sort((a,b)=> {
+        const da = parseDateTime(a.date)?.value?.getTime() || 0;
+        const db = parseDateTime(b.date)?.value?.getTime() || 0;
+        return da - db;
+      });
+      return rows;
+    }
+
+    function renderSalary() {
+      const emp = salaryEmployee.value;
+      const ym = salaryMonth.value;
+      const half = salaryHalf.value;
+
+      if (!emp || !ym || !half) {
+        salaryTitle.textContent = "ЗП";
+        salarySubtitle.textContent = "Выбери сотрудника / период";
+        salaryTotal.textContent = "0";
+        salaryBreakdown.innerHTML = `<li class="muted">Нет данных</li>`;
+        salaryRows.innerHTML = `<tr><td colspan="5" class="muted">Нет данных</td></tr>`;
+        return;
+      }
+
+      const label = salaryPeriodLabel(ym, half);
+      salaryTitle.textContent = `ЗП: ${emp}`;
+      salarySubtitle.textContent = `Период: ${label}`;
+
+      const rows = computeSalaryRowsFor(emp, ym, half);
+      const periodKey = `${ym}_${half}`;
+
+      const total = rows.reduce((s,r)=>s+r.sum,0);
+      salaryTotal.textContent = formatMoney(total);
+
+      const byRole = rows.reduce((acc,r)=>{ acc[r.role]=(acc[r.role]||0)+r.sum; return acc; }, {});
+      salaryBreakdown.innerHTML = Object.keys(byRole).length
+        ? Object.entries(byRole).map(([k,v])=> `<li>${escapeHtml(k)}: <b>${formatMoney(v)} ₽</b></li>`).join("")
+        : `<li class="muted">Начислений нет</li>`;
+
+      salaryRows.innerHTML = rows.length
+        ? rows.map(r => {
+            const paid = isPaid(r.orderId, r.role, periodKey);
+            return `
+              <tr>
+                <td class="text-center">
+                  <input type="checkbox" class="paycheck" data-oid="${r.orderId}" data-role="${r.role}" data-period="${periodKey}" ${paid ? "checked":""}>
+                </td>
+                <td class="nowrap">${formatDate(r.date)}</td>
+                <td>${escapeHtml(r.order)}</td>
+                <td class="nowrap">${escapeHtml(r.role)}</td>
+                <td class="right nowrap"><b>${formatMoney(r.sum)}</b></td>
+              </tr>
+            `;
+          }).join("")
+        : `<tr><td colspan="5" class="muted">Нет начислений за выбранный период</td></tr>`;
+
+      document.querySelectorAll(".paycheck").forEach(cb => {
+        cb.addEventListener("change", () => {
+          setPaid(cb.dataset.oid, cb.dataset.role, cb.dataset.period, cb.checked);
+          markDirtyAndAutosave();
+          renderOrders();
+          renderSalary();
+        });
+      });
+    }
+
+    // =========================
+    // 11) Events
+    // =========================
+    document.getElementById("btnAddOrder").addEventListener("click", () => {
+      const empty = new Array(40).fill(null);
+      // defaults
+      empty[3] = new Date().toISOString().slice(0,10); // date only
+      empty[2] = (STATE.refs["Статус"]||[])[0] || "";
+      STATE.orders.unshift({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(empty) });
+      markDirtyAndAutosave();
+      renderOrders();
+    });
+
+    document.getElementById("btnSave").addEventListener("click", () => {
+      forceSaveNow(true);
+      refreshEmployeeSelects();
+    });
+
+    document.getElementById("btnRecalc").addEventListener("click", () => {
+      STATE.orders.forEach(o => computeFormulas(o));
+      markDirtyAndAutosave();
+      renderOrders();
+      renderSalary();
+    });
+
+    document.getElementById("searchInput").addEventListener("input", renderOrders);
+    document.getElementById("toggleShowHidden").addEventListener("change", renderOrders);
+    document.getElementById("statusFilter").addEventListener("change", renderOrders);
+
+    document.getElementById("btnSalaryShow").addEventListener("click", renderSalary);
+
+    document.getElementById("btnMarkAllPaid").addEventListener("click", () => {
+      const emp = salaryEmployee.value;
+      const ym = salaryMonth.value;
+      const half = salaryHalf.value;
+      if (!emp || !ym || !half) return;
+      const periodKey = `${ym}_${half}`;
+      const rows = computeSalaryRowsFor(emp, ym, half);
+      rows.forEach(r => setPaid(r.orderId, r.role, periodKey, true));
+      markDirtyAndAutosave();
+      renderOrders();
+      renderSalary();
+    });
+
+    document.getElementById("btnUnmarkAllPaid").addEventListener("click", () => {
+      const emp = salaryEmployee.value;
+      const ym = salaryMonth.value;
+      const half = salaryHalf.value;
+      if (!emp || !ym || !half) return;
+      const periodKey = `${ym}_${half}`;
+      const rows = computeSalaryRowsFor(emp, ym, half);
+      rows.forEach(r => setPaid(r.orderId, r.role, periodKey, false));
+      markDirtyAndAutosave();
+      renderOrders();
+      renderSalary();
+    });
+
+    document.getElementById("modalRefs").addEventListener("show.bs.modal", () => {
+      renderRefsModal();
+    });
+
+    document.getElementById("btnRefsSave").addEventListener("click", () => {
+      markDirtyAndAutosave();
+      renderOrders();
+      refreshEmployeeSelects();
+      renderSalary();
+    });
+
+    document.getElementById("btnExportJson").addEventListener("click", () => {
+      forceSaveNow(false);
+      const blob = new Blob([JSON.stringify(STATE, null, 2)], {type:"application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "light_sales_export.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById("importJsonFile").addEventListener("change", async (ev) => {
+      const file = ev.target.files?.[0];
+      if (!file) return;
+      const text = await file.text();
+      try {
+        const imported = JSON.parse(text);
+        // minimal validation
+        if (!imported || typeof imported !== "object") throw new Error("bad json");
+        imported.refs = imported.refs || structuredCloneSafe(DEFAULT_REFS);
+        imported.orders = imported.orders || [];
+        imported.payouts = imported.payouts || {};
+        imported.orders = imported.orders.map(o => ({
+          id: o.id || crypto.randomUUID(),
+          hidden: !!o.hidden,
+          cells: normalizeRow(o.cells || [])
+        }));
+
+        STATE = imported;
+        forceSaveNow(false);
+        refreshEmployeeSelects();
+        renderOrders();
+        renderSalary();
+        alert("Импортировано ✅");
+      } catch (e) {
+        alert("Ошибка импорта: файл не похож на экспорт из этой системы.");
+      } finally {
+        ev.target.value = "";
+      }
+    });
+
+    document.getElementById("btnReset").addEventListener("click", () => {
+      if (!confirm("Сбросить всё? Это удалит данные из браузера.")) return;
+      localStorage.removeItem(LS_KEY);
+      localStorage.removeItem(LS_BACKUP_KEY);
+      STATE = loadState();
+      buildHead();
+      refreshEmployeeSelects();
+      renderOrders();
+      renderSalary();
+      setSaveUI("idle","Готово");
+      alert("Сброшено.");
+    });
+
+    // =========================
+    // 12) Init
+    // =========================
+    function init() {
+      buildHead();
+      refreshEmployeeSelects();
+      renderOrders();
+      renderSalary();
+      // При старте сразу сохраняем нормализованное состояние (чтобы не было "не сохранилось ни разу")
+      try { saveState(STATE); } catch {}
+      setSaveUI("idle","Готово");
+    }
+    init();
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

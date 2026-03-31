@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Партнерский калькулятор (ФИНАЛ)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-size: 0.9rem; }
+        .card-header { background-color: #1f2d3d; color: white; padding: 0.5rem 1rem; }
+        .partner-card-header { background-color: #27ae60; }
+        #tabs-container { display: flex; flex-wrap: wrap; padding: 0.5rem; background-color: #dce1e6; }
+        .tab { padding: 8px 15px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer; position: relative; margin-right: 5px; border-radius: 5px 5px 0 0; }
+        .tab.active { background-color: #fff; border-bottom-color: #fff; font-weight: bold; }
+        .tab .close-tab { margin-left: 10px; font-weight: bold; cursor: pointer; color: #999; }
+        .tab .close-tab:hover { color: #333; }
+        .summary-card { background-color: #e3f2fd; }
+        .partner-summary-card { background-color: #fffbe3; border: 1px solid #f1c40f; }
+        .summary-item { display: flex; justify-content: space-between; padding: 0.2rem 0.5rem; font-size: 1rem;}
+        .summary-item strong { font-size: 1.1rem; }
+        .partner-earning { color: #27ae60; font-size: 1.3rem !important; }
+        .param-card { background-color: #e8f5e9; }
+        .category-header { font-weight: bold; padding: 0.5rem; margin-top: 1rem; border-bottom: 2px solid #ddd; display: flex; justify-content: space-between; align-items: center;}
+        .item-row { display: grid; grid-template-columns: 80px 1fr 90px 40px 80px 110px; gap: 8px; align-items: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid #eee; }
+        .item-row:hover { background-color: #fdfde7; }
+        .item-row-header { font-weight: bold; color: #6c757d; font-size: 0.8rem; }
+        .item-row input { text-align: center; padding: 0.25rem; font-size: 0.9rem; }
+        .notes-card { height: calc(100vh - 300px); }
+        #client-offer, #notes { width: 100%; }
+        .read-only { background-color: #f1f1f1; border: 0; }
+    </style>
+</head>
+<body>
+<div class="container-fluid p-3">
+    <div id="tabs-container">
+        <button class="btn btn-sm btn-primary" onclick="addTab()">+ Новая вывеска</button>
+    </div>
+    <div class="row mt-2">
+        <div class="col-lg-8">
+             <div class="card mb-3 summary-card">
+                <div class="card-body row">
+                    <div class="col-md-4"><div class="summary-item"><span>Вывеска:</span> <strong id="summary-sign">0 ₽</strong></div><div class="summary-item"><span>Монтаж:</span> <strong id="summary-mounting">0 ₽</strong></div><div class="summary-item"><span>Итого:</span> <strong id="summary-total">0 ₽</strong></div></div>
+                    <div class="col-md-4"><div class="summary-item"><span>Товары:</span> <strong id="summary-goods">0 ₽</strong></div><div class="summary-item"><span>Дизайн:</span> <strong id="summary-design">0 ₽</strong></div><div class="summary-item"><span>Сборка:</span> <strong id="summary-assembly">0 ₽</strong></div></div>
+                    <div class="col-md-4"><div class="summary-item text-primary"><span>ЗП Мастера:</span> <strong id="summary-pay-master">0 ₽</strong></div><div class="summary-item text-primary"><span>ЗП Монтажника:</span> <strong id="summary-pay-installer">0 ₽</strong></div></div>
+                </div>
+            </div>
+
+            <div class="card mb-3 param-card">
+                <div class="card-body row align-items-end">
+                    <div class="col"><label>Ширина(см)</label><input type="number" id="param-width" class="form-control"></div>
+                    <div class="col"><label>Высота(см)</label><input type="number" id="param-height" class="form-control"></div>
+                    <div class="col"><label>Резка(м)</label><input type="number" id="param-cutting" class="form-control"></div>
+                    <div class="col"><label>Выборка(м)</label><input type="number" id="param-milling" class="form-control"></div>
+                    <div class="col"><label>Пайка(шт)</label><input type="number" id="param-soldering" class="form-control"></div>
+                    <div class="col"><label>Х(Товары)</label><input type="number" step="0.0001" id="coeff-goods" class="form-control" value="1.8625"></div>
+                    <div class="col"><label>Х(Дизайн)</label><input type="number" step="0.1" id="coeff-design" class="form-control" value="2"></div>
+                    <div class="col"><label>Х(Сборка)</label><input type="number" step="0.001" id="coeff-assembly" class="form-control" value="3.369"></div>
+                    <div class="col"><label>Х(Монтаж)</label><input type="number" step="0.001" id="coeff-montage" class="form-control" value="1.539"></div>
+                </div>
+            </div>
+
+            <div class="card"><div class="card-body" id="calculator-container"></div></div>
+        </div>
+        <div class="col-lg-4">
+             <div class="card mb-3 partner-summary-card">
+                <div class="card-header partner-card-header">Экономика Партнера</div>
+                <div class="card-body">
+                    <div class="summary-item"><span>Закупка для партнера:</span> <strong id="partner-cost">0 ₽</strong></div>
+                    <div class="summary-item"><span>Розница для клиента:</span> <strong id="partner-retail">0 ₽</strong></div>
+                    <hr>
+                    <div class="summary-item"><span>Заработок партнера:</span> <strong id="partner-earning" class="partner-earning">0 ₽</strong></div>
+                </div>
+            </div>
+            <div class="card" style="height: calc(100vh - 300px);">
+                 <div class="card-header">Шаблон / Заметки</div>
+                 <div class="card-body d-flex flex-column">
+                    <label class="form-label">Шаблон для клиента:</label>
+                    <textarea id="client-offer" class="form-control mb-3" style="height: 45%;"></textarea>
+                    <label class="form-label">Заметки:</label>
+                    <textarea id="notes" class="form-control" style="height: 45%;"></textarea>
+                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+const db = [
+    { category: 'Материалы', subcategory: 'Неон', id: '750621', name: 'Гибкий неон LP... (белый 6000K)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750623', name: 'Гибкий неон LP... (теплый белый 3000K)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750622', name: 'Гибкий неон LP... (дневной белый 4000K)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750627', name: 'Гибкий неон LP... (желтый золотой)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750632', name: 'Гибкий неон LP... (лимонный)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750631', name: 'Гибкий неон LP... (оранжевый)', cost: 208.949, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750624', name: 'Гибкий неон LP... (красный)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750628', name: 'Гибкий неон LP... (розовый)', cost: 208.949, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750629', name: 'Гибкий неон LP... (фиолетовый)', cost: 208.949, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750625', name: 'Гибкий неон LP... (зеленый)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750626', name: 'Гибкий неон LP... (синий)', cost: 200.655, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750633', name: 'Гибкий неон LP... (бирюзовый (Тифани))', cost: 208.949, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '750630', name: 'Гибкий неон LP... (холодный синий)', cost: 208.949, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '620724', name: 'Гибкий неон 8х16мм (теплый белый)', cost: 189.02, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '620728', name: 'Гибкий неон 8х16мм (желтый золотой)', cost: 189.02, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '620727', name: 'Гибкий неон 8х16мм (красный)', cost: 203.19, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Неон', id: '620723', name: 'Гибкий неон 8х16мм (белый 6000K)', cost: 189.02, unit: 'м', power: 10 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626158', name: 'БП ZR-24-12 (24W)', cost: 298.285, unit: 'шт', watts: 24 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626166', name: 'БП ZF-36-12 (36W)', cost: 185.588, unit: 'шт', watts: 36 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626083', name: 'БП ZM-36-12 (36W)', cost: 371.8, unit: 'шт', watts: 36 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626084', name: 'БП ZM-60-12 (60W)', cost: 495.742, unit: 'шт', watts: 60 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626086', name: 'БП ZML-100-12 (100W)', cost: 655.902, unit: 'шт', watts: 100 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626085', name: 'БП ZM-100-12 (100W)', cost: 760.344, unit: 'шт', watts: 100 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626088', name: 'БП ZM-150-12 (150W)', cost: 795.08, unit: 'шт', watts: 150 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626090', name: 'БП ZM-200-12 (200W)', cost: 922.61, unit: 'шт', watts: 200 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626091', name: 'БП ZM-250-12 (250W)', cost: 1056.302, unit: 'шт', watts: 250 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626092', name: 'БП ZM-300-12 (300W)', cost: 1245.062, unit: 'шт', watts: 300 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626123', name: 'БП MA-60-12 (60W)', cost: 545.311, unit: 'шт', watts: 60 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626124', name: 'БП MA-100-12 (100W)', cost: 672.464, unit: 'шт', watts: 100 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626125', name: 'БП MA-150-12 (150W)', cost: 923.455, unit: 'шт', watts: 150 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626126', name: 'БП MA-200-12 (200W)', cost: 1056.848, unit: 'шт', watts: 200 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626139', name: 'БП ZVS-60-12 (60W, IP67)', cost: 841.061, unit: 'шт', watts: 60 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626140', name: 'БП ZVS-100-12 (100W, IP67)', cost: 1322.789, unit: 'шт', watts: 100 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626141', name: 'БП ZVS-150-12 (150W, IP67)', cost: 1796.158, unit: 'шт', watts: 150 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626142', name: 'БП ZVS-200-12 (200W, IP67)', cost: 2407.431, unit: 'шт', watts: 200 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626144', name: 'БП ZVS-300-12 (300W, IP67)', cost: 2661.178, unit: 'шт', watts: 300 },
+    { category: 'Материалы', subcategory: 'Блок питания', id: '626146', name: 'БП ZVS-400-12 (400W, IP67)', cost: 4000.724, unit: 'шт', watts: 400 },
+    { category: 'Материалы', subcategory: 'Провода', id: '750641', name: 'Провод МГТФ 0,07', cost: 11.336, unit: 'м', auto: 'soldering_wire' },
+    { category: 'Материалы', subcategory: 'Провода', id: '035.ACC', name: 'Кабель акустический 2*0.35мм2', cost: 33.553, unit: 'м' },
+    { category: 'Материалы', subcategory: 'Провода', id: '050.ACC', name: 'Кабель акустический 2*0.50мм2', cost: 47.307, unit: 'м' },
+    { category: 'Материалы', subcategory: 'Провода', id: '075.ACC', name: 'Кабель акустический 2*0.75мм2', cost: 62.062, unit: 'м' },
+    { category: 'Материалы', subcategory: 'Провода', id: '725863', name: 'Шнур ШВВП 2х0.75 Черный', cost: 33.904, unit: 'м' },
+    { category: 'Материалы', subcategory: 'Провода', id: '889383', name: 'Шнур ШВВП 2х0.75 Белый', cost: 33.566, unit: 'м' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '717966', name: 'Дистанционные держатели', cost: 27.3, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: 'ETM3229697', name: 'Зажим для троса DIN 3093 1мм', cost: 3.25, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: 'ETM773560', name: 'Трос 1,0мм стальной', cost: 5.252, unit: 'м' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '682806', name: 'Вилка прямая белая', cost: 44.122, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '682807', name: 'Вилка прямая черная', cost: 43.29, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '23001', name: 'Картон гофрированный', cost: 84.5, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '750633_CTRL', name: 'Контроллер SP110E', cost: 884, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '722723', name: 'Сенсорный диммер', cost: 1289.86, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '722726', name: 'Диммер LP-M8-DIM-8A', cost: 198.068, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '71506', name: 'Диммер LP-RF-11B', cost: 210.743, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '71681', name: 'Разъем выводной (Papa)', cost: 134.264, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Расходники', id: '71684', name: 'Разъем выводной (Mama)', cost: 134.264, unit: 'шт' },
+    { category: 'Материалы', subcategory: 'Подложка', id: 'SUB01', name: 'Акрил', cost: 3510, unit: 'м2', auto: 'substrate_area' },
+    { category: 'Материалы', subcategory: 'Подложка', id: 'SUB02', name: 'Пленка', cost: 712.4, unit: 'м' },
+    { category: 'Материалы', subcategory: 'Производство подложки', id: 'WORK02', name: 'Резка акрила', cost: 41.6, unit: 'м', auto: 'cutting_length'},
+    { category: 'Материалы', subcategory: 'Производство подложки', id: 'WORK03', name: 'Выборка пазов', cost: 32.5, unit: 'м', auto: 'milling_length'},
+    { category: 'Материалы', subcategory: 'Производство подложки', id: 'WORK04', name: 'Отверстия', cost: 2.86, unit: 'шт'},
+    { category: 'Работы', subcategory: 'Дизайн макета', id: 'DSGN01', name: 'Макет до 50 эл.', cost: 954, unit: 'шт', pay_cat: 'designer'},
+    { category: 'Работы', subcategory: 'Дизайн макета', id: 'DSGN02', name: 'Макет 50-100 эл.', cost: 1431, unit: 'шт', pay_cat: 'designer'},
+    { category: 'Работы', subcategory: 'Дизайн макета', id: 'DSGN03', name: 'Макет от 150 эл.', cost: 1908, unit: 'шт', pay_cat: 'designer'},
+    { category: 'Работы', subcategory: 'Сборка', id: 'WORK05', name: 'Распайка 1 элемента', cost: 63.6, unit: 'шт', auto: 'soldering_count', pay_cat: 'master' },
+    { category: 'Работы', subcategory: 'Сборка', id: 'WORK06', name: 'Проклейка 1 м. неона', cost: 127.2, unit: 'м', auto: 'total_neon_length', pay_cat: 'master' },
+    { category: 'Работы', subcategory: 'Сборка', id: 'WORK07a', name: 'Установка диммера', cost: 106, unit: 'шт', pay_cat: 'master' },
+    { category: 'Работы', subcategory: 'Сборка', id: 'WORK07', name: 'Установка БП, сборка и подключение', cost: 53, unit: 'шт', pay_cat: 'master' },
+    { category: 'Работы', subcategory: 'Сборка', id: 'WORK07b', name: 'Поклейка пленки', cost: 530, unit: 'шт', pay_cat: 'master' },
+    { category: 'Работы', subcategory: 'Сборка', id: 'WORK08', name: 'Упаковка (для СДЭКа)', cost: 159, unit: 'шт', pay_cat: 'master' },
+    { category: 'Работы', subcategory: 'Монтаж', id: 'MONT01', name: 'Монтаж на трос', cost: 2067, unit: 'шт', pay_cat: 'installer' },
+    { category: 'Работы', subcategory: 'Монтаж', id: 'MONT02', name: 'Монтаж на крепления', cost: 2756, unit: 'шт', pay_cat: 'installer' },
+    { category: 'Работы', subcategory: 'Монтаж', id: 'MONT02a', name: 'Выезд за 1 км (Москва)', cost: 24.7, unit: 'км', pay_cat: 'installer' },
+    { category: 'Работы', subcategory: 'Монтаж', id: 'MONT03', name: 'Выезд', cost: 689, unit: 'шт', pay_cat: 'installer' },
+    { category: 'Работы', subcategory: 'Монтаж', id: 'MONT04', name: 'Платная парковка', cost: 382, unit: 'час', coeff: 1, pay_cat: 'installer' },
+    { category: 'Работы', subcategory: 'Монтаж', id: 'MONT05', name: 'Демонтаж вывески', cost: 689, unit: 'шт', pay_cat: 'installer' },
+    { category: 'Аренда', subcategory: 'Аренда', id: 'RENT01', name: 'Аренда места', cost: 200, unit: 'час' },
+];
+
+let state = {};
+const sessionKey = 'partnerCalculator_vFinal_Corrected';
+
+function init() {
+    const savedState = localStorage.getItem(sessionKey);
+    if (savedState) { state = JSON.parse(savedState); } 
+    else { state = { activeTabId: 'tab1', tabs: [{ id: 'tab1', name: 'Вывеска 1', data: {} }], nextTabNum: 2 }; }
+    renderTabs();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
+}
+
+function saveState() {
+    saveActiveTabData();
+    localStorage.setItem(sessionKey, JSON.stringify(state));
+}
+
+function renderTabs() {
+    const container = document.getElementById('tabs-container');
+    const addButton = container.querySelector('button');
+    container.innerHTML = '';
+    state.tabs.forEach(tab => {
+        const tabEl = document.createElement('div');
+        tabEl.className = `tab ${tab.id === state.activeTabId ? 'active' : ''}`;
+        const tabName = document.createElement('span');
+        tabName.textContent = tab.name;
+        tabName.ondblclick = () => { tabName.contentEditable = true; tabName.focus(); };
+        tabName.onblur = () => { tabName.contentEditable = false; tab.name = tabName.textContent; saveState(); };
+        tabName.onkeydown = (e) => { if (e.key === 'Enter') { e.preventDefault(); tabName.blur(); } };
+        tabEl.appendChild(tabName);
+        tabEl.onclick = (e) => { if (e.target === tabEl || e.target === tabName) switchTab(tab.id); };
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'close-tab';
+        closeBtn.textContent = 'x';
+        closeBtn.onclick = (e) => { e.stopPropagation(); deleteTab(tab.id); };
+        tabEl.appendChild(closeBtn);
+        container.appendChild(tabEl);
+    });
+    container.appendChild(addButton);
+}
+
+function addTab() {
+    saveActiveTabData(); 
+    const newTabId = `tab${state.nextTabNum++}`;
+    state.tabs.push({ id: newTabId, name: `Вывеска ${state.tabs.length + 1}`, data: {} });
+    switchTab(newTabId);
+}
+
+function deleteTab(tabId) {
+    if (state.tabs.length <= 1) { alert("Нельзя удалить последнюю вкладку."); return; }
+    if (confirm(`Удалить вкладку "${state.tabs.find(t => t.id === tabId).name}"?`)) {
+        state.tabs = state.tabs.filter(t => t.id !== tabId);
+        if (state.activeTabId === tabId) { switchTab(state.tabs[0].id); } 
+        else { saveState(); renderTabs(); }
+    }
+}
+
+function switchTab(tabId) {
+    saveActiveTabData();
+    state.activeTabId = tabId;
+    renderTabs();
+    loadActiveTabData();
+}
+
+function saveActiveTabData() {
+    const activeTab = state.tabs.find(t => t.id === state.activeTabId);
+    if (!activeTab) return;
+    activeTab.data = { quantities: {}, params: {}, coeffs: {}, notes: '' };
+    document.querySelectorAll('.quantity-input').forEach(input => {
+        const value = parseFloat(input.value);
+        if (value > 0) activeTab.data.quantities[input.dataset.id] = value;
+    });
+    activeTab.data.params = {
+        width: document.getElementById('param-width').value,
+        height: document.getElementById('param-height').value,
+        cutting: document.getElementById('param-cutting').value,
+        milling: document.getElementById('param-milling').value,
+        soldering: document.getElementById('param-soldering').value,
+    };
+    activeTab.data.coeffs = {
+        goods: document.getElementById('coeff-goods').value,
+        design: document.getElementById('coeff-design').value,
+        assembly: document.getElementById('coeff-assembly').value,
+        montage: document.getElementById('coeff-montage').value,
+    };
+    activeTab.data.notes = document.getElementById('notes').value;
+}
+
+function loadActiveTabData() {
+    const activeTab = state.tabs.find(t => t.id === state.activeTabId);
+    const data = activeTab ? activeTab.data : {};
+    document.querySelectorAll('.quantity-input').forEach(input => input.value = '');
+    if (data.quantities) {
+        for (const id in data.quantities) {
+            const input = document.querySelector(`.quantity-input[data-id="${id}"]`);
+            if (input) input.value = data.quantities[id];
+        }
+    }
+    const params = data.params || {};
+    document.getElementById('param-width').value = params.width || '';
+    document.getElementById('param-height').value = params.height || '';
+    document.getElementById('param-cutting').value = params.cutting || '';
+    document.getElementById('param-milling').value = params.milling || '';
+    document.getElementById('param-soldering').value = params.soldering || '';
+    const coeffs = data.coeffs || { goods: 1.8625, design: 2, assembly: 3.369, montage: 1.539 };
+    document.getElementById('coeff-goods').value = coeffs.goods;
+    document.getElementById('coeff-design').value = coeffs.design;
+    document.getElementById('coeff-assembly').value = coeffs.assembly;
+    document.getElementById('coeff-montage').value = coeffs.montage;
+    document.getElementById('notes').value = data.notes || '';
+    calculate();
+}
+
+function renderCalculator() {
+    const container = document.getElementById('calculator-container');
+    container.innerHTML = '';
+    let currentCategory = '', currentSubcategory = '';
+    const header = `<div class="item-row item-row-header" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span></div>`;
+
+    db.forEach(item => {
+        if (item.category !== currentCategory) { currentCategory = item.category; container.innerHTML += `<h4 class="mt-4">${currentCategory}</h4>`; }
+        if (item.subcategory !== currentSubcategory) {
+            currentSubcategory = item.subcategory;
+            let subHeader = `<div class="category-header">${currentSubcategory}`;
+            if (item.subcategory === 'Блок питания') subHeader += ` (Требуемая мощность: <span id="required-power-display">0</span>W)`;
+            subHeader += `</div>`;
+            container.innerHTML += subHeader;
+            container.innerHTML += header;
+        }
+        
+        container.innerHTML += `
+            <div class="item-row" id="row-${item.id}" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px;">
+                <span class="small text-muted">${item.id}</span>
+                <span class="small">${item.name}</span>
+                <input type="number" step="0.01" class="form-control form-control-sm cost-input" value="${item.cost}">
+                <span class="small text-center">${item.unit}</span>
+                <input type="number" step="0.01" class="form-control form-control-sm quantity-input ${item.auto ? 'read-only' : ''}" data-id="${item.id}">
+                <input type="text" class="form-control form-control-sm retail-price" readonly>
+            </div>`;
+    });
+}
+
+function attachGlobalListeners() {
+    const inputs = document.querySelectorAll('.cost-input, .quantity-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage');
+    inputs.forEach(el => el.addEventListener('input', calculate));
+    const textareas = document.querySelectorAll('#notes');
+    textareas.forEach(el => el.addEventListener('input', saveState));
+}
+
+function calculate() {
+    let summary = { goods: 0, design: 0, assembly: 0, mounting: 0, total: 0, payMaster: 0, payInstaller: 0, partnerCost: 0 };
+    const coeffs = {
+        goods: parseFloat(document.getElementById('coeff-goods').value) || 0,
+        design: parseFloat(document.getElementById('coeff-design').value) || 0,
+        assembly: parseFloat(document.getElementById('coeff-assembly').value) || 0,
+        montage: parseFloat(document.getElementById('coeff-montage').value) || 0,
+    };
+    
+    const solderingCount = parseFloat(document.getElementById('param-soldering').value) || 0;
+    document.querySelector('.quantity-input[data-id="SUB01"]').value = ((parseFloat(document.getElementById('param-width').value) || 0) / 100 * (parseFloat(document.getElementById('param-height').value) || 0) / 100).toFixed(3);
+    document.querySelector('.quantity-input[data-id="WORK02"]').value = parseFloat(document.getElementById('param-cutting').value) || 0;
+    document.querySelector('.quantity-input[data-id="WORK03"]').value = parseFloat(document.getElementById('param-milling').value) || 0;
+    document.querySelector('.quantity-input[data-id="WORK05"]').value = solderingCount;
+    document.querySelector('.quantity-input[data-id="750641"]').value = (solderingCount * 0.15).toFixed(2);
+    
+    let totalNeonLength = db.filter(i => i.power).reduce((sum, neon) => sum + (parseFloat(document.querySelector(`.quantity-input[data-id="${neon.id}"]`).value) || 0), 0);
+    document.querySelector('.quantity-input[data-id="WORK06"]').value = totalNeonLength.toFixed(2);
+    
+    const requiredPower = totalNeonLength * 10 * 1.4;
+    document.getElementById('required-power-display').textContent = requiredPower.toFixed(1);
+
+    db.forEach(item => {
+        const row = document.getElementById(`row-${item.id}`);
+        const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
+        const currentCost = parseFloat(row.querySelector('.cost-input').value) || 0;
+        const costPrice = currentCost * quantity;
+        
+        let retailPrice = 0;
+        let partnerItemCost = 0;
+        
+        if (quantity > 0) {
+            if (item.category === 'Материалы') {
+                const coeff = (item.subcategory === 'Производство подложки') ? coeffs.assembly : coeffs.goods;
+                retailPrice = costPrice * coeff;
+                summary.goods += retailPrice;
+                partnerItemCost = costPrice * 1.3;
+            } else if (item.subcategory === 'Дизайн макета') {
+                retailPrice = costPrice * coeffs.design;
+                summary.design += retailPrice;
+                // No ZP for partner
+                partnerItemCost = costPrice * 1.3;
+            } else if (item.subcategory === 'Сборка') {
+                retailPrice = costPrice * coeffs.assembly;
+                summary.assembly += retailPrice;
+                summary.payMaster += costPrice;
+                partnerItemCost = 0;
+            } else if (item.subcategory === 'Монтаж') {
+                const coeff = item.coeff === 1 ? 1 : coeffs.montage;
+                retailPrice = costPrice * coeff;
+                summary.mounting += retailPrice;
+                summary.payInstaller += costPrice;
+                partnerItemCost = costPrice * 1.3;
+            } else if (item.category === 'Аренда') {
+                partnerItemCost = costPrice;
+            }
+        }
+        summary.partnerCost += partnerItemCost;
+        row.querySelector('.retail-price').value = quantity ? Math.round(retailPrice) + ' ₽' : '';
+    });
+
+    summary.total = summary.goods + summary.design + summary.assembly + summary.mounting;
+    const signCost = summary.goods + summary.design + summary.assembly;
+    const partnerEarning = summary.total - summary.partnerCost;
+    
+    document.getElementById('summary-sign').textContent = `${Math.round(signCost)} ₽`;
+    document.getElementById('summary-mounting').textContent = `${Math.round(summary.mounting)} ₽`;
+    document.getElementById('summary-total').textContent = `${Math.round(summary.total)} ₽`;
+    document.getElementById('summary-goods').textContent = `${Math.round(summary.goods)} ₽`;
+    document.getElementById('summary-design').textContent = `${Math.round(summary.design)} ₽`;
+    document.getElementById('summary-assembly').textContent = `${Math.round(summary.assembly)} ₽`;
+    document.getElementById('summary-pay-master').textContent = `${Math.round(summary.payMaster)} ₽`;
+    document.getElementById('summary-pay-installer').textContent = `${Math.round(summary.payInstaller)} ₽`;
+    
+    document.getElementById('partner-cost').textContent = `${Math.round(summary.partnerCost)} ₽`;
+    document.getElementById('partner-retail').textContent = `${Math.round(summary.total)} ₽`;
+    document.getElementById('partner-earning').textContent = `${Math.round(partnerEarning)} ₽`;
+
+    const width = document.getElementById('param-width').value;
+    const height = document.getElementById('param-height').value;
+    let offerText = `Размер: ${width}х${height} см (ширина х высота)\n`;
+    offerText += `Стоимость вывески: ${Math.round(signCost)} р.\n`;
+    if (summary.mounting > 0) offerText += `Стоимость монтажа: ${Math.round(summary.mounting)} р.\n\n`;
+    offerText += `Итого: ${Math.round(summary.total)} р.\n\n`;
+    offerText += `Срок производства вывески 1-3 рабочих дня с момента оплаты.\n\n`;
+    offerText += `Способы оплаты:\n- по счету для юр. лиц.\n- СБП по QR коду\n\n`;
+    offerText += `Для оформления заказа, выберите способ оплаты. Если остались вопросы, задавайте.`;
+    document.getElementById('client-offer').value = offerText;
+    
+    saveState();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
