@@ -187,6 +187,7 @@
                       <th class="nowrap">Выплачено</th>
                       <th class="nowrap">Дата сдачи</th>
                       <th>Заказ</th>
+                      <th class="nowrap">Сотрудник</th>
                       <th class="nowrap">Роль</th>
                       <th class="right nowrap">Сумма, ₽</th>
                     </tr>
@@ -1054,6 +1055,8 @@
     const salaryTotal = document.getElementById("salaryTotal");
     const salaryBreakdown = document.getElementById("salaryBreakdown");
     const salaryRows = document.getElementById("salaryRows");
+    const btnMarkAllPaid = document.getElementById("btnMarkAllPaid");
+    const btnUnmarkAllPaid = document.getElementById("btnUnmarkAllPaid");
 
     function getAllEmployees() {
       const set = new Set();
@@ -1067,17 +1070,40 @@
     }
 
     function refreshEmployeeSelects() {
+      const prevEmployee = salaryEmployee.value;
+      const prevMonth = salaryMonth.value;
+      const prevHalf = salaryHalf.value;
       const employees = getAllEmployees();
-      salaryEmployee.innerHTML = employees.length
-        ? employees.map(e => `<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`).join("")
-        : `<option value="">(нет сотрудников)</option>`;
+      const options = [`<option value="">Все сотрудники</option>`];
+      employees.forEach(e => {
+        options.push(`<option value="${escapeHtml(e)}">${escapeHtml(e)}</option>`);
+      });
+      salaryEmployee.innerHTML = options.join("");
+      salaryEmployee.value = employees.includes(prevEmployee) ? prevEmployee : "";
 
       const now = new Date();
-      salaryMonth.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      salaryMonth.value = prevMonth || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+      salaryHalf.value = prevHalf || "H1";
     }
 
-    function computeSalaryRowsFor(emp, yearMonth, half) {
+    function pushSalaryRow(rows, periodKey, filterEmployee, options, payload) {
+      const employee = String(payload.employee || "").trim();
+      if (!employee || employee === "Нет") return;
+
+      const sum = toNumber(payload.sum);
+      if (!sum) return;
+
+      if (filterEmployee && employee !== filterEmployee) return;
+
+      const paid = isPaid(payload.orderId, payload.role, periodKey);
+      if (options.unpaidOnly && paid) return;
+
+      rows.push({ ...payload, employee, sum, paid });
+    }
+
+    function computeSalaryRowsFor(emp, yearMonth, half, options = {}) {
       const targetKey = `${yearMonth}_${half}`;
+      const filterEmployee = String(emp || "").trim();
       const rows = [];
 
       STATE.orders.forEach(o => {
@@ -1092,26 +1118,41 @@
         const orderName = `${o.cells[0]||""} • ${o.cells[1]||""}`.trim();
 
         // Designer
-        if (String(o.cells[15]||"") === emp) {
-          const sum = toNumber(o.cells[16]);
-          if (sum) rows.push({ orderId:o.id, date: shipped, order: orderName, role:"Дизайнер", sum });
-        }
+        pushSalaryRow(rows, targetKey, filterEmployee, options, {
+          orderId: o.id,
+          date: shipped,
+          order: orderName,
+          employee: o.cells[15],
+          role: "Дизайнер",
+          sum: o.cells[16]
+        });
         // Assembler
-        if (String(o.cells[18]||"") === emp) {
-          const sum = toNumber(o.cells[19]);
-          if (sum) rows.push({ orderId:o.id, date: shipped, order: orderName, role:"Сборщик", sum });
-        }
+        pushSalaryRow(rows, targetKey, filterEmployee, options, {
+          orderId: o.id,
+          date: shipped,
+          order: orderName,
+          employee: o.cells[18],
+          role: "Сборщик",
+          sum: o.cells[19]
+        });
         // Installer
-        if (String(o.cells[21]||"") === emp) {
-          const sum = toNumber(o.cells[22]);
-          if (sum) rows.push({ orderId:o.id, date: shipped, order: orderName, role:"Монтажник", sum });
-        }
+        pushSalaryRow(rows, targetKey, filterEmployee, options, {
+          orderId: o.id,
+          date: shipped,
+          order: orderName,
+          employee: o.cells[21],
+          role: "Монтажник",
+          sum: o.cells[22]
+        });
       });
 
       rows.sort((a,b)=> {
         const da = parseDateTime(a.date)?.value?.getTime() || 0;
         const db = parseDateTime(b.date)?.value?.getTime() || 0;
-        return da - db;
+        if (da !== db) return da - db;
+        const byEmployee = a.employee.localeCompare(b.employee, "ru");
+        if (byEmployee !== 0) return byEmployee;
+        return a.role.localeCompare(b.role, "ru");
       });
       return rows;
     }
@@ -1120,47 +1161,65 @@
       const emp = salaryEmployee.value;
       const ym = salaryMonth.value;
       const half = salaryHalf.value;
+      const showAllEmployees = !emp;
 
-      if (!emp || !ym || !half) {
+      if (!ym || !half) {
         salaryTitle.textContent = "ЗП";
-        salarySubtitle.textContent = "Выбери сотрудника / период";
+        salarySubtitle.textContent = "Выбери период";
         salaryTotal.textContent = "0";
         salaryBreakdown.innerHTML = `<li class="muted">Нет данных</li>`;
-        salaryRows.innerHTML = `<tr><td colspan="5" class="muted">Нет данных</td></tr>`;
+        salaryRows.innerHTML = `<tr><td colspan="6" class="muted">Нет данных</td></tr>`;
+        btnMarkAllPaid.disabled = true;
+        btnUnmarkAllPaid.disabled = true;
         return;
       }
 
       const label = salaryPeriodLabel(ym, half);
-      salaryTitle.textContent = `ЗП: ${emp}`;
-      salarySubtitle.textContent = `Период: ${label}`;
+      salaryTitle.textContent = showAllEmployees ? "ЗП: Все сотрудники" : `ЗП: ${emp}`;
+      salarySubtitle.textContent = showAllEmployees
+        ? `Период: ${label}. Показаны невыплаченные начисления по всем сотрудникам.`
+        : `Период: ${label}`;
 
-      const rows = computeSalaryRowsFor(emp, ym, half);
+      const rows = computeSalaryRowsFor(emp, ym, half, { unpaidOnly: showAllEmployees });
       const periodKey = `${ym}_${half}`;
 
       const total = rows.reduce((s,r)=>s+r.sum,0);
       salaryTotal.textContent = formatMoney(total);
 
-      const byRole = rows.reduce((acc,r)=>{ acc[r.role]=(acc[r.role]||0)+r.sum; return acc; }, {});
-      salaryBreakdown.innerHTML = Object.keys(byRole).length
-        ? Object.entries(byRole).map(([k,v])=> `<li>${escapeHtml(k)}: <b>${formatMoney(v)} ₽</b></li>`).join("")
-        : `<li class="muted">Начислений нет</li>`;
+      if (showAllEmployees) {
+        const byEmployee = rows.reduce((acc,r)=>{ acc[r.employee]=(acc[r.employee]||0)+r.sum; return acc; }, {});
+        salaryBreakdown.innerHTML = Object.keys(byEmployee).length
+          ? Object.entries(byEmployee)
+              .sort((a,b) => b[1] - a[1] || a[0].localeCompare(b[0], "ru"))
+              .map(([k,v])=> `<li>${escapeHtml(k)}: <b>${formatMoney(v)} ₽</b></li>`)
+              .join("")
+          : `<li class="muted">За выбранный период невыплаченных начислений нет</li>`;
+      } else {
+        const byRole = rows.reduce((acc,r)=>{ acc[r.role]=(acc[r.role]||0)+r.sum; return acc; }, {});
+        salaryBreakdown.innerHTML = Object.keys(byRole).length
+          ? Object.entries(byRole).map(([k,v])=> `<li>${escapeHtml(k)}: <b>${formatMoney(v)} ₽</b></li>`).join("")
+          : `<li class="muted">Начислений нет</li>`;
+      }
 
       salaryRows.innerHTML = rows.length
         ? rows.map(r => {
-            const paid = isPaid(r.orderId, r.role, periodKey);
             return `
               <tr>
                 <td class="text-center">
-                  <input type="checkbox" class="paycheck" data-oid="${r.orderId}" data-role="${r.role}" data-period="${periodKey}" ${paid ? "checked":""}>
+                  <input type="checkbox" class="paycheck" data-oid="${r.orderId}" data-role="${r.role}" data-period="${periodKey}" ${r.paid ? "checked":""}>
                 </td>
                 <td class="nowrap">${formatDate(r.date)}</td>
                 <td>${escapeHtml(r.order)}</td>
+                <td class="nowrap">${escapeHtml(r.employee)}</td>
                 <td class="nowrap">${escapeHtml(r.role)}</td>
                 <td class="right nowrap"><b>${formatMoney(r.sum)}</b></td>
               </tr>
             `;
           }).join("")
-        : `<tr><td colspan="5" class="muted">Нет начислений за выбранный период</td></tr>`;
+        : `<tr><td colspan="6" class="muted">${showAllEmployees ? "За выбранный период все выплаты закрыты" : "Нет начислений за выбранный период"}</td></tr>`;
+
+      btnMarkAllPaid.disabled = rows.length === 0;
+      btnUnmarkAllPaid.disabled = showAllEmployees || rows.length === 0;
 
       document.querySelectorAll(".paycheck").forEach(cb => {
         cb.addEventListener("change", () => {
@@ -1203,20 +1262,20 @@
 
     document.getElementById("btnSalaryShow").addEventListener("click", renderSalary);
 
-    document.getElementById("btnMarkAllPaid").addEventListener("click", () => {
+    btnMarkAllPaid.addEventListener("click", () => {
       const emp = salaryEmployee.value;
       const ym = salaryMonth.value;
       const half = salaryHalf.value;
-      if (!emp || !ym || !half) return;
+      if (!ym || !half) return;
       const periodKey = `${ym}_${half}`;
-      const rows = computeSalaryRowsFor(emp, ym, half);
+      const rows = computeSalaryRowsFor(emp, ym, half, { unpaidOnly: !emp });
       rows.forEach(r => setPaid(r.orderId, r.role, periodKey, true));
       markDirtyAndAutosave();
       renderOrders();
       renderSalary();
     });
 
-    document.getElementById("btnUnmarkAllPaid").addEventListener("click", () => {
+    btnUnmarkAllPaid.addEventListener("click", () => {
       const emp = salaryEmployee.value;
       const ym = salaryMonth.value;
       const half = salaryHalf.value;
