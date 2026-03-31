@@ -24,7 +24,7 @@
         .tab-delete-btn:hover { color: #c0392b; }
         .hidden-tabs-wrap { display: none; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0.5rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
         .hidden-tabs-label { color: #6c757d; font-size: 0.85rem; }
-        .hidden-tab-btn { white-space: nowrap; }
+        .hidden-tabs-select { min-width: 220px; max-width: 360px; }
         .summary-card { background-color: #e3f2fd; }
         .summary-item { display: flex; justify-content: space-between; padding: 0.2rem 0.5rem; font-size: 1rem;}
         .summary-item strong { font-size: 1.1rem; }
@@ -377,6 +377,39 @@ function renderTabs() {
     label.className = 'hidden-tabs-label';
     label.textContent = 'Скрытые вкладки:';
     hiddenWrap.appendChild(label);
+
+    const select = document.createElement('select');
+    select.className = 'form-select form-select-sm hidden-tabs-select';
+
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = 'Выберите скрытую вкладку';
+    select.appendChild(placeholder);
+
+    hiddenTabs.forEach(tab => {
+        const option = document.createElement('option');
+        option.value = tab.id;
+        option.textContent = tab.name;
+        select.appendChild(option);
+    });
+
+    const showBtn = document.createElement('button');
+    showBtn.type = 'button';
+    showBtn.className = 'btn btn-sm btn-outline-primary';
+    showBtn.textContent = 'Показать';
+    showBtn.disabled = true;
+    showBtn.onclick = () => {
+        if (!select.value) return;
+        showTab(select.value);
+    };
+
+    select.onchange = () => {
+        showBtn.disabled = !select.value;
+    };
+
+    hiddenWrap.appendChild(select);
+    hiddenWrap.appendChild(showBtn);
+    return;
 
     hiddenTabs.forEach(tab => {
         const btn = document.createElement('button');
