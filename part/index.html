@@ -18,6 +18,8 @@
         .tab-action { border: 0; background: transparent; font-weight: 600; cursor: pointer; user-select: none; line-height: 1; }
         .tab-hide-btn { padding: 3px 8px; border-radius: 999px; background: #e9ecef; color: #495057; font-size: 0.75rem; }
         .tab-hide-btn:hover { background: #d0d7de; color: #212529; }
+        .tab-copy-btn { padding: 3px 8px; border-radius: 999px; background: #e7f5ff; color: #0b7285; font-size: 0.75rem; }
+        .tab-copy-btn:hover { background: #d0ebff; color: #0a58ca; }
         .tab-delete-btn { padding: 0; color: #999; font-size: 1rem; }
         .tab-delete-btn:hover { color: #c0392b; }
         .hidden-tabs-wrap { display: none; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0.5rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
@@ -352,6 +354,14 @@ function renderTabs() {
         hideBtn.textContent = 'Скрыть';
         hideBtn.title = 'Скрыть вкладку';
         hideBtn.onclick = (e) => { e.stopPropagation(); hideTab(tab.id); };
+
+        const copyBtn = document.createElement('button');
+        copyBtn.type = 'button';
+        copyBtn.className = 'tab-action tab-copy-btn';
+        copyBtn.textContent = 'Копия';
+        copyBtn.title = 'Скопировать вкладку';
+        copyBtn.onclick = (e) => { e.stopPropagation(); copyTab(tab.id); };
+
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'tab-action tab-delete-btn';
@@ -359,6 +369,7 @@ function renderTabs() {
         closeBtn.title = 'Удалить вкладку';
         closeBtn.onclick = (e) => { e.stopPropagation(); deleteTab(tab.id); };
         actions.appendChild(hideBtn);
+        actions.appendChild(copyBtn);
         actions.appendChild(closeBtn);
         tabEl.appendChild(actions);
         container.appendChild(tabEl);
@@ -418,6 +429,37 @@ function addTab() {
     saveActiveTabData();
     const newTabId = `tab${state.nextTabNum++}`;
     state.tabs.push({ id: newTabId, name: `Вывеска ${state.tabs.length + 1}`, data: {}, hidden: false });
+    state.activeTabId = newTabId;
+    persistStateSnapshot();
+    renderTabs();
+    loadActiveTabData();
+}
+
+function getCopyTabName(baseName) {
+    const copyBaseName = `${baseName || 'Вывеска'} копия`;
+    let nextName = copyBaseName;
+    let copyIndex = 2;
+    while (state.tabs.some(tab => tab.name === nextName)) {
+        nextName = `${copyBaseName} ${copyIndex++}`;
+    }
+    return nextName;
+}
+
+function copyTab(tabId) {
+    saveActiveTabData();
+    const sourceIndex = state.tabs.findIndex(tab => tab.id === tabId);
+    if (sourceIndex === -1) return;
+
+    const sourceTab = state.tabs[sourceIndex];
+    const newTabId = `tab${state.nextTabNum++}`;
+    const newTab = {
+        id: newTabId,
+        name: getCopyTabName(sourceTab.name),
+        data: cloneState(sourceTab.data || {}),
+        hidden: false
+    };
+
+    state.tabs.splice(sourceIndex + 1, 0, newTab);
     state.activeTabId = newTabId;
     persistStateSnapshot();
     renderTabs();

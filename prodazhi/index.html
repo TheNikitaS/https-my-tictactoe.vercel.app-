@@ -751,7 +751,7 @@
         if (!channel || channel === "Нет") return;
 
         // Счёт попадает в ЛИД на дату создания строки заказа.
-        const invoiceDate = normalizeDateKey(order.cells[3]);
+        const invoiceDate = normalizeDateKey(order.cells[32]);
         if (invoiceDate && invoiceDate.startsWith(`${yearMonth}-`)) {
           ensure(monthStats, channel).invoice += 1;
           if (invoiceDate === selectedDate) ensure(dailyStats, channel).invoice += 1;
