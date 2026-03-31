@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Онлайн-инструменты</title>
+    <style>
+        :root {
+            color-scheme: light;
+            --bg: #f4f6f9;
+            --card: #ffffff;
+            --text: #1f2d3d;
+            --muted: #6c757d;
+            --accent: #1565c0;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #eef3f8, #fdfefe);
+            color: var(--text);
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        .wrap {
+            width: min(760px, 100%);
+            background: var(--card);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: 0 20px 60px rgba(31, 45, 61, 0.12);
+        }
+
+        h1 {
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-size: 32px;
+        }
+
+        p {
+            margin-top: 0;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .grid {
+            display: grid;
+            gap: 14px;
+            margin-top: 24px;
+        }
+
+        a.card {
+            display: block;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid #d9e2ec;
+            border-radius: 14px;
+            padding: 18px;
+            transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+        }
+
+        a.card:hover {
+            transform: translateY(-2px);
+            border-color: #90caf9;
+            box-shadow: 0 14px 30px rgba(21, 101, 192, 0.12);
+        }
+
+        .title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 4px;
+        }
+
+        .path {
+            font-size: 13px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <main class="wrap">
+        <h1>Онлайн-инструменты</h1>
+        <p>Три отдельных HTML-проекта опубликованы из одного публичного GitHub-репозитория. Выберите нужный инструмент по ссылке ниже.</p>
+
+        <section class="grid">
+            <a class="card" href="./moy/">
+                <div class="title">Мой</div>
+                <div class="path">/moy/</div>
+            </a>
+            <a class="card" href="./part/">
+                <div class="title">Парт</div>
+                <div class="path">/part/</div>
+            </a>
+            <a class="card" href="./prodazhi/">
+                <div class="title">Продажи</div>
+                <div class="path">/prodazhi/</div>
+            </a>
+        </section>
+    </main>
+</body>
+</html>
