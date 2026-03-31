@@ -2,6 +2,18 @@ $ErrorActionPreference = 'Stop'
 
 $root = $PSScriptRoot
 
+function Invoke-Git {
+    param(
+        [Parameter(ValueFromRemainingArguments = $true)]
+        [string[]]$Args
+    )
+
+    & 'C:\Program Files\Git\cmd\git.exe' @Args
+    if ($LASTEXITCODE -ne 0) {
+        throw "Git command failed: git $($Args -join ' ')"
+    }
+}
+
 function Get-UnicodeName {
     param(
         [int[]]$Codes
@@ -35,16 +47,20 @@ foreach ($mapping in $mappings) {
     Copy-Item -LiteralPath $mapping.Source -Destination $mapping.Target -Force
 }
 
-& 'C:\Program Files\Git\cmd\git.exe' add README.md .gitignore index.html publish.ps1 moy part prodazhi
+Invoke-Git add README.md .gitignore index.html publish.ps1 moy part prodazhi
 
 $status = & 'C:\Program Files\Git\cmd\git.exe' status --porcelain
+if ($LASTEXITCODE -ne 0) {
+    throw 'Failed to read git status.'
+}
+
 if (-not $status) {
     Write-Host 'No changes to publish.'
     exit 0
 }
 
 $timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss'
-& 'C:\Program Files\Git\cmd\git.exe' commit -m "Publish update $timestamp"
-& 'C:\Program Files\Git\cmd\git.exe' push origin main
+Invoke-Git commit -m "Publish update $timestamp"
+Invoke-Git push origin main
 
 Write-Host 'Published successfully.'
