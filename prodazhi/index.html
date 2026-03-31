@@ -257,6 +257,8 @@
                 <div class="fw-bold">Итог месяца</div>
                 <div class="small-note">Короткая сводка по выбранному месяцу</div>
                 <div class="row g-2 mt-1" id="leadSummaryCards"></div>
+                <div class="small-note mt-3">Ключевые метрики месяца</div>
+                <div class="row g-2 mt-1" id="leadSummaryMetrics"></div>
               </div>
             </div>
           </div>
@@ -1773,6 +1775,7 @@
     const leadDailySubtitle = document.getElementById("leadDailySubtitle");
     const leadDailyBody = document.getElementById("leadDailyBody");
     const leadSummaryCards = document.getElementById("leadSummaryCards");
+    const leadSummaryMetrics = document.getElementById("leadSummaryMetrics");
     const leadMonthBody = document.getElementById("leadMonthBody");
 
     function ensureLeadFilters() {
@@ -1806,6 +1809,7 @@
         leadDailySubtitle.textContent = "Нет каналов лида";
         leadDailyBody.innerHTML = `<tr><td colspan="6" class="muted">Добавь каналы лида в справочниках.</td></tr>`;
         leadSummaryCards.innerHTML = "";
+        leadSummaryMetrics.innerHTML = "";
         leadMonthBody.innerHTML = `<tr><td colspan="14" class="muted">Нет данных по каналам.</td></tr>`;
         return;
       }
@@ -1908,6 +1912,25 @@
           <div class="border rounded-3 p-2 bg-white h-100">
             <div class="small-note">${label}</div>
             <div class="fw-bold fs-5">${value}</div>
+          </div>
+        </div>
+      `).join("");
+
+      const summaryMetrics = [
+        ["зая-диз", formatPercent(totalMonth.design, totalMonth.inquiry)],
+        ["зая-кп", formatPercent(totalMonth.proposal, totalMonth.inquiry)],
+        ["кп-счё", formatPercent(totalMonth.invoice, totalMonth.proposal)],
+        ["зая-счё", formatPercent(totalMonth.invoice, totalMonth.inquiry)],
+        ["счё-зак", formatPercent(totalMonth.order, totalMonth.invoice)],
+        ["зая-зак", formatPercent(totalMonth.order, totalMonth.inquiry)],
+        ["кп-зак", formatPercent(totalMonth.order, totalMonth.proposal)],
+        ["Доля продаж", formatPercent(totalMonth.order, totalOrders, 0)]
+      ];
+      leadSummaryMetrics.innerHTML = summaryMetrics.map(([label, value]) => `
+        <div class="col-6 col-md-4 col-xl-3">
+          <div class="border rounded-3 p-2 bg-white h-100">
+            <div class="small-note">${label}</div>
+            <div class="fw-bold">${value}</div>
           </div>
         </div>
       `).join("");
