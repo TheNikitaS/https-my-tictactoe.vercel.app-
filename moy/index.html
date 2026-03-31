@@ -12,10 +12,15 @@
         #tabs-container { display: flex; flex-wrap: wrap; padding: 0.5rem; background-color: #dce1e6; }
         .tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer; position: relative; margin-right: 5px; border-radius: 5px 5px 0 0; }
         .tab.active { background-color: #fff; border-bottom-color: #fff; font-weight: bold; }
+        .tab-title { display: inline-block; min-width: 60px; padding: 2px 4px; border-radius: 4px; }
+        .tab-title.editing { background: #fff; outline: 2px solid #86b7fe; cursor: text; }
         .tab-actions { display: inline-flex; align-items: center; gap: 6px; }
-        .tab-action { font-weight: bold; cursor: pointer; color: #999; user-select: none; }
-        .tab-action:hover { color: #333; }
-        .hidden-tabs-wrap { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0.5rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
+        .tab-action { border: 0; background: transparent; font-weight: 600; cursor: pointer; user-select: none; line-height: 1; }
+        .tab-hide-btn { padding: 3px 8px; border-radius: 999px; background: #e9ecef; color: #495057; font-size: 0.75rem; }
+        .tab-hide-btn:hover { background: #d0d7de; color: #212529; }
+        .tab-delete-btn { padding: 0; color: #999; font-size: 1rem; }
+        .tab-delete-btn:hover { color: #c0392b; }
+        .hidden-tabs-wrap { display: none; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0.5rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
         .hidden-tabs-label { color: #6c757d; font-size: 0.85rem; }
         .hidden-tab-btn { white-space: nowrap; }
         .summary-card { background-color: #e3f2fd; }
@@ -297,13 +302,15 @@ function renderTabs() {
         tabEl.className = `tab ${tab.id === state.activeTabId ? 'active' : ''}`;
 
         const tabName = document.createElement('span');
+        tabName.className = 'tab-title';
         tabName.textContent = tab.name;
+        tabName.title = 'Двойной клик, чтобы переименовать вкладку';
         tabName.ondblclick = (e) => {
             e.stopPropagation();
-            tabName.contentEditable = true;
-            tabName.focus();
+            startTabRename(tab, tabName);
         };
         tabName.onblur = () => {
+            return finishTabRename(tab, tabName, true);
             tabName.contentEditable = false;
             tab.name = tabName.textContent.trim() || tab.name || 'Вывеска';
             tabName.textContent = tab.name;
@@ -312,12 +319,12 @@ function renderTabs() {
         tabName.onkeydown = (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                tabName.blur();
+                finishTabRename(tab, tabName, true);
             }
             if (e.key === 'Escape') {
                 e.preventDefault();
                 tabName.textContent = tab.name;
-                tabName.blur();
+                finishTabRename(tab, tabName, false);
             }
         };
 
@@ -330,15 +337,17 @@ function renderTabs() {
         const actions = document.createElement('span');
         actions.className = 'tab-actions';
 
-        const hideBtn = document.createElement('span');
-        hideBtn.className = 'tab-action';
-        hideBtn.textContent = '-';
+        const hideBtn = document.createElement('button');
+        hideBtn.type = 'button';
+        hideBtn.className = 'tab-action tab-hide-btn';
+        hideBtn.textContent = 'Скрыть';
         hideBtn.title = 'Скрыть вкладку';
         hideBtn.onclick = (e) => { e.stopPropagation(); hideTab(tab.id); };
 
-        const closeBtn = document.createElement('span');
-        closeBtn.className = 'tab-action';
-        closeBtn.textContent = 'x';
+        const closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'tab-action tab-delete-btn';
+        closeBtn.textContent = '×';
         closeBtn.title = 'Удалить вкладку';
         closeBtn.onclick = (e) => { e.stopPropagation(); deleteTab(tab.id); };
 
@@ -351,6 +360,7 @@ function renderTabs() {
 
     const hiddenTabs = state.tabs.filter(tab => tab.hidden);
     hiddenWrap.innerHTML = '';
+    hiddenWrap.style.display = hiddenTabs.length ? 'flex' : 'none';
     if (!hiddenTabs.length) return;
 
     const label = document.createElement('div');
@@ -366,6 +376,35 @@ function renderTabs() {
         btn.onclick = () => showTab(tab.id);
         hiddenWrap.appendChild(btn);
     });
+}
+
+function startTabRename(tab, tabName) {
+    if (tabName.isContentEditable) return;
+    tabName.dataset.originalName = tab.name;
+    tabName.contentEditable = true;
+    tabName.classList.add('editing');
+    requestAnimationFrame(() => {
+        tabName.focus();
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(tabName);
+        selection.removeAllRanges();
+        selection.addRange(range);
+    });
+}
+
+function finishTabRename(tab, tabName, shouldSave) {
+    if (!tabName.isContentEditable) return;
+    const fallbackName = tabName.dataset.originalName || tab.name || 'Вывеска';
+    const nextName = shouldSave ? (tabName.textContent.trim() || fallbackName) : fallbackName;
+    tabName.contentEditable = false;
+    tabName.classList.remove('editing');
+    tabName.textContent = nextName;
+    tab.name = nextName;
+    delete tabName.dataset.originalName;
+    if (shouldSave) {
+        saveState();
+    }
 }
 
 function addTab() {
