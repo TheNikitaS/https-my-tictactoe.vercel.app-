@@ -270,15 +270,18 @@
                   <tr>
                     <th>Канал</th>
                     <th class="right nowrap">Зая</th>
+                    <th class="right nowrap">зая-диз</th>
                     <th class="right nowrap">Диз</th>
+                    <th class="right nowrap">зая-кп</th>
                     <th class="right nowrap">КП</th>
-                    <th class="right nowrap">Счёт</th>
-                    <th class="right nowrap">Заказ</th>
-                    <th class="right nowrap">Зая→Диз</th>
-                    <th class="right nowrap">Диз→КП</th>
-                    <th class="right nowrap">КП→Счёт</th>
-                    <th class="right nowrap">Счёт→Заказ</th>
-                    <th class="right nowrap">Доля заказов</th>
+                    <th class="right nowrap">кп-счё</th>
+                    <th class="right nowrap">зая-счё</th>
+                    <th class="right nowrap">Счё</th>
+                    <th class="right nowrap">счё-зак</th>
+                    <th class="right nowrap">зая-зак</th>
+                    <th class="right nowrap">кп-зак</th>
+                    <th class="right nowrap">Зак</th>
+                    <th class="right nowrap">Доля продаж</th>
                   </tr>
                 </thead>
                 <tbody id="leadMonthBody"></tbody>
@@ -660,9 +663,9 @@
       return formatDateKeyLocal(parsed.value);
     }
 
-    function formatPercent(part, whole) {
+    function formatPercent(part, whole, fractionDigits = 2) {
       if (!whole) return "—";
-      return `${(part / whole * 100).toLocaleString("ru-RU", { minimumFractionDigits: 0, maximumFractionDigits: 1 })}%`;
+      return `${(part / whole * 100).toLocaleString("ru-RU", { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits })}%`;
     }
 
     function createLeadStats() {
@@ -1803,7 +1806,7 @@
         leadDailySubtitle.textContent = "Нет каналов лида";
         leadDailyBody.innerHTML = `<tr><td colspan="6" class="muted">Добавь каналы лида в справочниках.</td></tr>`;
         leadSummaryCards.innerHTML = "";
-        leadMonthBody.innerHTML = `<tr><td colspan="11" class="muted">Нет данных по каналам.</td></tr>`;
+        leadMonthBody.innerHTML = `<tr><td colspan="14" class="muted">Нет данных по каналам.</td></tr>`;
         return;
       }
 
@@ -1860,30 +1863,36 @@
           <tr>
             <td>${escapeHtml(channel)}</td>
             <td class="right nowrap">${month.inquiry}</td>
-            <td class="right nowrap">${month.design}</td>
-            <td class="right nowrap">${month.proposal}</td>
-            <td class="right nowrap">${month.invoice}</td>
-            <td class="right nowrap">${month.order}</td>
             <td class="right nowrap">${formatPercent(month.design, month.inquiry)}</td>
-            <td class="right nowrap">${formatPercent(month.proposal, month.design)}</td>
+            <td class="right nowrap">${month.design}</td>
+            <td class="right nowrap">${formatPercent(month.proposal, month.inquiry)}</td>
+            <td class="right nowrap">${month.proposal}</td>
             <td class="right nowrap">${formatPercent(month.invoice, month.proposal)}</td>
+            <td class="right nowrap">${formatPercent(month.invoice, month.inquiry)}</td>
+            <td class="right nowrap">${month.invoice}</td>
             <td class="right nowrap">${formatPercent(month.order, month.invoice)}</td>
-            <td class="right nowrap">${formatPercent(month.order, totalOrders)}</td>
+            <td class="right nowrap">${formatPercent(month.order, month.inquiry)}</td>
+            <td class="right nowrap">${formatPercent(month.order, month.proposal)}</td>
+            <td class="right nowrap">${month.order}</td>
+            <td class="right nowrap">${formatPercent(month.order, totalOrders, 0)}</td>
           </tr>
         `;
       }).join("") + `
         <tr class="table-secondary fw-bold">
           <td>Всего</td>
           <td class="right nowrap">${totalMonth.inquiry}</td>
-          <td class="right nowrap">${totalMonth.design}</td>
-          <td class="right nowrap">${totalMonth.proposal}</td>
-          <td class="right nowrap">${totalMonth.invoice}</td>
-          <td class="right nowrap">${totalMonth.order}</td>
           <td class="right nowrap">${formatPercent(totalMonth.design, totalMonth.inquiry)}</td>
-          <td class="right nowrap">${formatPercent(totalMonth.proposal, totalMonth.design)}</td>
+          <td class="right nowrap">${totalMonth.design}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.proposal, totalMonth.inquiry)}</td>
+          <td class="right nowrap">${totalMonth.proposal}</td>
           <td class="right nowrap">${formatPercent(totalMonth.invoice, totalMonth.proposal)}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.invoice, totalMonth.inquiry)}</td>
+          <td class="right nowrap">${totalMonth.invoice}</td>
           <td class="right nowrap">${formatPercent(totalMonth.order, totalMonth.invoice)}</td>
-          <td class="right nowrap">${formatPercent(totalMonth.order, totalOrders)}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.order, totalMonth.inquiry)}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.order, totalMonth.proposal)}</td>
+          <td class="right nowrap">${totalMonth.order}</td>
+          <td class="right nowrap">${formatPercent(totalMonth.order, totalOrders, 0)}</td>
         </tr>
       `;
 
