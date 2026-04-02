@@ -1,9 +1,10 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260402-platform3";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260402-platform2";
+const PLATFORM_BUILD = "20260402-platform3";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
   sidebarCollapsed: "dom-neona:platform:sidebarCollapsed"
@@ -427,6 +428,28 @@ const PLACEHOLDER_BLUEPRINTS = {
   }
 };
 
+const liveWorkspaceController = createLiveWorkspaceController({
+  supabase,
+  setStatus: setAuthStatus,
+  escapeHtml,
+  hasModulePermission,
+  hasModuleAccess,
+  getPermissionBadgeLabel,
+  getModuleStageLabel,
+  modules: MODULES,
+  rerenderCurrentModule: async () => {
+    if (!liveWorkspaceController.supports(STATE.activeModule)) return;
+    DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
+    DOM.placeholderView.classList.remove("d-none");
+  },
+  rerenderDashboard: () => {
+    if (STATE.activeModule === "dashboard") {
+      renderDashboard();
+    }
+  },
+  schemaReadyProvider: () => STATE.schemaReady
+});
+
 function setAuthStatus(message, tone = "") {
   DOM.authStatus.textContent = message;
   DOM.authStatus.className = `status-box${tone ? " " + tone : ""}`;
@@ -719,9 +742,9 @@ function getModuleStageLabel(moduleKey) {
     light2: "Активно развивается",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",
-    crm: "Стартовый экран",
-    warehouse: "Стартовый экран",
-    tasks: "Стартовый экран",
+    crm: "Живой рабочий модуль",
+    warehouse: "Живой рабочий модуль",
+    tasks: "Живой рабочий модуль",
     ai: "Концепт модуля"
   };
   return labels[moduleKey] || "Доступен";
@@ -918,11 +941,12 @@ function renderDashboard() {
     .filter((key) => key !== "dashboard")
     .map((key) => {
       const module = MODULES[key];
+      const liveSummary = liveWorkspaceController.getDashboardSummary(key);
       return `
         <article class="module-card">
           <h3>${escapeHtml(module.title)}</h3>
           <p>${escapeHtml(module.subtitle)}</p>
-          <div class="meta">${escapeHtml(getModuleStageLabel(key))} • ${escapeHtml(getPermissionBadgeLabel(key))}</div>
+          <div class="meta">${escapeHtml(getModuleStageLabel(key))} • ${escapeHtml(getPermissionBadgeLabel(key))}${liveSummary ? ` • ${escapeHtml(liveSummary)}` : ""}</div>
           <div class="mt-3">
             <button class="btn btn-dark btn-sm" type="button" data-dashboard-open="${escapeHtml(key)}">Открыть</button>
           </div>
@@ -990,7 +1014,11 @@ async function openModule(key) {
     return;
   }
 
-  renderPlaceholderModule(key);
+  if (liveWorkspaceController.supports(key)) {
+    DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(key);
+  } else {
+    renderPlaceholderModule(key);
+  }
   DOM.placeholderView.classList.remove("d-none");
 }
 
@@ -1671,6 +1699,12 @@ async function refreshCurrentView() {
     renderDashboard();
     return;
   }
+  if (liveWorkspaceController.supports(STATE.activeModule)) {
+    await liveWorkspaceController.refresh(STATE.activeModule);
+    DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
+    DOM.placeholderView.classList.remove("d-none");
+    return;
+  }
   if (MODULES[STATE.activeModule]?.type === "embed") {
     DOM.moduleFrame.src = DOM.moduleFrame.src;
   }
@@ -1805,8 +1839,40 @@ function bindAppEvents() {
 
   DOM.placeholderCard.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-placeholder-open]");
-    if (!button) return;
-    await openModule(button.dataset.placeholderOpen);
+    if (button) {
+      await openModule(button.dataset.placeholderOpen);
+      return;
+    }
+    if (!liveWorkspaceController.supports(STATE.activeModule)) return;
+    try {
+      await liveWorkspaceController.handleClick(event, STATE.activeModule);
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось выполнить действие в модуле.", "error");
+    }
+  });
+
+  DOM.placeholderCard.addEventListener("input", (event) => {
+    if (!liveWorkspaceController.supports(STATE.activeModule)) return;
+    liveWorkspaceController.handleInput(event, STATE.activeModule);
+  });
+
+  DOM.placeholderCard.addEventListener("change", async (event) => {
+    if (!liveWorkspaceController.supports(STATE.activeModule)) return;
+    try {
+      await liveWorkspaceController.handleChange(event, STATE.activeModule);
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось обновить данные модуля.", "error");
+    }
+  });
+
+  DOM.placeholderCard.addEventListener("submit", async (event) => {
+    if (!liveWorkspaceController.supports(STATE.activeModule)) return;
+    try {
+      await liveWorkspaceController.handleSubmit(event, STATE.activeModule);
+    } catch (error) {
+      event.preventDefault();
+      setAuthStatus(error.message || "Не удалось сохранить данные модуля.", "error");
+    }
   });
 
   document.getElementById("signOutButton").addEventListener("click", async () => {
