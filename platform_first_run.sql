@@ -15,20 +15,6 @@ begin
 end;
 $$;
 
-create or replace function public.is_admin(user_id uuid)
-returns boolean
-language sql
-stable
-as $$
-  select exists(
-    select 1
-    from public.app_profiles p
-    where p.id = user_id
-      and p.role in ('owner', 'admin')
-      and p.is_active = true
-  );
-$$;
-
 create table if not exists public.app_profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   email text,
@@ -48,6 +34,20 @@ drop trigger if exists app_profiles_set_updated_at on public.app_profiles;
 create trigger app_profiles_set_updated_at
 before update on public.app_profiles
 for each row execute function public.set_updated_at();
+
+create or replace function public.is_admin(user_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select exists(
+    select 1
+    from public.app_profiles p
+    where p.id = user_id
+      and p.role in ('owner', 'admin')
+      and p.is_active = true
+  );
+$$;
 
 create or replace function public.handle_new_auth_user()
 returns trigger
