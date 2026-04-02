@@ -47,7 +47,7 @@ foreach ($mapping in $mappings) {
     Copy-Item -LiteralPath $mapping.Source -Destination $mapping.Target -Force
 }
 
-Invoke-Git add README.md .gitignore index.html publish.ps1 supabase_setup.sql shared moy part prodazhi
+Invoke-Git add README.md .gitignore index.html publish.ps1 supabase_setup.sql platform_setup.sql shared moy part prodazhi platform
 
 $status = & 'C:\Program Files\Git\cmd\git.exe' status --porcelain
 if ($LASTEXITCODE -ne 0) {

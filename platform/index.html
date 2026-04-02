@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Дом Неон | Платформа</title>
+  <link rel="icon" type="image/png" href="../shared/assets/dom-neon-logo.png" />
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="./app.css" rel="stylesheet" />
+</head>
+<body>
+  <section class="auth-screen" id="authScreen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img class="auth-logo" src="../shared/assets/dom-neon-logo.png" alt="Дом Неон" />
+        <div class="auth-eyebrow">Единая платформа</div>
+        <h1>Домовой Неоник</h1>
+        <p>
+          Личный кабинет команды, доступ к калькуляторам, продажам, партнерам,
+          внутреннему мессенджеру и будущим модулям CRM, склада, задач и базы знаний.
+        </p>
+
+        <div class="auth-points">
+          <div class="auth-point">
+            <strong>Безопасный переход</strong>
+            Существующие инструменты остаются рабочими и подключаются внутрь платформы поэтапно.
+          </div>
+          <div class="auth-point">
+            <strong>Роли и доступы</strong>
+            Админ управляет тем, какие разделы видит каждый пользователь.
+          </div>
+          <div class="auth-point">
+            <strong>Почта и восстановление</strong>
+            Поддержаны вход по паролю, код на почту и восстановление пароля.
+          </div>
+        </div>
+      </div>
+
+      <div class="auth-forms">
+        <div class="auth-tabs" id="authTabs">
+          <button class="auth-tab active" type="button" data-auth-pane="signin">Вход</button>
+          <button class="auth-tab" type="button" data-auth-pane="register">Регистрация</button>
+          <button class="auth-tab" type="button" data-auth-pane="otp">Код на почту</button>
+          <button class="auth-tab" type="button" data-auth-pane="reset">Сброс пароля</button>
+        </div>
+
+        <div class="auth-pane active" id="pane-signin">
+          <div class="section-card">
+            <h2>Войти по логину и паролю</h2>
+            <p>Используйте рабочую почту и пароль от платформы.</p>
+            <form id="signInForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Почта</label>
+                <input class="form-control" type="email" name="email" required />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Пароль</label>
+                <input class="form-control" type="password" name="password" required />
+              </div>
+              <div class="col-12 d-flex gap-2">
+                <button class="btn btn-dark" type="submit">Войти</button>
+                <button class="btn btn-outline-secondary" type="button" data-auth-pane-trigger="otp">Войти по коду</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="auth-pane" id="pane-register">
+          <div class="section-card">
+            <h2>Создать учетную запись</h2>
+            <p>После регистрации первый администратор сможет выдать роли и доступы.</p>
+            <form id="registerForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Имя</label>
+                <input class="form-control" type="text" name="displayName" required />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Почта</label>
+                <input class="form-control" type="email" name="email" required />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Пароль</label>
+                <input class="form-control" type="password" name="password" minlength="6" required />
+              </div>
+              <div class="col-12">
+                <button class="btn btn-dark" type="submit">Зарегистрироваться</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="auth-pane" id="pane-otp">
+          <div class="section-card">
+            <h2>Вход по коду на почту</h2>
+            <p>Сначала запросите код, затем введите его ниже.</p>
+            <form id="otpRequestForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Почта</label>
+                <input class="form-control" type="email" name="email" required />
+              </div>
+              <div class="col-12">
+                <button class="btn btn-dark" type="submit">Отправить код</button>
+              </div>
+            </form>
+            <hr />
+            <form id="otpVerifyForm" class="row g-3">
+              <div class="col-md-7">
+                <label class="form-label">Почта</label>
+                <input class="form-control" type="email" name="email" required />
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">Код</label>
+                <input class="form-control" type="text" name="token" inputmode="numeric" required />
+              </div>
+              <div class="col-12">
+                <button class="btn btn-outline-dark" type="submit">Подтвердить код</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="auth-pane" id="pane-reset">
+          <div class="section-card">
+            <h2>Восстановить пароль</h2>
+            <p>На почту придет письмо для восстановления. После перехода по ссылке вы сможете задать новый пароль.</p>
+            <form id="resetRequestForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Почта</label>
+                <input class="form-control" type="email" name="email" required />
+              </div>
+              <div class="col-12">
+                <button class="btn btn-dark" type="submit">Отправить письмо</button>
+              </div>
+            </form>
+            <hr />
+            <form id="updatePasswordForm" class="row g-3">
+              <div class="col-12">
+                <label class="form-label">Новый пароль</label>
+                <input class="form-control" type="password" name="password" minlength="6" required />
+              </div>
+              <div class="col-12">
+                <button class="btn btn-outline-dark" type="submit">Сохранить новый пароль</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <div class="status-box" id="authStatus">
+          Готово к запуску. Если таблицы платформы еще не созданы, система подскажет это после входа.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="app-shell d-none" id="appShell">
+    <aside class="sidebar">
+      <div class="brand-row">
+        <img src="../shared/assets/dom-neon-logo.png" alt="Дом Неон" />
+        <div>
+          <strong>Дом Неон</strong>
+          <span>Единая операционная платформа</span>
+        </div>
+      </div>
+
+      <div class="profile-card" id="profileCard"></div>
+
+      <div class="section-title">Разделы</div>
+      <nav class="module-nav" id="moduleNav"></nav>
+    </aside>
+
+    <main class="content-shell">
+      <div class="topbar">
+        <div>
+          <h2 id="viewTitle">Панель управления</h2>
+          <p id="viewSubtitle">Общая точка входа в экосистему Дом Неон.</p>
+        </div>
+        <div class="d-flex flex-wrap gap-2">
+          <button class="btn btn-outline-dark" type="button" id="refreshButton">Обновить</button>
+          <button class="btn btn-dark" type="button" id="signOutButton">Выйти</button>
+        </div>
+      </div>
+
+      <section class="view-section" id="schemaWarningSection"></section>
+
+      <section class="view-section" id="dashboardView">
+        <div class="dashboard-grid" id="dashboardGrid"></div>
+      </section>
+
+      <section class="view-section d-none" id="embedView">
+        <div class="module-frame-wrap">
+          <iframe class="module-frame" id="moduleFrame" title="Модуль платформы"></iframe>
+        </div>
+      </section>
+
+      <section class="view-section d-none" id="adminView">
+        <div class="admin-grid">
+          <div class="section-card">
+            <div class="card-toolbar">
+              <div>
+                <h2>Пользователи</h2>
+                <div class="compact-help">Роли, активность, доступные модули и привязка к партнеру.</div>
+              </div>
+              <button class="btn btn-sm btn-outline-dark" type="button" id="reloadUsersButton">Обновить список</button>
+            </div>
+            <div class="table-shell">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Почта</th>
+                    <th>Имя</th>
+                    <th>Роль</th>
+                    <th>Партнер</th>
+                    <th>Модули</th>
+                    <th>Активен</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="adminUsersBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="section-card">
+            <div class="card-toolbar">
+              <div>
+                <h2>Партнеры</h2>
+                <div class="compact-help">Имя партнера и ссылка на его персональный калькулятор.</div>
+              </div>
+            </div>
+            <form class="row g-3 mb-3" id="partnerForm">
+              <div class="col-12">
+                <label class="form-label">Имя партнера</label>
+                <input class="form-control" type="text" name="displayName" required />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Slug / ID для ссылки</label>
+                <input class="form-control" type="text" name="slug" placeholder="например: mira" required />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Почта владельца</label>
+                <input class="form-control" type="email" name="email" placeholder="необязательно" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Комментарий</label>
+                <textarea class="form-control" name="notes" rows="2"></textarea>
+              </div>
+              <div class="col-12">
+                <button class="btn btn-dark" type="submit">Добавить партнера</button>
+              </div>
+            </form>
+
+            <div class="table-shell">
+              <table class="table table-sm align-middle">
+                <thead>
+                  <tr>
+                    <th>Партнер</th>
+                    <th>Slug</th>
+                    <th>Ссылка</th>
+                  </tr>
+                </thead>
+                <tbody id="partnerDirectoryBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view-section d-none" id="messengerView">
+        <div class="messenger-shell">
+          <div class="section-card">
+            <div class="card-toolbar">
+              <div>
+                <h2>Мессенджер</h2>
+                <div class="compact-help">Личные и групповые переписки внутри платформы.</div>
+              </div>
+              <button class="btn btn-sm btn-outline-dark" type="button" id="reloadThreadsButton">Обновить</button>
+            </div>
+
+            <form id="threadCreateForm" class="row g-3 mb-3">
+              <div class="col-md-4">
+                <label class="form-label">Тип</label>
+                <select class="form-select" name="threadType">
+                  <option value="direct">Личный</option>
+                  <option value="group">Группа</option>
+                </select>
+              </div>
+              <div class="col-md-8">
+                <label class="form-label">Название / тема</label>
+                <input class="form-control" type="text" name="title" placeholder="Для группы оставьте понятное название" />
+              </div>
+              <div class="col-12">
+                <label class="form-label">Почты участников</label>
+                <input class="form-control" type="text" name="emails" placeholder="через запятую, например: user1@mail.ru, user2@mail.ru" />
+              </div>
+              <div class="col-12">
+                <button class="btn btn-dark" type="submit">Создать чат</button>
+              </div>
+            </form>
+
+            <div class="thread-list" id="threadList"></div>
+          </div>
+
+          <div class="section-card messages-panel">
+            <div class="card-toolbar">
+              <div>
+                <h2 id="messageThreadTitle">Выберите чат</h2>
+                <div class="compact-help" id="messageThreadMeta">Сообщения обновляются вручную и при действиях внутри модуля.</div>
+              </div>
+            </div>
+
+            <div class="messages-list" id="messagesList">
+              <div class="compact-help">Пока чат не выбран.</div>
+            </div>
+
+            <form class="row g-3 mt-2" id="messageForm">
+              <div class="col-12">
+                <textarea class="form-control" name="body" rows="3" placeholder="Введите сообщение"></textarea>
+              </div>
+              <div class="col-12">
+                <button class="btn btn-dark" type="submit">Отправить</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      <section class="view-section d-none" id="placeholderView">
+        <div class="placeholder-card" id="placeholderCard"></div>
+      </section>
+    </main>
+  </section>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
