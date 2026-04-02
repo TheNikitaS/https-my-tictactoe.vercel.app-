@@ -1494,8 +1494,13 @@ async function init() {
       return;
     }
 
-    if (event === "TOKEN_REFRESHED" && session && STATE.user?.id === session.user.id && !DOM.appShell.classList.contains("d-none")) {
+    if (
+      session &&
+      STATE.user?.id === session.user.id &&
+      !DOM.appShell.classList.contains("d-none")
+    ) {
       STATE.session = session;
+      STATE.user = session.user;
       return;
     }
 
