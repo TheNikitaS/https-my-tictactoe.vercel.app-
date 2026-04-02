@@ -1,4 +1,4 @@
--- Дом Неона LIGHT 2 assets and purchases patch
+-- Дом Неона assets and purchases patch
 -- Run this once in Supabase SQL Editor if platform_first_run.sql
 -- was executed before the Assets and Purchases blocks were added.
 
@@ -19,6 +19,8 @@ create table if not exists public.light2_assets (
   asset_name text not null,
   asset_value numeric(14,2) not null default 0,
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -27,6 +29,10 @@ create table if not exists public.light2_assets (
 create index if not exists light2_assets_name_idx
   on public.light2_assets(asset_name);
 
+create unique index if not exists light2_assets_source_idx
+  on public.light2_assets(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
+
 drop trigger if exists light2_assets_set_updated_at on public.light2_assets;
 create trigger light2_assets_set_updated_at
 before update on public.light2_assets
@@ -34,10 +40,12 @@ for each row execute function public.set_updated_at();
 
 create table if not exists public.light2_asset_payments (
   id uuid primary key default gen_random_uuid(),
-  asset_id uuid not null references public.light2_assets(id) on delete cascade,
+  asset_id uuid references public.light2_assets(id) on delete cascade,
   payment_date date not null,
   payment_amount numeric(12,2) not null default 0,
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -45,6 +53,10 @@ create table if not exists public.light2_asset_payments (
 
 create index if not exists light2_asset_payments_asset_date_idx
   on public.light2_asset_payments(asset_id, payment_date desc);
+
+create unique index if not exists light2_asset_payments_source_idx
+  on public.light2_asset_payments(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
 
 drop trigger if exists light2_asset_payments_set_updated_at on public.light2_asset_payments;
 create trigger light2_asset_payments_set_updated_at
@@ -63,6 +75,8 @@ create table if not exists public.light2_purchase_catalog (
   unit_name text,
   price numeric(12,2) not null default 0,
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -70,6 +84,10 @@ create table if not exists public.light2_purchase_catalog (
 
 create index if not exists light2_purchase_catalog_supplier_idx
   on public.light2_purchase_catalog(supplier_name, category, article);
+
+create unique index if not exists light2_purchase_catalog_source_idx
+  on public.light2_purchase_catalog(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
 
 drop trigger if exists light2_purchase_catalog_set_updated_at on public.light2_purchase_catalog;
 create trigger light2_purchase_catalog_set_updated_at

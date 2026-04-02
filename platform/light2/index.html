@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ЛАЙТ 2 | ДОМ НЕОНА</title>
+  <title>ДОМ НЕОНА | Операционный контур</title>
   <link rel="icon" type="image/png" href="../../shared/assets/dom-neon-logo.png" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
@@ -13,11 +13,11 @@
   <div class="light2-shell">
     <header class="hero-card">
       <div class="hero-main">
-        <div class="hero-eyebrow">ДОМ НЕОНА / ЛАЙТ 2</div>
-        <h1>ЛАЙТ 2</h1>
+        <div class="hero-eyebrow">ДОМ НЕОНА / Операционный контур</div>
+        <h1>ДОМ НЕОНА</h1>
         <p>
-          Переносим рабочий файл в платформу поэтапно. Сначала вынесен отдельный модуль с разделами
-          и рабочим блоком взаиморасчетов, где партнер видит только свои строки.
+          Внутри платформы собран рабочий финансовый и операционный контур: живые блоки с редактированием,
+          плюс полная сверка с заполненными листами исходного файла.
         </p>
       </div>
 
@@ -51,15 +51,31 @@
       <button type="button" class="section-tab" data-section="leadgen">Лидогенерация</button>
       <button type="button" class="section-tab" data-section="metrics">Метрики</button>
       <button type="button" class="section-tab" data-section="finance">Финмодель</button>
+      <button type="button" class="section-tab" data-section="avito">Авито</button>
+      <button type="button" class="section-tab" data-section="direct">Директ</button>
+      <button type="button" class="section-tab" data-section="neon_usage">Расход неона</button>
+      <button type="button" class="section-tab" data-section="events">Мероприятия</button>
+      <button type="button" class="section-tab" data-section="risks">Риски</button>
+      <button type="button" class="section-tab" data-section="data">Данные</button>
+      <button type="button" class="section-tab" data-section="forecast">Прогноз</button>
+      <button type="button" class="section-tab" data-section="franchises">Франшизы</button>
+      <button type="button" class="section-tab" data-section="questions">Вопросы</button>
+      <button type="button" class="section-tab" data-section="lead_calc">Калькулятор лида</button>
     </nav>
 
     <section class="page-section" id="section-overview">
       <div class="section-card">
         <div class="section-head">
           <div>
-            <h2>Карта переноса ЛАЙТ 2</h2>
-            <p>Секции уже выделены по реальным листам файла. Ниже можно быстро перейти в нужный блок.</p>
+            <h2>Карта ДОМ НЕОНА</h2>
+            <p>Секции уже привязаны к реальным листам исходного файла и к рабочим блокам платформы.</p>
           </div>
+          <div class="section-actions">
+            <button type="button" class="btn btn-dark btn-sm" id="importWorkbookButton">Импортировать заполненный исходник</button>
+          </div>
+        </div>
+        <div class="scope-note mb-3" id="importWorkbookStatus">
+          Импорт переносит заполненные блоки исходного файла в рабочие таблицы платформы без дублей.
         </div>
         <div class="overview-grid" id="overviewGrid"></div>
       </div>
@@ -209,7 +225,7 @@
         <div class="section-head">
           <div>
             <h2>Закупки</h2>
-            <p>Следующий блок на перенос после взаиморасчетов и баланса.</p>
+            <p>Каталог поставщиков, материалов и закупочных цен.</p>
           </div>
         </div>
         <div class="template-host" data-template="purchases"></div>
@@ -249,6 +265,126 @@
           </div>
         </div>
         <div class="template-host" data-template="finance"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-avito">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Авито</h2>
+            <p>Ежедневные расходы, просмотры, лиды, заказы и стоимость заявки.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="avito"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-direct">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Директ</h2>
+            <p>Страницы, ключевые фразы, частотность и поисковый спрос.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="direct"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-neon_usage">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Расход неона по цветам</h2>
+            <p>Снимок цветового расхода и расчетов по каналам и периодам.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="neon_usage"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-events">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Мероприятия</h2>
+            <p>Рабочий календарь мероприятий и связанных операционных отметок.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="events"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-risks">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Решения и риски</h2>
+            <p>Зафиксированные вопросы, риски и управленческие решения.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="risks"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-data">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Данные</h2>
+            <p>Справочные таблицы и базовые коэффициенты из исходного файла.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="data"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-forecast">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Прогноз</h2>
+            <p>Прогноз по обороту, расходу, марже, чеку и продажам.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="forecast"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-franchises">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Площадки франшиз</h2>
+            <p>Справочник площадок и связанных примечаний по франчайзингу.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="franchises"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-questions">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Вопросы</h2>
+            <p>Список открытых вопросов, вынесенных из рабочей модели.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="questions"></div>
+      </div>
+    </section>
+
+    <section class="page-section d-none" id="section-lead_calc">
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Калькулятор лида</h2>
+            <p>Компактный лист расчета лидогенерации из исходного файла.</p>
+          </div>
+        </div>
+        <div class="template-host" data-template="lead_calc"></div>
       </div>
     </section>
   </div>

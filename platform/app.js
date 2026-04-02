@@ -27,6 +27,13 @@ const DOM = {
   moduleFrame: document.getElementById("moduleFrame"),
   adminView: document.getElementById("adminView"),
   adminUsersBody: document.getElementById("adminUsersBody"),
+  userAccessEditor: document.getElementById("userAccessEditor"),
+  roleTemplatesBody: document.getElementById("roleTemplatesBody"),
+  roleTemplateForm: document.getElementById("roleTemplateForm"),
+  rolePermissionsGrid: document.getElementById("rolePermissionsGrid"),
+  newRoleButton: document.getElementById("newRoleButton"),
+  resetRoleFormButton: document.getElementById("resetRoleFormButton"),
+  deleteRoleTemplateButton: document.getElementById("deleteRoleTemplateButton"),
   partnerDirectoryBody: document.getElementById("partnerDirectoryBody"),
   messengerView: document.getElementById("messengerView"),
   threadList: document.getElementById("threadList"),
@@ -47,6 +54,9 @@ const STATE = {
   activeModule: "dashboard",
   users: [],
   partnerProfiles: [],
+  roleTemplates: [],
+  selectedUserId: null,
+  editingRoleKey: null,
   threads: [],
   activeThreadId: null
 };
@@ -79,10 +89,10 @@ const MODULES = {
     }
   },
   light2: {
-    title: "ЛАЙТ 2",
-    subtitle: "Финансовый и операционный контур из рабочего файла ЛАЙТ 2.",
+    title: "ДОМ НЕОНА",
+    subtitle: "Финансовый и операционный контур компании внутри платформы.",
     type: "embed",
-    src: () => "./light2/index.html?v=20260402-light2-assets"
+    src: () => "./light2/index.html?v=20260402-dom-neona"
   },
   messenger: {
     title: "Мессенджер",
@@ -130,6 +140,107 @@ const MODULE_GROUPS = [
   "ai"
 ];
 
+const PERMISSION_FLAGS = [
+  { key: "view", label: "Видит" },
+  { key: "edit", label: "Редактирует" },
+  { key: "manage", label: "Управляет" }
+];
+
+const DEFAULT_ROLE_TEMPLATES = [
+  {
+    role_key: "owner",
+    display_name: "Владелец",
+    description: "Полный доступ ко всей платформе.",
+    is_system: true,
+    module_permissions: {
+      dashboard: { view: true, edit: true, manage: true },
+      sales: { view: true, edit: true, manage: true },
+      my_calculator: { view: true, edit: true, manage: true },
+      partner_calculator: { view: true, edit: true, manage: true },
+      light2: { view: true, edit: true, manage: true },
+      messenger: { view: true, edit: true, manage: true },
+      admin: { view: true, edit: true, manage: true },
+      crm: { view: true, edit: true, manage: true },
+      warehouse: { view: true, edit: true, manage: true },
+      tasks: { view: true, edit: true, manage: true },
+      ai: { view: true, edit: true, manage: true }
+    }
+  },
+  {
+    role_key: "admin",
+    display_name: "Администратор",
+    description: "Управляет пользователями, ролями и модулями.",
+    is_system: true,
+    module_permissions: {
+      dashboard: { view: true, edit: true, manage: true },
+      sales: { view: true, edit: true, manage: true },
+      my_calculator: { view: true, edit: true, manage: true },
+      partner_calculator: { view: true, edit: true, manage: true },
+      light2: { view: true, edit: true, manage: true },
+      messenger: { view: true, edit: true, manage: true },
+      admin: { view: true, edit: true, manage: true },
+      crm: { view: true, edit: true, manage: true },
+      warehouse: { view: true, edit: true, manage: true },
+      tasks: { view: true, edit: true, manage: true },
+      ai: { view: true, edit: true, manage: true }
+    }
+  },
+  {
+    role_key: "manager",
+    display_name: "Менеджер",
+    description: "Работает с продажами и ключевыми рабочими инструментами.",
+    is_system: true,
+    module_permissions: {
+      dashboard: { view: true, edit: true, manage: false },
+      sales: { view: true, edit: true, manage: false },
+      my_calculator: { view: true, edit: true, manage: false },
+      partner_calculator: { view: true, edit: true, manage: false },
+      light2: { view: true, edit: true, manage: false },
+      messenger: { view: true, edit: true, manage: false }
+    }
+  },
+  {
+    role_key: "partner",
+    display_name: "Партнер",
+    description: "Видит только свой контур и партнерский калькулятор.",
+    is_system: true,
+    module_permissions: {
+      dashboard: { view: true, edit: false, manage: false },
+      partner_calculator: { view: true, edit: true, manage: false },
+      light2: { view: true, edit: false, manage: false },
+      messenger: { view: true, edit: true, manage: false }
+    }
+  },
+  {
+    role_key: "staff",
+    display_name: "Сотрудник",
+    description: "Работает внутри назначенных ему модулей.",
+    is_system: true,
+    module_permissions: {
+      dashboard: { view: true, edit: false, manage: false },
+      messenger: { view: true, edit: true, manage: false }
+    }
+  },
+  {
+    role_key: "viewer",
+    display_name: "Наблюдатель",
+    description: "Только просмотр без редактирования.",
+    is_system: true,
+    module_permissions: {
+      dashboard: { view: true, edit: false, manage: false }
+    }
+  },
+  {
+    role_key: "user",
+    display_name: "Пользователь",
+    description: "Базовый вход в систему.",
+    is_system: true,
+    module_permissions: {
+      dashboard: { view: true, edit: false, manage: false }
+    }
+  }
+];
+
 function setAuthStatus(message, tone = "") {
   DOM.authStatus.textContent = message;
   DOM.authStatus.className = `status-box${tone ? " " + tone : ""}`;
@@ -152,6 +263,81 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
+function cloneJson(value) {
+  return JSON.parse(JSON.stringify(value ?? {}));
+}
+
+function createEmptyPermissionMap() {
+  return MODULE_GROUPS.reduce((acc, key) => {
+    acc[key] = { view: false, edit: false, manage: false };
+    return acc;
+  }, {});
+}
+
+function normalizeModulePermissions(rawPermissions, fallbackModules = []) {
+  const base = createEmptyPermissionMap();
+  if (rawPermissions && typeof rawPermissions === "object" && !Array.isArray(rawPermissions)) {
+    Object.entries(rawPermissions).forEach(([key, value]) => {
+      if (!base[key]) return;
+      base[key] = {
+        view: Boolean(value?.view),
+        edit: Boolean(value?.edit),
+        manage: Boolean(value?.manage)
+      };
+    });
+  }
+  if (Array.isArray(fallbackModules)) {
+    fallbackModules.forEach((key) => {
+      if (base[key]) {
+        base[key].view = true;
+        base[key].edit = true;
+      }
+    });
+  }
+  base.dashboard.view = true;
+  return base;
+}
+
+function permissionsToAllowedModules(permissions) {
+  return MODULE_GROUPS.filter((key) => permissions?.[key]?.view);
+}
+
+function getRoleTemplate(roleKey) {
+  return STATE.roleTemplates.find((role) => role.role_key === roleKey) || null;
+}
+
+function getProfilePermissionMap(profile = STATE.profile) {
+  const roleKey = profile?.role || "user";
+  if (roleKey === "owner" || roleKey === "admin") {
+    return MODULE_GROUPS.reduce((acc, key) => {
+      acc[key] = { view: true, edit: true, manage: true };
+      return acc;
+    }, {});
+  }
+
+  const template = getRoleTemplate(roleKey);
+  const templatePermissions = normalizeModulePermissions(
+    template?.module_permissions,
+    Array.isArray(template?.allowed_modules) ? template.allowed_modules : []
+  );
+  const ownPermissions = normalizeModulePermissions(profile?.module_permissions, profile?.allowed_modules);
+  const hasOwnPermissions =
+    profile?.module_permissions &&
+    typeof profile.module_permissions === "object" &&
+    !Array.isArray(profile.module_permissions) &&
+    Object.keys(profile.module_permissions).length > 0;
+  const effective = hasOwnPermissions ? ownPermissions : templatePermissions;
+  effective.dashboard.view = true;
+  return effective;
+}
+
+function summarizeModuleAccess(profile) {
+  const permissions = getProfilePermissionMap(profile);
+  return MODULE_GROUPS.filter((key) => permissions[key]?.view)
+    .map((key) => MODULES[key]?.title || key)
+    .join(", ");
+}
+
 function formatDateTime(value) {
   const date = value ? new Date(value) : null;
   if (!date || Number.isNaN(date.getTime())) return "—";
@@ -163,22 +349,27 @@ function formatDateTime(value) {
 
 function moduleListFromProfile() {
   if (STATE.profile?.role === "admin" || STATE.profile?.role === "owner") return MODULE_GROUPS;
-  const raw = STATE.profile?.allowed_modules;
-  if (Array.isArray(raw) && raw.length) {
-    return raw.filter((key) => MODULES[key]);
-  }
-  if (STATE.schemaReady) {
-    return ["dashboard", "sales", "my_calculator", "partner_calculator", "messenger"];
-  }
-  return ["dashboard", "sales", "my_calculator", "partner_calculator"];
+  const permissions = getProfilePermissionMap();
+  const visible = permissionsToAllowedModules(permissions)
+    .filter((key) => MODULES[key])
+    .filter((key) => key !== "admin" || Boolean(permissions.admin?.manage));
+  if (visible.length) return visible;
+  return ["dashboard"];
+}
+
+function hasModulePermission(key, flag = "view", profile = STATE.profile) {
+  if (!MODULES[key]) return false;
+  if (profile?.role === "owner" || profile?.role === "admin") return true;
+  const permissions = getProfilePermissionMap(profile);
+  return Boolean(permissions?.[key]?.[flag]);
 }
 
 function hasModuleAccess(key) {
-  return moduleListFromProfile().includes(key);
+  return hasModulePermission(key, "view") && moduleListFromProfile().includes(key);
 }
 
 function isAdmin() {
-  return STATE.profile?.role === "admin" || STATE.profile?.role === "owner";
+  return hasModulePermission("admin", "manage");
 }
 
 function getCurrentPartnerSlug() {
@@ -240,7 +431,8 @@ function renderProfileCard() {
     STATE.user?.email ||
     "Пользователь";
 
-  const role = STATE.profile?.role || (STATE.schemaReady ? "user" : "standalone");
+  const roleKey = STATE.profile?.role || (STATE.schemaReady ? "user" : "standalone");
+  const role = getRoleTemplate(roleKey)?.display_name || roleKey;
   const partnerSlug = getCurrentPartnerSlug();
 
   DOM.profileCard.innerHTML = `
@@ -380,6 +572,38 @@ async function loadPartnerProfiles() {
   STATE.partnerProfiles = data || [];
 }
 
+async function loadRoleTemplates() {
+  if (!STATE.schemaReady) {
+    STATE.roleTemplates = DEFAULT_ROLE_TEMPLATES.map((item) => cloneJson(item));
+    return;
+  }
+
+  const { data, error } = await supabase.from("app_role_templates").select("*").order("display_name", { ascending: true });
+  if (error) {
+    if (error.code === "42P01") {
+      STATE.roleTemplates = DEFAULT_ROLE_TEMPLATES.map((item) => cloneJson(item));
+      return;
+    }
+    throw error;
+  }
+
+  const current = Array.isArray(data) ? data : [];
+  const merged = DEFAULT_ROLE_TEMPLATES.map((role) => {
+    const existing = current.find((item) => item.role_key === role.role_key);
+    return existing ? existing : cloneJson(role);
+  });
+
+  current
+    .filter((role) => !merged.some((item) => item.role_key === role.role_key))
+    .forEach((role) => merged.push(role));
+
+  STATE.roleTemplates = merged;
+
+  if (!STATE.editingRoleKey || !STATE.roleTemplates.some((role) => role.role_key === STATE.editingRoleKey)) {
+    STATE.editingRoleKey = STATE.roleTemplates[0]?.role_key || null;
+  }
+}
+
 async function bootstrapApp(session) {
   STATE.session = session;
   STATE.user = session.user;
@@ -388,6 +612,7 @@ async function bootstrapApp(session) {
 
   try {
     STATE.profile = await ensureProfile(session.user);
+    await loadRoleTemplates();
     if (isAdmin()) {
       await loadPartnerProfiles();
     } else {
@@ -400,8 +625,10 @@ async function bootstrapApp(session) {
       STATE.profile = {
         display_name: session.user.user_metadata?.display_name || session.user.email,
         role: "user",
-        allowed_modules: ["dashboard", "sales", "my_calculator", "partner_calculator"]
+        allowed_modules: ["dashboard", "sales", "my_calculator", "partner_calculator"],
+        module_permissions: normalizeModulePermissions(null, ["dashboard", "sales", "my_calculator", "partner_calculator"])
       };
+      STATE.roleTemplates = DEFAULT_ROLE_TEMPLATES.map((item) => cloneJson(item));
     } else {
       throw error;
     }
@@ -433,29 +660,147 @@ function queuePlatformBootstrap(session) {
 function renderUserTable() {
   if (!STATE.users.length) {
     DOM.adminUsersBody.innerHTML = `<tr><td colspan="7" class="text-muted">Пользователи пока не найдены.</td></tr>`;
+    DOM.userAccessEditor.innerHTML = `<div class="compact-help">Пользователи пока не найдены.</div>`;
     return;
+  }
+
+  if (!STATE.selectedUserId || !STATE.users.some((user) => user.id === STATE.selectedUserId)) {
+    STATE.selectedUserId = STATE.users[0].id;
   }
 
   DOM.adminUsersBody.innerHTML = STATE.users
     .map((user) => {
-      const modules = Array.isArray(user.allowed_modules) ? user.allowed_modules.join(", ") : "";
-      const roleOptions = ["owner", "admin", "manager", "partner", "staff", "viewer", "user"]
-        .map((role) => `<option value="${role}" ${role === user.role ? "selected" : ""}>${role}</option>`)
-        .join("");
+      const accessSummary = summarizeModuleAccess(user) || "Нет";
+      const roleTemplate = getRoleTemplate(user.role);
+      const roleLabel = roleTemplate?.display_name || user.role || "user";
 
       return `
-        <tr data-user-id="${escapeHtml(user.id)}">
+        <tr data-user-id="${escapeHtml(user.id)}" class="${STATE.selectedUserId === user.id ? "table-active" : ""}">
           <td class="small">${escapeHtml(user.email || "—")}</td>
-          <td><input class="form-control form-control-sm" name="display_name" value="${escapeHtml(user.display_name || user.full_name || "")}" /></td>
-          <td><select class="form-select form-select-sm" name="role">${roleOptions}</select></td>
-          <td><input class="form-control form-control-sm" name="partner_slug" value="${escapeHtml(user.partner_slug || "")}" /></td>
-          <td><input class="form-control form-control-sm" name="allowed_modules" value="${escapeHtml(modules)}" /></td>
-          <td class="text-center"><input class="form-check-input" type="checkbox" name="is_active" ${user.is_active ? "checked" : ""} /></td>
-          <td><button class="btn btn-sm btn-outline-dark" type="button" data-save-user="${escapeHtml(user.id)}">Сохранить</button></td>
+          <td>${escapeHtml(user.display_name || user.full_name || "—")}</td>
+          <td>${escapeHtml(roleLabel)}</td>
+          <td>${escapeHtml(user.partner_slug || "—")}</td>
+          <td class="small">${escapeHtml(accessSummary)}</td>
+          <td>${user.is_active ? "Да" : "Нет"}</td>
+          <td><button class="btn btn-sm btn-outline-dark" type="button" data-select-user="${escapeHtml(user.id)}">Настроить</button></td>
         </tr>
       `;
     })
     .join("");
+
+  renderUserAccessEditor();
+}
+
+function renderPermissionGrid(container, permissions, mode) {
+  container.innerHTML = MODULE_GROUPS.map((key) => {
+    const module = MODULES[key];
+    const current = permissions[key] || { view: false, edit: false, manage: false };
+    return `
+      <article class="permission-card">
+        <div class="permission-card__head">
+          <strong>${escapeHtml(module.title)}</strong>
+          <span>${escapeHtml(module.subtitle)}</span>
+        </div>
+        <div class="permission-card__flags">
+          ${PERMISSION_FLAGS.map((flag) => `
+            <label class="permission-flag">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                data-${mode}-module="${escapeHtml(key)}"
+                data-${mode}-perm="${escapeHtml(flag.key)}"
+                ${current[flag.key] ? "checked" : ""}
+              />
+              <span>${escapeHtml(flag.label)}</span>
+            </label>
+          `).join("")}
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+function renderRoleTemplatesTable() {
+  if (!STATE.roleTemplates.length) {
+    DOM.roleTemplatesBody.innerHTML = `<tr><td colspan="4" class="text-muted">Роли пока не настроены.</td></tr>`;
+    return;
+  }
+
+  DOM.roleTemplatesBody.innerHTML = STATE.roleTemplates
+    .map((role) => `
+      <tr class="${STATE.editingRoleKey === role.role_key ? "table-active" : ""}">
+        <td><code>${escapeHtml(role.role_key)}</code></td>
+        <td>${escapeHtml(role.display_name || role.role_key)}</td>
+        <td>${role.is_system ? "Да" : "Нет"}</td>
+        <td><button class="btn btn-sm btn-outline-dark" type="button" data-edit-role="${escapeHtml(role.role_key)}">Открыть</button></td>
+      </tr>
+    `)
+    .join("");
+}
+
+function fillRoleTemplateForm(role) {
+  const form = DOM.roleTemplateForm;
+  if (!form) return;
+  const permissions = normalizeModulePermissions(role?.module_permissions, role?.allowed_modules);
+  form.elements.role_key.value = role?.role_key || "";
+  form.elements.display_name.value = role?.display_name || "";
+  form.elements.description.value = role?.description || "";
+  form.elements.role_key.readOnly = Boolean(role?.is_system);
+  DOM.deleteRoleTemplateButton.classList.toggle("d-none", !role || role.is_system);
+  renderPermissionGrid(DOM.rolePermissionsGrid, permissions, "role");
+}
+
+function renderUserAccessEditor() {
+  const user = STATE.users.find((item) => item.id === STATE.selectedUserId);
+  if (!user) {
+    DOM.userAccessEditor.innerHTML = `<div class="compact-help">Выберите пользователя из таблицы слева.</div>`;
+    return;
+  }
+
+  const roleOptions = STATE.roleTemplates
+    .map((role) => `<option value="${escapeHtml(role.role_key)}" ${role.role_key === user.role ? "selected" : ""}>${escapeHtml(role.display_name || role.role_key)}</option>`)
+    .join("");
+  const permissions = getProfilePermissionMap(user);
+
+  DOM.userAccessEditor.innerHTML = `
+    <form id="userAccessForm" data-user-id="${escapeHtml(user.id)}" class="row g-3">
+      <div class="col-12">
+        <div class="access-user-title">${escapeHtml(user.email || "Пользователь")}</div>
+        <div class="compact-help">Изменения сохраняются отдельно для выбранного пользователя.</div>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Имя</label>
+        <input class="form-control" type="text" name="display_name" value="${escapeHtml(user.display_name || user.full_name || "")}" />
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Роль</label>
+        <select class="form-select" name="role">${roleOptions}</select>
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Партнерский slug</label>
+        <input class="form-control" type="text" name="partner_slug" value="${escapeHtml(user.partner_slug || "")}" />
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <label class="permission-flag mb-0">
+          <input class="form-check-input" type="checkbox" name="is_active" ${user.is_active ? "checked" : ""} />
+          <span>Аккаунт активен</span>
+        </label>
+      </div>
+      <div class="col-12">
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          <button class="btn btn-sm btn-outline-dark" type="button" data-apply-role-template>Применить права роли</button>
+        </div>
+        <div class="form-label mb-2">Доступы по модулям</div>
+        <div class="permission-grid" id="userPermissionsGrid"></div>
+      </div>
+      <div class="col-12">
+        <button class="btn btn-dark" type="submit">Сохранить пользователя</button>
+      </div>
+    </form>
+  `;
+
+  const grid = document.getElementById("userPermissionsGrid");
+  renderPermissionGrid(grid, permissions, "user");
 }
 
 function renderPartnerDirectory() {
@@ -487,42 +832,126 @@ async function loadAdminData() {
   if (!isAdmin() || !STATE.schemaReady) {
     DOM.adminUsersBody.innerHTML = `<tr><td colspan="7" class="text-muted">Админ-функции доступны после запуска схемы платформы и входа админа.</td></tr>`;
     DOM.partnerDirectoryBody.innerHTML = `<tr><td colspan="5" class="text-muted">Сначала выполните platform_setup.sql.</td></tr>`;
+    DOM.roleTemplatesBody.innerHTML = `<tr><td colspan="4" class="text-muted">Роли станут доступны после запуска platform_setup.sql.</td></tr>`;
+    DOM.userAccessEditor.innerHTML = `<div class="compact-help">Доступы станут доступны после запуска схемы платформы.</div>`;
     return;
   }
 
-  const [{ data: users, error: userError }, { data: partners, error: partnerError }] = await Promise.all([
+  const [{ data: users, error: userError }, { data: partners, error: partnerError }, { data: roles, error: roleError }] = await Promise.all([
     supabase.from("app_profiles").select("*").order("created_at", { ascending: true }),
-    supabase.from("partner_profiles").select("*").order("display_name", { ascending: true })
+    supabase.from("partner_profiles").select("*").order("display_name", { ascending: true }),
+    supabase.from("app_role_templates").select("*").order("display_name", { ascending: true })
   ]);
 
   if (userError) throw userError;
   if (partnerError) throw partnerError;
+  if (roleError && roleError.code !== "42P01") throw roleError;
 
   STATE.users = users || [];
   STATE.partnerProfiles = partners || [];
+  STATE.roleTemplates = [
+    ...DEFAULT_ROLE_TEMPLATES.map((role) => roles?.find((item) => item.role_key === role.role_key) || cloneJson(role)),
+    ...(roles || []).filter((role) => !DEFAULT_ROLE_TEMPLATES.some((item) => item.role_key === role.role_key))
+  ];
+  if (!STATE.editingRoleKey || !STATE.roleTemplates.some((role) => role.role_key === STATE.editingRoleKey)) {
+    STATE.editingRoleKey = STATE.roleTemplates[0]?.role_key || null;
+  }
   renderUserTable();
   renderPartnerDirectory();
+  renderRoleTemplatesTable();
+  fillRoleTemplateForm(getRoleTemplate(STATE.editingRoleKey));
 }
 
 async function saveUserProfile(userId) {
-  const row = DOM.adminUsersBody.querySelector(`[data-user-id="${userId}"]`);
-  if (!row) return;
+  const form = document.getElementById("userAccessForm");
+  if (!form || form.dataset.userId !== userId) return;
+
+  const role = form.elements.role.value;
+  const modulePermissions = createEmptyPermissionMap();
+  form.querySelectorAll("[data-user-module]").forEach((input) => {
+    const moduleKey = input.dataset.userModule;
+    const permKey = input.dataset.userPerm;
+    if (!modulePermissions[moduleKey]) return;
+    modulePermissions[moduleKey][permKey] = input.checked;
+  });
+  MODULE_GROUPS.forEach((key) => {
+    if (modulePermissions[key].edit || modulePermissions[key].manage) {
+      modulePermissions[key].view = true;
+    }
+  });
+  modulePermissions.dashboard.view = true;
 
   const payload = {
-    display_name: row.querySelector('[name="display_name"]').value.trim(),
-    role: row.querySelector('[name="role"]').value,
-    partner_slug: sanitizeSlug(row.querySelector('[name="partner_slug"]').value),
-    allowed_modules: row
-      .querySelector('[name="allowed_modules"]')
-      .value.split(",")
-      .map((item) => item.trim())
-      .filter(Boolean),
-    is_active: row.querySelector('[name="is_active"]').checked
+    display_name: form.elements.display_name.value.trim(),
+    role,
+    partner_slug: sanitizeSlug(form.elements.partner_slug.value),
+    module_permissions: modulePermissions,
+    allowed_modules: permissionsToAllowedModules(modulePermissions),
+    is_active: form.elements.is_active.checked
   };
 
   const { error } = await supabase.from("app_profiles").update(payload).eq("id", userId);
   if (error) throw error;
   setAuthStatus("Изменения пользователя сохранены.", "success");
+  await loadAdminData();
+}
+
+function applyRoleTemplateToSelectedUser() {
+  const form = document.getElementById("userAccessForm");
+  if (!form) return;
+  const template = getRoleTemplate(form.elements.role.value);
+  const permissions = normalizeModulePermissions(template?.module_permissions, template?.allowed_modules);
+  const grid = document.getElementById("userPermissionsGrid");
+  if (grid) renderPermissionGrid(grid, permissions, "user");
+}
+
+async function saveRoleTemplate() {
+  const form = DOM.roleTemplateForm;
+  const roleKey = sanitizeSlug(form.elements.role_key.value).replaceAll("-", "_");
+  if (!roleKey) {
+    throw new Error("Укажите ключ роли.");
+  }
+
+  const permissions = createEmptyPermissionMap();
+  form.querySelectorAll("[data-role-module]").forEach((input) => {
+    const moduleKey = input.dataset.roleModule;
+    const permKey = input.dataset.rolePerm;
+    if (!permissions[moduleKey]) return;
+    permissions[moduleKey][permKey] = input.checked;
+  });
+  MODULE_GROUPS.forEach((key) => {
+    if (permissions[key].edit || permissions[key].manage) {
+      permissions[key].view = true;
+    }
+  });
+  permissions.dashboard.view = true;
+
+  const existing = getRoleTemplate(STATE.editingRoleKey);
+  const payload = {
+    role_key: roleKey,
+    display_name: form.elements.display_name.value.trim() || roleKey,
+    description: form.elements.description.value.trim() || null,
+    is_system: existing?.is_system || false,
+    module_permissions: permissions
+  };
+
+  const { error } = await supabase.from("app_role_templates").upsert(payload, { onConflict: "role_key" });
+  if (error) throw error;
+
+  STATE.editingRoleKey = roleKey;
+  setAuthStatus("Роль сохранена.", "success");
+  await loadAdminData();
+}
+
+async function deleteRoleTemplate() {
+  const role = getRoleTemplate(STATE.editingRoleKey);
+  if (!role || role.is_system) {
+    throw new Error("Системную роль удалить нельзя.");
+  }
+  const { error } = await supabase.from("app_role_templates").delete().eq("role_key", role.role_key);
+  if (error) throw error;
+  STATE.editingRoleKey = DEFAULT_ROLE_TEMPLATES[0]?.role_key || null;
+  setAuthStatus("Роль удалена.", "success");
   await loadAdminData();
 }
 
@@ -539,16 +968,18 @@ async function createPartner(form) {
 
   let ownerUserId = null;
   let ownerModules = null;
+  let ownerPermissions = null;
   if (email) {
     const { data: owner, error: ownerError } = await supabase
       .from("app_profiles")
-      .select("id, allowed_modules")
+      .select("id, allowed_modules, module_permissions")
       .eq("email", email)
       .maybeSingle();
 
     if (ownerError && ownerError.code !== "PGRST116") throw ownerError;
     ownerUserId = owner?.id || null;
     ownerModules = Array.isArray(owner?.allowed_modules) ? owner.allowed_modules : null;
+    ownerPermissions = normalizeModulePermissions(owner?.module_permissions, ownerModules);
   }
 
   const payload = {
@@ -570,9 +1001,14 @@ async function createPartner(form) {
         "light2"
       ])
     );
+    ownerPermissions = ownerPermissions || createEmptyPermissionMap();
+    ownerPermissions.dashboard.view = true;
+    ownerPermissions.partner_calculator.view = true;
+    ownerPermissions.partner_calculator.edit = true;
+    ownerPermissions.light2.view = true;
     await supabase
       .from("app_profiles")
-      .update({ partner_slug: slug, allowed_modules: nextModules })
+      .update({ partner_slug: slug, allowed_modules: nextModules, module_permissions: ownerPermissions })
       .eq("id", ownerUserId);
   }
 
@@ -920,12 +1356,70 @@ function bindAppEvents() {
   });
 
   DOM.adminUsersBody.addEventListener("click", async (event) => {
-    const button = event.target.closest("[data-save-user]");
+    const button = event.target.closest("[data-select-user]");
     if (!button) return;
+    STATE.selectedUserId = button.dataset.selectUser;
+    renderUserTable();
+  });
+
+  DOM.userAccessEditor.addEventListener("click", (event) => {
+    const applyButton = event.target.closest("[data-apply-role-template]");
+    if (!applyButton) return;
+    applyRoleTemplateToSelectedUser();
+  });
+
+  DOM.userAccessEditor.addEventListener("change", (event) => {
+    const roleSelect = event.target.closest('#userAccessForm select[name="role"]');
+    if (!roleSelect) return;
+    applyRoleTemplateToSelectedUser();
+  });
+
+  DOM.userAccessEditor.addEventListener("submit", async (event) => {
+    const form = event.target.closest("#userAccessForm");
+    if (!form) return;
+    event.preventDefault();
     try {
-      await saveUserProfile(button.dataset.saveUser);
+      await saveUserProfile(form.dataset.userId);
     } catch (error) {
       setAuthStatus(error.message || "Не удалось сохранить пользователя.", "error");
+    }
+  });
+
+  DOM.roleTemplatesBody.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-edit-role]");
+    if (!button) return;
+    STATE.editingRoleKey = button.dataset.editRole;
+    renderRoleTemplatesTable();
+    fillRoleTemplateForm(getRoleTemplate(STATE.editingRoleKey));
+  });
+
+  DOM.newRoleButton.addEventListener("click", () => {
+    STATE.editingRoleKey = null;
+    DOM.roleTemplateForm.reset();
+    DOM.roleTemplateForm.elements.role_key.readOnly = false;
+    DOM.deleteRoleTemplateButton.classList.add("d-none");
+    renderPermissionGrid(DOM.rolePermissionsGrid, createEmptyPermissionMap(), "role");
+    renderRoleTemplatesTable();
+  });
+
+  DOM.resetRoleFormButton.addEventListener("click", () => {
+    fillRoleTemplateForm(getRoleTemplate(STATE.editingRoleKey));
+  });
+
+  DOM.roleTemplateForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await saveRoleTemplate();
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось сохранить роль.", "error");
+    }
+  });
+
+  DOM.deleteRoleTemplateButton.addEventListener("click", async () => {
+    try {
+      await deleteRoleTemplate();
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось удалить роль.", "error");
     }
   });
 
@@ -989,6 +1483,9 @@ async function init() {
       STATE.threads = [];
       STATE.users = [];
       STATE.partnerProfiles = [];
+      STATE.roleTemplates = [];
+      STATE.selectedUserId = null;
+      STATE.editingRoleKey = null;
       showAuthScreen();
       setAuthStatus("Вы вышли из системы.");
       return;

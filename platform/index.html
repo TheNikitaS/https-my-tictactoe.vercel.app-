@@ -195,74 +195,136 @@
 
       <section class="view-section d-none" id="adminView">
         <div class="admin-grid">
-          <div class="section-card">
-            <div class="card-toolbar">
-              <div>
-                <h2>Пользователи</h2>
-                <div class="compact-help">Роли, активность, доступные модули и привязка к партнеру.</div>
+          <div class="admin-stack">
+            <div class="section-card">
+              <div class="card-toolbar">
+                <div>
+                  <h2>Пользователи</h2>
+                  <div class="compact-help">Быстрый список аккаунтов. Для точной настройки выберите пользователя справа.</div>
+                </div>
+                <button class="btn btn-sm btn-outline-dark" type="button" id="reloadUsersButton">Обновить список</button>
               </div>
-              <button class="btn btn-sm btn-outline-dark" type="button" id="reloadUsersButton">Обновить список</button>
+              <div class="table-shell">
+                <table class="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Почта</th>
+                      <th>Имя</th>
+                      <th>Роль</th>
+                      <th>Партнер</th>
+                      <th>Доступ</th>
+                      <th>Активен</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="adminUsersBody"></tbody>
+                </table>
+              </div>
             </div>
-            <div class="table-shell">
-              <table class="table table-sm align-middle">
-                <thead>
-                  <tr>
-                    <th>Почта</th>
-                    <th>Имя</th>
-                    <th>Роль</th>
-                    <th>Партнер</th>
-                    <th>Модули</th>
-                    <th>Активен</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody id="adminUsersBody"></tbody>
-              </table>
+
+            <div class="section-card">
+              <div class="card-toolbar">
+                <div>
+                  <h2>Роли</h2>
+                  <div class="compact-help">Создавайте свои роли и задавайте для них гибкие права по модулям.</div>
+                </div>
+                <button class="btn btn-sm btn-outline-dark" type="button" id="newRoleButton">Новая роль</button>
+              </div>
+
+              <div class="table-shell mb-3">
+                <table class="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Ключ</th>
+                      <th>Название</th>
+                      <th>Системная</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="roleTemplatesBody"></tbody>
+                </table>
+              </div>
+
+              <form id="roleTemplateForm" class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Ключ роли</label>
+                  <input class="form-control" type="text" name="role_key" placeholder="например: sales_editor" required />
+                </div>
+                <div class="col-md-8">
+                  <label class="form-label">Название роли</label>
+                  <input class="form-control" type="text" name="display_name" placeholder="Например: Редактор продаж" required />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Описание</label>
+                  <textarea class="form-control" name="description" rows="2" placeholder="Что видит и что может делать эта роль"></textarea>
+                </div>
+                <div class="col-12">
+                  <div class="form-label mb-2">Права роли</div>
+                  <div class="permission-grid" id="rolePermissionsGrid"></div>
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2">
+                  <button class="btn btn-dark" type="submit">Сохранить роль</button>
+                  <button class="btn btn-outline-secondary" type="button" id="resetRoleFormButton">Очистить</button>
+                  <button class="btn btn-outline-danger d-none" type="button" id="deleteRoleTemplateButton">Удалить роль</button>
+                </div>
+              </form>
             </div>
           </div>
 
-          <div class="section-card">
-            <div class="card-toolbar">
-              <div>
-                <h2>Партнеры</h2>
-                <div class="compact-help">Имя партнера и ссылка на его персональный калькулятор.</div>
+          <div class="admin-stack">
+            <div class="section-card">
+              <div class="card-toolbar">
+                <div>
+                  <h2>Доступы пользователя</h2>
+                  <div class="compact-help">Гибкая настройка: видит модуль, может редактировать, может управлять.</div>
+                </div>
               </div>
+              <div id="userAccessEditor" class="compact-help">Выберите пользователя из таблицы слева.</div>
             </div>
-            <form class="row g-3 mb-3" id="partnerForm">
-              <div class="col-12">
-                <label class="form-label">Имя партнера</label>
-                <input class="form-control" type="text" name="displayName" required />
-              </div>
-              <div class="col-12">
-                <label class="form-label">Slug / ID для ссылки</label>
-                <input class="form-control" type="text" name="slug" placeholder="например: mira" required />
-              </div>
-              <div class="col-12">
-                <label class="form-label">Почта владельца</label>
-                <input class="form-control" type="email" name="email" placeholder="необязательно" />
-              </div>
-              <div class="col-12">
-                <label class="form-label">Комментарий</label>
-                <textarea class="form-control" name="notes" rows="2"></textarea>
-              </div>
-              <div class="col-12">
-                <button class="btn btn-dark" type="submit">Добавить партнера</button>
-              </div>
-            </form>
 
-            <div class="table-shell">
-              <table class="table table-sm align-middle">
-                <thead>
-                  <tr>
-                    <th>Партнер</th>
-                    <th>Slug</th>
-                    <th>Почта</th>
-                    <th>Владелец</th>
-                    <th>Ссылка</th>
-                  </tr>
-                </thead>
-                <tbody id="partnerDirectoryBody"></tbody>
-              </table>
+            <div class="section-card">
+              <div class="card-toolbar">
+                <div>
+                  <h2>Партнеры</h2>
+                  <div class="compact-help">Имя партнера и ссылка на его персональный калькулятор.</div>
+                </div>
+              </div>
+              <form class="row g-3 mb-3" id="partnerForm">
+                <div class="col-12">
+                  <label class="form-label">Имя партнера</label>
+                  <input class="form-control" type="text" name="displayName" required />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Slug / ID для ссылки</label>
+                  <input class="form-control" type="text" name="slug" placeholder="например: mira" required />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Почта владельца</label>
+                  <input class="form-control" type="email" name="email" placeholder="необязательно" />
+                </div>
+                <div class="col-12">
+                  <label class="form-label">Комментарий</label>
+                  <textarea class="form-control" name="notes" rows="2"></textarea>
+                </div>
+                <div class="col-12">
+                  <button class="btn btn-dark" type="submit">Добавить партнера</button>
+                </div>
+              </form>
+
+              <div class="table-shell">
+                <table class="table table-sm align-middle">
+                  <thead>
+                    <tr>
+                      <th>Партнер</th>
+                      <th>Slug</th>
+                      <th>Почта</th>
+                      <th>Владелец</th>
+                      <th>Ссылка</th>
+                    </tr>
+                  </thead>
+                  <tbody id="partnerDirectoryBody"></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

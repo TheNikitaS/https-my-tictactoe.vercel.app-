@@ -295,6 +295,8 @@ create table if not exists public.light2_partner_settlements (
   status text not null default 'Ожидает сверки'
     check (status in ('Ожидает сверки', 'К выплате', 'Взаиморасчет произведен', 'Спор', 'Архив')),
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -302,6 +304,10 @@ create table if not exists public.light2_partner_settlements (
 
 create index if not exists light2_partner_settlements_partner_period_idx
   on public.light2_partner_settlements(partner_slug, period_label, created_at desc);
+
+create unique index if not exists light2_partner_settlements_source_idx
+  on public.light2_partner_settlements(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
 
 drop trigger if exists light2_partner_settlements_set_updated_at on public.light2_partner_settlements;
 create trigger light2_partner_settlements_set_updated_at
@@ -312,10 +318,13 @@ create table if not exists public.light2_balance_entries (
   id uuid primary key default gen_random_uuid(),
   entry_date date not null,
   account_type text not null
-    check (account_type in ('cash_card', 'ooo_account')),
+    check (account_type in ('cash_card', 'ooo_account', 'ip_account')),
   income_amount numeric(12,2) not null default 0,
   expense_amount numeric(12,2) not null default 0,
   note text,
+  source_sheet text,
+  source_row integer,
+  source_slot text,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -323,6 +332,10 @@ create table if not exists public.light2_balance_entries (
 
 create index if not exists light2_balance_entries_date_idx
   on public.light2_balance_entries(entry_date desc, account_type);
+
+create unique index if not exists light2_balance_entries_source_idx
+  on public.light2_balance_entries(source_sheet, source_row, source_slot)
+  where source_sheet is not null and source_row is not null and source_slot is not null;
 
 drop trigger if exists light2_balance_entries_set_updated_at on public.light2_balance_entries;
 create trigger light2_balance_entries_set_updated_at
@@ -341,6 +354,8 @@ create table if not exists public.light2_payment_calendar_entries (
     check (account_name in ('Наличные / карта', 'Счёт ООО', 'Счёт ИП', 'Не распределено')),
   status text not null default 'Платеж',
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -348,6 +363,10 @@ create table if not exists public.light2_payment_calendar_entries (
 
 create index if not exists light2_payment_calendar_entries_date_idx
   on public.light2_payment_calendar_entries(payment_date asc, account_name, operation_type);
+
+create unique index if not exists light2_payment_calendar_entries_source_idx
+  on public.light2_payment_calendar_entries(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
 
 drop trigger if exists light2_payment_calendar_entries_set_updated_at on public.light2_payment_calendar_entries;
 create trigger light2_payment_calendar_entries_set_updated_at
@@ -359,6 +378,8 @@ create table if not exists public.light2_assets (
   asset_name text not null,
   asset_value numeric(14,2) not null default 0,
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -367,6 +388,10 @@ create table if not exists public.light2_assets (
 create index if not exists light2_assets_name_idx
   on public.light2_assets(asset_name);
 
+create unique index if not exists light2_assets_source_idx
+  on public.light2_assets(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
+
 drop trigger if exists light2_assets_set_updated_at on public.light2_assets;
 create trigger light2_assets_set_updated_at
 before update on public.light2_assets
@@ -374,10 +399,12 @@ for each row execute function public.set_updated_at();
 
 create table if not exists public.light2_asset_payments (
   id uuid primary key default gen_random_uuid(),
-  asset_id uuid not null references public.light2_assets(id) on delete cascade,
+  asset_id uuid references public.light2_assets(id) on delete cascade,
   payment_date date not null,
   payment_amount numeric(12,2) not null default 0,
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -385,6 +412,10 @@ create table if not exists public.light2_asset_payments (
 
 create index if not exists light2_asset_payments_asset_date_idx
   on public.light2_asset_payments(asset_id, payment_date desc);
+
+create unique index if not exists light2_asset_payments_source_idx
+  on public.light2_asset_payments(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
 
 drop trigger if exists light2_asset_payments_set_updated_at on public.light2_asset_payments;
 create trigger light2_asset_payments_set_updated_at
@@ -403,6 +434,8 @@ create table if not exists public.light2_purchase_catalog (
   unit_name text,
   price numeric(12,2) not null default 0,
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -410,6 +443,10 @@ create table if not exists public.light2_purchase_catalog (
 
 create index if not exists light2_purchase_catalog_supplier_idx
   on public.light2_purchase_catalog(supplier_name, category, article);
+
+create unique index if not exists light2_purchase_catalog_source_idx
+  on public.light2_purchase_catalog(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
 
 drop trigger if exists light2_purchase_catalog_set_updated_at on public.light2_purchase_catalog;
 create trigger light2_purchase_catalog_set_updated_at
@@ -627,3 +664,113 @@ select
   true
 from auth.users u
 on conflict (id) do nothing;
+
+alter table public.app_profiles
+  add column if not exists module_permissions jsonb not null default '{}'::jsonb;
+
+create or replace function public.is_admin(user_id uuid)
+returns boolean
+language sql
+stable
+as $$
+  select exists (
+    select 1
+    from public.app_profiles p
+    where p.id = user_id
+      and p.is_active = true
+      and (
+        p.role in ('owner', 'admin')
+        or coalesce((p.module_permissions -> 'admin' ->> 'manage')::boolean, false)
+      )
+  );
+$$;
+
+do $$
+begin
+  if exists (
+    select 1
+    from pg_constraint
+    where conname = 'app_profiles_role_check'
+      and conrelid = 'public.app_profiles'::regclass
+  ) then
+    alter table public.app_profiles drop constraint app_profiles_role_check;
+  end if;
+end;
+$$;
+
+create table if not exists public.app_role_templates (
+  id uuid primary key default gen_random_uuid(),
+  role_key text not null unique,
+  display_name text not null,
+  description text,
+  module_permissions jsonb not null default '{}'::jsonb,
+  is_system boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists app_role_templates_set_updated_at on public.app_role_templates;
+create trigger app_role_templates_set_updated_at
+before update on public.app_role_templates
+for each row execute function public.set_updated_at();
+
+alter table public.app_role_templates enable row level security;
+
+drop policy if exists "role_templates_select_authenticated" on public.app_role_templates;
+create policy "role_templates_select_authenticated"
+on public.app_role_templates
+for select
+to authenticated
+using (true);
+
+drop policy if exists "role_templates_admin_insert" on public.app_role_templates;
+create policy "role_templates_admin_insert"
+on public.app_role_templates
+for insert
+to authenticated
+with check (public.is_admin(auth.uid()));
+
+drop policy if exists "role_templates_admin_update" on public.app_role_templates;
+create policy "role_templates_admin_update"
+on public.app_role_templates
+for update
+to authenticated
+using (public.is_admin(auth.uid()))
+with check (public.is_admin(auth.uid()));
+
+drop policy if exists "role_templates_admin_delete" on public.app_role_templates;
+create policy "role_templates_admin_delete"
+on public.app_role_templates
+for delete
+to authenticated
+using (public.is_admin(auth.uid()));
+
+insert into public.app_role_templates (role_key, display_name, description, module_permissions, is_system)
+values
+  ('owner','Владелец','Полный доступ ко всей платформе.','{"dashboard":{"view":true,"edit":true,"manage":true},"sales":{"view":true,"edit":true,"manage":true},"my_calculator":{"view":true,"edit":true,"manage":true},"partner_calculator":{"view":true,"edit":true,"manage":true},"light2":{"view":true,"edit":true,"manage":true},"messenger":{"view":true,"edit":true,"manage":true},"admin":{"view":true,"edit":true,"manage":true},"crm":{"view":true,"edit":true,"manage":true},"warehouse":{"view":true,"edit":true,"manage":true},"tasks":{"view":true,"edit":true,"manage":true},"ai":{"view":true,"edit":true,"manage":true}}'::jsonb,true),
+  ('admin','Администратор','Управляет пользователями, ролями и модулями.','{"dashboard":{"view":true,"edit":true,"manage":true},"sales":{"view":true,"edit":true,"manage":true},"my_calculator":{"view":true,"edit":true,"manage":true},"partner_calculator":{"view":true,"edit":true,"manage":true},"light2":{"view":true,"edit":true,"manage":true},"messenger":{"view":true,"edit":true,"manage":true},"admin":{"view":true,"edit":true,"manage":true},"crm":{"view":true,"edit":true,"manage":true},"warehouse":{"view":true,"edit":true,"manage":true},"tasks":{"view":true,"edit":true,"manage":true},"ai":{"view":true,"edit":true,"manage":true}}'::jsonb,true),
+  ('manager','Менеджер','Работает с продажами и ключевыми рабочими инструментами.','{"dashboard":{"view":true,"edit":true,"manage":false},"sales":{"view":true,"edit":true,"manage":false},"my_calculator":{"view":true,"edit":true,"manage":false},"partner_calculator":{"view":true,"edit":true,"manage":false},"light2":{"view":true,"edit":true,"manage":false},"messenger":{"view":true,"edit":true,"manage":false}}'::jsonb,true),
+  ('partner','Партнер','Видит только свой контур и партнерский калькулятор.','{"dashboard":{"view":true,"edit":false,"manage":false},"partner_calculator":{"view":true,"edit":true,"manage":false},"light2":{"view":true,"edit":false,"manage":false},"messenger":{"view":true,"edit":true,"manage":false}}'::jsonb,true),
+  ('staff','Сотрудник','Работает внутри назначенных ему модулей.','{"dashboard":{"view":true,"edit":false,"manage":false},"messenger":{"view":true,"edit":true,"manage":false}}'::jsonb,true),
+  ('viewer','Наблюдатель','Только просмотр без редактирования.','{"dashboard":{"view":true,"edit":false,"manage":false}}'::jsonb,true),
+  ('user','Пользователь','Базовый вход в систему.','{"dashboard":{"view":true,"edit":false,"manage":false}}'::jsonb,true)
+on conflict (role_key) do nothing;
+
+update public.app_profiles
+set module_permissions = (
+  select coalesce(
+    jsonb_object_agg(
+      key,
+      jsonb_build_object('view', true, 'edit', true, 'manage', false)
+    ),
+    '{}'::jsonb
+  )
+  from jsonb_array_elements_text(coalesce(public.app_profiles.allowed_modules, '[]'::jsonb)) as modules(key)
+)
+where coalesce(module_permissions, '{}'::jsonb) = '{}'::jsonb
+  and role not in ('owner', 'admin');
+
+update public.app_profiles
+set module_permissions = '{"dashboard":{"view":true,"edit":true,"manage":true},"sales":{"view":true,"edit":true,"manage":true},"my_calculator":{"view":true,"edit":true,"manage":true},"partner_calculator":{"view":true,"edit":true,"manage":true},"light2":{"view":true,"edit":true,"manage":true},"messenger":{"view":true,"edit":true,"manage":true},"admin":{"view":true,"edit":true,"manage":true},"crm":{"view":true,"edit":true,"manage":true},"warehouse":{"view":true,"edit":true,"manage":true},"tasks":{"view":true,"edit":true,"manage":true},"ai":{"view":true,"edit":true,"manage":true}}'::jsonb
+where coalesce(module_permissions, '{}'::jsonb) = '{}'::jsonb
+  and role in ('owner', 'admin');

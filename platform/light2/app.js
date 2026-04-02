@@ -13,7 +13,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 
 const BALANCE_ACCOUNTS = [
   { value: "cash_card", label: "Наличные / карта" },
-  { value: "ooo_account", label: "Счёт ООО" }
+  { value: "ooo_account", label: "Счёт ООО" },
+  { value: "ip_account", label: "Счёт ИП" }
 ];
 
 const CALENDAR_ACCOUNTS = [
@@ -32,6 +33,8 @@ const DOM = {
   statusBox: document.getElementById("statusBox"),
   sectionTabs: document.getElementById("sectionTabs"),
   overviewGrid: document.getElementById("overviewGrid"),
+  importWorkbookButton: document.getElementById("importWorkbookButton"),
+  importWorkbookStatus: document.getElementById("importWorkbookStatus"),
   scopeNote: document.getElementById("scopeNote"),
   settlementForm: document.getElementById("settlementForm"),
   settlementPreview: document.getElementById("settlementPreview"),
@@ -49,11 +52,11 @@ const DOM = {
 const SECTION_META = {
   overview: {
     title: "Обзор",
-    subtitle: "Быстрый вход в перенесенные блоки ЛАЙТ 2."
+    subtitle: "Быстрый вход в рабочие блоки и сверочные листы ДОМ НЕОНА."
   },
   balance: {
     title: "Баланс",
-    subtitle: "Два контура из исходного листа: наличные / карта и счет ООО.",
+    subtitle: "Три контура из исходного листа: наличные / карта, счёт ООО и счёт ИП.",
     cards: [
       {
         title: "Наличные / карта",
@@ -63,6 +66,11 @@ const SECTION_META = {
       {
         title: "Счёт ООО",
         text: "Второй контур учета с отдельным потоком операций.",
+        items: ["Дата", "Приход", "Расход", "Баланс"]
+      },
+      {
+        title: "Счёт ИП",
+        text: "Третий денежный контур, который уже был в исходном файле.",
         items: ["Дата", "Приход", "Расход", "Баланс"]
       }
     ]
@@ -91,7 +99,7 @@ const SECTION_META = {
   },
   settlements: {
     title: "Взаиморасчеты",
-    subtitle: "Первый полностью рабочий раздел переноса из ЛАЙТ 2.",
+    subtitle: "Полный блок сверки с мастерами и партнерами внутри ДОМ НЕОНА.",
     cards: [
       {
         title: "Поля исходного листа",
@@ -125,7 +133,8 @@ const SECTION_META = {
         text: "Отдельно зафиксированы расходы, показы и цена показа.",
         items: ["Расходы", "Показы", "Цена показа", "Месяц", "Изменение", "Процент"]
       }
-    ]
+    ],
+    snapshotSheet: "Лидогенерация"
   },
   metrics: {
     title: "Метрики",
@@ -136,7 +145,8 @@ const SECTION_META = {
         text: "Таблица уже размечена под перенос в нормальную аналитику.",
         items: ["Статья", "Сумма", "Деньги", "Процент", "Месяц", "Изменения"]
       }
-    ]
+    ],
+    snapshotSheet: "Метрики"
   },
   finance: {
     title: "Финмодель",
@@ -147,7 +157,128 @@ const SECTION_META = {
         text: "Подготовлено место под верхнеуровневую финмодель.",
         items: ["Статья", "Месяц", "Сумма", "По дате", "Год"]
       }
-    ]
+    ],
+    snapshotSheet: "ФинМодель"
+  },
+  avito: {
+    title: "Авито",
+    subtitle: "Ежедневная воронка Авито: расход, просмотры, лиды и заказы.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Снимок ежедневной эффективности уже доступен внутри платформы.",
+        items: ["Дата", "Расход", "Просмотры / клики", "Контакты / лиды", "Заказ", "Цена заказа"]
+      }
+    ],
+    snapshotSheet: "Авито"
+  },
+  direct: {
+    title: "Директ",
+    subtitle: "Страницы, ключи и частотность по рекламному спросу.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Полный справочник фраз и спроса вынесен как сверочный лист.",
+        items: ["Страница", "Фраза", "Число запросов", "Показов в месяц"]
+      }
+    ],
+    snapshotSheet: "Директ"
+  },
+  neon_usage: {
+    title: "Расход неона",
+    subtitle: "Матрица расхода неона по цветам, периодам и каналам.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Снимок расчетов по цветам и расходу сохранен для сверки.",
+        items: ["Цвет", "Период", "Расход", "Итоги"]
+      }
+    ],
+    snapshotSheet: "Расход неона по цветам"
+  },
+  events: {
+    title: "Мероприятия",
+    subtitle: "Календарь мероприятий и связанных операционных отметок.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Лист перенесен для общей видимости и дальнейшей доработки.",
+        items: ["Дата", "Событие", "План", "Итог"]
+      }
+    ],
+    snapshotSheet: "Мероприятия"
+  },
+  risks: {
+    title: "Риски",
+    subtitle: "Решения, риски и рабочие вопросы по управлению.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Лист перенесен для управленческой фиксации и обзора.",
+        items: ["Категория", "Описание", "Решение", "Комментарий"]
+      }
+    ],
+    snapshotSheet: "Решения и риски"
+  },
+  data: {
+    title: "Данные",
+    subtitle: "Справочные данные и базовые таблицы из исходника.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Справочная подложка перенесена для контроля формул и коэффициентов.",
+        items: ["Параметр", "Значение", "Комментарий"]
+      }
+    ],
+    snapshotSheet: "Данные"
+  },
+  forecast: {
+    title: "Прогноз",
+    subtitle: "Оборот, расход, маржа, чек, продажи и прибыль.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Прогнозный блок перенесен как часть общего контура ДОМ НЕОНА.",
+        items: ["Оборот", "Расход", "Маржа", "Чек", "Продаж", "Прибыль"]
+      }
+    ],
+    snapshotSheet: "Прогноз"
+  },
+  franchises: {
+    title: "Франшизы",
+    subtitle: "Площадки франшиз и связанные рабочие заметки.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Справочник площадок сохранен внутри платформы.",
+        items: ["Площадка", "Описание"]
+      }
+    ],
+    snapshotSheet: "Площадки франшиз"
+  },
+  questions: {
+    title: "Вопросы",
+    subtitle: "Открытые вопросы, вынесенные из исходной модели.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Лист перенесен как список вопросов для следующего управленческого цикла.",
+        items: ["Вопрос", "Комментарий"]
+      }
+    ],
+    snapshotSheet: "Вопросы"
+  },
+  lead_calc: {
+    title: "Калькулятор лида",
+    subtitle: "Компактный расчетный лист лидогенерации.",
+    cards: [
+      {
+        title: "Поля листа",
+        text: "Формулы и текущие значения сохранены для сверки.",
+        items: ["Показатель", "Значение"]
+      }
+    ],
+    snapshotSheet: "Калькулятор Лидогереации"
   }
 };
 
@@ -162,6 +293,11 @@ const STATE = {
   assets: [],
   assetPayments: [],
   purchaseCatalog: [],
+  workbookSnapshot: null,
+  workbookReady: false,
+  workbookError: "",
+  snapshotSearches: {},
+  importBusy: false,
   activeSection: "overview",
   schemaReady: true,
   schemaError: "",
@@ -224,6 +360,46 @@ function sanitizeSlug(value) {
     .toLowerCase()
     .replace(/[^a-z0-9а-яё_-]+/gi, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function parseWorkbookNumber(value) {
+  if (value === null || value === undefined || value === "") return 0;
+  const normalized = String(value)
+    .replace(/[\u00A0\u202F\s]/g, "")
+    .replace(",", ".");
+  const parsed = Number(normalized);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function parseRuDateToIso(value) {
+  const text = String(value || "").trim();
+  const match = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
+  if (!match) return "";
+  return `${match[3]}-${match[2]}-${match[1]}`;
+}
+
+function getWorkbookSheetByName(name) {
+  return STATE.workbookSnapshot?.sheets?.find((sheet) => sheet.name === name) || null;
+}
+
+function getWorkbookCell(row, col) {
+  return row?.cells?.[String(col)] || null;
+}
+
+function getWorkbookDisplay(row, col) {
+  return getWorkbookCell(row, col)?.display || "";
+}
+
+function getWorkbookRaw(row, col) {
+  return getWorkbookCell(row, col)?.raw ?? "";
+}
+
+function chunkArray(items, chunkSize = 200) {
+  const chunks = [];
+  for (let index = 0; index < items.length; index += chunkSize) {
+    chunks.push(items.slice(index, index + chunkSize));
+  }
+  return chunks;
 }
 
 function isAdmin() {
@@ -313,6 +489,47 @@ function setModuleState(label) {
   DOM.moduleState.textContent = label;
 }
 
+function setImportStatus(message, tone = "") {
+  if (!DOM.importWorkbookStatus) return;
+  DOM.importWorkbookStatus.textContent = message;
+  DOM.importWorkbookStatus.className = `scope-note mb-3${tone ? ` scope-note-${tone}` : ""}`;
+}
+
+function syncImportButton() {
+  if (!DOM.importWorkbookButton) return;
+
+  const available = isAdmin() && STATE.workbookReady;
+  DOM.importWorkbookButton.disabled = STATE.importBusy || !available;
+  DOM.importWorkbookButton.textContent = STATE.importBusy
+    ? "Импортирую исходник..."
+    : "Импортировать заполненный исходник";
+
+  if (!isAdmin()) {
+    DOM.importWorkbookButton.classList.add("d-none");
+    setImportStatus("Импорт исходного файла доступен только владельцу и администраторам.");
+    return;
+  }
+
+  DOM.importWorkbookButton.classList.remove("d-none");
+
+  if (STATE.workbookError) {
+    setImportStatus(`Сверочный файл не загрузился: ${STATE.workbookError}`, "error");
+    return;
+  }
+
+  if (!STATE.workbookReady) {
+    setImportStatus("Подготавливаю заполненный исходник для импорта...");
+    return;
+  }
+
+  if (!STATE.financeReady || !STATE.operationsReady || !STATE.schemaReady) {
+    setImportStatus("Перед импортом выполните SQL-патчи ДОМ НЕОНА для схемы, финансов, операций и workbook sync.", "error");
+    return;
+  }
+
+  setImportStatus("Импорт переносит заполненные блоки исходного файла в рабочие таблицы платформы без дублей.");
+}
+
 function getBalanceDom() {
   return {
     scopeNote: document.getElementById("balanceScopeNote"),
@@ -384,6 +601,42 @@ function getPurchasesDom() {
   };
 }
 
+function getColumnLabel(index) {
+  let value = Number(index || 0);
+  let label = "";
+  while (value > 0) {
+    const remainder = (value - 1) % 26;
+    label = String.fromCharCode(65 + remainder) + label;
+    value = Math.floor((value - 1) / 26);
+  }
+  return label || "A";
+}
+
+function getSnapshotHost(sectionKey) {
+  return document.querySelector(`.template-host[data-template="${sectionKey}"]`);
+}
+
+function getSnapshotSheet(sectionKey) {
+  const sheetName = SECTION_META[sectionKey]?.snapshotSheet;
+  if (!sheetName || !STATE.workbookSnapshot?.sheets?.length) return null;
+  return STATE.workbookSnapshot.sheets.find((sheet) => sheet.name === sheetName) || null;
+}
+
+function getSnapshotSearch(sectionKey) {
+  return String(STATE.snapshotSearches[sectionKey] || "").trim().toLowerCase();
+}
+
+function buildSnapshotRows(sheet, sectionKey) {
+  if (!sheet?.rows?.length) return [];
+  const query = getSnapshotSearch(sectionKey);
+  if (!query) return sheet.rows;
+  return sheet.rows.filter((row) =>
+    Object.values(row.cells || {}).some((cell) =>
+      [cell.display, cell.raw, cell.formula].join(" | ").toLowerCase().includes(query)
+    )
+  );
+}
+
 function getCalendarStatusTone(status) {
   if (status === "Поступление") return "status-closed";
   if (status === "Платеж") return "status-ready";
@@ -415,6 +668,7 @@ function renderInteractiveFinanceSections() {
             <select class="form-select" name="account_type" required>
               <option value="cash_card">Наличные / карта</option>
               <option value="ooo_account">Счёт ООО</option>
+              <option value="ip_account">Счёт ИП</option>
             </select>
           </div>
           <div>
@@ -443,6 +697,7 @@ function renderInteractiveFinanceSections() {
             <option value="">Все счета</option>
             <option value="cash_card">Наличные / карта</option>
             <option value="ooo_account">Счёт ООО</option>
+            <option value="ip_account">Счёт ИП</option>
           </select>
         </div>
         <div>
@@ -632,13 +887,13 @@ function renderInteractiveFinanceSections() {
           </form>
         </article>
         <article class="subsection-card">
-          <h3>Выплата по активу</h3>
-          <p>Журналируем отдельные выплаты, чтобы видеть сколько уже закрыто и что осталось.</p>
+          <h3>График выплат по активам</h3>
+          <p>Можно привязать выплату к активу или оставить без привязки, как в исходном файле ДОМ НЕОНА.</p>
           <form class="record-form mb-0" id="assetPaymentForm">
             <div class="form-grid">
               <div>
                 <label class="form-label">Актив</label>
-                <select class="form-select" name="asset_id" id="assetPaymentAssetId" required></select>
+                <select class="form-select" name="asset_id" id="assetPaymentAssetId"></select>
               </div>
               <div>
                 <label class="form-label">Дата выплаты</label>
@@ -872,6 +1127,480 @@ function renderTemplateSections() {
   });
 }
 
+function renderWorkbookSnapshotSection(sectionKey) {
+  const host = getSnapshotHost(sectionKey);
+  if (!host) return;
+
+  const meta = SECTION_META[sectionKey];
+  const sheetName = meta?.snapshotSheet;
+  if (!sheetName) return;
+
+  if (STATE.workbookError) {
+    host.innerHTML = `<div class="scope-note scope-note-error">Не удалось загрузить сверочный лист: ${escapeHtml(STATE.workbookError)}</div>`;
+    return;
+  }
+
+  if (!STATE.workbookReady) {
+    host.innerHTML = `<div class="scope-note">Загружаю сверочный лист ${escapeHtml(sheetName)} из исходного файла...</div>`;
+    return;
+  }
+
+  const sheet = getSnapshotSheet(sectionKey);
+  if (!sheet) {
+    host.innerHTML = `<div class="scope-note">Лист ${escapeHtml(sheetName)} не найден в snapshot-файле.</div>`;
+    return;
+  }
+
+  const rows = buildSnapshotRows(sheet, sectionKey);
+  const headerRow = sheet.rows.find((row) => row.index <= 3) || sheet.rows[0];
+  const columns = Array.from({ length: sheet.maxCol || 1 }, (_, idx) => idx + 1);
+
+  host.innerHTML = `
+    <div class="snapshot-toolbar">
+      <div class="summary-row">
+        <article class="summary-card">
+          <span>Лист</span>
+          <strong>${escapeHtml(sheet.name)}</strong>
+        </article>
+        <article class="summary-card">
+          <span>Непустых ячеек</span>
+          <strong>${escapeHtml(String(sheet.nonEmpty || 0))}</strong>
+        </article>
+        <article class="summary-card">
+          <span>Формул</span>
+          <strong>${escapeHtml(String(sheet.formulas || 0))}</strong>
+        </article>
+        <article class="summary-card">
+          <span>Строк в выборке</span>
+          <strong>${escapeHtml(String(rows.length))}</strong>
+        </article>
+      </div>
+      <div class="toolbar-grid mt-3">
+        <div>
+          <label class="form-label">Поиск по листу</label>
+          <input
+            class="form-control"
+            type="text"
+            value="${escapeHtml(STATE.snapshotSearches[sectionKey] || "")}"
+            data-snapshot-search="${escapeHtml(sectionKey)}"
+            placeholder="Значение, формула или подпись"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="snapshot-hint">
+      Значения взяты из заполненного файла. Ячейки с формулами отмечены точкой и показывают формулу по наведению.
+    </div>
+    <div class="table-shell mt-3">
+      <table class="table table-sm align-middle snapshot-table">
+        <thead>
+          <tr>
+            <th class="snapshot-row-head">#</th>
+            ${columns.map((col) => `<th>${escapeHtml(getColumnLabel(col))}</th>`).join("")}
+          </tr>
+        </thead>
+        <tbody>
+          ${
+            rows.length
+              ? rows
+                  .map((row) => {
+                    const cells = row.cells || {};
+                    return `
+                      <tr>
+                        <th class="snapshot-row-head">${escapeHtml(String(row.index))}</th>
+                        ${columns
+                          .map((col) => {
+                            const cell = cells[String(col)];
+                            if (!cell) return `<td></td>`;
+                            const formula = cell.formula ? ` title="${escapeHtml(cell.formula)}"` : "";
+                            const tone = cell.kind ? ` cell-${escapeHtml(cell.kind)}` : "";
+                            const marker = cell.formula ? `<span class="formula-dot"></span>` : "";
+                            return `<td class="snapshot-cell${tone}"${formula}>${marker}<span>${escapeHtml(cell.display || cell.raw || "")}</span></td>`;
+                          })
+                          .join("")}
+                      </tr>
+                    `;
+                  })
+                  .join("")
+              : `<tr><td colspan="${columns.length + 1}" class="muted">По текущему поиску строки не найдены.</td></tr>`
+          }
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  if (headerRow) {
+    host.querySelectorAll("thead th").forEach((cell, index) => {
+      if (index === 0) return;
+      const headerCell = headerRow.cells?.[String(index)];
+      if (headerCell?.display) {
+        cell.title = headerCell.display;
+      }
+    });
+  }
+}
+
+function renderWorkbookSnapshotSections() {
+  Object.keys(SECTION_META).forEach((key) => {
+    if (SECTION_META[key].snapshotSheet) {
+      renderWorkbookSnapshotSection(key);
+    }
+  });
+}
+
+async function loadWorkbookSnapshot() {
+  if (STATE.workbookReady || STATE.workbookError) return;
+  try {
+    const response = await fetch(`./workbook_snapshot.json?v=20260402-dom-neona`, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    STATE.workbookSnapshot = await response.json();
+    STATE.workbookReady = true;
+    STATE.workbookError = "";
+  } catch (error) {
+    STATE.workbookError = error.message || "неизвестная ошибка";
+  }
+  renderWorkbookSnapshotSections();
+  syncImportButton();
+}
+
+function buildBalanceImportRows() {
+  const sheet = getWorkbookSheetByName("Баланс");
+  if (!sheet?.rows?.length) return [];
+
+  const groups = [
+    { slot: "cash_card", account_type: "cash_card", dateCol: 1, incomeCol: 2, expenseCol: 3, noteCol: 5 },
+    { slot: "ooo_account", account_type: "ooo_account", dateCol: 7, incomeCol: 8, expenseCol: 9, noteCol: 11 },
+    { slot: "ip_account", account_type: "ip_account", dateCol: 13, incomeCol: 14, expenseCol: 15, noteCol: 17 }
+  ];
+
+  return sheet.rows
+    .filter((row) => row.index >= 4)
+    .flatMap((row) =>
+      groups.flatMap((group) => {
+        const entryDate = parseRuDateToIso(getWorkbookDisplay(row, group.dateCol));
+        const incomeAmount = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, group.incomeCol)));
+        const expenseAmount = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, group.expenseCol)));
+        const note = String(getWorkbookDisplay(row, group.noteCol) || "").trim();
+
+        if (!entryDate || (!incomeAmount && !expenseAmount && !note)) {
+          return [];
+        }
+
+        return [
+          {
+            source_sheet: "Баланс",
+            source_row: row.index,
+            source_slot: group.slot,
+            entry_date: entryDate,
+            account_type: group.account_type,
+            income_amount: incomeAmount,
+            expense_amount: expenseAmount,
+            note: note || null,
+            created_by: STATE.user?.id || null
+          }
+        ];
+      })
+    );
+}
+
+function buildCalendarImportRows() {
+  const sheet = getWorkbookSheetByName("Платежный календарь");
+  if (!sheet?.rows?.length) return [];
+
+  const validAccounts = new Set(CALENDAR_ACCOUNTS.map((item) => item.value));
+  const validStatuses = new Set(CALENDAR_STATUSES);
+
+  return sheet.rows
+    .filter((row) => row.index >= 6)
+    .flatMap((row) => {
+      const paymentDate = parseRuDateToIso(getWorkbookDisplay(row, 1));
+      const counterparty = String(getWorkbookDisplay(row, 2) || "").trim();
+      const amount = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 3)));
+      const operationType = String(getWorkbookDisplay(row, 4) || "").trim();
+      const category = String(getWorkbookDisplay(row, 5) || "").trim();
+      const accountNameRaw = String(getWorkbookDisplay(row, 6) || "").trim();
+      const statusRaw = String(getWorkbookDisplay(row, 7) || "").trim();
+      const note = String(getWorkbookDisplay(row, 8) || "").trim();
+
+      if (!paymentDate || !counterparty || !amount || !operationType) {
+        return [];
+      }
+
+      return [
+        {
+          source_sheet: "Платежный календарь",
+          source_row: row.index,
+          payment_date: paymentDate,
+          counterparty,
+          amount,
+          operation_type: operationType === "Приход" ? "Приход" : "Расход",
+          category: category || null,
+          account_name: validAccounts.has(accountNameRaw) ? accountNameRaw : "Не распределено",
+          status: validStatuses.has(statusRaw) ? statusRaw : "Ожидает",
+          note: note || null,
+          created_by: STATE.user?.id || null
+        }
+      ];
+    });
+}
+
+function buildAssetsImportRows() {
+  const sheet = getWorkbookSheetByName("Активы");
+  if (!sheet?.rows?.length) return [];
+
+  return sheet.rows
+    .filter((row) => row.index >= 3)
+    .flatMap((row) => {
+      const assetName = String(getWorkbookDisplay(row, 1) || "").trim();
+      const assetValue = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 2)));
+      if (!assetName && !assetValue) {
+        return [];
+      }
+      return [
+        {
+          source_sheet: "Активы",
+          source_row: row.index,
+          asset_name: assetName || `Актив ${row.index}`,
+          asset_value: assetValue,
+          note: null,
+          created_by: STATE.user?.id || null
+        }
+      ];
+    });
+}
+
+function buildAssetPaymentImportRows() {
+  const sheet = getWorkbookSheetByName("Активы");
+  if (!sheet?.rows?.length) return [];
+
+  return sheet.rows
+    .filter((row) => row.index >= 2)
+    .flatMap((row) => {
+      const paymentDate = parseRuDateToIso(getWorkbookDisplay(row, 7));
+      const trancheOne = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 8)));
+      const trancheTwo = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 9)));
+      const paidRaw = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 10)));
+      const noteRaw = String(getWorkbookDisplay(row, 11) || "").trim();
+      const paymentAmount = paidRaw || roundMoney(trancheOne + trancheTwo);
+
+      if (!paymentDate || !paymentAmount) {
+        return [];
+      }
+
+      const noteParts = [];
+      if (trancheOne || trancheTwo) {
+        noteParts.push(`План из исходника: ${formatMoney(trancheOne)} ₽ + ${formatMoney(trancheTwo)} ₽`);
+      }
+      if (noteRaw) {
+        noteParts.push(noteRaw);
+      }
+
+      return [
+        {
+          source_sheet: "Активы",
+          source_row: row.index,
+          asset_id: null,
+          payment_date: paymentDate,
+          payment_amount: paymentAmount,
+          note: noteParts.join(" | ") || null,
+          created_by: STATE.user?.id || null
+        }
+      ];
+    });
+}
+
+function buildPurchaseImportRows() {
+  const sheet = getWorkbookSheetByName("Закупки");
+  if (!sheet?.rows?.length) return [];
+
+  let currentSupplierName = "";
+  let currentInn = "";
+  let currentUrl = "";
+  let currentCity = "";
+
+  return sheet.rows
+    .filter((row) => row.index >= 2)
+    .flatMap((row) => {
+      const supplierName = String(getWorkbookDisplay(row, 1) || "").trim();
+      const supplierInn = String(getWorkbookDisplay(row, 2) || "").trim();
+      const supplierUrl = String(getWorkbookDisplay(row, 3) || "").trim();
+      const city = String(getWorkbookDisplay(row, 4) || "").trim();
+
+      if (supplierName) currentSupplierName = supplierName;
+      if (supplierInn) currentInn = supplierInn;
+      if (supplierUrl) currentUrl = supplierUrl;
+      if (city) currentCity = city;
+
+      const category = String(getWorkbookDisplay(row, 5) || "").trim();
+      const article = String(getWorkbookDisplay(row, 6) || "").trim();
+      const itemName = String(getWorkbookDisplay(row, 7) || "").trim();
+      const unitName = String(getWorkbookDisplay(row, 8) || "").trim();
+      const price = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 9)));
+
+      if (!currentSupplierName || (!category && !article && !itemName && !unitName && !price)) {
+        return [];
+      }
+
+      return [
+        {
+          source_sheet: "Закупки",
+          source_row: row.index,
+          supplier_name: currentSupplierName,
+          supplier_inn: currentInn || null,
+          supplier_url: currentUrl && currentUrl !== "Нет" ? currentUrl : null,
+          city: currentCity || null,
+          category: category || null,
+          article: article || null,
+          item_name: itemName || null,
+          unit_name: unitName || null,
+          price,
+          note: null,
+          created_by: STATE.user?.id || null
+        }
+      ];
+    });
+}
+
+function buildSettlementImportData() {
+  const sheet = getWorkbookSheetByName("Взаиморасчет с мастерами");
+  if (!sheet?.rows?.length) {
+    return { partners: [], settlements: [] };
+  }
+
+  const partners = new Map();
+  const settlements = [];
+
+  sheet.rows
+    .filter((row) => row.index >= 2)
+    .forEach((row) => {
+      const periodLabel = String(getWorkbookDisplay(row, 1) || "").trim();
+      const partnerName = String(getWorkbookDisplay(row, 2) || "").trim();
+      const salaryAmount = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 3)));
+      const purchaseAmount = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 4)));
+      const status = String(getWorkbookDisplay(row, 7) || "").trim() || "Ожидает сверки";
+
+      if (!periodLabel || !partnerName) {
+        return;
+      }
+
+      const slug = sanitizeSlug(partnerName);
+      if (!slug) {
+        return;
+      }
+
+      if (!partners.has(slug)) {
+        partners.set(slug, {
+          slug,
+          display_name: partnerName,
+          notes: "Импортировано из исходного файла ДОМ НЕОНА.",
+          calculator_url: `../part/index.html?partner=${encodeURIComponent(slug)}`
+        });
+      }
+
+      settlements.push({
+        source_sheet: "Взаиморасчет с мастерами",
+        source_row: row.index,
+        partner_slug: slug,
+        period_label: periodLabel,
+        salary_amount: salaryAmount,
+        purchase_amount: purchaseAmount,
+        status,
+        note: null,
+        created_by: STATE.user?.id || null
+      });
+    });
+
+  return {
+    partners: Array.from(partners.values()),
+    settlements
+  };
+}
+
+async function upsertInBatches(tableName, rows, onConflict) {
+  for (const batch of chunkArray(rows)) {
+    if (!batch.length) continue;
+    const { error } = await supabase.from(tableName).upsert(batch, { onConflict });
+    if (error) throw error;
+  }
+}
+
+async function ensureImportedPartners(partners) {
+  if (!partners.length) return;
+
+  const slugs = partners.map((item) => item.slug);
+  const { data, error } = await supabase.from("partner_profiles").select("slug").in("slug", slugs);
+  if (error) throw error;
+
+  const existing = new Set((data || []).map((item) => item.slug));
+  const missing = partners.filter((item) => !existing.has(item.slug));
+  if (!missing.length) return;
+
+  const { error: insertError } = await supabase.from("partner_profiles").insert(missing);
+  if (insertError) throw insertError;
+}
+
+async function importWorkbookIntoTables() {
+  if (!isAdmin()) {
+    throw new Error("Импорт доступен только владельцу и администраторам.");
+  }
+
+  if (!STATE.workbookReady) {
+    await loadWorkbookSnapshot();
+  }
+
+  if (!STATE.schemaReady || !STATE.financeReady || !STATE.operationsReady) {
+    throw new Error("Сначала выполните SQL-патчи ДОМ НЕОНА: schema, finance, operations и workbook sync.");
+  }
+
+  STATE.importBusy = true;
+  syncImportButton();
+  setImportStatus("Проверяю заполненный исходник и переношу данные в рабочие таблицы...");
+
+  try {
+    const balanceRows = buildBalanceImportRows();
+    const calendarRows = buildCalendarImportRows();
+    const assetsRows = buildAssetsImportRows();
+    const assetPaymentRows = buildAssetPaymentImportRows();
+    const purchaseRows = buildPurchaseImportRows();
+    const settlementData = buildSettlementImportData();
+
+    await upsertInBatches("light2_balance_entries", balanceRows, "source_sheet,source_row,source_slot");
+    await upsertInBatches("light2_payment_calendar_entries", calendarRows, "source_sheet,source_row");
+    await upsertInBatches("light2_assets", assetsRows, "source_sheet,source_row");
+    await upsertInBatches("light2_asset_payments", assetPaymentRows, "source_sheet,source_row");
+    await upsertInBatches("light2_purchase_catalog", purchaseRows, "source_sheet,source_row");
+    await ensureImportedPartners(settlementData.partners);
+    await upsertInBatches("light2_partner_settlements", settlementData.settlements, "source_sheet,source_row");
+
+    await loadSettlements();
+    await loadFinanceData();
+    await loadOperationsData();
+    syncModuleStatus();
+
+    setImportStatus(
+      `Импорт завершен: баланс ${balanceRows.length}, календарь ${calendarRows.length}, активы ${assetsRows.length}, выплаты ${assetPaymentRows.length}, закупки ${purchaseRows.length}, взаиморасчеты ${settlementData.settlements.length}.`,
+      "success"
+    );
+    setStatus("Заполненный исходник ДОМ НЕОНА перенесён в рабочие таблицы платформы.", "success");
+  } catch (error) {
+    const rawMessage = error.message || "Не удалось импортировать исходный файл.";
+    const message =
+      rawMessage.includes("source_") ||
+      rawMessage.includes("ip_account") ||
+      rawMessage.includes("asset_id") ||
+      rawMessage.includes("duplicate key value")
+        ? `нужен SQL-патч platform_light2_workbook_sync_patch.sql (${rawMessage})`
+        : rawMessage;
+    setImportStatus(`Импорт остановлен: ${message}`, "error");
+    throw new Error(message);
+  } finally {
+    STATE.importBusy = false;
+    syncImportButton();
+  }
+}
+
 function openSection(sectionKey) {
   STATE.activeSection = isSectionAllowed(sectionKey) ? sectionKey : "overview";
   document.querySelectorAll(".section-tab").forEach((button) => {
@@ -880,6 +1609,10 @@ function openSection(sectionKey) {
   document.querySelectorAll(".page-section").forEach((section) => {
     section.classList.toggle("d-none", section.id !== `section-${STATE.activeSection}`);
   });
+  if (SECTION_META[STATE.activeSection]?.snapshotSheet) {
+    renderWorkbookSnapshotSection(STATE.activeSection);
+    void loadWorkbookSnapshot();
+  }
 }
 
 function syncSectionTabs() {
@@ -1092,12 +1825,12 @@ function getCurrentBalanceTotals() {
   return STATE.balanceEntries.reduce(
     (acc, entry) => {
       const delta = roundMoney(toNumber(entry.income_amount) - toNumber(entry.expense_amount));
-      if (entry.account_type === "cash_card") acc.cashCard = roundMoney(acc.cashCard + delta);
-      if (entry.account_type === "ooo_account") acc.oooAccount = roundMoney(acc.oooAccount + delta);
+      const key = entry.account_type || "unknown";
+      acc.byAccount[key] = roundMoney((acc.byAccount[key] || 0) + delta);
       acc.total = roundMoney(acc.total + delta);
       return acc;
     },
-    { cashCard: 0, oooAccount: 0, total: 0 }
+    { byAccount: {}, total: 0 }
   );
 }
 
@@ -1159,7 +1892,8 @@ function getVisibleCalendarEntries() {
 }
 
 function getAssetLabel(assetId) {
-  return STATE.assets.find((item) => item.id === assetId)?.asset_name || "—";
+  if (!assetId) return "Без привязки";
+  return STATE.assets.find((item) => item.id === assetId)?.asset_name || "Без привязки";
 }
 
 function buildAssetPaymentTotals() {
@@ -1175,7 +1909,7 @@ function populateAssetSelectors() {
 
   const previousFormValue = dom.paymentAssetSelect.value;
   const previousFilterValue = dom.paymentFilter.value;
-  const options = ['<option value="">Выберите актив</option>']
+  const options = ['<option value="">Без привязки к активу</option>']
     .concat(
       STATE.assets
         .slice()
@@ -1185,7 +1919,7 @@ function populateAssetSelectors() {
     .join("");
 
   dom.paymentAssetSelect.innerHTML = options;
-  dom.paymentFilter.innerHTML = ['<option value="">Все активы</option>']
+  dom.paymentFilter.innerHTML = ['<option value="">Все активы</option>', '<option value="__unassigned__">Без привязки</option>']
     .concat(
       STATE.assets
         .slice()
@@ -1197,7 +1931,9 @@ function populateAssetSelectors() {
   if (previousFormValue && STATE.assets.some((item) => item.id === previousFormValue)) {
     dom.paymentAssetSelect.value = previousFormValue;
   }
-  if (previousFilterValue && STATE.assets.some((item) => item.id === previousFilterValue)) {
+  if (previousFilterValue === "__unassigned__") {
+    dom.paymentFilter.value = "__unassigned__";
+  } else if (previousFilterValue && STATE.assets.some((item) => item.id === previousFilterValue)) {
     dom.paymentFilter.value = previousFilterValue;
   }
 }
@@ -1317,7 +2053,11 @@ function getVisibleAssetPayments() {
   const query = String(dom.paymentSearch?.value || "").trim().toLowerCase();
 
   let rows = STATE.assetPayments.slice();
-  if (assetFilter) rows = rows.filter((item) => item.asset_id === assetFilter);
+  if (assetFilter === "__unassigned__") {
+    rows = rows.filter((item) => !item.asset_id);
+  } else if (assetFilter) {
+    rows = rows.filter((item) => item.asset_id === assetFilter);
+  }
   if (query) {
     rows = rows.filter((item) =>
       [item.payment_date, getAssetLabel(item.asset_id), item.note, formatMoney(item.payment_amount)].join(" | ").toLowerCase().includes(query)
@@ -1371,10 +2111,10 @@ function renderAssetsSummary() {
   const dom = getAssetsDom();
   if (!dom.summary) return;
 
-  const totals = buildAssetPaymentTotals();
   const assetRows = getVisibleAssets();
+  const paymentRows = getVisibleAssetPayments();
   const totalValue = assetRows.reduce((sum, asset) => sum + toNumber(asset.asset_value), 0);
-  const totalPaid = assetRows.reduce((sum, asset) => sum + toNumber(totals[asset.id] || 0), 0);
+  const totalPaid = paymentRows.reduce((sum, item) => sum + toNumber(item.payment_amount), 0);
   const remaining = roundMoney(totalValue - totalPaid);
 
   dom.summary.innerHTML = `
@@ -1669,6 +2409,14 @@ function renderBalanceSummary(rows) {
   const totals = getCurrentBalanceTotals();
   const income = rows.reduce((sum, entry) => sum + toNumber(entry.income_amount), 0);
   const expense = rows.reduce((sum, entry) => sum + toNumber(entry.expense_amount), 0);
+  const accountCards = BALANCE_ACCOUNTS.map(
+    (account) => `
+      <article class="summary-card">
+        <span>${escapeHtml(account.label)}</span>
+        <strong>${formatMoney(totals.byAccount[account.value] || 0)} ₽</strong>
+      </article>
+    `
+  ).join("");
 
   dom.summary.innerHTML = `
     <article class="summary-card">
@@ -1687,14 +2435,7 @@ function renderBalanceSummary(rows) {
       <span>Баланс компании сейчас</span>
       <strong>${formatMoney(totals.total)} ₽</strong>
     </article>
-    <article class="summary-card">
-      <span>Наличные / карта</span>
-      <strong>${formatMoney(totals.cashCard)} ₽</strong>
-    </article>
-    <article class="summary-card">
-      <span>Счёт ООО</span>
-      <strong>${formatMoney(totals.oooAccount)} ₽</strong>
-    </article>
+    ${accountCards}
   `;
 }
 
@@ -1710,6 +2451,14 @@ function renderCalendarSummary(rows) {
     .filter((entry) => entry.operation_type === "Расход")
     .reduce((sum, entry) => sum + toNumber(entry.amount), 0);
   const net = roundMoney(incoming - outgoing);
+  const accountCards = BALANCE_ACCOUNTS.map(
+    (account) => `
+      <article class="summary-card">
+        <span>${escapeHtml(account.label)}</span>
+        <strong>${formatMoney(totals.byAccount[account.value] || 0)} ₽</strong>
+      </article>
+    `
+  ).join("");
 
   dom.summary.innerHTML = `
     <article class="summary-card">
@@ -1732,14 +2481,7 @@ function renderCalendarSummary(rows) {
       <span>Баланс компании сейчас</span>
       <strong>${formatMoney(totals.total)} ₽</strong>
     </article>
-    <article class="summary-card">
-      <span>Наличные / карта</span>
-      <strong>${formatMoney(totals.cashCard)} ₽</strong>
-    </article>
-    <article class="summary-card">
-      <span>Счёт ООО</span>
-      <strong>${formatMoney(totals.oooAccount)} ₽</strong>
-    </article>
+    ${accountCards}
   `;
 }
 
@@ -1945,9 +2687,10 @@ function syncModuleStatus() {
   if (!STATE.schemaReady && !STATE.financeReady && !STATE.operationsReady) {
     setModuleState("Нужны SQL-патчи");
     setStatus(
-      "LIGHT 2 загружен частично. Выполните platform_light2_patch.sql, platform_light2_finance_patch.sql и platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.",
+      "ДОМ НЕОНА загружен частично. Выполните platform_light2_patch.sql, platform_light2_finance_patch.sql и platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.",
       "warning"
     );
+    syncImportButton();
     return;
   }
 
@@ -1957,6 +2700,7 @@ function syncModuleStatus() {
       `Остальные блоки работают, но для взаиморасчетов нужен platform_light2_patch.sql${STATE.operationsReady ? "" : " и для Активов/Закупок нужен platform_light2_assets_purchases_patch.sql"}.`,
       "warning"
     );
+    syncImportButton();
     return;
   }
 
@@ -1966,6 +2710,7 @@ function syncModuleStatus() {
       "Взаиморасчеты уже работают. Для финансовых блоков выполните platform_light2_finance_patch.sql, а для Активов и Закупок — platform_light2_assets_purchases_patch.sql.",
       "warning"
     );
+    syncImportButton();
     return;
   }
 
@@ -1975,6 +2720,7 @@ function syncModuleStatus() {
       "Взаиморасчеты уже работают. Для разделов Баланс и Платежный календарь выполните platform_light2_finance_patch.sql.",
       "warning"
     );
+    syncImportButton();
     return;
   }
 
@@ -1984,11 +2730,13 @@ function syncModuleStatus() {
       "Финансовые блоки уже работают. Для разделов Активы и Закупки выполните platform_light2_assets_purchases_patch.sql.",
       "warning"
     );
+    syncImportButton();
     return;
   }
 
   setModuleState("Готово");
-  setStatus("ЛАЙТ 2 загружен. Взаиморасчеты, Баланс, Платежный календарь, Активы и Закупки работают внутри платформы.", "success");
+  setStatus("ДОМ НЕОНА загружен. Взаиморасчеты, Баланс, Платежный календарь, Активы и Закупки работают внутри платформы.", "success");
+  syncImportButton();
 }
 
 async function loadBootstrapData() {
@@ -2003,6 +2751,7 @@ async function loadBootstrapData() {
     setStatus("Откройте модуль через платформу после входа в аккаунт.", "warning");
     DOM.userDisplay.textContent = "Нет сессии";
     DOM.accessMode.textContent = "—";
+    syncImportButton();
     return false;
   }
 
@@ -2022,6 +2771,7 @@ async function loadBootstrapData() {
   updateHero();
   syncSectionTabs();
   renderOverview();
+  syncImportButton();
 
   renderPartnerSelect(DOM.settlementPartnerFilter, { includeAll: true });
   renderPartnerSelect(DOM.settlementForm.elements.partner_slug);
@@ -2056,7 +2806,7 @@ async function loadSettlements() {
   STATE.schemaError = "";
   STATE.settlements = data || [];
   setModuleState("Готово");
-  setStatus("ЛАЙТ 2 загружен. Взаиморасчеты уже работают внутри платформы.", "success");
+  setStatus("ДОМ НЕОНА загружен. Взаиморасчеты уже работают внутри платформы.", "success");
   renderSettlements();
 }
 
@@ -2272,25 +3022,24 @@ async function saveAssetPayment() {
   const dom = getAssetsDom();
   const formData = new FormData(dom.paymentForm);
   const payload = {
-    asset_id: String(formData.get("asset_id") || "").trim(),
+    asset_id: String(formData.get("asset_id") || "").trim() || null,
     payment_date: String(formData.get("payment_date") || "").trim(),
     payment_amount: roundMoney(formData.get("payment_amount")),
     note: String(formData.get("note") || "").trim() || null,
     created_by: STATE.user?.id || null
   };
 
-  if (!payload.asset_id) throw new Error("Выберите актив для выплаты.");
   if (!payload.payment_date) throw new Error("Укажите дату выплаты.");
   if (payload.payment_amount <= 0) throw new Error("Сумма выплаты должна быть больше нуля.");
 
   if (STATE.editingAssetPaymentId) {
     const { error } = await supabase.from("light2_asset_payments").update(payload).eq("id", STATE.editingAssetPaymentId);
     if (error) throw error;
-    setStatus("Выплата по активу обновлена.", "success");
+    setStatus("Запись графика выплат обновлена.", "success");
   } else {
     const { error } = await supabase.from("light2_asset_payments").insert(payload);
     if (error) throw error;
-    setStatus("Выплата по активу добавлена.", "success");
+    setStatus("Запись графика выплат добавлена.", "success");
   }
 
   resetAssetPaymentForm();
@@ -2388,6 +3137,21 @@ function bindEvents() {
     const button = event.target.closest("[data-open-section]");
     if (!button) return;
     openSection(button.dataset.openSection);
+  });
+
+  DOM.importWorkbookButton?.addEventListener("click", async () => {
+    try {
+      await importWorkbookIntoTables();
+    } catch (error) {
+      setStatus(error.message || "Не удалось импортировать исходный файл.", "error");
+    }
+  });
+
+  document.body.addEventListener("input", (event) => {
+    const input = event.target.closest("[data-snapshot-search]");
+    if (!input) return;
+    STATE.snapshotSearches[input.dataset.snapshotSearch] = input.value;
+    renderWorkbookSnapshotSection(input.dataset.snapshotSearch);
   });
 
   DOM.settlementForm.addEventListener("input", updateSettlementPreview);
@@ -2687,9 +3451,11 @@ async function start() {
   renderOverview();
   renderTemplateSections();
   renderInteractiveFinanceSections();
+  renderWorkbookSnapshotSections();
   syncSectionTabs();
   bindEvents();
   openSection("overview");
+  void loadWorkbookSnapshot();
 
   try {
     const ready = await loadBootstrapData();
@@ -2698,9 +3464,11 @@ async function start() {
     await loadFinanceData();
     await loadOperationsData();
     syncModuleStatus();
+    syncImportButton();
   } catch (error) {
     setModuleState("Ошибка");
-    setStatus(error.message || "Не удалось запустить модуль ЛАЙТ 2.", "error");
+    setStatus(error.message || "Не удалось запустить модуль ДОМ НЕОНА.", "error");
+    syncImportButton();
   }
 }
 

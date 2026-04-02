@@ -1,7 +1,7 @@
--- Apply this after platform_setup.sql for the LIGHT 2 module.
+-- Apply this after platform_setup.sql for the ДОМ НЕОНА module.
 -- 1) Creates the partner settlements table
 -- 2) Adds RLS so partners only see their own rows
--- 3) Grants the LIGHT 2 module to owner/admin and linked partners
+-- 3) Grants the ДОМ НЕОНА module to owner/admin and linked partners
 
 create table if not exists public.light2_partner_settlements (
   id uuid primary key default gen_random_uuid(),
@@ -12,6 +12,8 @@ create table if not exists public.light2_partner_settlements (
   status text not null default 'Ожидает сверки'
     check (status in ('Ожидает сверки', 'К выплате', 'Взаиморасчет произведен', 'Спор', 'Архив')),
   note text,
+  source_sheet text,
+  source_row integer,
   created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -19,6 +21,10 @@ create table if not exists public.light2_partner_settlements (
 
 create index if not exists light2_partner_settlements_partner_period_idx
   on public.light2_partner_settlements(partner_slug, period_label, created_at desc);
+
+create unique index if not exists light2_partner_settlements_source_idx
+  on public.light2_partner_settlements(source_sheet, source_row)
+  where source_sheet is not null and source_row is not null;
 
 drop trigger if exists light2_partner_settlements_set_updated_at on public.light2_partner_settlements;
 create trigger light2_partner_settlements_set_updated_at

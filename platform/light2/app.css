@@ -235,6 +235,18 @@ body {
   border: 1px solid rgba(13, 124, 164, 0.14);
 }
 
+.scope-note.scope-note-error {
+  color: var(--danger);
+  background: rgba(194, 71, 71, 0.08);
+  border-color: rgba(194, 71, 71, 0.18);
+}
+
+.scope-note.scope-note-success {
+  color: #1d7a45;
+  background: rgba(29, 122, 69, 0.09);
+  border-color: rgba(29, 122, 69, 0.18);
+}
+
 .settlement-form,
 .record-form {
   margin-bottom: 18px;
@@ -301,6 +313,56 @@ body {
 
 .table-shell table {
   margin: 0;
+}
+
+.snapshot-toolbar {
+  display: grid;
+  gap: 12px;
+}
+
+.snapshot-hint {
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.snapshot-table {
+  min-width: max-content;
+}
+
+.snapshot-row-head {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: #f5f9fb;
+  min-width: 68px;
+}
+
+.snapshot-cell {
+  position: relative;
+  min-width: 120px;
+  vertical-align: top;
+}
+
+.snapshot-cell span {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.snapshot-cell.cell-number,
+.snapshot-cell.cell-percent {
+  text-align: right;
+}
+
+.formula-dot {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
 }
 
 .table-shell thead th {
