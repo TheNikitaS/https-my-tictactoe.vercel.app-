@@ -220,11 +220,13 @@ body {
   border: 1px solid rgba(13, 124, 164, 0.14);
 }
 
-.settlement-form {
+.settlement-form,
+.record-form {
   margin-bottom: 18px;
 }
 
-.settlement-form.is-hidden {
+.settlement-form.is-hidden,
+.record-form.is-hidden {
   display: none;
 }
 
@@ -256,6 +258,12 @@ body {
   flex-wrap: wrap;
   gap: 10px;
   margin-top: 14px;
+}
+
+.section-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .summary-card span {
@@ -321,6 +329,26 @@ body {
 .badge-soft.status-archive {
   color: #5a6570;
   background: rgba(108, 117, 125, 0.14);
+}
+
+.badge-soft.type-incoming {
+  color: #116149;
+  background: rgba(25, 135, 84, 0.14);
+}
+
+.badge-soft.type-outgoing {
+  color: #8f5b00;
+  background: rgba(255, 193, 7, 0.18);
+}
+
+.amount-positive {
+  color: var(--success);
+  font-weight: 700;
+}
+
+.amount-negative {
+  color: var(--danger);
+  font-weight: 700;
 }
 
 .muted {
