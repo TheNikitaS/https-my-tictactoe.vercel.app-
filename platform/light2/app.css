@@ -290,6 +290,62 @@ body {
   font-size: 0.88rem;
 }
 
+.analytics-shell {
+  display: grid;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.analytics-grid {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.analytics-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.analytics-panel-wide {
+  grid-column: 1 / -1;
+}
+
+.analytics-kpi-strip {
+  gap: 12px;
+}
+
+.analytics-caption {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.analytics-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.analytics-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(237, 243, 247, 0.7);
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+.analytics-footnote {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.analytics-mini-table th,
+.analytics-mini-table td {
+  white-space: nowrap;
+}
+
 .overview-card button {
   margin-top: 6px;
 }

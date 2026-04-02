@@ -26,6 +26,22 @@ const CALENDAR_ACCOUNTS = [
 
 const CALENDAR_STATUSES = ["Платеж", "Поступление", "Ожидает", "Перенесен", "Отменен"];
 
+const MONTH_NAMES = [
+  "Январь",
+  "Февраль",
+  "Март",
+  "Апрель",
+  "Май",
+  "Июнь",
+  "Июль",
+  "Август",
+  "Сентябрь",
+  "Октябрь",
+  "Ноябрь",
+  "Декабрь"
+];
+const MONTH_NAME_SET = new Set(MONTH_NAMES);
+
 const DOM = {
   userDisplay: document.getElementById("userDisplay"),
   accessMode: document.getElementById("accessMode"),
@@ -413,6 +429,27 @@ function getOverviewSectionFootnote(key) {
 
   const sheetName = SECTION_META[key]?.snapshotSheet;
   const sheet = sheetName ? getSnapshotSheet(key) : null;
+  if (sheet && key === "leadgen") {
+    const parsed = parseLeadgenSnapshot(sheet);
+    const activeBlocks = parsed.blocks.filter((block) => block.dataSeries.length);
+    return `${activeBlocks.length} каналов • ${parsed.latestMonthLabel || "без среза"}`;
+  }
+
+  if (sheet && key === "metrics") {
+    const parsed = parseMetricsSnapshot(sheet);
+    const latest = parsed.series.at(-1);
+    if (latest) {
+      return `${latest.monthLabel} ${latest.yearLabel} • ${formatMoney(latest.revenue)} ₽`;
+    }
+  }
+
+  if (sheet && key === "finance") {
+    const parsed = parseFinmodelSnapshot(sheet);
+    const latest = parsed.timeline.at(-1);
+    if (latest) {
+      return `${latest.monthLabel} ${latest.yearLabel} • ${formatMoney(latest.turnover)} ₽`;
+    }
+  }
   if (sheet) {
     return `${sheet.nonEmpty || 0} ячеек • ${sheet.formulas || 0} формул`;
   }
@@ -981,6 +1018,549 @@ function buildSnapshotRows(sheet, sectionKey) {
   );
 }
 
+function getRowCell(row, columnIndex) {
+  return row?.cells?.[String(columnIndex)] || null;
+}
+
+function getRowDisplay(row, columnIndex) {
+  return String(getRowCell(row, columnIndex)?.display || "").trim();
+}
+
+function getRowRaw(row, columnIndex) {
+  return getRowCell(row, columnIndex)?.raw ?? "";
+}
+
+function getSheetRow(sheet, rowIndex) {
+  return sheet?.rows?.find((row) => row.index === rowIndex) || null;
+}
+
+function getSheetDisplay(sheet, rowIndex, columnIndex) {
+  return getRowDisplay(getSheetRow(sheet, rowIndex), columnIndex);
+}
+
+function getSheetCell(sheet, rowIndex, columnIndex) {
+  return getRowCell(getSheetRow(sheet, rowIndex), columnIndex);
+}
+
+function hasSnapshotValue(cell) {
+  if (!cell) return false;
+  const display = String(cell.display || "").trim();
+  const raw = String(cell.raw ?? "").trim();
+  if (!display && !raw) return false;
+  if (display === "#DIV/0!" || raw === "#DIV/0!") return false;
+  return true;
+}
+
+function getSnapshotCellNumber(cell) {
+  if (!cell) return 0;
+  return parseWorkbookNumber(cell.raw ?? cell.display ?? 0);
+}
+
+function getSheetNumber(sheet, rowIndex, columnIndex) {
+  return getSnapshotCellNumber(getSheetCell(sheet, rowIndex, columnIndex));
+}
+
+function isMonthLabel(value) {
+  return MONTH_NAME_SET.has(String(value || "").trim());
+}
+
+function toYearLabel(value) {
+  const source = String(value || "").trim();
+  if (!source) return "";
+  const fullYearMatch = source.match(/\d{4}/);
+  if (fullYearMatch) return fullYearMatch[0];
+  const shortYearMatch = source.match(/\d{2}/);
+  return shortYearMatch ? `20${shortYearMatch[0]}` : source;
+}
+
+function formatPercentFromDecimal(value) {
+  if (!Number.isFinite(value)) return "—";
+  return `${new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(value * 100)}%`;
+}
+
+function formatPlainNumber(value, digits = 0) {
+  if (!Number.isFinite(value)) return "—";
+  return new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits
+  }).format(value);
+}
+
+function getMetricRowByLabels(rowMap, labels = []) {
+  for (const label of labels) {
+    const row = rowMap.get(label);
+    if (row) return row;
+  }
+  return null;
+}
+
+function getMetricCell(rowMap, labels, columnIndex) {
+  const row = getMetricRowByLabels(rowMap, labels);
+  return row ? getRowCell(row, columnIndex) : null;
+}
+
+function getMetricNumber(rowMap, labels, columnIndex) {
+  return getSnapshotCellNumber(getMetricCell(rowMap, labels, columnIndex));
+}
+
+function parseLeadgenSnapshot(sheet) {
+  if (!sheet?.rows?.length) return { blocks: [] };
+
+  const headerRows = sheet.rows.filter((row) => {
+    const cells = Object.values(row.cells || {});
+    return getRowDisplay(row, 2) === "Среднее" && cells.some((cell) => isMonthLabel(cell.display));
+  });
+
+  const blocks = headerRows.map((headerRow, index) => {
+    const nextHeaderRow = headerRows[index + 1];
+    const monthColumns = Object.keys(headerRow.cells || {})
+      .map(Number)
+      .sort((a, b) => a - b)
+      .filter((columnIndex) => isMonthLabel(getRowDisplay(headerRow, columnIndex)))
+      .map((columnIndex) => ({
+        columnIndex,
+        monthLabel: getRowDisplay(headerRow, columnIndex)
+      }));
+
+    const rowMap = new Map(
+      sheet.rows
+        .filter((row) => row.index > headerRow.index && row.index < (nextHeaderRow?.index || Number.MAX_SAFE_INTEGER))
+        .filter((row) => getRowDisplay(row, 1))
+        .map((row) => [getRowDisplay(row, 1), row])
+    );
+
+    const leadRow = getMetricRowByLabels(rowMap, ["Заявки/Лиды", "Контакты"]);
+    const clickConversionRow = getMetricRowByLabels(rowMap, ["Конверсия клики", "Конверсия в контакт"]);
+    const leadCostRow = getMetricRowByLabels(rowMap, ["Стоимость лида", "Стоимость контакта"]);
+
+    const dataSeries = monthColumns
+      .filter(({ columnIndex }) =>
+        [
+          getMetricCell(rowMap, ["Расходы"], columnIndex),
+          getMetricCell(rowMap, ["Заявки/Лиды", "Контакты"], columnIndex),
+          getMetricCell(rowMap, ["Продажи"], columnIndex),
+          getMetricCell(rowMap, ["Прибыль чистая"], columnIndex)
+        ].some(hasSnapshotValue)
+      )
+      .map(({ columnIndex, monthLabel }) => ({
+        columnIndex,
+        monthLabel,
+        spend: getMetricNumber(rowMap, ["Расходы"], columnIndex),
+        leads: getMetricNumber(rowMap, ["Заявки/Лиды", "Контакты"], columnIndex),
+        sales: getMetricNumber(rowMap, ["Продажи"], columnIndex),
+        profitNet: getMetricNumber(rowMap, ["Прибыль чистая"], columnIndex),
+        costPerLead: getMetricNumber(rowMap, ["Стоимость лида", "Стоимость контакта"], columnIndex),
+        costPerSale: getMetricNumber(rowMap, ["Цена продажи"], columnIndex),
+        clickConversion: getMetricNumber(rowMap, ["Конверсия клики", "Конверсия в контакт"], columnIndex),
+        leadConversion: getMetricNumber(rowMap, ["Конверсия лида"], columnIndex),
+        saleConversion: getMetricNumber(rowMap, ["Конверсия продажи"], columnIndex)
+      }));
+
+    return {
+      title: getRowDisplay(headerRow, 1) || `Канал ${index + 1}`,
+      leadLabel: leadRow ? getRowDisplay(leadRow, 1) : "Лиды",
+      clickConversionLabel: clickConversionRow ? getRowDisplay(clickConversionRow, 1) : "Конверсия",
+      leadCostLabel: leadCostRow ? getRowDisplay(leadCostRow, 1) : "Стоимость лида",
+      hasLeadConversion: Boolean(getMetricRowByLabels(rowMap, ["Конверсия лида"])),
+      dataSeries
+    };
+  });
+
+  return {
+    blocks,
+    latestMonthLabel:
+      blocks
+        .map((block) => block.dataSeries.at(-1)?.monthLabel)
+        .filter(Boolean)
+        .at(-1) || ""
+  };
+}
+
+function parseMetricsSnapshot(sheet) {
+  if (!sheet?.rows?.length) return { series: [] };
+
+  const yearGroups = Object.keys(getSheetRow(sheet, 1)?.cells || {})
+    .map(Number)
+    .sort((a, b) => a - b)
+    .filter((columnIndex) => /\d/.test(getSheetDisplay(sheet, 1, columnIndex)))
+    .map((columnIndex, index, columns) => ({
+      start: columnIndex,
+      end: (columns[index + 1] || (sheet.maxCol + 1)) - 1,
+      yearLabel: toYearLabel(getSheetDisplay(sheet, 1, columnIndex))
+    }));
+
+  const getYearForColumn = (columnIndex) =>
+    yearGroups.find((group) => columnIndex >= group.start && columnIndex <= group.end)?.yearLabel || "";
+
+  const rowMap = new Map(
+    sheet.rows
+      .filter((row) => row.index >= 4 && getRowDisplay(row, 1))
+      .map((row) => [getRowDisplay(row, 1), row])
+  );
+
+  const series = Array.from({ length: sheet.maxCol || 0 }, (_, idx) => idx + 1)
+    .filter((columnIndex) => isMonthLabel(getSheetDisplay(sheet, 2, columnIndex)))
+    .filter((columnIndex) => getSheetDisplay(sheet, 3, columnIndex).startsWith("Сумма"))
+    .map((columnIndex) => ({
+      columnIndex,
+      monthLabel: getSheetDisplay(sheet, 2, columnIndex),
+      yearLabel: getYearForColumn(columnIndex),
+      revenue: getMetricNumber(rowMap, ["Выручка"], columnIndex),
+      cost: getMetricNumber(rowMap, ["Себестоимость"], columnIndex),
+      grossProfit: getMetricNumber(rowMap, ["Валовая прибыль"], columnIndex),
+      operatingExpenses: getMetricNumber(rowMap, ["Операционные расходы"], columnIndex),
+      operatingProfit: getMetricNumber(rowMap, ["Операционная прибыль"], columnIndex),
+      taxes: getMetricNumber(rowMap, ["Налоги и сборы"], columnIndex),
+      netProfit: getMetricNumber(rowMap, ["Чистая прибыль"], columnIndex),
+      productProfitability: getMetricNumber(rowMap, ["Rпр — рентабельность продукции"], columnIndex),
+      businessProfitability: getMetricNumber(rowMap, ["Рентабильность бизнеса"], columnIndex),
+      margin: getMetricNumber(rowMap, ["Маржа"], columnIndex),
+      averageCheck: getMetricNumber(rowMap, ["Средний чек"], columnIndex),
+      sales: getMetricNumber(rowMap, ["Продажи"], columnIndex),
+      warehouse: getMetricNumber(rowMap, ["Склад"], columnIndex),
+      tbuMoney: getMetricNumber(rowMap, ["ТБУ в деньгах"], columnIndex)
+    }))
+    .filter(
+      (item) =>
+        hasSnapshotValue(getMetricCell(rowMap, ["Выручка"], item.columnIndex)) ||
+        hasSnapshotValue(getMetricCell(rowMap, ["Чистая прибыль"], item.columnIndex)) ||
+        hasSnapshotValue(getMetricCell(rowMap, ["Продажи"], item.columnIndex))
+    );
+
+  return { series };
+}
+
+function parseFinmodelSnapshot(sheet) {
+  if (!sheet?.rows?.length) return { timeline: [], partnerTotals: [] };
+
+  const timeline = [];
+  let currentYear = "";
+  let currentPartner = "";
+
+  sheet.rows
+    .filter((row) => row.index >= 4)
+    .forEach((row) => {
+      const yearLabel = toYearLabel(getRowDisplay(row, 12)) || currentYear;
+      if (yearLabel) currentYear = yearLabel;
+
+      const partnerLabel = getRowDisplay(row, 20) || currentPartner;
+      if (partnerLabel) currentPartner = partnerLabel;
+
+      const monthLabel = getRowDisplay(row, 13);
+      const turnoverCell = getRowCell(row, 14);
+      if (!isMonthLabel(monthLabel) || !hasSnapshotValue(turnoverCell)) return;
+
+      timeline.push({
+        rowIndex: row.index,
+        yearLabel: currentYear,
+        monthLabel,
+        turnover: getSnapshotCellNumber(turnoverCell),
+        orders: getSnapshotCellNumber(getRowCell(row, 15)),
+        partnerLabel: currentPartner || "Без привязки"
+      });
+    });
+
+  const partnerTotals = Array.from(
+    timeline.reduce((map, item) => {
+      const current = map.get(item.partnerLabel) || { partnerLabel: item.partnerLabel, turnover: 0, orders: 0, months: 0 };
+      current.turnover += item.turnover;
+      current.orders += item.orders;
+      current.months += 1;
+      map.set(item.partnerLabel, current);
+      return map;
+    }, new Map()).values()
+  ).sort((a, b) => b.turnover - a.turnover);
+
+  return { timeline, partnerTotals };
+}
+
+function renderLeadgenAnalytics(sheet) {
+  const parsed = parseLeadgenSnapshot(sheet);
+  if (!parsed.blocks.length) return "";
+
+  const cards = parsed.blocks
+    .map((block) => {
+      const latest = block.dataSeries.at(-1);
+      if (!latest) return "";
+
+      const recentSeries = block.dataSeries.slice(-4);
+      return `
+        <article class="subsection-card analytics-panel">
+          <div class="panel-kicker">Канал</div>
+          <h3>${escapeHtml(block.title)}</h3>
+          <div class="analytics-caption">Последний заполненный срез: ${escapeHtml(latest.monthLabel)}</div>
+          <div class="summary-row analytics-kpi-strip">
+            <article class="summary-card">
+              <span>Расходы</span>
+              <strong>${formatMoney(latest.spend)} ₽</strong>
+            </article>
+            <article class="summary-card">
+              <span>${escapeHtml(block.leadLabel)}</span>
+              <strong>${formatPlainNumber(latest.leads)}</strong>
+            </article>
+            <article class="summary-card">
+              <span>Продажи</span>
+              <strong>${formatPlainNumber(latest.sales)}</strong>
+            </article>
+            <article class="summary-card">
+              <span>Чистая прибыль</span>
+              <strong class="${latest.profitNet >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.profitNet)} ₽</strong>
+            </article>
+          </div>
+          <div class="analytics-chip-row">
+            <span class="analytics-chip">${escapeHtml(block.clickConversionLabel)}: <strong>${formatPercentFromDecimal(latest.clickConversion)}</strong></span>
+            ${block.hasLeadConversion ? `<span class="analytics-chip">Конверсия лида: <strong>${formatPercentFromDecimal(latest.leadConversion)}</strong></span>` : ""}
+            <span class="analytics-chip">Конверсия продажи: <strong>${formatPercentFromDecimal(latest.saleConversion)}</strong></span>
+            <span class="analytics-chip">${escapeHtml(block.leadCostLabel)}: <strong>${formatMoney(latest.costPerLead)} ₽</strong></span>
+            <span class="analytics-chip">Цена продажи: <strong>${formatMoney(latest.costPerSale)} ₽</strong></span>
+          </div>
+          <div class="table-shell mt-3">
+            <table class="table table-sm align-middle analytics-mini-table">
+              <thead>
+                <tr>
+                  <th>Месяц</th>
+                  <th class="text-end">Расходы</th>
+                  <th class="text-end">${escapeHtml(block.leadLabel)}</th>
+                  <th class="text-end">Продажи</th>
+                  <th class="text-end">Чистая прибыль</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recentSeries
+                  .map(
+                    (item) => `
+                      <tr>
+                        <td>${escapeHtml(item.monthLabel)}</td>
+                        <td class="text-end">${formatMoney(item.spend)}</td>
+                        <td class="text-end">${formatPlainNumber(item.leads)}</td>
+                        <td class="text-end">${formatPlainNumber(item.sales)}</td>
+                        <td class="text-end ${item.profitNet >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(item.profitNet)}</td>
+                      </tr>
+                    `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+
+  return `
+    <div class="analytics-shell">
+      <div class="scope-note mb-3">
+        Каналы разбираются автоматически из листа. Сверху показаны последние заполненные месяцы по каждому рекламному блоку, снизу остаётся исходная таблица для сверки.
+      </div>
+      <div class="subsection-grid analytics-grid">${cards}</div>
+    </div>
+  `;
+}
+
+function renderMetricsAnalytics(sheet) {
+  const parsed = parseMetricsSnapshot(sheet);
+  if (!parsed.series.length) return "";
+
+  const latest = parsed.series.at(-1);
+  const recentSeries = parsed.series.slice(-6);
+  const latestLabel = `${latest.monthLabel} ${latest.yearLabel}`.trim();
+
+  return `
+    <div class="analytics-shell">
+      <div class="summary-row analytics-kpi-strip mb-3">
+        <article class="summary-card">
+          <span>Актуальный месяц</span>
+          <strong>${escapeHtml(latestLabel)}</strong>
+        </article>
+        <article class="summary-card">
+          <span>Выручка</span>
+          <strong>${formatMoney(latest.revenue)} ₽</strong>
+        </article>
+        <article class="summary-card">
+          <span>Чистая прибыль</span>
+          <strong class="${latest.netProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.netProfit)} ₽</strong>
+        </article>
+        <article class="summary-card">
+          <span>Продажи</span>
+          <strong>${formatPlainNumber(latest.sales)}</strong>
+        </article>
+        <article class="summary-card">
+          <span>Средний чек</span>
+          <strong>${formatMoney(latest.averageCheck)} ₽</strong>
+        </article>
+      </div>
+      <div class="subsection-grid analytics-grid">
+        <article class="subsection-card analytics-panel">
+          <div class="panel-kicker">Экономика месяца</div>
+          <h3>${escapeHtml(latestLabel)}</h3>
+          <div class="overview-list">
+            <div class="overview-list-item"><span>Себестоимость</span><strong>${formatMoney(latest.cost)} ₽</strong></div>
+            <div class="overview-list-item"><span>Валовая прибыль</span><strong class="${latest.grossProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.grossProfit)} ₽</strong></div>
+            <div class="overview-list-item"><span>Операционные расходы</span><strong>${formatMoney(latest.operatingExpenses)} ₽</strong></div>
+            <div class="overview-list-item"><span>Операционная прибыль</span><strong class="${latest.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.operatingProfit)} ₽</strong></div>
+            <div class="overview-list-item"><span>Налоги и сборы</span><strong>${formatMoney(latest.taxes)} ₽</strong></div>
+            <div class="overview-list-item"><span>ТБУ в деньгах</span><strong>${formatMoney(latest.tbuMoney)} ₽</strong></div>
+          </div>
+        </article>
+        <article class="subsection-card analytics-panel">
+          <div class="panel-kicker">Качество бизнеса</div>
+          <h3>Маржа и рентабельность</h3>
+          <div class="analytics-chip-row">
+            <span class="analytics-chip">Маржа: <strong>${formatPercentFromDecimal(latest.margin)}</strong></span>
+            <span class="analytics-chip">Rпр: <strong>${formatPercentFromDecimal(latest.productProfitability)}</strong></span>
+            <span class="analytics-chip">Рентабельность бизнеса: <strong>${formatPercentFromDecimal(latest.businessProfitability)}</strong></span>
+            <span class="analytics-chip">Склад: <strong>${formatMoney(latest.warehouse)} ₽</strong></span>
+          </div>
+          <div class="analytics-footnote">Показатели взяты из последнего заполненного месяца листа и сохраняют исходную формульную логику.</div>
+        </article>
+        <article class="subsection-card analytics-panel analytics-panel-wide">
+          <div class="panel-kicker">Последние месяцы</div>
+          <h3>Динамика управленческих метрик</h3>
+          <div class="table-shell mt-2">
+            <table class="table table-sm align-middle analytics-mini-table">
+              <thead>
+                <tr>
+                  <th>Месяц</th>
+                  <th class="text-end">Выручка</th>
+                  <th class="text-end">Опер. прибыль</th>
+                  <th class="text-end">Чистая прибыль</th>
+                  <th class="text-end">Продажи</th>
+                  <th class="text-end">Средний чек</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recentSeries
+                  .map(
+                    (item) => `
+                      <tr>
+                        <td>${escapeHtml(`${item.monthLabel} ${item.yearLabel}`.trim())}</td>
+                        <td class="text-end">${formatMoney(item.revenue)}</td>
+                        <td class="text-end ${item.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(item.operatingProfit)}</td>
+                        <td class="text-end ${item.netProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(item.netProfit)}</td>
+                        <td class="text-end">${formatPlainNumber(item.sales)}</td>
+                        <td class="text-end">${formatMoney(item.averageCheck)}</td>
+                      </tr>
+                    `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </div>
+  `;
+}
+
+function renderFinmodelAnalytics(sheet) {
+  const parsed = parseFinmodelSnapshot(sheet);
+  if (!parsed.timeline.length) return "";
+
+  const latest = parsed.timeline.at(-1);
+  const bestMonth = parsed.timeline.reduce((best, item) => (!best || item.turnover > best.turnover ? item : best), null);
+  const currentYearRows = parsed.timeline.filter((item) => item.yearLabel === latest.yearLabel);
+  const currentYearTurnover = currentYearRows.reduce((sum, item) => sum + item.turnover, 0);
+  const currentYearOrders = currentYearRows.reduce((sum, item) => sum + item.orders, 0);
+  const recentTimeline = parsed.timeline.slice(-8);
+
+  return `
+    <div class="analytics-shell">
+      <div class="summary-row analytics-kpi-strip mb-3">
+        <article class="summary-card">
+          <span>Последний месяц</span>
+          <strong>${escapeHtml(`${latest.monthLabel} ${latest.yearLabel}`.trim())}</strong>
+        </article>
+        <article class="summary-card">
+          <span>Оборот</span>
+          <strong>${formatMoney(latest.turnover)} ₽</strong>
+        </article>
+        <article class="summary-card">
+          <span>Заказов</span>
+          <strong>${formatPlainNumber(latest.orders)}</strong>
+        </article>
+        <article class="summary-card">
+          <span>Средний чек месяца</span>
+          <strong>${latest.orders ? formatMoney(latest.turnover / latest.orders) : "—"}</strong>
+        </article>
+      </div>
+      <div class="subsection-grid analytics-grid">
+        <article class="subsection-card analytics-panel">
+          <div class="panel-kicker">Годовой контур</div>
+          <h3>${escapeHtml(latest.yearLabel)} год на сегодня</h3>
+          <div class="overview-list">
+            <div class="overview-list-item"><span>Оборот</span><strong>${formatMoney(currentYearTurnover)} ₽</strong></div>
+            <div class="overview-list-item"><span>Заказов</span><strong>${formatPlainNumber(currentYearOrders)}</strong></div>
+            <div class="overview-list-item"><span>Средний чек</span><strong>${currentYearOrders ? formatMoney(currentYearTurnover / currentYearOrders) : "—"}</strong></div>
+            <div class="overview-list-item"><span>Лучший месяц</span><strong>${bestMonth ? escapeHtml(`${bestMonth.monthLabel} ${bestMonth.yearLabel}`.trim()) : "—"}</strong></div>
+          </div>
+        </article>
+        <article class="subsection-card analytics-panel">
+          <div class="panel-kicker">Партнёры</div>
+          <h3>Вклад по партнёрам</h3>
+          <div class="overview-list">
+            ${parsed.partnerTotals
+              .slice(0, 6)
+              .map(
+                (item) => `
+                  <div class="overview-list-item">
+                    <div>
+                      <strong>${escapeHtml(item.partnerLabel)}</strong>
+                      <span>${formatPlainNumber(item.months)} мес. • ${formatPlainNumber(item.orders)} заказов</span>
+                    </div>
+                    <strong>${formatMoney(item.turnover)} ₽</strong>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+        </article>
+        <article class="subsection-card analytics-panel analytics-panel-wide">
+          <div class="panel-kicker">Временной ряд</div>
+          <h3>Оборот и заказы по месяцам</h3>
+          <div class="table-shell mt-2">
+            <table class="table table-sm align-middle analytics-mini-table">
+              <thead>
+                <tr>
+                  <th>Месяц</th>
+                  <th class="text-end">Оборот</th>
+                  <th class="text-end">Заказов</th>
+                  <th class="text-end">Средний чек</th>
+                  <th>Партнёр</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${recentTimeline
+                  .map(
+                    (item) => `
+                      <tr>
+                        <td>${escapeHtml(`${item.monthLabel} ${item.yearLabel}`.trim())}</td>
+                        <td class="text-end">${formatMoney(item.turnover)}</td>
+                        <td class="text-end">${formatPlainNumber(item.orders)}</td>
+                        <td class="text-end">${item.orders ? formatMoney(item.turnover / item.orders) : "—"}</td>
+                        <td>${escapeHtml(item.partnerLabel)}</td>
+                      </tr>
+                    `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </div>
+    </div>
+  `;
+}
+
+function renderSnapshotAnalytics(sectionKey, sheet) {
+  if (sectionKey === "leadgen") return renderLeadgenAnalytics(sheet);
+  if (sectionKey === "metrics") return renderMetricsAnalytics(sheet);
+  if (sectionKey === "finance") return renderFinmodelAnalytics(sheet);
+  return "";
+}
+
 function getCalendarStatusTone(status) {
   if (status === "Поступление") return "status-closed";
   if (status === "Платеж") return "status-ready";
@@ -1501,8 +2081,10 @@ function renderWorkbookSnapshotSection(sectionKey) {
   const rows = buildSnapshotRows(sheet, sectionKey);
   const headerRow = sheet.rows.find((row) => row.index <= 3) || sheet.rows[0];
   const columns = Array.from({ length: sheet.maxCol || 1 }, (_, idx) => idx + 1);
+  const analyticsHtml = renderSnapshotAnalytics(sectionKey, sheet);
 
   host.innerHTML = `
+    ${analyticsHtml}
     <div class="snapshot-toolbar">
       <div class="summary-row">
         <article class="summary-card">
