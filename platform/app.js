@@ -3,6 +3,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
+const PLATFORM_BUILD = "20260402-navfix4";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
@@ -92,7 +93,7 @@ const MODULES = {
     title: "ДОМ НЕОНА",
     subtitle: "Финансовый и операционный контур компании внутри платформы.",
     type: "embed",
-    src: () => "./light2/index.html?v=20260402-dom-neona"
+    src: () => `./light2/index.html?v=${PLATFORM_BUILD}`
   },
   messenger: {
     title: "Мессенджер",
