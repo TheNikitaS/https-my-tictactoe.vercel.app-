@@ -7,7 +7,7 @@
   <link rel="icon" type="image/png" href="../../shared/assets/dom-neon-logo.png" />
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="./app.css?v=20260402-analytics1" rel="stylesheet" />
+  <link href="./app.css?v=20260402-workspace1" rel="stylesheet" />
 </head>
 <body>
   <div class="light2-shell">
@@ -39,6 +39,17 @@
 
     <section class="status-card" id="statusBox">
       Загружаю структуру модуля и профиль пользователя...
+    </section>
+
+    <section class="workspace-toolbar">
+      <div class="workspace-toolbar__meta">
+        <strong>Рабочий режим ДОМ НЕОНА</strong>
+        <span id="workspaceModeLabel">Таблицы в стандартном режиме, формы открыты.</span>
+      </div>
+      <div class="section-actions">
+        <button type="button" class="btn btn-outline-dark btn-sm" id="toggleCompactTablesButton">Компактные таблицы</button>
+        <button type="button" class="btn btn-outline-dark btn-sm" id="toggleAllFormsButton">Скрыть формы</button>
+      </div>
     </section>
 
     <nav class="section-tabs" id="sectionTabs">
@@ -88,7 +99,7 @@
         <div class="section-head">
           <div>
             <h2>Баланс</h2>
-            <p>Два контура учета из исходного листа: наличные / карта и счет ООО.</p>
+            <p>Три контура учета из исходного листа: наличные / карта, счет ООО и счет ИП.</p>
           </div>
         </div>
         <div class="template-host" data-template="balance"></div>
@@ -130,6 +141,8 @@
             </p>
           </div>
           <div class="section-actions">
+            <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="settlements">Новая запись</button>
+            <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="settlements">Скрыть форму</button>
             <button type="button" class="btn btn-outline-dark btn-sm" id="refreshSettlementsButton">Обновить</button>
           </div>
         </div>
@@ -391,6 +404,6 @@
     </section>
   </div>
 
-  <script type="module" src="./app.js?v=20260402-analytics1"></script>
+  <script type="module" src="./app.js?v=20260402-workspace1"></script>
 </body>
 </html>

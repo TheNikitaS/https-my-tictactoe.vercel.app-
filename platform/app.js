@@ -3,7 +3,11 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260402-analytics1";
+const PLATFORM_BUILD = "20260402-workspace1";
+const PLATFORM_UI_KEYS = {
+  wideMode: "dom-neona:platform:wideMode",
+  sidebarCollapsed: "dom-neona:platform:sidebarCollapsed"
+};
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
@@ -22,6 +26,8 @@ const DOM = {
   moduleNav: document.getElementById("moduleNav"),
   viewTitle: document.getElementById("viewTitle"),
   viewSubtitle: document.getElementById("viewSubtitle"),
+  sidebarToggleButton: document.getElementById("sidebarToggleButton"),
+  wideModeButton: document.getElementById("wideModeButton"),
   dashboardView: document.getElementById("dashboardView"),
   dashboardGrid: document.getElementById("dashboardGrid"),
   embedView: document.getElementById("embedView"),
@@ -63,7 +69,11 @@ const STATE = {
   selectedUserId: null,
   editingRoleKey: null,
   threads: [],
-  activeThreadId: null
+  activeThreadId: null,
+  ui: {
+    wideMode: readStoredBoolean(PLATFORM_UI_KEYS.wideMode, true),
+    sidebarCollapsed: readStoredBoolean(PLATFORM_UI_KEYS.sidebarCollapsed, false)
+  }
 };
 
 const MODULES = {
@@ -251,12 +261,77 @@ function setAuthStatus(message, tone = "") {
   DOM.authStatus.className = `status-box${tone ? " " + tone : ""}`;
 }
 
+function readStoredBoolean(key, fallback) {
+  try {
+    const stored = window.localStorage.getItem(key);
+    if (stored === null) return fallback;
+    return stored === "true";
+  } catch {
+    return fallback;
+  }
+}
+
 function sanitizeSlug(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
     .replace(/[^a-z0-9а-яё_-]+/gi, "-")
     .replace(/^-+|-+$/g, "");
+}
+
+function getModuleShortLabel(key) {
+  const labels = {
+    dashboard: "ПУ",
+    sales: "Прод",
+    my_calculator: "Мой",
+    partner_calculator: "Парт",
+    light2: "Дом",
+    messenger: "Чат",
+    admin: "Адм",
+    crm: "CRM",
+    warehouse: "Склад",
+    tasks: "Задачи",
+    ai: "ИИ"
+  };
+  return labels[key] || "Мод";
+}
+
+function persistShellUi() {
+  try {
+    window.localStorage.setItem(PLATFORM_UI_KEYS.wideMode, String(STATE.ui.wideMode));
+    window.localStorage.setItem(PLATFORM_UI_KEYS.sidebarCollapsed, String(STATE.ui.sidebarCollapsed));
+  } catch {
+    // Ignore storage failures in browser privacy modes.
+  }
+}
+
+function applyShellMode() {
+  document.body.classList.toggle("platform-wide", STATE.ui.wideMode);
+  DOM.appShell.classList.toggle("sidebar-collapsed", STATE.ui.sidebarCollapsed);
+
+  if (DOM.sidebarToggleButton) {
+    DOM.sidebarToggleButton.textContent = STATE.ui.sidebarCollapsed ? "Показать меню" : "Свернуть меню";
+    DOM.sidebarToggleButton.classList.toggle("btn-dark", STATE.ui.sidebarCollapsed);
+    DOM.sidebarToggleButton.classList.toggle("btn-outline-dark", !STATE.ui.sidebarCollapsed);
+  }
+
+  if (DOM.wideModeButton) {
+    DOM.wideModeButton.textContent = STATE.ui.wideMode ? "Обычная ширина" : "Широкий режим";
+    DOM.wideModeButton.classList.toggle("btn-dark", STATE.ui.wideMode);
+    DOM.wideModeButton.classList.toggle("btn-outline-dark", !STATE.ui.wideMode);
+  }
+}
+
+function toggleSidebarCollapsed() {
+  STATE.ui.sidebarCollapsed = !STATE.ui.sidebarCollapsed;
+  persistShellUi();
+  applyShellMode();
+}
+
+function toggleWideMode() {
+  STATE.ui.wideMode = !STATE.ui.wideMode;
+  persistShellUi();
+  applyShellMode();
 }
 
 function escapeHtml(value) {
@@ -411,6 +486,7 @@ function showAuthScreen() {
 function showAppShell() {
   DOM.authScreen.classList.add("d-none");
   DOM.appShell.classList.remove("d-none");
+  applyShellMode();
 }
 
 function renderSchemaWarning() {
@@ -454,8 +530,12 @@ function renderModuleNav() {
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.moduleKey = key;
+    button.dataset.shortLabel = getModuleShortLabel(key);
     button.classList.toggle("active", STATE.activeModule === key);
-    button.textContent = MODULES[key].title;
+    button.innerHTML = `
+      <span class="module-nav-main">${escapeHtml(MODULES[key].title)}</span>
+      <span class="module-nav-mini">${escapeHtml(getModuleShortLabel(key))}</span>
+    `;
     DOM.moduleNav.appendChild(button);
   });
 }
@@ -1370,6 +1450,14 @@ function bindAppEvents() {
 
   document.getElementById("refreshButton").addEventListener("click", async () => {
     await refreshCurrentView();
+  });
+
+  DOM.sidebarToggleButton?.addEventListener("click", () => {
+    toggleSidebarCollapsed();
+  });
+
+  DOM.wideModeButton?.addEventListener("click", () => {
+    toggleWideMode();
   });
 
   document.getElementById("reloadUsersButton").addEventListener("click", async () => {

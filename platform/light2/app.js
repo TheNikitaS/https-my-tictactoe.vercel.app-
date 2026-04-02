@@ -2,6 +2,11 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
+const LIGHT2_UI_KEYS = {
+  compactTables: "dom-neona:light2:compactTables",
+  activeSection: "dom-neona:light2:activeSection",
+  hiddenForms: "dom-neona:light2:hiddenForms"
+};
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
@@ -47,6 +52,9 @@ const DOM = {
   accessMode: document.getElementById("accessMode"),
   moduleState: document.getElementById("moduleState"),
   statusBox: document.getElementById("statusBox"),
+  workspaceModeLabel: document.getElementById("workspaceModeLabel"),
+  toggleCompactTablesButton: document.getElementById("toggleCompactTablesButton"),
+  toggleAllFormsButton: document.getElementById("toggleAllFormsButton"),
   sectionTabs: document.getElementById("sectionTabs"),
   liveOverviewSummary: document.getElementById("liveOverviewSummary"),
   liveOverviewPanels: document.getElementById("liveOverviewPanels"),
@@ -316,7 +324,7 @@ const STATE = {
   workbookError: "",
   snapshotSearches: {},
   importBusy: false,
-  activeSection: "overview",
+  activeSection: readStoredString(LIGHT2_UI_KEYS.activeSection, "overview"),
   schemaReady: true,
   schemaError: "",
   financeReady: true,
@@ -328,7 +336,17 @@ const STATE = {
   editingCalendarId: null,
   editingAssetId: null,
   editingAssetPaymentId: null,
-  editingPurchaseId: null
+  editingPurchaseId: null,
+  ui: {
+    compactTables: readStoredBoolean(LIGHT2_UI_KEYS.compactTables, false),
+    hiddenForms: readStoredJson(LIGHT2_UI_KEYS.hiddenForms, {
+      settlements: false,
+      balance: false,
+      calendar: false,
+      assets: false,
+      purchases: false
+    })
+  }
 };
 
 function escapeHtml(value) {
@@ -338,6 +356,36 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function readStoredBoolean(key, fallback) {
+  try {
+    const stored = window.localStorage.getItem(key);
+    if (stored === null) return fallback;
+    return stored === "true";
+  } catch {
+    return fallback;
+  }
+}
+
+function readStoredJson(key, fallback) {
+  try {
+    const stored = window.localStorage.getItem(key);
+    if (!stored) return fallback;
+    const parsed = JSON.parse(stored);
+    return parsed && typeof parsed === "object" ? { ...fallback, ...parsed } : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function readStoredString(key, fallback) {
+  try {
+    const stored = window.localStorage.getItem(key);
+    return stored || fallback;
+  } catch {
+    return fallback;
+  }
 }
 
 function toNumber(value) {
@@ -909,6 +957,96 @@ function syncImportButton() {
   }
 
   setImportStatus("Импорт переносит заполненные блоки исходного файла в рабочие таблицы платформы без дублей.");
+}
+
+function persistWorkspaceUi() {
+  try {
+    window.localStorage.setItem(LIGHT2_UI_KEYS.compactTables, String(STATE.ui.compactTables));
+    window.localStorage.setItem(LIGHT2_UI_KEYS.hiddenForms, JSON.stringify(STATE.ui.hiddenForms));
+    window.localStorage.setItem(LIGHT2_UI_KEYS.activeSection, STATE.activeSection);
+  } catch {
+    // Ignore localStorage failures in private browsing.
+  }
+}
+
+function isSectionFormHidden(sectionKey) {
+  return Boolean(STATE.ui.hiddenForms?.[sectionKey]);
+}
+
+function applyRecordFormsVisibility() {
+  const pairs = [
+    { section: "settlements", nodes: [DOM.settlementForm] },
+    { section: "balance", nodes: [getBalanceDom().form] },
+    { section: "calendar", nodes: [getCalendarDom().form] },
+    { section: "assets", nodes: [getAssetsDom().assetForm, getAssetsDom().paymentForm] },
+    { section: "purchases", nodes: [getPurchasesDom().form] }
+  ];
+
+  pairs.forEach(({ section, nodes }) => {
+    const shouldHide = !isAdmin() || isSectionFormHidden(section);
+    nodes.forEach((node) => {
+      node?.classList.toggle("is-hidden", shouldHide);
+    });
+    document.querySelectorAll(`[data-form-toggle="${section}"]`).forEach((button) => {
+      button.textContent = shouldHide ? "Показать форму" : "Скрыть форму";
+      button.classList.toggle("btn-dark", !shouldHide);
+      button.classList.toggle("btn-outline-dark", shouldHide);
+    });
+  });
+
+  if (DOM.toggleAllFormsButton) {
+    const hiddenCount = Object.values(STATE.ui.hiddenForms || {}).filter(Boolean).length;
+    const totalForms = Object.keys(STATE.ui.hiddenForms || {}).length || 1;
+    const allHidden = hiddenCount >= totalForms;
+    DOM.toggleAllFormsButton.textContent = allHidden ? "Показать формы" : "Скрыть формы";
+    DOM.toggleAllFormsButton.classList.toggle("btn-dark", allHidden);
+    DOM.toggleAllFormsButton.classList.toggle("btn-outline-dark", !allHidden);
+  }
+}
+
+function syncWorkspaceModeUi() {
+  document.body.classList.toggle("compact-tables", STATE.ui.compactTables);
+  if (DOM.toggleCompactTablesButton) {
+    DOM.toggleCompactTablesButton.textContent = STATE.ui.compactTables ? "Обычные таблицы" : "Компактные таблицы";
+    DOM.toggleCompactTablesButton.classList.toggle("btn-dark", STATE.ui.compactTables);
+    DOM.toggleCompactTablesButton.classList.toggle("btn-outline-dark", !STATE.ui.compactTables);
+  }
+
+  const hiddenCount = Object.values(STATE.ui.hiddenForms || {}).filter(Boolean).length;
+  if (DOM.workspaceModeLabel) {
+    DOM.workspaceModeLabel.textContent = STATE.ui.compactTables
+      ? `Компактный режим включен. Скрытых форм: ${hiddenCount}.`
+      : `Стандартный режим таблиц. Скрытых форм: ${hiddenCount}.`;
+  }
+
+  applyRecordFormsVisibility();
+}
+
+function setSectionFormHidden(sectionKey, hidden) {
+  if (!Object.prototype.hasOwnProperty.call(STATE.ui.hiddenForms, sectionKey)) return;
+  STATE.ui.hiddenForms[sectionKey] = hidden;
+  persistWorkspaceUi();
+  syncWorkspaceModeUi();
+}
+
+function toggleSectionForm(sectionKey) {
+  setSectionFormHidden(sectionKey, !isSectionFormHidden(sectionKey));
+}
+
+function toggleAllForms() {
+  const hasVisibleForm = Object.values(STATE.ui.hiddenForms || {}).some((hidden) => !hidden);
+  Object.keys(STATE.ui.hiddenForms || {}).forEach((key) => {
+    STATE.ui.hiddenForms[key] = hasVisibleForm;
+  });
+  persistWorkspaceUi();
+  syncWorkspaceModeUi();
+}
+
+function ensureSectionFormVisible(sectionKey) {
+  if (!isAdmin()) return;
+  if (isSectionFormHidden(sectionKey)) {
+    setSectionFormHidden(sectionKey, false);
+  }
 }
 
 function getBalanceDom() {
@@ -1577,8 +1715,13 @@ function renderInteractiveFinanceSections() {
   const balanceHost = document.querySelector('.template-host[data-template="balance"]');
   if (balanceHost) {
     balanceHost.innerHTML = `
-      <div class="section-actions mb-3">
-        <button type="button" class="btn btn-outline-dark btn-sm" id="refreshBalanceButton">Обновить</button>
+      <div class="section-actions section-actions--workspace mb-3">
+        <div class="section-actions__group">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="balance">Новая запись</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="balance">Скрыть форму</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshBalanceButton">Обновить</button>
+        </div>
+        <span class="workspace-chip">Живой баланс по трем контурам</span>
       </div>
       <div class="scope-note" id="balanceScopeNote"></div>
       <form class="record-form" id="balanceForm">
@@ -1657,8 +1800,13 @@ function renderInteractiveFinanceSections() {
   const calendarHost = document.querySelector('.template-host[data-template="calendar"]');
   if (calendarHost) {
     calendarHost.innerHTML = `
-      <div class="section-actions mb-3">
-        <button type="button" class="btn btn-outline-dark btn-sm" id="refreshCalendarButton">Обновить</button>
+      <div class="section-actions section-actions--workspace mb-3">
+        <div class="section-actions__group">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="calendar">Новая запись</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="calendar">Скрыть форму</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshCalendarButton">Обновить</button>
+        </div>
+        <span class="workspace-chip">План денег и обязательств</span>
       </div>
       <div class="scope-note" id="calendarScopeNote"></div>
       <form class="record-form" id="calendarForm">
@@ -1781,8 +1929,13 @@ function renderInteractiveFinanceSections() {
   const assetsHost = document.querySelector('.template-host[data-template="assets"]');
   if (assetsHost) {
     assetsHost.innerHTML = `
-      <div class="section-actions mb-3">
-        <button type="button" class="btn btn-outline-dark btn-sm" id="refreshAssetsButton">Обновить</button>
+      <div class="section-actions section-actions--workspace mb-3">
+        <div class="section-actions__group">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="assets">Новая запись</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="assets">Скрыть форму</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshAssetsButton">Обновить</button>
+        </div>
+        <span class="workspace-chip">Активы и график выплат</span>
       </div>
       <div class="scope-note" id="assetsScopeNote"></div>
       <div class="subsection-grid">
@@ -1893,8 +2046,13 @@ function renderInteractiveFinanceSections() {
   const purchasesHost = document.querySelector('.template-host[data-template="purchases"]');
   if (purchasesHost) {
     purchasesHost.innerHTML = `
-      <div class="section-actions mb-3">
-        <button type="button" class="btn btn-outline-dark btn-sm" id="refreshPurchasesButton">Обновить</button>
+      <div class="section-actions section-actions--workspace mb-3">
+        <div class="section-actions__group">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="purchases">Новая позиция</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="purchases">Скрыть форму</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshPurchasesButton">Обновить</button>
+        </div>
+        <span class="workspace-chip">Каталог поставщиков и цен</span>
       </div>
       <div class="scope-note" id="purchasesScopeNote"></div>
       <article class="subsection-card mb-3">
@@ -2529,6 +2687,7 @@ async function importWorkbookIntoTables() {
 
 function openSection(sectionKey) {
   STATE.activeSection = isSectionAllowed(sectionKey) ? sectionKey : "overview";
+  persistWorkspaceUi();
   document.querySelectorAll(".section-tab").forEach((button) => {
     button.classList.toggle("active", button.dataset.section === STATE.activeSection);
   });
@@ -2598,7 +2757,7 @@ function resetSettlementForm() {
   if (!isAdmin()) {
     DOM.settlementForm.classList.add("is-hidden");
   } else {
-    DOM.settlementForm.classList.remove("is-hidden");
+    DOM.settlementForm.classList.toggle("is-hidden", isSectionFormHidden("settlements"));
     renderPartnerSelect(DOM.settlementForm.elements.partner_slug);
   }
 
@@ -2671,7 +2830,7 @@ function resetBalanceForm() {
   dom.form.elements.income_amount.value = "0";
   dom.form.elements.expense_amount.value = "0";
   dom.submitButton.textContent = "Сохранить запись";
-  dom.form.classList.toggle("is-hidden", !isAdmin());
+  dom.form.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("balance"));
   updateBalancePreview();
 }
 
@@ -2687,7 +2846,7 @@ function resetCalendarForm() {
   dom.form.elements.status.value = "Платеж";
   dom.form.elements.amount.value = "0";
   dom.submitButton.textContent = "Сохранить запись";
-  dom.form.classList.toggle("is-hidden", !isAdmin());
+  dom.form.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("calendar"));
   updateCalendarPreview();
 }
 
@@ -2897,7 +3056,7 @@ function resetAssetForm() {
   dom.assetForm.reset();
   dom.assetForm.elements.asset_value.value = "0";
   dom.assetSubmitButton.textContent = "Сохранить актив";
-  dom.assetForm.classList.toggle("is-hidden", !isAdmin());
+  dom.assetForm.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
 }
 
 function resetAssetPaymentForm() {
@@ -2909,7 +3068,7 @@ function resetAssetPaymentForm() {
   dom.paymentForm.elements.payment_date.value = new Date().toISOString().slice(0, 10);
   dom.paymentForm.elements.payment_amount.value = "0";
   dom.paymentSubmitButton.textContent = "Сохранить выплату";
-  dom.paymentForm.classList.toggle("is-hidden", !isAdmin());
+  dom.paymentForm.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
 }
 
 function resetPurchaseForm() {
@@ -2920,7 +3079,7 @@ function resetPurchaseForm() {
   dom.form.reset();
   dom.form.elements.price.value = "0";
   dom.submitButton.textContent = "Сохранить позицию";
-  dom.form.classList.toggle("is-hidden", !isAdmin());
+  dom.form.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("purchases"));
 }
 
 function renderAssetsScopeNote() {
@@ -3100,8 +3259,8 @@ function renderAssets() {
   if (!dom.assetTableBody || !dom.paymentTableBody) return;
 
   renderAssetsScopeNote();
-  dom.assetForm?.classList.toggle("is-hidden", !isAdmin());
-  dom.paymentForm?.classList.toggle("is-hidden", !isAdmin());
+  dom.assetForm?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
+  dom.paymentForm?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
   populateAssetSelectors();
 
   if (!isAdmin()) {
@@ -3176,7 +3335,7 @@ function renderPurchases() {
   if (!dom.tableBody) return;
 
   renderPurchasesScopeNote();
-  dom.form?.classList.toggle("is-hidden", !isAdmin());
+  dom.form?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("purchases"));
   populatePurchaseFilters();
 
   if (!isAdmin()) {
@@ -3225,6 +3384,7 @@ function fillAssetForm(item) {
   const dom = getAssetsDom();
   if (!dom.assetForm) return;
 
+  ensureSectionFormVisible("assets");
   STATE.editingAssetId = item.id;
   dom.assetForm.elements.asset_name.value = item.asset_name || "";
   dom.assetForm.elements.asset_value.value = toNumber(item.asset_value);
@@ -3236,6 +3396,7 @@ function fillAssetPaymentForm(item) {
   const dom = getAssetsDom();
   if (!dom.paymentForm) return;
 
+  ensureSectionFormVisible("assets");
   STATE.editingAssetPaymentId = item.id;
   dom.paymentForm.elements.asset_id.value = item.asset_id || "";
   dom.paymentForm.elements.payment_date.value = item.payment_date || "";
@@ -3248,6 +3409,7 @@ function fillPurchaseForm(item) {
   const dom = getPurchasesDom();
   if (!dom.form) return;
 
+  ensureSectionFormVisible("purchases");
   STATE.editingPurchaseId = item.id;
   dom.form.elements.supplier_name.value = item.supplier_name || "";
   dom.form.elements.supplier_inn.value = item.supplier_inn || "";
@@ -3567,6 +3729,7 @@ function renderCalendar() {
 }
 
 function fillSettlementForm(item) {
+  ensureSectionFormVisible("settlements");
   STATE.editingSettlementId = item.id;
   DOM.settlementForm.elements.period_label.value = item.period_label || "";
   DOM.settlementForm.elements.partner_slug.value = item.partner_slug || "";
@@ -3582,6 +3745,7 @@ function fillBalanceForm(item) {
   const dom = getBalanceDom();
   if (!dom.form) return;
 
+  ensureSectionFormVisible("balance");
   STATE.editingBalanceId = item.id;
   dom.form.elements.entry_date.value = item.entry_date || "";
   dom.form.elements.account_type.value = item.account_type || "cash_card";
@@ -3596,6 +3760,7 @@ function fillCalendarForm(item) {
   const dom = getCalendarDom();
   if (!dom.form) return;
 
+  ensureSectionFormVisible("calendar");
   STATE.editingCalendarId = item.id;
   dom.form.elements.payment_date.value = item.payment_date || "";
   dom.form.elements.counterparty.value = item.counterparty || "";
@@ -4071,6 +4236,44 @@ function bindEvents() {
     openSection(button.dataset.openSection);
   });
 
+  DOM.toggleCompactTablesButton?.addEventListener("click", () => {
+    STATE.ui.compactTables = !STATE.ui.compactTables;
+    persistWorkspaceUi();
+    syncWorkspaceModeUi();
+  });
+
+  DOM.toggleAllFormsButton?.addEventListener("click", () => {
+    toggleAllForms();
+  });
+
+  document.body.addEventListener("click", (event) => {
+    const formToggleButton = event.target.closest("[data-form-toggle]");
+    if (formToggleButton) {
+      toggleSectionForm(formToggleButton.dataset.formToggle);
+      return;
+    }
+
+    const startButton = event.target.closest("[data-section-start]");
+    if (startButton) {
+      const sectionKey = startButton.dataset.sectionStart;
+      ensureSectionFormVisible(sectionKey);
+      if (sectionKey === "settlements") {
+        resetSettlementForm();
+      } else if (sectionKey === "balance") {
+        resetBalanceForm();
+      } else if (sectionKey === "calendar") {
+        resetCalendarForm();
+      } else if (sectionKey === "assets") {
+        resetAssetForm();
+        resetAssetPaymentForm();
+      } else if (sectionKey === "purchases") {
+        resetPurchaseForm();
+      }
+      openSection(sectionKey);
+      document.querySelector(`#section-${sectionKey}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  });
+
   DOM.importWorkbookButton?.addEventListener("click", async () => {
     try {
       await importWorkbookIntoTables();
@@ -4386,7 +4589,8 @@ async function start() {
   renderWorkbookSnapshotSections();
   syncSectionTabs();
   bindEvents();
-  openSection("overview");
+  syncWorkspaceModeUi();
+  openSection(STATE.activeSection || "overview");
   void loadWorkbookSnapshot();
 
   try {

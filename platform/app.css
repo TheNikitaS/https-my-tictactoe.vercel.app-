@@ -29,6 +29,10 @@ body {
   color: var(--text);
 }
 
+body.platform-wide {
+  --shell-pad: 12px;
+}
+
 .d-none {
   display: none !important;
 }
@@ -185,6 +189,12 @@ body {
   min-height: 100vh;
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
+  width: 100%;
+  transition: grid-template-columns 0.22s ease;
+}
+
+.app-shell.sidebar-collapsed {
+  grid-template-columns: 104px minmax(0, 1fr);
 }
 
 .sidebar {
@@ -192,6 +202,12 @@ body {
   border-right: 1px solid rgba(220, 231, 239, 0.86);
   background: rgba(250, 253, 255, 0.94);
   backdrop-filter: blur(14px);
+  position: sticky;
+  top: 0;
+  align-self: start;
+  height: 100vh;
+  overflow: auto;
+  transition: padding 0.22s ease;
 }
 
 .brand-row {
@@ -220,6 +236,10 @@ body {
   display: block;
   color: var(--muted);
   font-size: 0.92rem;
+}
+
+.sidebar-toolbar {
+  margin-bottom: 14px;
 }
 
 .profile-card {
@@ -264,6 +284,17 @@ body {
   font-weight: 600;
 }
 
+.module-nav-main {
+  display: inline;
+}
+
+.module-nav-mini {
+  display: none;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
 .module-nav button.active,
 .module-nav button:hover {
   background: #fff;
@@ -274,6 +305,14 @@ body {
 .content-shell {
   padding: 20px;
   min-width: 0;
+  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
+  scroll-padding-top: 88px;
+}
+
+body.platform-wide .content-shell {
+  padding: 12px;
 }
 
 .topbar {
@@ -286,6 +325,9 @@ body {
   border-radius: 24px;
   background: rgba(255, 255, 255, 0.84);
   box-shadow: 0 18px 46px rgba(23, 48, 66, 0.08);
+  position: sticky;
+  top: 12px;
+  z-index: 30;
 }
 
 .topbar h2 {
@@ -300,6 +342,10 @@ body {
 
 .view-section {
   margin-top: 20px;
+}
+
+body.platform-wide .view-section {
+  margin-top: 14px;
 }
 
 .dashboard-grid {
@@ -338,11 +384,12 @@ body {
   border-radius: 24px;
   overflow: hidden;
   box-shadow: 0 20px 46px rgba(23, 48, 66, 0.08);
+  min-height: calc(100vh - 112px);
 }
 
 .module-frame {
   width: 100%;
-  min-height: calc(100vh - 180px);
+  min-height: calc(100vh - 112px);
   border: 0;
   background: #fff;
 }
@@ -508,6 +555,45 @@ body {
   color: #7e2f2f;
 }
 
+.app-shell.sidebar-collapsed .sidebar {
+  padding-inline: 12px;
+}
+
+.app-shell.sidebar-collapsed .brand-row {
+  justify-content: center;
+}
+
+.app-shell.sidebar-collapsed .brand-row > div,
+.app-shell.sidebar-collapsed .sidebar .section-title,
+.app-shell.sidebar-collapsed .profile-card .fw-bold,
+.app-shell.sidebar-collapsed .profile-card .small {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .profile-card {
+  padding: 12px 8px;
+  display: flex;
+  justify-content: center;
+}
+
+.app-shell.sidebar-collapsed .role-pill {
+  width: 100%;
+  justify-content: center;
+}
+
+.app-shell.sidebar-collapsed .module-nav button {
+  text-align: center;
+  padding-inline: 10px;
+}
+
+.app-shell.sidebar-collapsed .module-nav-main {
+  display: none;
+}
+
+.app-shell.sidebar-collapsed .module-nav-mini {
+  display: inline;
+}
+
 @media (max-width: 1100px) {
   .auth-card,
   .app-shell,
@@ -519,5 +605,18 @@ body {
   .sidebar {
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    position: static;
+    height: auto;
+  }
+
+  .content-shell {
+    height: auto;
+    min-height: 0;
+    overflow: visible;
+  }
+
+  .module-frame-wrap,
+  .module-frame {
+    min-height: calc(100vh - 140px);
   }
 }
