@@ -605,6 +605,7 @@ async function loadRoleTemplates() {
 }
 
 async function bootstrapApp(session) {
+  const previousModule = STATE.activeModule || "dashboard";
   STATE.session = session;
   STATE.user = session.user;
   STATE.schemaReady = true;
@@ -639,7 +640,9 @@ async function bootstrapApp(session) {
   renderModuleNav();
   renderDashboard();
   showAppShell();
-  await openModule("dashboard");
+  const availableModules = moduleListFromProfile();
+  const targetModule = availableModules.includes(previousModule) ? previousModule : availableModules[0] || "dashboard";
+  await openModule(targetModule);
 }
 
 async function openPlatformForSession(session) {
@@ -1488,6 +1491,11 @@ async function init() {
       STATE.editingRoleKey = null;
       showAuthScreen();
       setAuthStatus("Вы вышли из системы.");
+      return;
+    }
+
+    if (event === "TOKEN_REFRESHED" && session && STATE.user?.id === session.user.id && !DOM.appShell.classList.contains("d-none")) {
+      STATE.session = session;
       return;
     }
 
