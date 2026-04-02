@@ -415,6 +415,21 @@ async function bootstrapApp(session) {
   await openModule("dashboard");
 }
 
+async function openPlatformForSession(session) {
+  try {
+    await bootstrapApp(session);
+  } catch (error) {
+    showAuthScreen();
+    setAuthStatus(error.message || "Не удалось открыть платформу.", "error");
+  }
+}
+
+function queuePlatformBootstrap(session) {
+  window.setTimeout(() => {
+    void openPlatformForSession(session);
+  }, 0);
+}
+
 function renderUserTable() {
   if (!STATE.users.length) {
     DOM.adminUsersBody.innerHTML = `<tr><td colspan="7" class="text-muted">Пользователи пока не найдены.</td></tr>`;
@@ -776,15 +791,19 @@ function bindAuthEvents() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     setAuthStatus("Проверяю логин и пароль...");
-    const { error } = await supabase.auth.signInWithPassword({
-      email: String(formData.get("email") || "").trim(),
-      password: String(formData.get("password") || "")
-    });
-    if (error) {
-      setAuthStatus(error.message, "error");
-      return;
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: String(formData.get("email") || "").trim(),
+        password: String(formData.get("password") || "")
+      });
+      if (error) {
+        setAuthStatus(error.message, "error");
+        return;
+      }
+      setAuthStatus("Вход выполнен. Открываю платформу...", "success");
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось выполнить вход.", "error");
     }
-    setAuthStatus("Вход выполнен.", "success");
   });
 
   document.getElementById("registerForm").addEventListener("submit", async (event) => {
@@ -955,7 +974,7 @@ async function init() {
   bindAuthEvents();
   bindAppEvents();
 
-  supabase.auth.onAuthStateChange(async (event, session) => {
+  supabase.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
       showAuthScreen();
       showAuthPane("reset");
@@ -968,6 +987,7 @@ async function init() {
       STATE.user = null;
       STATE.profile = null;
       STATE.threads = [];
+      STATE.users = [];
       STATE.partnerProfiles = [];
       showAuthScreen();
       setAuthStatus("Вы вышли из системы.");
@@ -975,12 +995,7 @@ async function init() {
     }
 
     if (session) {
-      try {
-        await bootstrapApp(session);
-      } catch (error) {
-        showAuthScreen();
-        setAuthStatus(error.message || "Не удалось открыть платформу.", "error");
-      }
+      queuePlatformBootstrap(session);
     }
   });
 
@@ -991,11 +1006,7 @@ async function init() {
   }
 
   if (data.session) {
-    try {
-      await bootstrapApp(data.session);
-    } catch (sessionError) {
-      setAuthStatus(sessionError.message || "Не удалось загрузить платформу.", "error");
-    }
+    await openPlatformForSession(data.session);
   } else {
     showAuthScreen();
   }
