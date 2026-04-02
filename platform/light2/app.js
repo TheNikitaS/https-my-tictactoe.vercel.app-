@@ -1617,18 +1617,7 @@ function buildSettlementImportData() {
 }
 
 async function upsertInBatches(tableName, rows, onConflict) {
-  try {
-    for (const batch of chunkArray(rows)) {
-      if (!batch.length) continue;
-      const { error } = await supabase.from(tableName).upsert(batch, { onConflict });
-      if (error) throw error;
-    }
-  } catch (error) {
-    if (!isOnConflictConstraintError(error)) {
-      throw error;
-    }
-    await syncRowsWithoutUpsert(tableName, rows, onConflict);
-  }
+  await syncRowsWithoutUpsert(tableName, rows, onConflict);
 }
 
 async function ensureImportedPartners(partners) {
