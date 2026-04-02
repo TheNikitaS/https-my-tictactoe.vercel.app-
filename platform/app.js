@@ -3,7 +3,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260402-workspace1";
+const PLATFORM_BUILD = "20260402-platform2";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
   sidebarCollapsed: "dom-neona:platform:sidebarCollapsed"
@@ -255,6 +255,177 @@ const DEFAULT_ROLE_TEMPLATES = [
     }
   }
 ];
+
+const PLACEHOLDER_BLUEPRINTS = {
+  crm: {
+    eyebrow: "Коммерческий контур",
+    intro:
+      "CRM уже собрана как следующий слой над Продажами: здесь должна жить короткая воронка, карточка сделки, контроль менеджеров и гибкие интеграции с каналами заявок.",
+    metrics: [
+      { label: "Источник базы", value: "Продажи + ЛИД" },
+      { label: "Карточка сделки", value: "Гибкая, под неон и вывески" },
+      { label: "Автообновление", value: "Из заказов и лидов" }
+    ],
+    sections: [
+      {
+        title: "Что уже заложено",
+        items: [
+          "Быстрый переход из платформы и разграничение доступа по ролям.",
+          "Связка с модулем Продажи как базовым источником заказов и счетов.",
+          "Место под подключение каналов: Авито, сайт, рекомендации, мессенджеры."
+        ]
+      },
+      {
+        title: "Карточка продажи",
+        items: [
+          "Клиент, канал, ответственный, стадия, сумма, сроки, комментарии.",
+          "История коммуникаций и закрепление файлов, счетов и договоров.",
+          "Переход заказа в производство и в складские движения без двойного ввода."
+        ]
+      },
+      {
+        title: "Гибкие интеграции",
+        items: [
+          "Отдельный слой для каналов, чтобы позже добавить ответы из Авито прямо в карточке.",
+          "Управляемые статусы и поля без жесткой привязки к одной воронке.",
+          "Основа под API-подключения и собственные сценарии автоматизации."
+        ]
+      }
+    ],
+    lanes: [
+      { title: "Новые лиды", items: ["Сайт / Авито", "Нужен первый контакт", "Новая заявка в работу"] },
+      { title: "В работе", items: ["Квалификация", "Дизайн / КП", "Счет выставлен"] },
+      { title: "Заказ", items: ["Счет оплачен", "Передано в производство", "Контроль исполнения"] }
+    ],
+    links: ["sales", "light2", "admin"]
+  },
+  warehouse: {
+    eyebrow: "Операционный контур",
+    intro:
+      "Склад строится не отдельно, а как часть общей экосистемы: остатки, закупки, продажи и финансы должны видеть друг друга. Здесь закладываю рабочую структуру под это.",
+    metrics: [
+      { label: "Источник закупок", value: "ДОМ НЕОНА / Закупки" },
+      { label: "Связь с калькуляторами", value: "Остатки и артикулы" },
+      { label: "Финансы", value: "Поступления, закупки, маржа" }
+    ],
+    sections: [
+      {
+        title: "Что должен видеть склад",
+        items: [
+          "Остатки материалов, блоков питания, комплектующих и неона по цветам.",
+          "Резервы под текущие заказы и предупреждения о дефиците.",
+          "Связь с закупками, чтобы заказ материалов рождался из нехватки."
+        ]
+      },
+      {
+        title: "Как он свяжется с платформой",
+        items: [
+          "Продажи передают потребность и статус заказа.",
+          "Калькуляторы используют те же группы товаров и артикулы.",
+          "ДОМ НЕОНА отражает финансовую часть закупки и оплат."
+        ]
+      },
+      {
+        title: "Первый набор разделов",
+        items: [
+          "Остатки и движения.",
+          "Поступления и списания.",
+          "Закупки, финансы, графики расхода и маржинальность."
+        ]
+      }
+    ],
+    lanes: [
+      { title: "Остатки", items: ["Критический остаток", "В резерве", "Доступно к продаже"] },
+      { title: "Закупка", items: ["Нужно заказать", "У поставщика", "Принято на склад"] },
+      { title: "Аналитика", items: ["Оборачиваемость", "Топ расходников", "Потери и дефицит"] }
+    ],
+    links: ["light2", "sales", "my_calculator"]
+  },
+  tasks: {
+    eyebrow: "Контур исполнения",
+    intro:
+      "Тасктрекер будет держать в одном месте итерации, оценку задач и рабочие доски команды. Основа уже выделена как отдельный модуль платформы.",
+    metrics: [
+      { label: "Формат", value: "Канбан + итерации" },
+      { label: "Оценка", value: "Через приоритет и загрузку" },
+      { label: "Связь", value: "С CRM, складом и производством" }
+    ],
+    sections: [
+      {
+        title: "Что будет внутри",
+        items: [
+          "Общая доска задач по отделам и направлениям.",
+          "Итерации и очередь задач на взятие в работу.",
+          "Гибкие статусы, ответственные, сроки и блокеры."
+        ]
+      },
+      {
+        title: "Под ваш процесс",
+        items: [
+          "Отдельный слой под оценку задач из файла итераций.",
+          "Разделение управленческих и производственных задач.",
+          "Быстрые фильтры: срочно, ждет данных, заблокировано, готово к запуску."
+        ]
+      },
+      {
+        title: "Связи с модулями",
+        items: [
+          "Задача может рождаться из сделки, закупки или проблемы по заказу.",
+          "Ответственный видит только свой контур по правам.",
+          "Домовой Неоник сможет помогать с поиском информации по задаче."
+        ]
+      }
+    ],
+    lanes: [
+      { title: "Очередь", items: ["Новая инициатива", "Нужна оценка", "Готово к старту"] },
+      { title: "В работе", items: ["Исполнение", "Нужен ответ", "На проверке"] },
+      { title: "Финиш", items: ["Сделано", "Архив", "Перенос в следующую итерацию"] }
+    ],
+    links: ["messenger", "admin", "ai"]
+  },
+  ai: {
+    eyebrow: "Корпоративный ИИ",
+    intro:
+      "Домовой Неоник — внутренний помощник компании. Он должен знать только ваши процессы, документы, товары, регламенты и отвечать как внутренняя база знаний, а не как общий чат-бот.",
+    metrics: [
+      { label: "Назначение", value: "Внутренняя база знаний" },
+      { label: "Источники", value: "Документы, регламенты, таблицы" },
+      { label: "Режим", value: "Только внутри компании" }
+    ],
+    sections: [
+      {
+        title: "Что он должен уметь",
+        items: [
+          "Отвечать сотрудникам по товарам, процессам, ролям и внутренним правилам.",
+          "Подсказывать, где в платформе лежит нужная информация.",
+          "Помогать в онбординге новых сотрудников и партнеров."
+        ]
+      },
+      {
+        title: "Контур знаний",
+        items: [
+          "Документы компании, презентации, регламенты, таблицы и описания товаров.",
+          "Выборочные данные из CRM, склада, задач и ДОМ НЕОНА.",
+          "Гибкое разделение доступа: кому какие знания можно раскрывать."
+        ]
+      },
+      {
+        title: "Следующий шаг",
+        items: [
+          "Отдельный интерфейс чата внутри платформы.",
+          "Загрузка и структурирование базы знаний.",
+          "Привязка ответов к ролям, отделам и источникам."
+        ]
+      }
+    ],
+    lanes: [
+      { title: "Источники", items: ["Регламенты", "Презентации", "Таблицы / справочники"] },
+      { title: "Сценарии", items: ["Поиск ответа", "Подсказка по модулю", "Справка по процессу"] },
+      { title: "Контроль", items: ["Ограничения доступа", "Проверка ответов", "Расширение базы"] }
+    ],
+    links: ["light2", "warehouse", "tasks"]
+  }
+};
 
 function setAuthStatus(message, tone = "") {
   DOM.authStatus.textContent = message;
@@ -540,6 +711,208 @@ function renderModuleNav() {
   });
 }
 
+function getModuleStageLabel(moduleKey) {
+  const labels = {
+    sales: "Рабочий модуль",
+    my_calculator: "Рабочий модуль",
+    partner_calculator: "Рабочий модуль",
+    light2: "Активно развивается",
+    messenger: "Базовая версия",
+    admin: "Управляющий модуль",
+    crm: "Стартовый экран",
+    warehouse: "Стартовый экран",
+    tasks: "Стартовый экран",
+    ai: "Концепт модуля"
+  };
+  return labels[moduleKey] || "Доступен";
+}
+
+function getPermissionBadgeLabel(moduleKey, profile = STATE.profile) {
+  if (!hasModulePermission(moduleKey, "view", profile)) return "Нет доступа";
+  if (hasModulePermission(moduleKey, "manage", profile)) return "Управление";
+  if (hasModulePermission(moduleKey, "edit", profile)) return "Редактирование";
+  return "Просмотр";
+}
+
+function summarizePermissionStats(permissions) {
+  return MODULE_GROUPS.reduce(
+    (acc, key) => {
+      if (permissions[key]?.view) acc.view += 1;
+      if (permissions[key]?.edit) acc.edit += 1;
+      if (permissions[key]?.manage) acc.manage += 1;
+      return acc;
+    },
+    { view: 0, edit: 0, manage: 0 }
+  );
+}
+
+function getPermissionMapFromForm(container, mode) {
+  const permissions = createEmptyPermissionMap();
+  container?.querySelectorAll(`[data-${mode}-module]`).forEach((input) => {
+    const moduleKey = input.dataset[`${mode}Module`];
+    const permKey = input.dataset[`${mode}Perm`];
+    if (!permissions[moduleKey]) return;
+    permissions[moduleKey][permKey] = input.checked;
+  });
+  return normalizePermissionDependencies(permissions);
+}
+
+function normalizePermissionDependencies(permissions) {
+  const next = cloneJson(permissions);
+  MODULE_GROUPS.forEach((key) => {
+    if (!next[key]) {
+      next[key] = { view: false, edit: false, manage: false };
+    }
+    if (next[key].manage) {
+      next[key].edit = true;
+      next[key].view = true;
+    } else if (next[key].edit) {
+      next[key].view = true;
+    } else if (!next[key].view) {
+      next[key].edit = false;
+      next[key].manage = false;
+    }
+  });
+  next.dashboard.view = true;
+  return next;
+}
+
+function applyPermissionPreset(permissions, preset) {
+  const next = createEmptyPermissionMap();
+  if (preset === "all") {
+    MODULE_GROUPS.forEach((key) => {
+      next[key] = { view: true, edit: true, manage: true };
+    });
+  } else if (preset === "view") {
+    MODULE_GROUPS.forEach((key) => {
+      next[key] = { view: true, edit: false, manage: false };
+    });
+  } else if (preset === "work") {
+    MODULE_GROUPS.forEach((key) => {
+      next[key] = { view: true, edit: true, manage: false };
+    });
+    next.admin = { view: false, edit: false, manage: false };
+    next.ai = { view: true, edit: false, manage: false };
+  } else {
+    return normalizePermissionDependencies(next);
+  }
+  return normalizePermissionDependencies(next);
+}
+
+function renderPermissionSummary(permissions, mode) {
+  const stats = summarizePermissionStats(permissions);
+  return `
+    <div class="permission-summary">
+      <div class="permission-summary__stats">
+        <div class="permission-stat">
+          <span>Видит</span>
+          <strong>${escapeHtml(String(stats.view))}</strong>
+        </div>
+        <div class="permission-stat">
+          <span>Редактирует</span>
+          <strong>${escapeHtml(String(stats.edit))}</strong>
+        </div>
+        <div class="permission-stat">
+          <span>Управляет</span>
+          <strong>${escapeHtml(String(stats.manage))}</strong>
+        </div>
+      </div>
+      <div class="permission-toolbar">
+        <button class="btn btn-sm btn-outline-dark" type="button" data-${mode}-preset="all">Полный доступ</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" data-${mode}-preset="work">Рабочий доступ</button>
+        <button class="btn btn-sm btn-outline-dark" type="button" data-${mode}-preset="view">Только просмотр</button>
+        <button class="btn btn-sm btn-outline-secondary" type="button" data-${mode}-preset="clear">Сбросить</button>
+      </div>
+    </div>
+  `;
+}
+
+function renderPlaceholderModule(moduleKey) {
+  const module = MODULES[moduleKey];
+  const blueprint = PLACEHOLDER_BLUEPRINTS[moduleKey];
+  if (!module || !blueprint) {
+    DOM.placeholderCard.innerHTML = `
+      <h3>${escapeHtml(module?.title || "Модуль")}</h3>
+      <p class="mb-0 text-muted">Модуль уже заложен в платформу как место подключения. Следующим этапом сюда будем переносить бизнес-логику.</p>
+    `;
+    return;
+  }
+
+  const permissionLabel = getPermissionBadgeLabel(moduleKey);
+  const relatedLinks = blueprint.links
+    .filter((key) => hasModuleAccess(key))
+    .map(
+      (key) => `
+        <button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="${escapeHtml(key)}">
+          ${escapeHtml(MODULES[key].title)}
+        </button>
+      `
+    )
+    .join("");
+
+  DOM.placeholderCard.innerHTML = `
+    <div class="placeholder-shell">
+      <div class="placeholder-hero">
+        <div>
+          <div class="placeholder-eyebrow">${escapeHtml(blueprint.eyebrow)}</div>
+          <h3>${escapeHtml(module.title)}</h3>
+          <p>${escapeHtml(blueprint.intro)}</p>
+        </div>
+        <div class="placeholder-status">
+          <div class="placeholder-chip">${escapeHtml(getModuleStageLabel(moduleKey))}</div>
+          <div class="placeholder-chip">${escapeHtml(permissionLabel)}</div>
+        </div>
+      </div>
+
+      <div class="placeholder-metrics">
+        ${blueprint.metrics
+          .map(
+            (item) => `
+              <article class="placeholder-metric">
+                <span>${escapeHtml(item.label)}</span>
+                <strong>${escapeHtml(item.value)}</strong>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+
+      <div class="placeholder-sections">
+        ${blueprint.sections
+          .map(
+            (section) => `
+              <article class="placeholder-panel">
+                <h4>${escapeHtml(section.title)}</h4>
+                <ul class="placeholder-list">
+                  ${section.items.map((item) => `<li>${escapeHtml(item)}</li>`).join("")}
+                </ul>
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+
+      <div class="placeholder-board">
+        ${blueprint.lanes
+          .map(
+            (lane) => `
+              <article class="placeholder-lane">
+                <h4>${escapeHtml(lane.title)}</h4>
+                ${lane.items.map((item) => `<div class="placeholder-task">${escapeHtml(item)}</div>`).join("")}
+              </article>
+            `
+          )
+          .join("")}
+      </div>
+
+      <div class="placeholder-links">
+        <div class="compact-help">Связанные модули платформы</div>
+        <div class="d-flex flex-wrap gap-2">${relatedLinks || '<span class="text-muted">Связанные модули появятся после выдачи доступов.</span>'}</div>
+      </div>
+    </div>
+  `;
+}
+
 function renderDashboard() {
   const cards = moduleListFromProfile()
     .filter((key) => key !== "dashboard")
@@ -549,7 +922,7 @@ function renderDashboard() {
         <article class="module-card">
           <h3>${escapeHtml(module.title)}</h3>
           <p>${escapeHtml(module.subtitle)}</p>
-          <div class="meta">Открыть модуль</div>
+          <div class="meta">${escapeHtml(getModuleStageLabel(key))} • ${escapeHtml(getPermissionBadgeLabel(key))}</div>
           <div class="mt-3">
             <button class="btn btn-dark btn-sm" type="button" data-dashboard-open="${escapeHtml(key)}">Открыть</button>
           </div>
@@ -617,11 +990,7 @@ async function openModule(key) {
     return;
   }
 
-  DOM.placeholderCard.innerHTML = `
-    <h3>${escapeHtml(module.title)}</h3>
-    <p class="mb-2">${escapeHtml(module.subtitle)}</p>
-    <p class="mb-0 text-muted">Модуль уже заложен в платформу как место подключения. Следующим этапом сюда будем переносить бизнес-логику из ваших процессов и Excel-файлов.</p>
-  `;
+  renderPlaceholderModule(key);
   DOM.placeholderView.classList.remove("d-none");
 }
 
@@ -797,32 +1166,36 @@ function renderUserTable() {
 }
 
 function renderPermissionGrid(container, permissions, mode) {
-  container.innerHTML = MODULE_GROUPS.map((key) => {
-    const module = MODULES[key];
-    const current = permissions[key] || { view: false, edit: false, manage: false };
-    return `
-      <article class="permission-card">
-        <div class="permission-card__head">
-          <strong>${escapeHtml(module.title)}</strong>
-          <span>${escapeHtml(module.subtitle)}</span>
-        </div>
-        <div class="permission-card__flags">
-          ${PERMISSION_FLAGS.map((flag) => `
-            <label class="permission-flag">
-              <input
-                class="form-check-input"
-                type="checkbox"
-                data-${mode}-module="${escapeHtml(key)}"
-                data-${mode}-perm="${escapeHtml(flag.key)}"
-                ${current[flag.key] ? "checked" : ""}
-              />
-              <span>${escapeHtml(flag.label)}</span>
-            </label>
-          `).join("")}
-        </div>
-      </article>
-    `;
-  }).join("");
+  const normalized = normalizePermissionDependencies(permissions);
+  container.innerHTML = `
+    ${renderPermissionSummary(normalized, mode)}
+    ${MODULE_GROUPS.map((key) => {
+      const module = MODULES[key];
+      const current = normalized[key] || { view: false, edit: false, manage: false };
+      return `
+        <article class="permission-card">
+          <div class="permission-card__head">
+            <strong>${escapeHtml(module.title)}</strong>
+            <span>${escapeHtml(module.subtitle)}</span>
+          </div>
+          <div class="permission-card__flags">
+            ${PERMISSION_FLAGS.map((flag) => `
+              <label class="permission-flag">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  data-${mode}-module="${escapeHtml(key)}"
+                  data-${mode}-perm="${escapeHtml(flag.key)}"
+                  ${current[flag.key] ? "checked" : ""}
+                />
+                <span>${escapeHtml(flag.label)}</span>
+              </label>
+            `).join("")}
+          </div>
+        </article>
+      `;
+    }).join("")}
+  `;
 }
 
 function renderRoleTemplatesTable() {
@@ -866,6 +1239,8 @@ function renderUserAccessEditor() {
     .map((role) => `<option value="${escapeHtml(role.role_key)}" ${role.role_key === user.role ? "selected" : ""}>${escapeHtml(role.display_name || role.role_key)}</option>`)
     .join("");
   const permissions = getProfilePermissionMap(user);
+  const currentRole = getRoleTemplate(user.role);
+  const stats = summarizePermissionStats(permissions);
 
   DOM.userAccessEditor.innerHTML = `
     <form id="userAccessForm" data-user-id="${escapeHtml(user.id)}" class="row g-3">
@@ -880,6 +1255,7 @@ function renderUserAccessEditor() {
       <div class="col-md-6">
         <label class="form-label">Роль</label>
         <select class="form-select" name="role">${roleOptions}</select>
+        <div class="compact-help mt-2">${escapeHtml(currentRole?.description || "Роль задает базовый шаблон доступа, который можно донастроить ниже.")}</div>
       </div>
       <div class="col-md-6">
         <label class="form-label">Партнерский slug</label>
@@ -890,6 +1266,13 @@ function renderUserAccessEditor() {
           <input class="form-check-input" type="checkbox" name="is_active" ${user.is_active ? "checked" : ""} />
           <span>Аккаунт активен</span>
         </label>
+      </div>
+      <div class="col-md-6">
+        <div class="permission-summary__stats">
+          <div class="permission-stat"><span>Видит модулей</span><strong>${escapeHtml(String(stats.view))}</strong></div>
+          <div class="permission-stat"><span>Редактирует</span><strong>${escapeHtml(String(stats.edit))}</strong></div>
+          <div class="permission-stat"><span>Управляет</span><strong>${escapeHtml(String(stats.manage))}</strong></div>
+        </div>
       </div>
       <div class="col-12">
         <div class="d-flex flex-wrap gap-2 mb-2">
@@ -972,19 +1355,7 @@ async function saveUserProfile(userId) {
   if (!form || form.dataset.userId !== userId) return;
 
   const role = form.elements.role.value;
-  const modulePermissions = createEmptyPermissionMap();
-  form.querySelectorAll("[data-user-module]").forEach((input) => {
-    const moduleKey = input.dataset.userModule;
-    const permKey = input.dataset.userPerm;
-    if (!modulePermissions[moduleKey]) return;
-    modulePermissions[moduleKey][permKey] = input.checked;
-  });
-  MODULE_GROUPS.forEach((key) => {
-    if (modulePermissions[key].edit || modulePermissions[key].manage) {
-      modulePermissions[key].view = true;
-    }
-  });
-  modulePermissions.dashboard.view = true;
+  const modulePermissions = normalizePermissionDependencies(getPermissionMapFromForm(form, "user"));
 
   const payload = {
     display_name: form.elements.display_name.value.trim(),
@@ -1017,19 +1388,7 @@ async function saveRoleTemplate() {
     throw new Error("Укажите ключ роли.");
   }
 
-  const permissions = createEmptyPermissionMap();
-  form.querySelectorAll("[data-role-module]").forEach((input) => {
-    const moduleKey = input.dataset.roleModule;
-    const permKey = input.dataset.rolePerm;
-    if (!permissions[moduleKey]) return;
-    permissions[moduleKey][permKey] = input.checked;
-  });
-  MODULE_GROUPS.forEach((key) => {
-    if (permissions[key].edit || permissions[key].manage) {
-      permissions[key].view = true;
-    }
-  });
-  permissions.dashboard.view = true;
+  const permissions = normalizePermissionDependencies(getPermissionMapFromForm(form, "role"));
 
   const existing = getRoleTemplate(STATE.editingRoleKey);
   const payload = {
@@ -1444,6 +1803,12 @@ function bindAppEvents() {
     await openModule(button.dataset.dashboardOpen);
   });
 
+  DOM.placeholderCard.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-placeholder-open]");
+    if (!button) return;
+    await openModule(button.dataset.placeholderOpen);
+  });
+
   document.getElementById("signOutButton").addEventListener("click", async () => {
     await supabase.auth.signOut();
   });
@@ -1481,10 +1846,26 @@ function bindAppEvents() {
     applyRoleTemplateToSelectedUser();
   });
 
+  DOM.userAccessEditor.addEventListener("click", (event) => {
+    const presetButton = event.target.closest("[data-user-preset]");
+    if (!presetButton) return;
+    const grid = document.getElementById("userPermissionsGrid");
+    if (!grid) return;
+    renderPermissionGrid(grid, applyPermissionPreset(getPermissionMapFromForm(grid, "user"), presetButton.dataset.userPreset), "user");
+  });
+
   DOM.userAccessEditor.addEventListener("change", (event) => {
     const roleSelect = event.target.closest('#userAccessForm select[name="role"]');
     if (!roleSelect) return;
     applyRoleTemplateToSelectedUser();
+  });
+
+  DOM.userAccessEditor.addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-user-module]");
+    if (!checkbox) return;
+    const grid = document.getElementById("userPermissionsGrid");
+    if (!grid) return;
+    renderPermissionGrid(grid, getPermissionMapFromForm(grid, "user"), "user");
   });
 
   DOM.userAccessEditor.addEventListener("submit", async (event) => {
@@ -1504,6 +1885,22 @@ function bindAppEvents() {
     STATE.editingRoleKey = button.dataset.editRole;
     renderRoleTemplatesTable();
     fillRoleTemplateForm(getRoleTemplate(STATE.editingRoleKey));
+  });
+
+  DOM.roleTemplateForm.addEventListener("click", (event) => {
+    const presetButton = event.target.closest("[data-role-preset]");
+    if (!presetButton) return;
+    renderPermissionGrid(
+      DOM.rolePermissionsGrid,
+      applyPermissionPreset(getPermissionMapFromForm(DOM.rolePermissionsGrid, "role"), presetButton.dataset.rolePreset),
+      "role"
+    );
+  });
+
+  DOM.roleTemplateForm.addEventListener("change", (event) => {
+    const checkbox = event.target.closest("[data-role-module]");
+    if (!checkbox) return;
+    renderPermissionGrid(DOM.rolePermissionsGrid, getPermissionMapFromForm(DOM.rolePermissionsGrid, "role"), "role");
   });
 
   DOM.newRoleButton.addEventListener("click", () => {
