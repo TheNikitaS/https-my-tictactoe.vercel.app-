@@ -53,6 +53,10 @@ const STATE = {
   schemaReady: true,
   schemaError: "",
   activeModule: "dashboard",
+  loadedEmbedKey: null,
+  loadedEmbedSrc: "",
+  queuedBootstrapSignature: "",
+  queuedBootstrapTimer: null,
   users: [],
   partnerProfiles: [],
   roleTemplates: [],
@@ -491,10 +495,17 @@ function hideViews() {
 
 async function openModule(key) {
   if (!hasModuleAccess(key)) return;
+  const module = MODULES[key];
+  const nextSrc = module.type === "embed" ? (typeof module.src === "function" ? module.src() : module.src) : "";
+  const sameEmbedAlreadyOpen =
+    module.type === "embed" &&
+    STATE.activeModule === key &&
+    STATE.loadedEmbedKey === key &&
+    STATE.loadedEmbedSrc === nextSrc &&
+    !DOM.embedView.classList.contains("d-none");
+
   STATE.activeModule = key;
   renderModuleNav();
-
-  const module = MODULES[key];
   setViewMeta(module.title, module.subtitle);
   hideViews();
 
@@ -505,8 +516,11 @@ async function openModule(key) {
   }
 
   if (module.type === "embed") {
-    const src = typeof module.src === "function" ? module.src() : module.src;
-    DOM.moduleFrame.src = src;
+    if (!sameEmbedAlreadyOpen) {
+      DOM.moduleFrame.src = nextSrc;
+      STATE.loadedEmbedKey = key;
+      STATE.loadedEmbedSrc = nextSrc;
+    }
     DOM.embedView.classList.remove("d-none");
     return;
   }
@@ -656,7 +670,14 @@ async function openPlatformForSession(session) {
 }
 
 function queuePlatformBootstrap(session) {
-  window.setTimeout(() => {
+  const signature = `${session.user.id}:${session.access_token || ""}:${session.expires_at || ""}`;
+  if (STATE.queuedBootstrapSignature === signature) return;
+  STATE.queuedBootstrapSignature = signature;
+  if (STATE.queuedBootstrapTimer) {
+    window.clearTimeout(STATE.queuedBootstrapTimer);
+  }
+  STATE.queuedBootstrapTimer = window.setTimeout(() => {
+    STATE.queuedBootstrapTimer = null;
     void openPlatformForSession(session);
   }, 0);
 }
@@ -1484,6 +1505,13 @@ async function init() {
       STATE.session = null;
       STATE.user = null;
       STATE.profile = null;
+      STATE.loadedEmbedKey = null;
+      STATE.loadedEmbedSrc = "";
+      STATE.queuedBootstrapSignature = "";
+      if (STATE.queuedBootstrapTimer) {
+        window.clearTimeout(STATE.queuedBootstrapTimer);
+        STATE.queuedBootstrapTimer = null;
+      }
       STATE.threads = [];
       STATE.users = [];
       STATE.partnerProfiles = [];
