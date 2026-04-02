@@ -81,7 +81,7 @@ begin
           allowed_modules = '["dashboard","sales","my_calculator","partner_calculator","light2","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb;
 
     return new;
-  end;
+  end if;
 
   insert into public.app_profiles (
     id,
