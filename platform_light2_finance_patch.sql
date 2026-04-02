@@ -30,6 +30,18 @@ create table if not exists public.light2_balance_entries (
   updated_at timestamptz not null default now()
 );
 
+alter table public.light2_balance_entries
+  add column if not exists source_sheet text,
+  add column if not exists source_row integer,
+  add column if not exists source_slot text;
+
+alter table public.light2_balance_entries
+  drop constraint if exists light2_balance_entries_account_type_check;
+
+alter table public.light2_balance_entries
+  add constraint light2_balance_entries_account_type_check
+  check (account_type in ('cash_card', 'ooo_account', 'ip_account'));
+
 create index if not exists light2_balance_entries_date_idx
   on public.light2_balance_entries(entry_date desc, account_type);
 
@@ -60,6 +72,10 @@ create table if not exists public.light2_payment_calendar_entries (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.light2_payment_calendar_entries
+  add column if not exists source_sheet text,
+  add column if not exists source_row integer;
 
 create index if not exists light2_payment_calendar_entries_date_idx
   on public.light2_payment_calendar_entries(payment_date asc, account_name, operation_type);

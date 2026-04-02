@@ -19,6 +19,10 @@ create table if not exists public.light2_partner_settlements (
   updated_at timestamptz not null default now()
 );
 
+alter table public.light2_partner_settlements
+  add column if not exists source_sheet text,
+  add column if not exists source_row integer;
+
 create index if not exists light2_partner_settlements_partner_period_idx
   on public.light2_partner_settlements(partner_slug, period_label, created_at desc);
 

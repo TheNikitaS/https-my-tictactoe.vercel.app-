@@ -26,6 +26,10 @@ create table if not exists public.light2_assets (
   updated_at timestamptz not null default now()
 );
 
+alter table public.light2_assets
+  add column if not exists source_sheet text,
+  add column if not exists source_row integer;
+
 create index if not exists light2_assets_name_idx
   on public.light2_assets(asset_name);
 
@@ -50,6 +54,13 @@ create table if not exists public.light2_asset_payments (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.light2_asset_payments
+  alter column asset_id drop not null;
+
+alter table public.light2_asset_payments
+  add column if not exists source_sheet text,
+  add column if not exists source_row integer;
 
 create index if not exists light2_asset_payments_asset_date_idx
   on public.light2_asset_payments(asset_id, payment_date desc);
@@ -81,6 +92,10 @@ create table if not exists public.light2_purchase_catalog (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.light2_purchase_catalog
+  add column if not exists source_sheet text,
+  add column if not exists source_row integer;
 
 create index if not exists light2_purchase_catalog_supplier_idx
   on public.light2_purchase_catalog(supplier_name, category, article);
