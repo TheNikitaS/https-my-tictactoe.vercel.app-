@@ -22,7 +22,7 @@ as $$
     select 1
     from public.app_profiles p
     where p.id = user_id
-      and p.role = 'admin'
+      and p.role in ('owner', 'admin')
       and p.is_active = true
   );
 $$;
@@ -33,7 +33,7 @@ create table if not exists public.app_profiles (
   full_name text,
   display_name text,
   role text not null default 'user'
-    check (role in ('admin', 'manager', 'partner', 'staff', 'viewer', 'user')),
+    check (role in ('owner', 'admin', 'manager', 'partner', 'staff', 'viewer', 'user')),
   allowed_modules jsonb not null default
     '["dashboard","sales","my_calculator","partner_calculator","messenger"]'::jsonb,
   partner_slug text unique,
@@ -54,6 +54,35 @@ security definer
 set search_path = public
 as $$
 begin
+  if not exists (
+    select 1 from public.app_profiles p where p.role in ('owner', 'admin') and p.is_active = true
+  ) then
+    insert into public.app_profiles (
+      id,
+      email,
+      full_name,
+      display_name,
+      role,
+      allowed_modules
+    )
+    values (
+      new.id,
+      new.email,
+      coalesce(new.raw_user_meta_data ->> 'display_name', new.email),
+      coalesce(new.raw_user_meta_data ->> 'display_name', new.email),
+      'owner',
+      '["dashboard","sales","my_calculator","partner_calculator","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb
+    )
+    on conflict (id) do update
+      set email = excluded.email,
+          full_name = coalesce(public.app_profiles.full_name, excluded.full_name),
+          display_name = coalesce(public.app_profiles.display_name, excluded.display_name),
+          role = 'owner',
+          allowed_modules = '["dashboard","sales","my_calculator","partner_calculator","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb;
+
+    return new;
+  end;
+
   insert into public.app_profiles (
     id,
     email,
@@ -263,7 +292,7 @@ select
   u.email,
   coalesce(u.raw_user_meta_data ->> 'display_name', u.email),
   coalesce(u.raw_user_meta_data ->> 'display_name', u.email),
-  case when row_number() over (order by u.created_at asc) = 1 then 'admin' else 'user' end,
+  case when row_number() over (order by u.created_at asc) = 1 then 'owner' else 'user' end,
   case
     when row_number() over (order by u.created_at asc) = 1
       then '["dashboard","sales","my_calculator","partner_calculator","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb

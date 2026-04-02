@@ -155,7 +155,7 @@ function formatDateTime(value) {
 }
 
 function moduleListFromProfile() {
-  if (STATE.profile?.role === "admin") return MODULE_GROUPS;
+  if (STATE.profile?.role === "admin" || STATE.profile?.role === "owner") return MODULE_GROUPS;
   const raw = STATE.profile?.allowed_modules;
   if (Array.isArray(raw) && raw.length) {
     return raw.filter((key) => MODULES[key]);
@@ -171,7 +171,7 @@ function hasModuleAccess(key) {
 }
 
 function isAdmin() {
-  return STATE.profile?.role === "admin";
+  return STATE.profile?.role === "admin" || STATE.profile?.role === "owner";
 }
 
 function getCurrentPartnerSlug() {
@@ -417,7 +417,7 @@ function renderUserTable() {
   DOM.adminUsersBody.innerHTML = STATE.users
     .map((user) => {
       const modules = Array.isArray(user.allowed_modules) ? user.allowed_modules.join(", ") : "";
-      const roleOptions = ["admin", "manager", "partner", "staff", "viewer", "user"]
+      const roleOptions = ["owner", "admin", "manager", "partner", "staff", "viewer", "user"]
         .map((role) => `<option value="${role}" ${role === user.role ? "selected" : ""}>${role}</option>`)
         .join("");
 
