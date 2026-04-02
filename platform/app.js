@@ -78,6 +78,12 @@ const MODULES = {
       return slug ? `../part/index.html?partner=${encodeURIComponent(slug)}` : "../part/index.html";
     }
   },
+  light2: {
+    title: "ЛАЙТ 2",
+    subtitle: "Финансовый и операционный контур из рабочего файла ЛАЙТ 2.",
+    type: "embed",
+    src: () => "./light2/index.html?v=20260402-light2"
+  },
   messenger: {
     title: "Мессенджер",
     subtitle: "Личные и групповые чаты команды.",
@@ -115,6 +121,7 @@ const MODULE_GROUPS = [
   "sales",
   "my_calculator",
   "partner_calculator",
+  "light2",
   "messenger",
   "admin",
   "crm",
@@ -516,15 +523,17 @@ async function createPartner(form) {
   }
 
   let ownerUserId = null;
+  let ownerModules = null;
   if (email) {
     const { data: owner, error: ownerError } = await supabase
       .from("app_profiles")
-      .select("id")
+      .select("id, allowed_modules")
       .eq("email", email)
       .maybeSingle();
 
     if (ownerError && ownerError.code !== "PGRST116") throw ownerError;
     ownerUserId = owner?.id || null;
+    ownerModules = Array.isArray(owner?.allowed_modules) ? owner.allowed_modules : null;
   }
 
   const payload = {
@@ -540,7 +549,16 @@ async function createPartner(form) {
   if (error) throw error;
 
   if (ownerUserId) {
-    await supabase.from("app_profiles").update({ partner_slug: slug }).eq("id", ownerUserId);
+    const nextModules = Array.from(
+      new Set([
+        ...(ownerModules || ["dashboard", "sales", "my_calculator", "partner_calculator", "messenger"]),
+        "light2"
+      ])
+    );
+    await supabase
+      .from("app_profiles")
+      .update({ partner_slug: slug, allowed_modules: nextModules })
+      .eq("id", ownerUserId);
   }
 
   form.reset();

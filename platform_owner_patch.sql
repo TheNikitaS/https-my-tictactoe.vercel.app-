@@ -48,14 +48,14 @@ begin
       coalesce(new.raw_user_meta_data ->> 'display_name', new.email),
       coalesce(new.raw_user_meta_data ->> 'display_name', new.email),
       'owner',
-      '["dashboard","sales","my_calculator","partner_calculator","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb
+      '["dashboard","sales","my_calculator","partner_calculator","light2","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb
     )
     on conflict (id) do update
       set email = excluded.email,
           full_name = coalesce(public.app_profiles.full_name, excluded.full_name),
           display_name = coalesce(public.app_profiles.display_name, excluded.display_name),
           role = 'owner',
-          allowed_modules = '["dashboard","sales","my_calculator","partner_calculator","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb;
+          allowed_modules = '["dashboard","sales","my_calculator","partner_calculator","light2","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb;
 
     return new;
   end if;
@@ -86,6 +86,6 @@ update public.app_profiles
 set
   role = 'owner',
   is_active = true,
-  allowed_modules = '["dashboard","sales","my_calculator","partner_calculator","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb,
+  allowed_modules = '["dashboard","sales","my_calculator","partner_calculator","light2","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb,
   updated_at = now()
 where email = 'n.suhotin@yandex.ru';
