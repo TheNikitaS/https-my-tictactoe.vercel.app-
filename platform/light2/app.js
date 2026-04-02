@@ -402,6 +402,104 @@ function chunkArray(items, chunkSize = 200) {
   return chunks;
 }
 
+function isOnConflictConstraintError(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return message.includes("there is no unique or exclusion constraint matching the on conflict specification");
+}
+
+function buildCompositeKey(row, fields) {
+  return fields.map((field) => String(row?.[field] ?? "")).join("::");
+}
+
+async function syncRowsWithoutUpsert(tableName, rows, onConflict) {
+  const conflictFields = String(onConflict || "")
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  if (!rows.length || !conflictFields.length) return;
+
+  const dedupedRows = Array.from(
+    rows.reduce((map, row) => {
+      map.set(buildCompositeKey(row, conflictFields), row);
+      return map;
+    }, new Map()).values()
+  );
+
+  const selectFields = Array.from(new Set(["id", ...conflictFields])).join(", ");
+  const existingRows = [];
+
+  if (conflictFields.includes("source_sheet")) {
+    const sourceSheets = [...new Set(dedupedRows.map((row) => row.source_sheet).filter(Boolean))];
+
+    for (const sourceSheet of sourceSheets) {
+      const scopedRows = dedupedRows.filter((row) => row.source_sheet === sourceSheet);
+      const sourceRowValues = conflictFields.includes("source_row")
+        ? [...new Set(scopedRows.map((row) => row.source_row).filter((value) => value !== null && value !== undefined))]
+        : [];
+
+      if (!sourceRowValues.length) {
+        const { data, error } = await supabase.from(tableName).select(selectFields).eq("source_sheet", sourceSheet);
+        if (error) throw error;
+        existingRows.push(...(data || []));
+        continue;
+      }
+
+      for (const rowBatch of chunkArray(sourceRowValues, 150)) {
+        const { data, error } = await supabase
+          .from(tableName)
+          .select(selectFields)
+          .eq("source_sheet", sourceSheet)
+          .in("source_row", rowBatch);
+        if (error) throw error;
+        existingRows.push(...(data || []));
+      }
+    }
+  } else {
+    const { data, error } = await supabase.from(tableName).select(selectFields);
+    if (error) throw error;
+    existingRows.push(...(data || []));
+  }
+
+  const existingMap = new Map();
+  existingRows.forEach((row) => {
+    const key = buildCompositeKey(row, conflictFields);
+    if (!existingMap.has(key)) {
+      existingMap.set(key, row.id);
+    }
+  });
+
+  const inserts = [];
+  const updates = [];
+
+  dedupedRows.forEach((row) => {
+    const existingId = existingMap.get(buildCompositeKey(row, conflictFields));
+    if (existingId) {
+      updates.push({ id: existingId, ...row });
+    } else {
+      inserts.push(row);
+    }
+  });
+
+  for (const batch of chunkArray(inserts)) {
+    if (!batch.length) continue;
+    const { error } = await supabase.from(tableName).insert(batch);
+    if (error) throw error;
+  }
+
+  for (const batch of chunkArray(updates, 40)) {
+    const results = await Promise.all(
+      batch.map(async (row) => {
+        const { id, ...payload } = row;
+        return supabase.from(tableName).update(payload).eq("id", id);
+      })
+    );
+
+    const failed = results.find((result) => result.error);
+    if (failed?.error) throw failed.error;
+  }
+}
+
 function isAdmin() {
   return STATE.profile?.role === "owner" || STATE.profile?.role === "admin";
 }
@@ -1519,10 +1617,17 @@ function buildSettlementImportData() {
 }
 
 async function upsertInBatches(tableName, rows, onConflict) {
-  for (const batch of chunkArray(rows)) {
-    if (!batch.length) continue;
-    const { error } = await supabase.from(tableName).upsert(batch, { onConflict });
-    if (error) throw error;
+  try {
+    for (const batch of chunkArray(rows)) {
+      if (!batch.length) continue;
+      const { error } = await supabase.from(tableName).upsert(batch, { onConflict });
+      if (error) throw error;
+    }
+  } catch (error) {
+    if (!isOnConflictConstraintError(error)) {
+      throw error;
+    }
+    await syncRowsWithoutUpsert(tableName, rows, onConflict);
   }
 }
 
