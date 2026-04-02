@@ -88,4 +88,4 @@ set
   is_active = true,
   allowed_modules = '["dashboard","sales","my_calculator","partner_calculator","messenger","admin","crm","warehouse","tasks","ai"]'::jsonb,
   updated_at = now()
-where email = 'ВАША_ПОЧТА_ДЛЯ_ВХОДА';
+where email = 'n.suhotin@yandex.ru';

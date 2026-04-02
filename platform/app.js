@@ -438,17 +438,22 @@ function renderUserTable() {
 
 function renderPartnerDirectory() {
   if (!STATE.partnerProfiles.length) {
-    DOM.partnerDirectoryBody.innerHTML = `<tr><td colspan="3" class="text-muted">Партнеры пока не добавлены.</td></tr>`;
+    DOM.partnerDirectoryBody.innerHTML = `<tr><td colspan="5" class="text-muted">Партнеры пока не добавлены.</td></tr>`;
     return;
   }
 
+  const usersMap = new Map((STATE.users || []).map((user) => [user.id, user]));
   DOM.partnerDirectoryBody.innerHTML = STATE.partnerProfiles
     .map((partner) => {
       const url = partner.calculator_url || buildPartnerCalculatorUrl(partner.slug);
+      const owner = usersMap.get(partner.owner_user_id);
+      const ownerLabel = owner?.display_name || owner?.email || "—";
       return `
         <tr>
           <td>${escapeHtml(partner.display_name)}</td>
           <td>${escapeHtml(partner.slug)}</td>
+          <td>${escapeHtml(partner.email || "—")}</td>
+          <td>${escapeHtml(ownerLabel)}</td>
           <td><a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(url)}</a></td>
         </tr>
       `;
@@ -459,7 +464,7 @@ function renderPartnerDirectory() {
 async function loadAdminData() {
   if (!isAdmin() || !STATE.schemaReady) {
     DOM.adminUsersBody.innerHTML = `<tr><td colspan="7" class="text-muted">Админ-функции доступны после запуска схемы платформы и входа админа.</td></tr>`;
-    DOM.partnerDirectoryBody.innerHTML = `<tr><td colspan="3" class="text-muted">Сначала выполните platform_setup.sql.</td></tr>`;
+    DOM.partnerDirectoryBody.innerHTML = `<tr><td colspan="5" class="text-muted">Сначала выполните platform_setup.sql.</td></tr>`;
     return;
   }
 
