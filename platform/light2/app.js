@@ -32,6 +32,8 @@ const DOM = {
   moduleState: document.getElementById("moduleState"),
   statusBox: document.getElementById("statusBox"),
   sectionTabs: document.getElementById("sectionTabs"),
+  liveOverviewSummary: document.getElementById("liveOverviewSummary"),
+  liveOverviewPanels: document.getElementById("liveOverviewPanels"),
   overviewGrid: document.getElementById("overviewGrid"),
   importWorkbookButton: document.getElementById("importWorkbookButton"),
   importWorkbookStatus: document.getElementById("importWorkbookStatus"),
@@ -352,6 +354,250 @@ function formatDate(value) {
 
 function roundMoney(value) {
   return Math.round(toNumber(value) * 100) / 100;
+}
+
+function getTodayIso() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function diffDaysFromToday(isoDate) {
+  if (!isoDate) return null;
+  const today = new Date(`${getTodayIso()}T00:00:00`);
+  const target = new Date(`${isoDate}T00:00:00`);
+  if (Number.isNaN(today.getTime()) || Number.isNaN(target.getTime())) return null;
+  return Math.round((target.getTime() - today.getTime()) / 86400000);
+}
+
+function getOpenSettlementRows(rows = STATE.settlements) {
+  const allowedRows = isAdmin()
+    ? rows.slice()
+    : rows.filter((item) => item.partner_slug === getCurrentPartnerSlug());
+
+  return allowedRows.filter((item) => item.status !== "Взаиморасчет произведен" && item.status !== "Архив");
+}
+
+function getLatestUpdatedAt(rows) {
+  return rows
+    .map((item) => item.updated_at || item.created_at || "")
+    .filter(Boolean)
+    .sort((a, b) => new Date(b) - new Date(a))[0] || "";
+}
+
+function getOverviewSectionFootnote(key) {
+  if (key === "balance") {
+    const totals = getCurrentBalanceTotals();
+    return `${STATE.balanceEntries.length} строк • ${formatMoney(totals.total)} ₽`;
+  }
+
+  if (key === "calendar") {
+    return `${STATE.calendarEntries.length} строк плана`;
+  }
+
+  if (key === "assets") {
+    return `${STATE.assets.length} активов • ${STATE.assetPayments.length} выплат`;
+  }
+
+  if (key === "settlements") {
+    const openRows = getOpenSettlementRows();
+    return `${STATE.settlements.length} строк • открыто ${openRows.length}`;
+  }
+
+  if (key === "purchases") {
+    const suppliers = new Set(STATE.purchaseCatalog.map((item) => String(item.supplier_name || "").trim()).filter(Boolean));
+    return `${STATE.purchaseCatalog.length} позиций • ${suppliers.size} поставщиков`;
+  }
+
+  const sheetName = SECTION_META[key]?.snapshotSheet;
+  const sheet = sheetName ? getSnapshotSheet(key) : null;
+  if (sheet) {
+    return `${sheet.nonEmpty || 0} ячеек • ${sheet.formulas || 0} формул`;
+  }
+
+  if (sheetName && !STATE.workbookReady) {
+    return "Сверяю snapshot...";
+  }
+
+  return "Готово к работе";
+}
+
+function renderLiveOverviewSummary() {
+  if (!DOM.liveOverviewSummary) return;
+
+  const totals = getCurrentBalanceTotals();
+  const openSettlements = getOpenSettlementRows();
+  const upcomingCalendar = STATE.calendarEntries.filter((entry) => {
+    if (!entry.payment_date || entry.status === "Отменен") return false;
+    const diff = diffDaysFromToday(entry.payment_date);
+    return diff !== null && diff <= 14;
+  });
+  const upcomingIncoming = upcomingCalendar
+    .filter((entry) => entry.operation_type === "Приход")
+    .reduce((sum, entry) => sum + toNumber(entry.amount), 0);
+  const upcomingOutgoing = upcomingCalendar
+    .filter((entry) => entry.operation_type === "Расход")
+    .reduce((sum, entry) => sum + toNumber(entry.amount), 0);
+  const totalAssetValue = STATE.assets.reduce((sum, item) => sum + toNumber(item.asset_value), 0);
+  const totalAssetPaid = STATE.assetPayments.reduce((sum, item) => sum + toNumber(item.payment_amount), 0);
+  const remainingAssetValue = roundMoney(totalAssetValue - totalAssetPaid);
+
+  DOM.liveOverviewSummary.innerHTML = `
+    <article class="summary-card">
+      <span>Баланс компании сейчас</span>
+      <strong>${formatMoney(totals.total)} ₽</strong>
+    </article>
+    <article class="summary-card">
+      <span>Поступления на 14 дней</span>
+      <strong>${formatMoney(upcomingIncoming)} ₽</strong>
+    </article>
+    <article class="summary-card">
+      <span>Платежи на 14 дней</span>
+      <strong>${formatMoney(upcomingOutgoing)} ₽</strong>
+    </article>
+    <article class="summary-card">
+      <span>Открытые взаиморасчеты</span>
+      <strong>${openSettlements.length}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Остаток по активам</span>
+      <strong>${formatMoney(remainingAssetValue)} ₽</strong>
+    </article>
+    <article class="summary-card">
+      <span>Позиции закупок</span>
+      <strong>${STATE.purchaseCatalog.length}</strong>
+    </article>
+  `;
+}
+
+function renderLiveOverviewPanels() {
+  if (!DOM.liveOverviewPanels) return;
+
+  const totals = getCurrentBalanceTotals();
+  const latestFinanceUpdate = getLatestUpdatedAt([...STATE.balanceEntries, ...STATE.calendarEntries]);
+  const urgentCalendarRows = STATE.calendarEntries
+    .filter((entry) => {
+      if (!entry.payment_date || entry.status === "Отменен") return false;
+      const diff = diffDaysFromToday(entry.payment_date);
+      return diff !== null && diff <= 14;
+    })
+    .sort((a, b) => {
+      const diffA = diffDaysFromToday(a.payment_date);
+      const diffB = diffDaysFromToday(b.payment_date);
+      return diffA - diffB;
+    })
+    .slice(0, 6);
+
+  const openSettlements = getOpenSettlementRows()
+    .map((item) => ({ ...item, settlementTotal: computeSettlement(item).total }))
+    .sort((a, b) => Math.abs(b.settlementTotal) - Math.abs(a.settlementTotal))
+    .slice(0, 5);
+
+  const totalAssetValue = STATE.assets.reduce((sum, item) => sum + toNumber(item.asset_value), 0);
+  const totalAssetPaid = STATE.assetPayments.reduce((sum, item) => sum + toNumber(item.payment_amount), 0);
+  const recentPurchases = STATE.purchaseCatalog
+    .slice()
+    .sort((a, b) => new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0))
+    .slice(0, 4);
+  const uniqueSuppliers = new Set(STATE.purchaseCatalog.map((item) => String(item.supplier_name || "").trim()).filter(Boolean));
+  const uniqueCategories = new Set(STATE.purchaseCatalog.map((item) => String(item.category || "").trim()).filter(Boolean));
+
+  const accountItems = BALANCE_ACCOUNTS.map(
+    (account) => `
+      <div class="overview-list-item">
+        <span>${escapeHtml(account.label)}</span>
+        <strong>${formatMoney(totals.byAccount[account.value] || 0)} ₽</strong>
+      </div>
+    `
+  ).join("");
+
+  const paymentItems = urgentCalendarRows.length
+    ? urgentCalendarRows
+        .map((entry) => {
+          const diff = diffDaysFromToday(entry.payment_date);
+          const dueLabel = diff < 0 ? `Просрочено на ${Math.abs(diff)} дн.` : diff === 0 ? "Сегодня" : `Через ${diff} дн.`;
+          return `
+            <div class="overview-list-item">
+              <div>
+                <strong>${escapeHtml(entry.counterparty || "Без контрагента")}</strong>
+                <span>${escapeHtml(formatDate(entry.payment_date))} • ${escapeHtml(dueLabel)}</span>
+              </div>
+              <strong class="${entry.operation_type === "Приход" ? "amount-positive" : "amount-negative"}">
+                ${entry.operation_type === "Приход" ? "+" : "-"}${formatMoney(entry.amount)} ₽
+              </strong>
+            </div>
+          `;
+        })
+        .join("")
+    : `<div class="muted">На ближайшие 14 дней новых платежей не найдено.</div>`;
+
+  const settlementItems = openSettlements.length
+    ? openSettlements
+        .map(
+          (item) => `
+            <div class="overview-list-item">
+              <div>
+                <strong>${escapeHtml(getPartnerLabel(item.partner_slug))}</strong>
+                <span>${escapeHtml(item.period_label)}</span>
+              </div>
+              <strong class="${item.settlementTotal >= 0 ? "amount-positive" : "amount-negative"}">
+                ${item.settlementTotal >= 0 ? "+" : ""}${formatMoney(item.settlementTotal)} ₽
+              </strong>
+            </div>
+          `
+        )
+        .join("")
+    : `<div class="muted">Открытых взаиморасчетов сейчас нет.</div>`;
+
+  const purchaseItems = recentPurchases.length
+    ? recentPurchases
+        .map(
+          (item) => `
+            <div class="overview-list-item">
+              <div>
+                <strong>${escapeHtml(item.item_name || item.article || "Позиция")}</strong>
+                <span>${escapeHtml(item.supplier_name || "Без поставщика")} • ${escapeHtml(item.category || "Без категории")}</span>
+              </div>
+              <strong>${formatMoney(item.price)} ₽</strong>
+            </div>
+          `
+        )
+        .join("")
+    : `<div class="muted">Каталог закупок пока пуст.</div>`;
+
+  DOM.liveOverviewPanels.innerHTML = `
+    <article class="subsection-card overview-panel">
+      <div class="panel-kicker">Финансы сейчас</div>
+      <h3>Деньги по контурам</h3>
+      <div class="overview-list">${accountItems}</div>
+      <div class="overview-panel-footnote">Последнее обновление: ${escapeHtml(formatDateTime(latestFinanceUpdate))}</div>
+    </article>
+    <article class="subsection-card overview-panel">
+      <div class="panel-kicker">Ближайшие даты</div>
+      <h3>Платежный радар</h3>
+      <div class="overview-list">${paymentItems}</div>
+    </article>
+    <article class="subsection-card overview-panel">
+      <div class="panel-kicker">Партнеры</div>
+      <h3>Кому нужно уделить внимание</h3>
+      <div class="overview-list">${settlementItems}</div>
+    </article>
+    <article class="subsection-card overview-panel">
+      <div class="panel-kicker">Активы и закупки</div>
+      <h3>Материальная база</h3>
+      <div class="overview-inline-stats">
+        <div><span>Активов</span><strong>${STATE.assets.length}</strong></div>
+        <div><span>Стоимость</span><strong>${formatMoney(totalAssetValue)} ₽</strong></div>
+        <div><span>Выплачено</span><strong>${formatMoney(totalAssetPaid)} ₽</strong></div>
+        <div><span>Поставщиков</span><strong>${uniqueSuppliers.size}</strong></div>
+        <div><span>Категорий</span><strong>${uniqueCategories.size}</strong></div>
+        <div><span>Закупок</span><strong>${STATE.purchaseCatalog.length}</strong></div>
+      </div>
+      <div class="overview-list mt-3">${purchaseItems}</div>
+    </article>
+  `;
 }
 
 function sanitizeSlug(value) {
@@ -1185,12 +1431,15 @@ function updateHero() {
 }
 
 function renderOverview() {
+  renderLiveOverviewSummary();
+  renderLiveOverviewPanels();
   const cards = Object.entries(SECTION_META)
     .filter(([key]) => key !== "overview" && isSectionAllowed(key))
     .map(([key, meta]) => `
       <article class="overview-card">
         <h3>${escapeHtml(meta.title)}</h3>
         <p>${escapeHtml(meta.subtitle)}</p>
+        <div class="overview-card-meta">${escapeHtml(getOverviewSectionFootnote(key))}</div>
         <button class="btn btn-dark btn-sm" type="button" data-open-section="${escapeHtml(key)}">Открыть</button>
       </article>
     `)
@@ -1360,6 +1609,7 @@ async function loadWorkbookSnapshot() {
     STATE.workbookError = error.message || "неизвестная ошибка";
   }
   renderWorkbookSnapshotSections();
+  renderOverview();
   syncImportButton();
 }
 
@@ -2891,6 +3141,7 @@ async function loadSettlements() {
       setModuleState("Нужен SQL-патч");
       setStatus("Чтобы включить рабочий блок взаиморасчетов, выполните platform_light2_patch.sql в Supabase SQL Editor.", "warning");
       renderSettlements();
+      renderOverview();
       return;
     }
     throw error;
@@ -2902,6 +3153,7 @@ async function loadSettlements() {
   setModuleState("Готово");
   setStatus("ДОМ НЕОНА загружен. Взаиморасчеты уже работают внутри платформы.", "success");
   renderSettlements();
+  renderOverview();
 }
 
 async function loadFinanceData() {
@@ -2926,6 +3178,7 @@ async function loadFinanceData() {
       STATE.calendarEntries = [];
       renderBalance();
       renderCalendar();
+      renderOverview();
       return;
     }
     throw error;
@@ -2937,6 +3190,7 @@ async function loadFinanceData() {
   STATE.calendarEntries = calendarResult.data || [];
   renderBalance();
   renderCalendar();
+  renderOverview();
 }
 
 async function loadOperationsData() {
@@ -2956,6 +3210,7 @@ async function loadOperationsData() {
       STATE.purchaseCatalog = [];
       renderAssets();
       renderPurchases();
+      renderOverview();
       return;
     }
     throw error;
@@ -2968,6 +3223,7 @@ async function loadOperationsData() {
   STATE.purchaseCatalog = purchasesResult.data || [];
   renderAssets();
   renderPurchases();
+  renderOverview();
 }
 
 async function saveSettlement() {
