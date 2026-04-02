@@ -84,7 +84,7 @@ const SECTION_META = {
     cards: [
       {
         title: "Поля листа",
-        text: "Подготовлено место для активов и последующих выплат.",
+        text: "Карточки активов и отдельный журнал выплат уже работают внутри платформы.",
         items: ["Актив", "Стоимость", "Выплачено", "Комментарий"]
       }
     ]
@@ -102,12 +102,12 @@ const SECTION_META = {
   },
   purchases: {
     title: "Закупки",
-    subtitle: "Будет вынесен следующим слоем после стабилизации взаиморасчетов.",
+    subtitle: "Нормализованный каталог закупок с поставщиками, категориями, артикулами и ценами.",
     cards: [
       {
-        title: "План переноса",
-        text: "Сначала переносим структуру закупок, затем связываем ее со складом и оплатами.",
-        items: ["Поставщик", "Сумма", "Дата", "Комментарий", "Привязка к финансам"]
+        title: "Поля каталога",
+        text: "Закупки уже вынесены в удобный каталог, который дальше можно будет связать со складом и оплатами.",
+        items: ["Поставщик", "Город", "Категория", "Артикул", "Позиция", "Единица", "Цена"]
       }
     ]
   },
@@ -159,14 +159,22 @@ const STATE = {
   settlements: [],
   balanceEntries: [],
   calendarEntries: [],
+  assets: [],
+  assetPayments: [],
+  purchaseCatalog: [],
   activeSection: "overview",
   schemaReady: true,
   schemaError: "",
   financeReady: true,
   financeError: "",
+  operationsReady: true,
+  operationsError: "",
   editingSettlementId: null,
   editingBalanceId: null,
-  editingCalendarId: null
+  editingCalendarId: null,
+  editingAssetId: null,
+  editingAssetPaymentId: null,
+  editingPurchaseId: null
 };
 
 function escapeHtml(value) {
@@ -237,6 +245,16 @@ function isFinanceSchemaMissing(error) {
     error?.code === "42P01" ||
     message.includes("light2_balance_entries") ||
     message.includes("light2_payment_calendar_entries")
+  );
+}
+
+function isOperationsSchemaMissing(error) {
+  const message = (error?.message || "").toLowerCase();
+  return (
+    error?.code === "42P01" ||
+    message.includes("light2_assets") ||
+    message.includes("light2_asset_payments") ||
+    message.includes("light2_purchase_catalog")
   );
 }
 
@@ -328,6 +346,41 @@ function getCalendarDom() {
     tableBody: document.getElementById("calendarTableBody"),
     actionsHead: document.getElementById("calendarActionsHead"),
     refreshButton: document.getElementById("refreshCalendarButton")
+  };
+}
+
+function getAssetsDom() {
+  return {
+    scopeNote: document.getElementById("assetsScopeNote"),
+    assetForm: document.getElementById("assetForm"),
+    assetSubmitButton: document.getElementById("assetSubmitButton"),
+    assetResetButton: document.getElementById("assetResetButton"),
+    paymentForm: document.getElementById("assetPaymentForm"),
+    paymentSubmitButton: document.getElementById("assetPaymentSubmitButton"),
+    paymentResetButton: document.getElementById("assetPaymentResetButton"),
+    paymentAssetSelect: document.getElementById("assetPaymentAssetId"),
+    summary: document.getElementById("assetsSummary"),
+    search: document.getElementById("assetsSearch"),
+    assetTableBody: document.getElementById("assetsTableBody"),
+    paymentFilter: document.getElementById("assetPaymentFilter"),
+    paymentSearch: document.getElementById("assetPaymentSearch"),
+    paymentTableBody: document.getElementById("assetPaymentsTableBody"),
+    refreshButton: document.getElementById("refreshAssetsButton")
+  };
+}
+
+function getPurchasesDom() {
+  return {
+    scopeNote: document.getElementById("purchasesScopeNote"),
+    form: document.getElementById("purchaseForm"),
+    submitButton: document.getElementById("purchaseSubmitButton"),
+    resetButton: document.getElementById("purchaseResetButton"),
+    supplierFilter: document.getElementById("purchaseSupplierFilter"),
+    categoryFilter: document.getElementById("purchaseCategoryFilter"),
+    search: document.getElementById("purchaseSearch"),
+    summary: document.getElementById("purchaseSummary"),
+    tableBody: document.getElementById("purchaseTableBody"),
+    refreshButton: document.getElementById("refreshPurchasesButton")
   };
 }
 
@@ -543,9 +596,221 @@ function renderInteractiveFinanceSections() {
           <tbody id="calendarTableBody"></tbody>
         </table>
       </div>
+      `;
+    }
+
+  const assetsHost = document.querySelector('.template-host[data-template="assets"]');
+  if (assetsHost) {
+    assetsHost.innerHTML = `
+      <div class="section-actions mb-3">
+        <button type="button" class="btn btn-outline-dark btn-sm" id="refreshAssetsButton">Обновить</button>
+      </div>
+      <div class="scope-note" id="assetsScopeNote"></div>
+      <div class="subsection-grid">
+        <article class="subsection-card">
+          <h3>Карточка актива</h3>
+          <p>Стоимость актива и базовый комментарий. Выплаты ведутся отдельно в журнале ниже.</p>
+          <form class="record-form mb-0" id="assetForm">
+            <div class="form-grid">
+              <div>
+                <label class="form-label">Актив</label>
+                <input class="form-control" type="text" name="asset_name" placeholder="Например: Сайт" required />
+              </div>
+              <div>
+                <label class="form-label">Стоимость, ₽</label>
+                <input class="form-control" type="number" step="0.01" min="0" name="asset_value" value="0" required />
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">Комментарий</label>
+              <textarea class="form-control" name="note" rows="2" placeholder="Что входит в актив или кому он передан"></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-dark" type="submit" id="assetSubmitButton">Сохранить актив</button>
+              <button class="btn btn-outline-secondary" type="button" id="assetResetButton">Очистить форму</button>
+            </div>
+          </form>
+        </article>
+        <article class="subsection-card">
+          <h3>Выплата по активу</h3>
+          <p>Журналируем отдельные выплаты, чтобы видеть сколько уже закрыто и что осталось.</p>
+          <form class="record-form mb-0" id="assetPaymentForm">
+            <div class="form-grid">
+              <div>
+                <label class="form-label">Актив</label>
+                <select class="form-select" name="asset_id" id="assetPaymentAssetId" required></select>
+              </div>
+              <div>
+                <label class="form-label">Дата выплаты</label>
+                <input class="form-control" type="date" name="payment_date" required />
+              </div>
+              <div>
+                <label class="form-label">Сумма, ₽</label>
+                <input class="form-control" type="number" step="0.01" min="0" name="payment_amount" value="0" required />
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">Комментарий</label>
+              <textarea class="form-control" name="note" rows="2" placeholder="Например: передал наличными Кириллу"></textarea>
+            </div>
+            <div class="form-actions">
+              <button class="btn btn-dark" type="submit" id="assetPaymentSubmitButton">Сохранить выплату</button>
+              <button class="btn btn-outline-secondary" type="button" id="assetPaymentResetButton">Очистить форму</button>
+            </div>
+          </form>
+        </article>
+      </div>
+      <div class="toolbar-grid mt-3">
+        <div>
+          <label class="form-label">Поиск по активам</label>
+          <input class="form-control" type="text" id="assetsSearch" placeholder="Название или комментарий" />
+        </div>
+        <div>
+          <label class="form-label">Фильтр выплат</label>
+          <select class="form-select" id="assetPaymentFilter">
+            <option value="">Все активы</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Поиск по выплатам</label>
+          <input class="form-control" type="text" id="assetPaymentSearch" placeholder="Комментарий или дата" />
+        </div>
+      </div>
+      <div class="summary-row mt-3" id="assetsSummary"></div>
+      <div class="table-shell mt-3">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Актив</th>
+              <th class="text-end">Стоимость, ₽</th>
+              <th class="text-end">Выплачено, ₽</th>
+              <th class="text-end">Остаток, ₽</th>
+              <th>Комментарий</th>
+              <th>Обновлено</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="assetsTableBody"></tbody>
+        </table>
+      </div>
+      <div class="table-shell mt-3">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Дата выплаты</th>
+              <th>Актив</th>
+              <th class="text-end">Сумма, ₽</th>
+              <th>Комментарий</th>
+              <th>Обновлено</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="assetPaymentsTableBody"></tbody>
+        </table>
+      </div>
     `;
   }
-}
+
+  const purchasesHost = document.querySelector('.template-host[data-template="purchases"]');
+  if (purchasesHost) {
+    purchasesHost.innerHTML = `
+      <div class="section-actions mb-3">
+        <button type="button" class="btn btn-outline-dark btn-sm" id="refreshPurchasesButton">Обновить</button>
+      </div>
+      <div class="scope-note" id="purchasesScopeNote"></div>
+      <article class="subsection-card mb-3">
+        <h3>Позиция закупки</h3>
+        <p>Нормализованный каталог поставщиков и материалов из листа Закупки.</p>
+        <form class="record-form mb-0" id="purchaseForm">
+          <div class="form-grid">
+            <div>
+              <label class="form-label">Компания</label>
+              <input class="form-control" type="text" name="supplier_name" placeholder="Поставщик" required />
+            </div>
+            <div>
+              <label class="form-label">ИНН</label>
+              <input class="form-control" type="text" name="supplier_inn" placeholder="ИНН поставщика" />
+            </div>
+            <div>
+              <label class="form-label">Ссылка</label>
+              <input class="form-control" type="url" name="supplier_url" placeholder="https://..." />
+            </div>
+            <div>
+              <label class="form-label">Город</label>
+              <input class="form-control" type="text" name="city" placeholder="Например: Спб" />
+            </div>
+            <div>
+              <label class="form-label">Категория</label>
+              <input class="form-control" type="text" name="category" placeholder="Например: Гибкий неон" />
+            </div>
+            <div>
+              <label class="form-label">Артикул</label>
+              <input class="form-control" type="text" name="article" placeholder="Артикул" />
+            </div>
+            <div>
+              <label class="form-label">Наименование</label>
+              <input class="form-control" type="text" name="item_name" placeholder="Название позиции" />
+            </div>
+            <div>
+              <label class="form-label">Ед. изм.</label>
+              <input class="form-control" type="text" name="unit_name" placeholder="м, шт, м2" />
+            </div>
+            <div>
+              <label class="form-label">Цена, ₽</label>
+              <input class="form-control" type="number" step="0.01" min="0" name="price" value="0" />
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Комментарий</label>
+            <textarea class="form-control" name="note" rows="2" placeholder="Любая заметка по позиции или поставщику"></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-dark" type="submit" id="purchaseSubmitButton">Сохранить позицию</button>
+            <button class="btn btn-outline-secondary" type="button" id="purchaseResetButton">Очистить форму</button>
+          </div>
+        </form>
+      </article>
+      <div class="toolbar-grid">
+        <div>
+          <label class="form-label">Поставщик</label>
+          <select class="form-select" id="purchaseSupplierFilter">
+            <option value="">Все поставщики</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Категория</label>
+          <select class="form-select" id="purchaseCategoryFilter">
+            <option value="">Все категории</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Поиск</label>
+          <input class="form-control" type="text" id="purchaseSearch" placeholder="Поставщик, артикул, позиция" />
+        </div>
+      </div>
+      <div class="summary-row mt-3" id="purchaseSummary"></div>
+      <div class="table-shell mt-3">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th>Компания</th>
+              <th>Город</th>
+              <th>Категория</th>
+              <th>Артикул</th>
+              <th>Наименование</th>
+              <th>Ед.</th>
+              <th class="text-end">Цена, ₽</th>
+              <th>Ссылка</th>
+              <th>Комментарий</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="purchaseTableBody"></tbody>
+        </table>
+      </div>
+    `;
+  }
+  }
 
 function updateHero() {
   const displayName =
@@ -891,6 +1156,444 @@ function getVisibleCalendarEntries() {
   });
 
   return rows;
+}
+
+function getAssetLabel(assetId) {
+  return STATE.assets.find((item) => item.id === assetId)?.asset_name || "—";
+}
+
+function buildAssetPaymentTotals() {
+  return STATE.assetPayments.reduce((map, item) => {
+    map[item.asset_id] = roundMoney((map[item.asset_id] || 0) + toNumber(item.payment_amount));
+    return map;
+  }, {});
+}
+
+function populateAssetSelectors() {
+  const dom = getAssetsDom();
+  if (!dom.paymentAssetSelect || !dom.paymentFilter) return;
+
+  const previousFormValue = dom.paymentAssetSelect.value;
+  const previousFilterValue = dom.paymentFilter.value;
+  const options = ['<option value="">Выберите актив</option>']
+    .concat(
+      STATE.assets
+        .slice()
+        .sort((a, b) => String(a.asset_name || "").localeCompare(String(b.asset_name || ""), "ru"))
+        .map((asset) => `<option value="${escapeHtml(asset.id)}">${escapeHtml(asset.asset_name)}</option>`)
+    )
+    .join("");
+
+  dom.paymentAssetSelect.innerHTML = options;
+  dom.paymentFilter.innerHTML = ['<option value="">Все активы</option>']
+    .concat(
+      STATE.assets
+        .slice()
+        .sort((a, b) => String(a.asset_name || "").localeCompare(String(b.asset_name || ""), "ru"))
+        .map((asset) => `<option value="${escapeHtml(asset.id)}">${escapeHtml(asset.asset_name)}</option>`)
+    )
+    .join("");
+
+  if (previousFormValue && STATE.assets.some((item) => item.id === previousFormValue)) {
+    dom.paymentAssetSelect.value = previousFormValue;
+  }
+  if (previousFilterValue && STATE.assets.some((item) => item.id === previousFilterValue)) {
+    dom.paymentFilter.value = previousFilterValue;
+  }
+}
+
+function populatePurchaseFilters() {
+  const dom = getPurchasesDom();
+  if (!dom.supplierFilter || !dom.categoryFilter) return;
+
+  const previousSupplier = dom.supplierFilter.value;
+  const previousCategory = dom.categoryFilter.value;
+
+  const suppliers = [...new Set(STATE.purchaseCatalog.map((item) => String(item.supplier_name || "").trim()).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b, "ru")
+  );
+  const categories = [...new Set(STATE.purchaseCatalog.map((item) => String(item.category || "").trim()).filter(Boolean))].sort(
+    (a, b) => a.localeCompare(b, "ru")
+  );
+
+  dom.supplierFilter.innerHTML = ['<option value="">Все поставщики</option>']
+    .concat(suppliers.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
+    .join("");
+  dom.categoryFilter.innerHTML = ['<option value="">Все категории</option>']
+    .concat(categories.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
+    .join("");
+
+  if (suppliers.includes(previousSupplier)) dom.supplierFilter.value = previousSupplier;
+  if (categories.includes(previousCategory)) dom.categoryFilter.value = previousCategory;
+}
+
+function resetAssetForm() {
+  const dom = getAssetsDom();
+  if (!dom.assetForm) return;
+
+  STATE.editingAssetId = null;
+  dom.assetForm.reset();
+  dom.assetForm.elements.asset_value.value = "0";
+  dom.assetSubmitButton.textContent = "Сохранить актив";
+  dom.assetForm.classList.toggle("is-hidden", !isAdmin());
+}
+
+function resetAssetPaymentForm() {
+  const dom = getAssetsDom();
+  if (!dom.paymentForm) return;
+
+  STATE.editingAssetPaymentId = null;
+  dom.paymentForm.reset();
+  dom.paymentForm.elements.payment_date.value = new Date().toISOString().slice(0, 10);
+  dom.paymentForm.elements.payment_amount.value = "0";
+  dom.paymentSubmitButton.textContent = "Сохранить выплату";
+  dom.paymentForm.classList.toggle("is-hidden", !isAdmin());
+}
+
+function resetPurchaseForm() {
+  const dom = getPurchasesDom();
+  if (!dom.form) return;
+
+  STATE.editingPurchaseId = null;
+  dom.form.reset();
+  dom.form.elements.price.value = "0";
+  dom.submitButton.textContent = "Сохранить позицию";
+  dom.form.classList.toggle("is-hidden", !isAdmin());
+}
+
+function renderAssetsScopeNote() {
+  const dom = getAssetsDom();
+  if (!dom.scopeNote) return;
+
+  if (!isAdmin()) {
+    dom.scopeNote.textContent = "Раздел Активы доступен только владельцу и администраторам платформы.";
+    return;
+  }
+
+  if (!STATE.operationsReady) {
+    dom.scopeNote.textContent = "Для раздела Активы выполните SQL-патч platform_light2_assets_purchases_patch.sql.";
+    return;
+  }
+
+  dom.scopeNote.textContent = "Активы перенесены в карточки и журнал выплат: это удобнее, чем хранить суммы в длинной Excel-матрице.";
+}
+
+function renderPurchasesScopeNote() {
+  const dom = getPurchasesDom();
+  if (!dom.scopeNote) return;
+
+  if (!isAdmin()) {
+    dom.scopeNote.textContent = "Раздел Закупки доступен только владельцу и администраторам платформы.";
+    return;
+  }
+
+  if (!STATE.operationsReady) {
+    dom.scopeNote.textContent = "Для раздела Закупки выполните SQL-патч platform_light2_assets_purchases_patch.sql.";
+    return;
+  }
+
+  dom.scopeNote.textContent = "Закупки перенесены в нормализованный каталог: поставщик, категория, артикул, позиция, единица и цена.";
+}
+
+function getVisibleAssets() {
+  const dom = getAssetsDom();
+  const query = String(dom.search?.value || "").trim().toLowerCase();
+  const totals = buildAssetPaymentTotals();
+
+  let rows = STATE.assets.slice();
+  if (query) {
+    rows = rows.filter((asset) =>
+      [asset.asset_name, asset.note, formatMoney(totals[asset.id] || 0), formatMoney(asset.asset_value)].join(" | ").toLowerCase().includes(query)
+    );
+  }
+
+  rows.sort((a, b) => String(a.asset_name || "").localeCompare(String(b.asset_name || ""), "ru"));
+  return rows;
+}
+
+function getVisibleAssetPayments() {
+  const dom = getAssetsDom();
+  const assetFilter = dom.paymentFilter?.value || "";
+  const query = String(dom.paymentSearch?.value || "").trim().toLowerCase();
+
+  let rows = STATE.assetPayments.slice();
+  if (assetFilter) rows = rows.filter((item) => item.asset_id === assetFilter);
+  if (query) {
+    rows = rows.filter((item) =>
+      [item.payment_date, getAssetLabel(item.asset_id), item.note, formatMoney(item.payment_amount)].join(" | ").toLowerCase().includes(query)
+    );
+  }
+
+  rows.sort((a, b) => {
+    const dateDiff = String(b.payment_date || "").localeCompare(String(a.payment_date || ""));
+    if (dateDiff !== 0) return dateDiff;
+    return new Date(b.updated_at || b.created_at || 0) - new Date(a.updated_at || a.created_at || 0);
+  });
+  return rows;
+}
+
+function getVisiblePurchases() {
+  const dom = getPurchasesDom();
+  const supplierFilter = dom.supplierFilter?.value || "";
+  const categoryFilter = dom.categoryFilter?.value || "";
+  const query = String(dom.search?.value || "").trim().toLowerCase();
+
+  let rows = STATE.purchaseCatalog.slice();
+  if (supplierFilter) rows = rows.filter((item) => item.supplier_name === supplierFilter);
+  if (categoryFilter) rows = rows.filter((item) => item.category === categoryFilter);
+  if (query) {
+    rows = rows.filter((item) =>
+      [
+        item.supplier_name,
+        item.supplier_inn,
+        item.city,
+        item.category,
+        item.article,
+        item.item_name,
+        item.unit_name,
+        item.note
+      ]
+        .join(" | ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }
+
+  rows.sort((a, b) => {
+    const supplierDiff = String(a.supplier_name || "").localeCompare(String(b.supplier_name || ""), "ru");
+    if (supplierDiff !== 0) return supplierDiff;
+    return String(a.item_name || "").localeCompare(String(b.item_name || ""), "ru");
+  });
+  return rows;
+}
+
+function renderAssetsSummary() {
+  const dom = getAssetsDom();
+  if (!dom.summary) return;
+
+  const totals = buildAssetPaymentTotals();
+  const assetRows = getVisibleAssets();
+  const totalValue = assetRows.reduce((sum, asset) => sum + toNumber(asset.asset_value), 0);
+  const totalPaid = assetRows.reduce((sum, asset) => sum + toNumber(totals[asset.id] || 0), 0);
+  const remaining = roundMoney(totalValue - totalPaid);
+
+  dom.summary.innerHTML = `
+    <article class="summary-card">
+      <span>Активов в выборке</span>
+      <strong>${assetRows.length}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Стоимость активов</span>
+      <strong>${formatMoney(totalValue)} ₽</strong>
+    </article>
+    <article class="summary-card">
+      <span>Уже выплачено</span>
+      <strong>${formatMoney(totalPaid)} ₽</strong>
+    </article>
+    <article class="summary-card">
+      <span>Остаток к закрытию</span>
+      <strong class="${remaining <= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(remaining)} ₽</strong>
+    </article>
+  `;
+}
+
+function renderPurchasesSummary() {
+  const dom = getPurchasesDom();
+  if (!dom.summary) return;
+
+  const rows = getVisiblePurchases();
+  const supplierCount = new Set(rows.map((item) => item.supplier_name).filter(Boolean)).size;
+  const categoryCount = new Set(rows.map((item) => item.category).filter(Boolean)).size;
+  const pricedCount = rows.filter((item) => toNumber(item.price) > 0).length;
+  const averagePrice = pricedCount
+    ? rows.filter((item) => toNumber(item.price) > 0).reduce((sum, item) => sum + toNumber(item.price), 0) / pricedCount
+    : 0;
+
+  dom.summary.innerHTML = `
+    <article class="summary-card">
+      <span>Позиции в выборке</span>
+      <strong>${rows.length}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Поставщиков</span>
+      <strong>${supplierCount}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Категорий</span>
+      <strong>${categoryCount}</strong>
+    </article>
+    <article class="summary-card">
+      <span>Средняя цена по заполненным</span>
+      <strong>${formatMoney(averagePrice)} ₽</strong>
+    </article>
+  `;
+}
+
+function renderAssets() {
+  const dom = getAssetsDom();
+  if (!dom.assetTableBody || !dom.paymentTableBody) return;
+
+  renderAssetsScopeNote();
+  dom.assetForm?.classList.toggle("is-hidden", !isAdmin());
+  dom.paymentForm?.classList.toggle("is-hidden", !isAdmin());
+  populateAssetSelectors();
+
+  if (!isAdmin()) {
+    dom.summary.innerHTML = "";
+    dom.assetTableBody.innerHTML = `<tr><td colspan="7" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
+    dom.paymentTableBody.innerHTML = `<tr><td colspan="6" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
+    return;
+  }
+
+  if (!STATE.operationsReady) {
+    dom.summary.innerHTML = "";
+    dom.assetTableBody.innerHTML = `<tr><td colspan="7" class="muted">Сначала выполните platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.</td></tr>`;
+    dom.paymentTableBody.innerHTML = `<tr><td colspan="6" class="muted">Сначала выполните platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.</td></tr>`;
+    return;
+  }
+
+  const totals = buildAssetPaymentTotals();
+  const assetRows = getVisibleAssets();
+  const paymentRows = getVisibleAssetPayments();
+  renderAssetsSummary();
+
+  dom.assetTableBody.innerHTML = assetRows.length
+    ? assetRows
+        .map((asset) => {
+          const paid = toNumber(totals[asset.id] || 0);
+          const remaining = roundMoney(toNumber(asset.asset_value) - paid);
+          return `
+            <tr>
+              <td>${escapeHtml(asset.asset_name || "—")}</td>
+              <td class="text-end">${escapeHtml(formatMoney(asset.asset_value))}</td>
+              <td class="text-end">${escapeHtml(formatMoney(paid))}</td>
+              <td class="text-end ${remaining <= 0 ? "amount-positive" : "amount-negative"}">${escapeHtml(formatMoney(remaining))}</td>
+              <td>${escapeHtml(asset.note || "—")}</td>
+              <td class="small">${escapeHtml(formatDateTime(asset.updated_at || asset.created_at))}</td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">Изменить</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">Удалить</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        })
+        .join("")
+    : `<tr><td colspan="7" class="muted">Пока нет активов для текущего фильтра.</td></tr>`;
+
+  dom.paymentTableBody.innerHTML = paymentRows.length
+    ? paymentRows
+        .map(
+          (payment) => `
+            <tr>
+              <td>${escapeHtml(formatDate(payment.payment_date))}</td>
+              <td>${escapeHtml(getAssetLabel(payment.asset_id))}</td>
+              <td class="text-end">${escapeHtml(formatMoney(payment.payment_amount))}</td>
+              <td>${escapeHtml(payment.note || "—")}</td>
+              <td class="small">${escapeHtml(formatDateTime(payment.updated_at || payment.created_at))}</td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">Изменить</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">Удалить</button>
+                </div>
+              </td>
+            </tr>
+          `
+        )
+        .join("")
+    : `<tr><td colspan="6" class="muted">Пока нет выплат для текущего фильтра.</td></tr>`;
+}
+
+function renderPurchases() {
+  const dom = getPurchasesDom();
+  if (!dom.tableBody) return;
+
+  renderPurchasesScopeNote();
+  dom.form?.classList.toggle("is-hidden", !isAdmin());
+  populatePurchaseFilters();
+
+  if (!isAdmin()) {
+    dom.summary.innerHTML = "";
+    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
+    return;
+  }
+
+  if (!STATE.operationsReady) {
+    dom.summary.innerHTML = "";
+    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Сначала выполните platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.</td></tr>`;
+    return;
+  }
+
+  const rows = getVisiblePurchases();
+  renderPurchasesSummary();
+
+  dom.tableBody.innerHTML = rows.length
+    ? rows
+        .map(
+          (item) => `
+            <tr>
+              <td>${escapeHtml(item.supplier_name || "—")}</td>
+              <td>${escapeHtml(item.city || "—")}</td>
+              <td>${escapeHtml(item.category || "—")}</td>
+              <td>${escapeHtml(item.article || "—")}</td>
+              <td>${escapeHtml(item.item_name || "—")}</td>
+              <td>${escapeHtml(item.unit_name || "—")}</td>
+              <td class="text-end">${escapeHtml(formatMoney(item.price))}</td>
+              <td>${item.supplier_url ? `<a href="${escapeHtml(item.supplier_url)}" target="_blank" rel="noreferrer">Открыть</a>` : "—"}</td>
+              <td>${escapeHtml(item.note || "—")}</td>
+              <td>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">Изменить</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">Удалить</button>
+                </div>
+              </td>
+            </tr>
+          `
+        )
+        .join("")
+    : `<tr><td colspan="10" class="muted">Пока нет позиций закупки для текущего фильтра.</td></tr>`;
+}
+
+function fillAssetForm(item) {
+  const dom = getAssetsDom();
+  if (!dom.assetForm) return;
+
+  STATE.editingAssetId = item.id;
+  dom.assetForm.elements.asset_name.value = item.asset_name || "";
+  dom.assetForm.elements.asset_value.value = toNumber(item.asset_value);
+  dom.assetForm.elements.note.value = item.note || "";
+  dom.assetSubmitButton.textContent = "Сохранить изменения";
+}
+
+function fillAssetPaymentForm(item) {
+  const dom = getAssetsDom();
+  if (!dom.paymentForm) return;
+
+  STATE.editingAssetPaymentId = item.id;
+  dom.paymentForm.elements.asset_id.value = item.asset_id || "";
+  dom.paymentForm.elements.payment_date.value = item.payment_date || "";
+  dom.paymentForm.elements.payment_amount.value = toNumber(item.payment_amount);
+  dom.paymentForm.elements.note.value = item.note || "";
+  dom.paymentSubmitButton.textContent = "Сохранить изменения";
+}
+
+function fillPurchaseForm(item) {
+  const dom = getPurchasesDom();
+  if (!dom.form) return;
+
+  STATE.editingPurchaseId = item.id;
+  dom.form.elements.supplier_name.value = item.supplier_name || "";
+  dom.form.elements.supplier_inn.value = item.supplier_inn || "";
+  dom.form.elements.supplier_url.value = item.supplier_url || "";
+  dom.form.elements.city.value = item.city || "";
+  dom.form.elements.category.value = item.category || "";
+  dom.form.elements.article.value = item.article || "";
+  dom.form.elements.item_name.value = item.item_name || "";
+  dom.form.elements.unit_name.value = item.unit_name || "";
+  dom.form.elements.price.value = toNumber(item.price);
+  dom.form.elements.note.value = item.note || "";
+  dom.submitButton.textContent = "Сохранить изменения";
 }
 
 function getVisibleSettlements() {
@@ -1239,10 +1942,10 @@ function fillCalendarForm(item) {
 }
 
 function syncModuleStatus() {
-  if (!STATE.schemaReady && !STATE.financeReady) {
+  if (!STATE.schemaReady && !STATE.financeReady && !STATE.operationsReady) {
     setModuleState("Нужны SQL-патчи");
     setStatus(
-      "LIGHT 2 загружен частично. Выполните platform_light2_patch.sql и platform_light2_finance_patch.sql в Supabase SQL Editor.",
+      "LIGHT 2 загружен частично. Выполните platform_light2_patch.sql, platform_light2_finance_patch.sql и platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.",
       "warning"
     );
     return;
@@ -1250,7 +1953,19 @@ function syncModuleStatus() {
 
   if (!STATE.schemaReady) {
     setModuleState("Частично готово");
-    setStatus("Баланс и Платежный календарь работают, но для взаиморасчетов нужен platform_light2_patch.sql.", "warning");
+    setStatus(
+      `Остальные блоки работают, но для взаиморасчетов нужен platform_light2_patch.sql${STATE.operationsReady ? "" : " и для Активов/Закупок нужен platform_light2_assets_purchases_patch.sql"}.`,
+      "warning"
+    );
+    return;
+  }
+
+  if (!STATE.financeReady && !STATE.operationsReady) {
+    setModuleState("Частично готово");
+    setStatus(
+      "Взаиморасчеты уже работают. Для финансовых блоков выполните platform_light2_finance_patch.sql, а для Активов и Закупок — platform_light2_assets_purchases_patch.sql.",
+      "warning"
+    );
     return;
   }
 
@@ -1263,8 +1978,17 @@ function syncModuleStatus() {
     return;
   }
 
+  if (!STATE.operationsReady) {
+    setModuleState("Частично готово");
+    setStatus(
+      "Финансовые блоки уже работают. Для разделов Активы и Закупки выполните platform_light2_assets_purchases_patch.sql.",
+      "warning"
+    );
+    return;
+  }
+
   setModuleState("Готово");
-  setStatus("ЛАЙТ 2 загружен. Взаиморасчеты, Баланс и Платежный календарь работают внутри платформы.", "success");
+  setStatus("ЛАЙТ 2 загружен. Взаиморасчеты, Баланс, Платежный календарь, Активы и Закупки работают внутри платформы.", "success");
 }
 
 async function loadBootstrapData() {
@@ -1304,6 +2028,9 @@ async function loadBootstrapData() {
   resetSettlementForm();
   resetBalanceForm();
   resetCalendarForm();
+  resetAssetForm();
+  resetAssetPaymentForm();
+  resetPurchaseForm();
   return true;
 }
 
@@ -1366,6 +2093,37 @@ async function loadFinanceData() {
   STATE.calendarEntries = calendarResult.data || [];
   renderBalance();
   renderCalendar();
+}
+
+async function loadOperationsData() {
+  const [assetsResult, paymentsResult, purchasesResult] = await Promise.all([
+    supabase.from("light2_assets").select("*").order("asset_name", { ascending: true }),
+    supabase.from("light2_asset_payments").select("*").order("payment_date", { ascending: false }).order("updated_at", { ascending: false }),
+    supabase.from("light2_purchase_catalog").select("*").order("supplier_name", { ascending: true }).order("item_name", { ascending: true })
+  ]);
+
+  if (assetsResult.error || paymentsResult.error || purchasesResult.error) {
+    const error = assetsResult.error || paymentsResult.error || purchasesResult.error;
+    if (isOperationsSchemaMissing(error)) {
+      STATE.operationsReady = false;
+      STATE.operationsError = error.message || "Таблицы блоков Активы/Закупки не найдены.";
+      STATE.assets = [];
+      STATE.assetPayments = [];
+      STATE.purchaseCatalog = [];
+      renderAssets();
+      renderPurchases();
+      return;
+    }
+    throw error;
+  }
+
+  STATE.operationsReady = true;
+  STATE.operationsError = "";
+  STATE.assets = assetsResult.data || [];
+  STATE.assetPayments = paymentsResult.data || [];
+  STATE.purchaseCatalog = purchasesResult.data || [];
+  renderAssets();
+  renderPurchases();
 }
 
 async function saveSettlement() {
@@ -1482,6 +2240,98 @@ async function saveCalendarEntry() {
   syncModuleStatus();
 }
 
+async function saveAsset() {
+  const dom = getAssetsDom();
+  const formData = new FormData(dom.assetForm);
+  const payload = {
+    asset_name: String(formData.get("asset_name") || "").trim(),
+    asset_value: roundMoney(formData.get("asset_value")),
+    note: String(formData.get("note") || "").trim() || null,
+    created_by: STATE.user?.id || null
+  };
+
+  if (!payload.asset_name) throw new Error("Укажите название актива.");
+  if (payload.asset_value < 0) throw new Error("Стоимость актива не может быть отрицательной.");
+
+  if (STATE.editingAssetId) {
+    const { error } = await supabase.from("light2_assets").update(payload).eq("id", STATE.editingAssetId);
+    if (error) throw error;
+    setStatus("Актив обновлен.", "success");
+  } else {
+    const { error } = await supabase.from("light2_assets").insert(payload);
+    if (error) throw error;
+    setStatus("Актив добавлен.", "success");
+  }
+
+  resetAssetForm();
+  await loadOperationsData();
+  syncModuleStatus();
+}
+
+async function saveAssetPayment() {
+  const dom = getAssetsDom();
+  const formData = new FormData(dom.paymentForm);
+  const payload = {
+    asset_id: String(formData.get("asset_id") || "").trim(),
+    payment_date: String(formData.get("payment_date") || "").trim(),
+    payment_amount: roundMoney(formData.get("payment_amount")),
+    note: String(formData.get("note") || "").trim() || null,
+    created_by: STATE.user?.id || null
+  };
+
+  if (!payload.asset_id) throw new Error("Выберите актив для выплаты.");
+  if (!payload.payment_date) throw new Error("Укажите дату выплаты.");
+  if (payload.payment_amount <= 0) throw new Error("Сумма выплаты должна быть больше нуля.");
+
+  if (STATE.editingAssetPaymentId) {
+    const { error } = await supabase.from("light2_asset_payments").update(payload).eq("id", STATE.editingAssetPaymentId);
+    if (error) throw error;
+    setStatus("Выплата по активу обновлена.", "success");
+  } else {
+    const { error } = await supabase.from("light2_asset_payments").insert(payload);
+    if (error) throw error;
+    setStatus("Выплата по активу добавлена.", "success");
+  }
+
+  resetAssetPaymentForm();
+  await loadOperationsData();
+  syncModuleStatus();
+}
+
+async function savePurchase() {
+  const dom = getPurchasesDom();
+  const formData = new FormData(dom.form);
+  const payload = {
+    supplier_name: String(formData.get("supplier_name") || "").trim(),
+    supplier_inn: String(formData.get("supplier_inn") || "").trim() || null,
+    supplier_url: String(formData.get("supplier_url") || "").trim() || null,
+    city: String(formData.get("city") || "").trim() || null,
+    category: String(formData.get("category") || "").trim() || null,
+    article: String(formData.get("article") || "").trim() || null,
+    item_name: String(formData.get("item_name") || "").trim() || null,
+    unit_name: String(formData.get("unit_name") || "").trim() || null,
+    price: roundMoney(formData.get("price")),
+    note: String(formData.get("note") || "").trim() || null,
+    created_by: STATE.user?.id || null
+  };
+
+  if (!payload.supplier_name) throw new Error("Укажите поставщика.");
+
+  if (STATE.editingPurchaseId) {
+    const { error } = await supabase.from("light2_purchase_catalog").update(payload).eq("id", STATE.editingPurchaseId);
+    if (error) throw error;
+    setStatus("Позиция закупки обновлена.", "success");
+  } else {
+    const { error } = await supabase.from("light2_purchase_catalog").insert(payload);
+    if (error) throw error;
+    setStatus("Позиция закупки добавлена.", "success");
+  }
+
+  resetPurchaseForm();
+  await loadOperationsData();
+  syncModuleStatus();
+}
+
 async function deleteBalanceEntry(id) {
   const { error } = await supabase.from("light2_balance_entries").delete().eq("id", id);
   if (error) throw error;
@@ -1498,9 +2348,35 @@ async function deleteCalendarEntry(id) {
   syncModuleStatus();
 }
 
+async function deleteAsset(id) {
+  const { error } = await supabase.from("light2_assets").delete().eq("id", id);
+  if (error) throw error;
+  setStatus("Актив удален.", "success");
+  await loadOperationsData();
+  syncModuleStatus();
+}
+
+async function deleteAssetPayment(id) {
+  const { error } = await supabase.from("light2_asset_payments").delete().eq("id", id);
+  if (error) throw error;
+  setStatus("Выплата по активу удалена.", "success");
+  await loadOperationsData();
+  syncModuleStatus();
+}
+
+async function deletePurchase(id) {
+  const { error } = await supabase.from("light2_purchase_catalog").delete().eq("id", id);
+  if (error) throw error;
+  setStatus("Позиция закупки удалена.", "success");
+  await loadOperationsData();
+  syncModuleStatus();
+}
+
 function bindEvents() {
   const balanceDom = getBalanceDom();
   const calendarDom = getCalendarDom();
+  const assetsDom = getAssetsDom();
+  const purchasesDom = getPurchasesDom();
 
   DOM.sectionTabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-section]");
@@ -1545,6 +2421,33 @@ function bindEvents() {
     }
   });
 
+  assetsDom.assetForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await saveAsset();
+    } catch (error) {
+      setStatus(error.message || "Не удалось сохранить актив.", "error");
+    }
+  });
+
+  assetsDom.paymentForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await saveAssetPayment();
+    } catch (error) {
+      setStatus(error.message || "Не удалось сохранить выплату по активу.", "error");
+    }
+  });
+
+  purchasesDom.form?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    try {
+      await savePurchase();
+    } catch (error) {
+      setStatus(error.message || "Не удалось сохранить позицию закупки.", "error");
+    }
+  });
+
   DOM.settlementResetButton.addEventListener("click", () => {
     resetSettlementForm();
     renderSettlements();
@@ -1558,6 +2461,21 @@ function bindEvents() {
   calendarDom.resetButton?.addEventListener("click", () => {
     resetCalendarForm();
     renderCalendar();
+  });
+
+  assetsDom.assetResetButton?.addEventListener("click", () => {
+    resetAssetForm();
+    renderAssets();
+  });
+
+  assetsDom.paymentResetButton?.addEventListener("click", () => {
+    resetAssetPaymentForm();
+    renderAssets();
+  });
+
+  purchasesDom.resetButton?.addEventListener("click", () => {
+    resetPurchaseForm();
+    renderPurchases();
   });
 
   [DOM.settlementPartnerFilter, DOM.settlementStatusFilter, DOM.settlementSearch].forEach((element) => {
@@ -1576,6 +2494,16 @@ function bindEvents() {
       element?.addEventListener("change", renderCalendar);
     }
   );
+
+  [assetsDom.search, assetsDom.paymentFilter, assetsDom.paymentSearch].forEach((element) => {
+    element?.addEventListener("input", renderAssets);
+    element?.addEventListener("change", renderAssets);
+  });
+
+  [purchasesDom.supplierFilter, purchasesDom.categoryFilter, purchasesDom.search].forEach((element) => {
+    element?.addEventListener("input", renderPurchases);
+    element?.addEventListener("change", renderPurchases);
+  });
 
   DOM.refreshSettlementsButton.addEventListener("click", async () => {
     try {
@@ -1601,6 +2529,24 @@ function bindEvents() {
       syncModuleStatus();
     } catch (error) {
       setStatus(error.message || "Не удалось обновить платежный календарь.", "error");
+    }
+  });
+
+  assetsDom.refreshButton?.addEventListener("click", async () => {
+    try {
+      await loadOperationsData();
+      syncModuleStatus();
+    } catch (error) {
+      setStatus(error.message || "Не удалось обновить раздел Активы.", "error");
+    }
+  });
+
+  purchasesDom.refreshButton?.addEventListener("click", async () => {
+    try {
+      await loadOperationsData();
+      syncModuleStatus();
+    } catch (error) {
+      setStatus(error.message || "Не удалось обновить раздел Закупки.", "error");
     }
   });
 
@@ -1669,6 +2615,72 @@ function bindEvents() {
       setStatus(error.message || "Не удалось удалить запись платежного календаря.", "error");
     }
   });
+
+  assetsDom.assetTableBody?.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-edit-asset]");
+    if (editButton) {
+      const item = STATE.assets.find((row) => row.id === editButton.dataset.editAsset);
+      if (item) {
+        fillAssetForm(item);
+        openSection("assets");
+      }
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-delete-asset]");
+    if (!deleteButton) return;
+    if (!window.confirm("Удалить актив?")) return;
+
+    try {
+      await deleteAsset(deleteButton.dataset.deleteAsset);
+    } catch (error) {
+      setStatus(error.message || "Не удалось удалить актив.", "error");
+    }
+  });
+
+  assetsDom.paymentTableBody?.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-edit-asset-payment]");
+    if (editButton) {
+      const item = STATE.assetPayments.find((row) => row.id === editButton.dataset.editAssetPayment);
+      if (item) {
+        fillAssetPaymentForm(item);
+        openSection("assets");
+      }
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-delete-asset-payment]");
+    if (!deleteButton) return;
+    if (!window.confirm("Удалить выплату по активу?")) return;
+
+    try {
+      await deleteAssetPayment(deleteButton.dataset.deleteAssetPayment);
+    } catch (error) {
+      setStatus(error.message || "Не удалось удалить выплату по активу.", "error");
+    }
+  });
+
+  purchasesDom.tableBody?.addEventListener("click", async (event) => {
+    const editButton = event.target.closest("[data-edit-purchase]");
+    if (editButton) {
+      const item = STATE.purchaseCatalog.find((row) => row.id === editButton.dataset.editPurchase);
+      if (item) {
+        fillPurchaseForm(item);
+        openSection("purchases");
+      }
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-delete-purchase]");
+    if (!deleteButton) return;
+    if (!window.confirm("Удалить позицию закупки?")) return;
+
+    try {
+      await deletePurchase(deleteButton.dataset.deletePurchase);
+    } catch (error) {
+      setStatus(error.message || "Не удалось удалить позицию закупки.", "error");
+    }
+  });
 }
 
 async function start() {
@@ -1684,6 +2696,7 @@ async function start() {
     if (!ready) return;
     await loadSettlements();
     await loadFinanceData();
+    await loadOperationsData();
     syncModuleStatus();
   } catch (error) {
     setModuleState("Ошибка");

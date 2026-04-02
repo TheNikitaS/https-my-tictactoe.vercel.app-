@@ -173,6 +173,12 @@ body {
   gap: 14px;
 }
 
+.subsection-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
 .overview-card,
 .template-card,
 .summary-card,
@@ -185,16 +191,25 @@ body {
 
 .overview-card h3,
 .template-card h3,
-.summary-card h3 {
+.summary-card h3,
+.subsection-card h3 {
   margin: 0 0 8px;
   font-size: 1.04rem;
 }
 
 .overview-card p,
-.template-card p {
+.template-card p,
+.subsection-card p {
   margin: 0 0 12px;
   color: var(--muted);
   line-height: 1.5;
+}
+
+.subsection-card {
+  padding: 16px;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
 }
 
 .overview-card button {

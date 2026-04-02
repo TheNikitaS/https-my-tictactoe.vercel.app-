@@ -82,7 +82,7 @@ const MODULES = {
     title: "ЛАЙТ 2",
     subtitle: "Финансовый и операционный контур из рабочего файла ЛАЙТ 2.",
     type: "embed",
-    src: () => "./light2/index.html?v=20260402-light2-finance"
+    src: () => "./light2/index.html?v=20260402-light2-assets"
   },
   messenger: {
     title: "Мессенджер",
