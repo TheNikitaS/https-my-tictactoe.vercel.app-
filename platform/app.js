@@ -1,10 +1,10 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260403-platform-premium4";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260403-platform-premium5";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260403-platform-premium4";
+const PLATFORM_BUILD = "20260403-platform-premium5";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -696,9 +696,22 @@ function buildPartnerCalculatorUrl(slug) {
   return `../part/index.html?partner=${encodeURIComponent(slug)}`;
 }
 
+function isMessengerPolicyRecursion(error) {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    message.includes("infinite recursion detected in policy") &&
+    (message.includes("app_thread_members") || message.includes("app_threads") || message.includes("app_messages"))
+  );
+}
+
 function isSchemaMissing(error) {
   const message = (error?.message || "").toLowerCase();
-  return error?.code === "42P01" || message.includes("relation") || message.includes("app_profiles");
+  return (
+    error?.code === "42P01" ||
+    message.includes("does not exist") ||
+    message.includes('relation "app_profiles"') ||
+    message.includes("app_profiles")
+  );
 }
 
 function showAuthPane(key) {
@@ -1053,7 +1066,17 @@ async function openModule(key) {
 
   if (module.type === "messenger") {
     DOM.messengerView.classList.remove("d-none");
-    await loadThreads();
+    try {
+      await loadThreads();
+    } catch (error) {
+      if (isMessengerPolicyRecursion(error)) {
+        DOM.threadList.innerHTML = `<div class="compact-help">Мессенджер временно недоступен: в Supabase зациклилась policy для чата. Выполните <code>platform_messenger_rls_fix.sql</code> в SQL Editor.</div>`;
+        DOM.messagesList.innerHTML = `<div class="compact-help">После выполнения SQL-патча обновите платформу, и чат заработает без рекурсии policy.</div>`;
+        setShellStatus("Мессенджер временно отключён до выполнения platform_messenger_rls_fix.sql.", "warning");
+        return;
+      }
+      throw error;
+    }
     return;
   }
 
@@ -1164,9 +1187,11 @@ async function upsertSharedState(appId, payload) {
   if (insertError) throw insertError;
 }
 
-async function clearTableByColumn(tableName, columnName) {
+async function clearTableByColumn(tableName, columnName, options = {}) {
   const { error } = await supabase.from(tableName).delete().not(columnName, "is", null);
-  if (error && error.code !== "42P01") throw error;
+  if (!error || error.code === "42P01") return;
+  if (options.ignoreMessengerPolicyError && isMessengerPolicyRecursion(error)) return;
+  throw error;
 }
 
 async function performOwnerDataResetIfNeeded() {
@@ -1235,9 +1260,9 @@ async function performOwnerDataResetIfNeeded() {
     updatedAt: now
   });
 
-  await clearTableByColumn("app_messages", "id");
-  await clearTableByColumn("app_thread_members", "thread_id");
-  await clearTableByColumn("app_threads", "id");
+  await clearTableByColumn("app_messages", "id", { ignoreMessengerPolicyError: true });
+  await clearTableByColumn("app_thread_members", "thread_id", { ignoreMessengerPolicyError: true });
+  await clearTableByColumn("app_threads", "id", { ignoreMessengerPolicyError: true });
   await clearTableByColumn("light2_asset_payments", "id");
   await clearTableByColumn("light2_assets", "id");
   await clearTableByColumn("light2_purchase_catalog", "id");
@@ -1858,7 +1883,17 @@ async function refreshCurrentView() {
     return;
   }
   if (STATE.activeModule === "messenger") {
-    await loadThreads();
+    try {
+      await loadThreads();
+    } catch (error) {
+      if (isMessengerPolicyRecursion(error)) {
+        DOM.threadList.innerHTML = `<div class="compact-help">Мессенджер временно недоступен: выполните <code>platform_messenger_rls_fix.sql</code> в Supabase SQL Editor.</div>`;
+        DOM.messagesList.innerHTML = `<div class="compact-help">После SQL-патча обновите платформу.</div>`;
+        setShellStatus("Мессенджер временно отключён до выполнения platform_messenger_rls_fix.sql.", "warning");
+        return;
+      }
+      throw error;
+    }
     return;
   }
   if (STATE.activeModule === "dashboard") {

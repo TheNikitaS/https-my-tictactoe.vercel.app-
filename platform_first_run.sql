@@ -383,19 +383,58 @@ for delete
 to authenticated
 using (public.is_admin(auth.uid()));
 
+create or replace function public.can_access_thread(target_thread_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    public.is_admin(auth.uid())
+    or exists (
+      select 1
+      from public.app_threads t
+      where t.id = target_thread_id
+        and (
+          t.created_by = auth.uid()
+          or exists (
+            select 1
+            from public.app_thread_members m
+            where m.thread_id = t.id
+              and m.user_id = auth.uid()
+          )
+        )
+    );
+$$;
+
+revoke all on function public.can_access_thread(uuid) from public;
+grant execute on function public.can_access_thread(uuid) to authenticated;
+
+create or replace function public.can_manage_thread(target_thread_id uuid)
+returns boolean
+language sql
+security definer
+set search_path = public
+as $$
+  select
+    public.is_admin(auth.uid())
+    or exists (
+      select 1
+      from public.app_threads t
+      where t.id = target_thread_id
+        and t.created_by = auth.uid()
+    );
+$$;
+
+revoke all on function public.can_manage_thread(uuid) from public;
+grant execute on function public.can_manage_thread(uuid) to authenticated;
+
 drop policy if exists "threads_select_member" on public.app_threads;
 create policy "threads_select_member"
 on public.app_threads
 for select
 to authenticated
-using (
-  public.is_admin(auth.uid())
-  or exists (
-    select 1
-    from public.app_thread_members m
-    where m.thread_id = id and m.user_id = auth.uid()
-  )
-);
+using (public.can_access_thread(id));
 
 drop policy if exists "threads_insert_authenticated" on public.app_threads;
 create policy "threads_insert_authenticated"
@@ -412,11 +451,7 @@ to authenticated
 using (
   public.is_admin(auth.uid())
   or user_id = auth.uid()
-  or exists (
-    select 1
-    from public.app_thread_members m
-    where m.thread_id = thread_id and m.user_id = auth.uid()
-  )
+  or public.can_access_thread(thread_id)
 );
 
 drop policy if exists "thread_members_insert_creator" on public.app_thread_members;
@@ -424,28 +459,14 @@ create policy "thread_members_insert_creator"
 on public.app_thread_members
 for insert
 to authenticated
-with check (
-  public.is_admin(auth.uid())
-  or exists (
-    select 1
-    from public.app_threads t
-    where t.id = thread_id and t.created_by = auth.uid()
-  )
-);
+with check (public.can_manage_thread(thread_id));
 
 drop policy if exists "messages_select_member" on public.app_messages;
 create policy "messages_select_member"
 on public.app_messages
 for select
 to authenticated
-using (
-  public.is_admin(auth.uid())
-  or exists (
-    select 1
-    from public.app_thread_members m
-    where m.thread_id = thread_id and m.user_id = auth.uid()
-  )
-);
+using (public.can_access_thread(thread_id));
 
 drop policy if exists "messages_insert_member" on public.app_messages;
 create policy "messages_insert_member"
@@ -454,11 +475,7 @@ for insert
 to authenticated
 with check (
   sender_id = auth.uid()
-  and exists (
-    select 1
-    from public.app_thread_members m
-    where m.thread_id = thread_id and m.user_id = auth.uid()
-  )
+  and public.can_access_thread(thread_id)
 );
 
 drop policy if exists "light2_settlements_select_scope" on public.light2_partner_settlements;
