@@ -1138,6 +1138,19 @@ body.platform-wide .view-section {
   .workspace-form-grid {
     grid-template-columns: 1fr;
   }
+
+  .workspace-command-bar {
+    padding: 12px;
+  }
+
+  .workspace-command-bar__actions > * {
+    flex: 1 1 160px;
+  }
+
+  .workspace-mode-tabs,
+  .workspace-view-tabs {
+    flex-wrap: nowrap;
+  }
 }
 
 :root {
@@ -1337,6 +1350,99 @@ body.platform-wide .content-shell {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.workspace-mode-tabs,
+.workspace-command-bar__actions,
+.workspace-command-bar__meta,
+.workspace-stage-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.workspace-mode-tabs {
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.workspace-mode-tab {
+  border: 1px solid rgba(150, 131, 103, 0.22);
+  background: rgba(255, 252, 247, 0.82);
+  color: var(--text);
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.workspace-mode-tab.active {
+  background: #17212b;
+  color: #fff7ed;
+  border-color: transparent;
+}
+
+.workspace-command-bar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 20px;
+  border: 1px solid rgba(150, 131, 103, 0.2);
+  background: linear-gradient(180deg, rgba(255, 253, 249, 0.98), rgba(248, 242, 234, 0.94));
+  box-shadow: 0 12px 28px rgba(23, 33, 43, 0.05);
+}
+
+.workspace-command-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1px solid rgba(150, 131, 103, 0.18);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.workspace-inline-hint {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(142, 107, 58, 0.16);
+  background: rgba(142, 107, 58, 0.06);
+  color: var(--accent-strong);
+  font-size: 0.9rem;
+}
+
+.workspace-stage-card {
+  min-width: 120px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(150, 131, 103, 0.16);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.workspace-stage-card span,
+.workspace-stage-card strong {
+  display: block;
+}
+
+.workspace-stage-card span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  margin-bottom: 6px;
+}
+
+.workspace-panel--active {
+  border-color: rgba(142, 107, 58, 0.32);
+  box-shadow: 0 18px 34px rgba(142, 107, 58, 0.1);
+}
+
+.workspace-panel--muted {
+  opacity: 0.78;
 }
 
 .workspace-view-tab {

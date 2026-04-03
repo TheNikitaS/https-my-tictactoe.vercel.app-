@@ -1,4 +1,4 @@
-const LIVE_MODULE_CONFIG = {
+﻿const LIVE_MODULE_CONFIG = {
   crm: {
     appId: "platform_crm_v2",
     legacyAppId: "platform_crm_v1",
@@ -139,6 +139,30 @@ const BUILDER_META = {
   }
 };
 
+const MODULE_MODE_CONFIG = {
+  crm: [
+    { key: "overview", label: "Обзор" },
+    { key: "board", label: "Воронка" },
+    { key: "table", label: "Таблица" },
+    { key: "form", label: "Карточка" }
+  ],
+  warehouse: [
+    { key: "overview", label: "Обзор" },
+    { key: "catalog", label: "Каталог" },
+    { key: "movements", label: "Движения" },
+    { key: "form", label: "Формы" }
+  ],
+  tasks: [
+    { key: "overview", label: "Обзор" },
+    { key: "board", label: "Канбан" },
+    { key: "table", label: "Лента" },
+    { key: "form", label: "Формы" }
+  ]
+};
+
+const LIVE_UI_STORAGE_PREFIX = "dom-neona:live-ui";
+const LIVE_DRAFT_STORAGE_PREFIX = "dom-neona:live-draft";
+
 const moneyFormatter = new Intl.NumberFormat("ru-RU", {
   style: "currency",
   currency: "RUB",
@@ -151,6 +175,33 @@ const numberFormatter = new Intl.NumberFormat("ru-RU", {
 
 function deepClone(value) {
   return JSON.parse(JSON.stringify(value ?? null));
+}
+
+function readStoredJson(key, fallback) {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return deepClone(fallback);
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? parsed : deepClone(fallback);
+  } catch {
+    return deepClone(fallback);
+  }
+}
+
+function writeStoredJson(key, value) {
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value ?? null));
+  } catch {
+    // Ignore storage failures in private browsing modes.
+  }
+}
+
+function removeStoredValue(key) {
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    // Ignore storage failures in private browsing modes.
+  }
 }
 
 function createId(prefix) {
@@ -702,10 +753,139 @@ export function createLiveWorkspaceController({
 }) {
   const docs = { crm: null, warehouse: null, tasks: null };
 
+  function getModuleUiKey(moduleKey) {
+    return `${LIVE_UI_STORAGE_PREFIX}:${moduleKey}`;
+  }
+
+  function getDraftKey(moduleKey, formKey) {
+    return `${LIVE_DRAFT_STORAGE_PREFIX}:${moduleKey}:${formKey}`;
+  }
+
+  function hydrateUiState(moduleKey, defaults) {
+    return { ...defaults, ...readStoredJson(getModuleUiKey(moduleKey), {}) };
+  }
+
+  function persistUiState(moduleKey) {
+    if (!supports(moduleKey)) return;
+    const state = ui[moduleKey] || {};
+    const payload = {};
+    Object.keys(state).forEach((key) => {
+      if (key.endsWith("Id")) return;
+      payload[key] = state[key];
+    });
+    writeStoredJson(getModuleUiKey(moduleKey), payload);
+  }
+
+  function readDraft(moduleKey, formKey) {
+    return readStoredJson(getDraftKey(moduleKey, formKey), {});
+  }
+
+  function writeDraft(moduleKey, formKey, draft) {
+    writeStoredJson(getDraftKey(moduleKey, formKey), draft);
+  }
+
+  function clearDraft(moduleKey, formKey) {
+    removeStoredValue(getDraftKey(moduleKey, formKey));
+  }
+
+  function serializeFormDraft(form) {
+    const payload = {};
+    Array.from(form.elements || []).forEach((field) => {
+      if (!field || !field.name || field.disabled || field.type === "hidden") return;
+      if (field.type === "checkbox") {
+        payload[field.name] = Boolean(field.checked);
+        return;
+      }
+      payload[field.name] = field.value ?? "";
+    });
+    return payload;
+  }
+
+  function draftValue(primaryValue, fallbackDraftValue) {
+    const primaryText = compactText(primaryValue);
+    if (primaryText) return primaryValue;
+    if (typeof primaryValue === "number" && Number.isFinite(primaryValue)) return primaryValue;
+    return fallbackDraftValue ?? "";
+  }
+
+  function modeIs(uiState, ...modes) {
+    const current = uiState?.mode || "overview";
+    return modes.includes(current);
+  }
+
+  function buildModeTabs(moduleKey, escapeFn) {
+    const uiState = ui[moduleKey];
+    const options = MODULE_MODE_CONFIG[moduleKey] || [];
+    return `
+      <div class="workspace-mode-tabs" role="tablist" aria-label="Режимы раздела">
+        ${options
+          .map(
+            (option) => `
+              <button class="workspace-mode-tab ${uiState.mode === option.key ? "active" : ""}" type="button" data-live-mode="${escapeFn(option.key)}">
+                ${escapeFn(option.label)}
+              </button>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderActionBar(moduleKey, actions, escapeFn) {
+    return `
+      <div class="workspace-command-bar">
+        <div class="workspace-command-bar__meta">
+          <span class="workspace-command-chip">Режим: ${escapeFn((MODULE_MODE_CONFIG[moduleKey] || []).find((item) => item.key === ui[moduleKey].mode)?.label || "Обзор")}</span>
+          <span class="workspace-command-chip">Вид: ${escapeFn(ui[moduleKey].activeViewId === "adhoc" ? "Текущий фильтр" : "Сохраненный")}</span>
+        </div>
+        <div class="workspace-command-bar__actions">
+          ${actions.join("")}
+        </div>
+      </div>
+    `;
+  }
+
+  function renderDraftBadge(moduleKey, formKey) {
+    const draft = readDraft(moduleKey, formKey);
+    if (!draft || !Object.keys(draft).length) return "";
+    return '<div class="workspace-inline-hint">Есть черновик. Он уже подставлен в форму и не потеряется после обновления страницы.</div>';
+  }
+
+  async function exportModuleData(moduleKey) {
+    const doc = await ensureDocument(moduleKey);
+    const blob = new Blob([JSON.stringify(doc, null, 2)], { type: "application/json;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${moduleKey}-${todayString()}.json`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+    setStatus("JSON выгружен.", "success");
+  }
+
+  async function importModuleData(moduleKey) {
+    const raw = window.prompt("Вставьте JSON экспорт этого раздела целиком.");
+    if (!raw) return;
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (error) {
+      throw new Error(`JSON не распознан: ${error.message || "ошибка синтаксиса"}`);
+    }
+    await saveDocument(moduleKey, parsed, "JSON раздела импортирован.");
+    await rerenderCurrentModule();
+  }
+
+  function duplicateTitle(value) {
+    return compactText(value) ? `${compactText(value)} копия` : "Копия";
+  }
+
   const ui = {
-    crm: { search: "", stage: "all", owner: "all", editId: null, activeViewId: "default", configOpen: false },
-    warehouse: { search: "", category: "all", itemEditId: null, movementItemId: "", activeViewId: "default", configOpen: false },
-    tasks: { search: "", status: "all", sprint: "all", owner: "all", taskEditId: null, sprintEditId: null, activeViewId: "default", configOpen: false }
+    crm: hydrateUiState("crm", { search: "", stage: "all", owner: "all", editId: null, activeViewId: "default", configOpen: false, mode: "overview" }),
+    warehouse: hydrateUiState("warehouse", { search: "", category: "all", itemEditId: null, movementItemId: "", activeViewId: "default", configOpen: false, mode: "overview" }),
+    tasks: hydrateUiState("tasks", { search: "", status: "all", sprint: "all", owner: "all", taskEditId: null, sprintEditId: null, activeViewId: "default", configOpen: false, mode: "overview" })
   };
 
   const docFactories = {
@@ -830,10 +1010,12 @@ export function createLiveWorkspaceController({
     if (!view) return;
     Object.assign(ui[moduleKey], getDefaultFilters(moduleKey), view.filters || {});
     ui[moduleKey].activeViewId = viewId;
+    persistUiState(moduleKey);
   }
 
   function markFiltersAsAdHoc(moduleKey) {
     ui[moduleKey].activeViewId = "adhoc";
+    persistUiState(moduleKey);
   }
 
   function getFilteredCrmDeals(doc) {
@@ -863,6 +1045,7 @@ export function createLiveWorkspaceController({
           ${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-crm-stage-select="${escapeHtml(deal.id)}">${CRM_STAGES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === deal.stage ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(stage.tone)}">${escapeHtml(stage.label)}</span>`}
           <div class="workspace-card__actions">
             ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Изменить</button>` : ""}
+            ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button>` : ""}
             ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-crm-delete="${escapeHtml(deal.id)}">Удалить</button>` : ""}
           </div>
         </div>
@@ -887,12 +1070,29 @@ export function createLiveWorkspaceController({
       ...getFormulaMetrics("crm", doc, filtered)
     ];
     const customHeader = renderCustomTableHeader("crm", doc, escapeHtml);
+    const formDraft = editDeal ? null : readDraft("crm", "deal");
+    const stageSummary = CRM_STAGES.map((stage) => {
+      const count = (doc.deals || []).filter((deal) => deal.stage === stage.key).length;
+      return `<div class="workspace-stage-card"><span>${escapeHtml(stage.label)}</span><strong>${escapeHtml(formatNumber(count))}</strong></div>`;
+    }).join("");
+    const actionBar = renderActionBar(
+      "crm",
+      [
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-crm-new>Новая сделка</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Воронка</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Таблица</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="crm">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="crm">Импорт JSON</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="crm:deal">Сбросить черновик</button>' : ""
+      ].filter(Boolean),
+      escapeHtml
+    );
     const dealTableRows =
       filtered.length > 0
         ? filtered
             .map((deal) => {
               const stage = getCrmStageMeta(deal.stage);
-              return `<tr><td>${escapeHtml(deal.title || "Сделка")}</td><td>${escapeHtml(deal.client || "—")}</td><td>${escapeHtml(stage.label)}</td><td>${escapeHtml(deal.owner || "—")}</td><td>${escapeHtml(deal.channel || "—")}</td><td>${escapeHtml(formatMoney(deal.amount || 0))}</td><td>${escapeHtml(formatDate(deal.deadline))}</td>${renderCustomTableCells("crm", doc, deal, escapeHtml)}<td class="text-end">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Открыть</button>` : ""}</td></tr>`;
+              return `<tr><td>${escapeHtml(deal.title || "Сделка")}</td><td>${escapeHtml(deal.client || "—")}</td><td>${escapeHtml(stage.label)}</td><td>${escapeHtml(deal.owner || "—")}</td><td>${escapeHtml(deal.channel || "—")}</td><td>${escapeHtml(formatMoney(deal.amount || 0))}</td><td>${escapeHtml(formatDate(deal.deadline))}</td>${renderCustomTableCells("crm", doc, deal, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Открыть</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button>` : ""}</div></td></tr>`;
             })
             .join("")
         : `<tr><td colspan="${8 + getVisibleCustomFields("crm", doc, "showInTable").length}" class="text-muted">По текущим фильтрам сделок нет.</td></tr>`;
@@ -902,6 +1102,8 @@ export function createLiveWorkspaceController({
         ${renderWorkspaceHeader("crm")}
         ${renderMetricGrid(metrics)}
         ${renderViewTabs("crm", doc, ui.crm, escapeHtml)}
+        ${buildModeTabs("crm", escapeHtml)}
+        ${actionBar}
         <div class="workspace-toolbar">
           <div class="workspace-toolbar__group">
             <input class="form-control" type="search" placeholder="Поиск по клиенту, каналу, названию" value="${escapeHtml(filters.search)}" data-live-filter="search" />
@@ -909,29 +1111,31 @@ export function createLiveWorkspaceController({
             <select class="form-select" data-live-filter="owner"><option value="all">Все ответственные</option>${owners.map((owner) => `<option value="${escapeHtml(owner)}" ${filters.owner === owner ? "selected" : ""}>${escapeHtml(owner)}</option>`).join("")}</select>
           </div>
           <div class="workspace-toolbar__group workspace-toolbar__group--end">
-            ${canEdit ? `<button class="btn btn-dark" type="button" data-crm-new>Новая сделка</button>` : `<span class="workspace-note">Редактирование отключено для вашей роли</span>`}
+            ${canEdit ? `<button class="btn btn-dark" type="button" data-live-mode="form">Карточка</button>` : `<span class="workspace-note">Редактирование отключено для вашей роли</span>`}
+            <button class="btn btn-outline-dark" type="button" data-live-filters-reset="crm">Сбросить фильтры</button>
             ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="crm">${ui.crm.configOpen ? "Скрыть конструктор" : "Конструктор"}</button>` : ""}
           </div>
         </div>
         ${canManage ? renderBuilderPanel("crm", doc, ui.crm, escapeHtml) : ""}
-        <div class="workspace-grid workspace-grid--2">
+        ${modeIs(filters, "overview", "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editDeal ? "Карточка сделки" : "Новая сделка"}</h4><div class="compact-help">Карточка строится под ваш цикл: лид → квалификация → КП/счет → производство → закрытие.</div></div></div>
-            ${canEdit ? `<form id="crmDealForm" class="workspace-form"><input type="hidden" name="id" value="${escapeHtml(editDeal?.id || "")}" /><div class="workspace-form-grid"><label><span>Название сделки</span><input class="form-control" type="text" name="title" value="${escapeHtml(editDeal?.title || "")}" required /></label><label><span>Клиент</span><input class="form-control" type="text" name="client" value="${escapeHtml(editDeal?.client || "")}" required /></label><label><span>Канал</span><input class="form-control" type="text" name="channel" value="${escapeHtml(editDeal?.channel || "")}" /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editDeal?.owner || "")}" /></label><label><span>Стадия</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${(editDeal?.stage || "lead") === stage.key ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label><label><span>Сумма, ₽</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(String(toNumber(editDeal?.amount || 0) || ""))}" /></label><label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(editDeal?.deadline || ""))}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editDeal?.note || "")}</textarea></label>${renderCustomFieldSection("crm", doc, editDeal, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editDeal ? "Сохранить изменения" : "Добавить сделку"}</button><button class="btn btn-outline-secondary" type="button" data-crm-new>Очистить форму</button></div></form>` : renderAccessHint("crm")}
+            ${canEdit ? `${renderDraftBadge("crm", "deal")}<form id="crmDealForm" class="workspace-form" data-draft-form="deal"><input type="hidden" name="id" value="${escapeHtml(editDeal?.id || "")}" /><div class="workspace-form-grid"><label><span>Название сделки</span><input class="form-control" type="text" name="title" value="${escapeHtml(editDeal ? editDeal.title || "" : draftValue("", formDraft?.title))}" required /></label><label><span>Клиент</span><input class="form-control" type="text" name="client" value="${escapeHtml(editDeal ? editDeal.client || "" : draftValue("", formDraft?.client))}" required /></label><label><span>Канал</span><input class="form-control" type="text" name="channel" value="${escapeHtml(editDeal ? editDeal.channel || "" : draftValue("", formDraft?.channel))}" /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editDeal ? editDeal.owner || "" : draftValue("", formDraft?.owner))}" /></label><label><span>Стадия</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${((editDeal?.stage || formDraft?.stage || "lead") === stage.key) ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label><label><span>Сумма, ₽</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(editDeal ? String(toNumber(editDeal.amount || 0) || "") : compactText(formDraft?.amount || ""))}" /></label><label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(editDeal ? normalizeDateInput(editDeal.deadline || "") : normalizeDateInput(formDraft?.deadline || ""))}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editDeal ? editDeal.note || "" : draftValue("", formDraft?.note))}</textarea></label>${renderCustomFieldSection("crm", doc, editDeal || formDraft, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editDeal ? "Сохранить изменения" : "Добавить сделку"}</button><button class="btn btn-outline-secondary" type="button" data-crm-new>Очистить форму</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-duplicate="${escapeHtml(editDeal.id)}">Сделать копию</button>` : ""}</div></form>` : renderAccessHint("crm")}
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Фокус недели</h4><div class="compact-help">Быстрый срез по тем сделкам, которым прямо сейчас нужен контроль.</div></div></div>
+            <div class="workspace-stage-strip">${stageSummary}</div>
             <div class="workspace-stack">${(sortByDateDesc(openDeals, "deadline").slice(0, 6) || []).map((deal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(deal.title || "Сделка")}</strong><div class="workspace-list-item__meta">${escapeHtml(deal.client || "—")} • ${escapeHtml(deal.owner || "—")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getCrmStageMeta(deal.stage).tone)}">${escapeHtml(getCrmStageMeta(deal.stage).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(deal.deadline))}</div></div></div>`).join("") || '<div class="workspace-empty">Активных сделок пока нет.</div>'}</div>
           </section>
-        </div>
-        <section class="workspace-panel">
+        </div>` : ""}
+        ${modeIs(filters, "board") ? `<section class="workspace-panel">
           <div class="panel-heading"><div><h4>Воронка сделок</h4><div class="compact-help">Карточки можно быстро переводить между стадиями прямо из списка.</div></div><div class="workspace-note">Показано: ${escapeHtml(String(filtered.length))}</div></div>
           <div class="workspace-board workspace-board--crm">${CRM_STAGES.map((stage) => { const stageDeals = filtered.filter((deal) => deal.stage === stage.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(stage.label)}</strong><span>${escapeHtml(String(stageDeals.length))}</span></div><div class="workspace-lane__body">${stageDeals.map((deal) => renderCrmCard(doc, deal, canEdit, canManage)).join("") || '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
-        </section>
-        <section class="workspace-panel">
+        </section>` : ""}
+        ${modeIs(filters, "table") ? `<section class="workspace-panel">
           <div class="panel-heading"><div><h4>Список сделок</h4><div class="compact-help">Нижняя таблица удобна для поиска и быстрого перехода к нужной карточке.</div></div></div>
           <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Сделка</th><th>Клиент</th><th>Стадия</th><th>Ответственный</th><th>Канал</th><th>Сумма</th><th>Срок</th>${customHeader}<th></th></tr></thead><tbody>${dealTableRows}</tbody></table></div>
-        </section>
+        </section>` : ""}
         ${renderRelatedLinks("crm")}
       </div>
     `;
@@ -986,12 +1190,27 @@ export function createLiveWorkspaceController({
       ...getFormulaMetrics("warehouse", doc, filteredItems)
     ];
     const customHeader = renderCustomTableHeader("warehouse", doc, escapeHtml);
+    const warehouseActionBar = renderActionBar(
+      "warehouse",
+      [
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-item-new>Новая позиция</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="movements">Движения</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Каталог</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:item">Сбросить черновик позиции</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:movement">Сбросить черновик движения</button>' : ""
+      ].filter(Boolean),
+      escapeHtml
+    );
 
     return `
       <div class="workspace-shell">
         ${renderWorkspaceHeader("warehouse")}
         ${renderMetricGrid(metrics)}
         ${renderViewTabs("warehouse", doc, ui.warehouse, escapeHtml)}
+        ${buildModeTabs("warehouse", escapeHtml)}
+        ${warehouseActionBar}
         <div class="workspace-toolbar">
           <div class="workspace-toolbar__group">
             <input class="form-control" type="search" placeholder="Поиск по позиции, SKU, категории" value="${escapeHtml(filters.search)}" data-live-filter="search" />
@@ -1006,17 +1225,17 @@ export function createLiveWorkspaceController({
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editItem ? "Редактирование позиции" : "Новая позиция склада"}</h4><div class="compact-help">Каталог можно использовать как общий справочник материалов для склада и будущих калькуляторов.</div></div></div>
-            ${canEdit ? `<form id="warehouseItemForm" class="workspace-form"><input type="hidden" name="id" value="${escapeHtml(editItem?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(editItem?.name || "")}" required /></label><label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(editItem?.sku || "")}" /></label><label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(editItem?.category || "")}" /></label><label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(editItem?.unit || "шт")}" /></label><label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(String(toNumber(editItem?.openingStock || 0) || ""))}" /></label><label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(String(toNumber(editItem?.minStock || 0) || ""))}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3">${escapeHtml(editItem?.note || "")}</textarea></label>${renderCustomFieldSection("warehouse", doc, editItem, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editItem ? "Сохранить позицию" : "Добавить позицию"}</button><button class="btn btn-outline-secondary" type="button" data-warehouse-item-new>Очистить форму</button></div></form>` : renderAccessHint("warehouse")}
+            ${canEdit ? `<form id="warehouseItemForm" class="workspace-form" data-draft-form="item"><input type="hidden" name="id" value="${escapeHtml(editItem?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(editItem?.name || "")}" required /></label><label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(editItem?.sku || "")}" /></label><label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(editItem?.category || "")}" /></label><label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(editItem?.unit || "шт")}" /></label><label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(String(toNumber(editItem?.openingStock || 0) || ""))}" /></label><label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(String(toNumber(editItem?.minStock || 0) || ""))}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3">${escapeHtml(editItem?.note || "")}</textarea></label>${renderCustomFieldSection("warehouse", doc, editItem, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editItem ? "Сохранить позицию" : "Добавить позицию"}</button><button class="btn btn-outline-secondary" type="button" data-warehouse-item-new>Очистить форму</button></div></form>` : renderAccessHint("warehouse")}
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Движение по складу</h4><div class="compact-help">Приход, списание и резервы лучше вносить отдельно — остатки считаются автоматически.</div></div></div>
-            ${canEdit ? `<form id="warehouseMovementForm" class="workspace-form"><div class="workspace-form-grid"><label><span>Позиция</span><select class="form-select" name="itemId" required><option value="">Выберите позицию</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${filters.movementItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label><label><span>Тип</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label><label><span>Количество</span><input class="form-control" type="number" min="0" step="1" name="qty" required /></label><label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить движение</button></div></form>` : renderAccessHint("warehouse")}
+            ${canEdit ? `<form id="warehouseMovementForm" class="workspace-form" data-draft-form="movement"><div class="workspace-form-grid"><label><span>Позиция</span><select class="form-select" name="itemId" required><option value="">Выберите позицию</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${filters.movementItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label><label><span>Тип</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label><label><span>Количество</span><input class="form-control" type="number" min="0" step="1" name="qty" required /></label><label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить движение</button></div></form>` : renderAccessHint("warehouse")}
           </section>
         </div>
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Текущие остатки</h4><div class="compact-help">Доступное количество = на руках − резерв.</div></div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Позиция</th><th>Категория</th><th>На руках</th><th>Резерв</th><th>Доступно</th><th>Минимум</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.category || "—")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Движение</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">Позиции не найдены. Добавьте первую запись или смените фильтр.</td></tr>`}</tbody></table></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Позиция</th><th>Категория</th><th>На руках</th><th>Резерв</th><th>Доступно</th><th>Минимум</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.category || "—")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-item-duplicate="${escapeHtml(item.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Движение</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">Позиции не найдены. Добавьте первую запись или смените фильтр.</td></tr>`}</tbody></table></div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Последние движения</h4><div class="compact-help">Отсюда удобно контролировать, что и когда ушло в резерв или было списано.</div></div></div>
@@ -1063,12 +1282,28 @@ export function createLiveWorkspaceController({
       ...getFormulaMetrics("tasks", doc, filteredTasks)
     ];
     const customHeader = renderCustomTableHeader("tasks", doc, escapeHtml);
+    const tasksActionBar = renderActionBar(
+      "tasks",
+      [
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-task-new>Новая задача</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-sprint-new>Новая итерация</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Канбан</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Лента</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="tasks">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="tasks">Импорт JSON</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:task">Сбросить черновик задачи</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:sprint">Сбросить черновик итерации</button>' : ""
+      ].filter(Boolean),
+      escapeHtml
+    );
 
     return `
       <div class="workspace-shell">
         ${renderWorkspaceHeader("tasks")}
         ${renderMetricGrid(metrics)}
         ${renderViewTabs("tasks", doc, ui.tasks, escapeHtml)}
+        ${buildModeTabs("tasks", escapeHtml)}
+        ${tasksActionBar}
         <div class="workspace-toolbar">
           <div class="workspace-toolbar__group">
             <input class="form-control" type="search" placeholder="Поиск по задаче, владельцу, итерации" value="${escapeHtml(filters.search)}" data-live-filter="search" />
@@ -1085,11 +1320,11 @@ export function createLiveWorkspaceController({
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editTask ? "Редактирование задачи" : "Новая задача"}</h4><div class="compact-help">Задачи можно вести по отделам, инициативам и проектам. Быстрый перевод между колонками остается прямо на карточках.</div></div></div>
-            ${canEdit ? `<form id="tasksTaskForm" class="workspace-form"><input type="hidden" name="id" value="${escapeHtml(editTask?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(editTask?.title || "")}" required /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editTask?.owner || "")}" /></label><label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${(editTask?.status || "backlog") === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select></label><label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((priority) => `<option value="${escapeHtml(priority.key)}" ${(editTask?.priority || "medium") === priority.key ? "selected" : ""}>${escapeHtml(priority.label)}</option>`).join("")}</select></label><label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${editTask?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label><label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(editTask?.dueDate || ""))}" /></label></div><label class="permission-flag"><input class="form-check-input" type="checkbox" name="blocked" ${editTask?.blocked ? "checked" : ""} /><span>Есть блокер / нужна помощь</span></label><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editTask?.note || "")}</textarea></label>${renderCustomFieldSection("tasks", doc, editTask, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editTask ? "Сохранить задачу" : "Добавить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-task-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
+            ${canEdit ? `<form id="tasksTaskForm" class="workspace-form" data-draft-form="task"><input type="hidden" name="id" value="${escapeHtml(editTask?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(editTask?.title || "")}" required /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editTask?.owner || "")}" /></label><label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${(editTask?.status || "backlog") === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select></label><label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((priority) => `<option value="${escapeHtml(priority.key)}" ${(editTask?.priority || "medium") === priority.key ? "selected" : ""}>${escapeHtml(priority.label)}</option>`).join("")}</select></label><label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${editTask?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label><label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(editTask?.dueDate || ""))}" /></label></div><label class="permission-flag"><input class="form-check-input" type="checkbox" name="blocked" ${editTask?.blocked ? "checked" : ""} /><span>Есть блокер / нужна помощь</span></label><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editTask?.note || "")}</textarea></label>${renderCustomFieldSection("tasks", doc, editTask, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editTask ? "Сохранить задачу" : "Добавить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-task-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editSprint ? "Редактирование итерации" : "Новая итерация"}</h4><div class="compact-help">Итерация помогает держать в фокусе ближайший рабочий цикл и распределять задачи по этапам.</div></div></div>
-            ${canEdit ? `<form id="tasksSprintForm" class="workspace-form"><input type="hidden" name="id" value="${escapeHtml(editSprint?.id || "")}" /><div class="workspace-form-grid"><label><span>Название итерации</span><input class="form-control" type="text" name="title" value="${escapeHtml(editSprint?.title || "")}" required /></label><label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(editSprint?.startDate || ""))}" /></label><label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(editSprint?.endDate || ""))}" /></label></div><label><span>Цель итерации</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(editSprint?.goal || "")}</textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editSprint ? "Сохранить итерацию" : "Добавить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-sprint-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
+            ${canEdit ? `<form id="tasksSprintForm" class="workspace-form" data-draft-form="sprint"><input type="hidden" name="id" value="${escapeHtml(editSprint?.id || "")}" /><div class="workspace-form-grid"><label><span>Название итерации</span><input class="form-control" type="text" name="title" value="${escapeHtml(editSprint?.title || "")}" required /></label><label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(editSprint?.startDate || ""))}" /></label><label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(editSprint?.endDate || ""))}" /></label></div><label><span>Цель итерации</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(editSprint?.goal || "")}</textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editSprint ? "Сохранить итерацию" : "Добавить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-sprint-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
         </div>
         <section class="workspace-panel">
@@ -1098,7 +1333,7 @@ export function createLiveWorkspaceController({
         </section>
         <section class="workspace-panel">
           <div class="panel-heading"><div><h4>Канбан</h4><div class="compact-help">Карточки отражают текущую загрузку команды и дают быстрый доступ к правке статуса.</div></div><div class="workspace-note">Показано: ${escapeHtml(String(filteredTasks.length))}</div></div>
-          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Задача")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Без ответственного")} • срок ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Без итерации")}</div>${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Есть блокер</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Изменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">Удалить</button>` : ""}</div></div></article>`).join("") : '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
+          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Задача")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Без ответственного")} • срок ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Без итерации")}</div>${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Есть блокер</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-task-duplicate="${escapeHtml(task.id)}">Копия</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">Удалить</button>` : ""}</div></div></article>`).join("") : '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
         </section>
         <section class="workspace-panel">
           <div class="panel-heading"><div><h4>Лента задач</h4><div class="compact-help">Нижняя таблица полезна для сортировки и быстрого перехода в нужную карточку.</div></div></div>
@@ -1156,6 +1391,8 @@ export function createLiveWorkspaceController({
     if (index >= 0) deals[index] = record;
     else deals.unshift(record);
     ui.crm.editId = null;
+    clearDraft("crm", "deal");
+    persistUiState("crm");
     await saveDocument("crm", { ...doc, deals }, index >= 0 ? "Сделка обновлена." : "Сделка добавлена.");
     await rerenderCurrentModule();
   }
@@ -1183,6 +1420,8 @@ export function createLiveWorkspaceController({
     if (index >= 0) items[index] = record;
     else items.unshift(record);
     ui.warehouse.itemEditId = null;
+    clearDraft("warehouse", "item");
+    persistUiState("warehouse");
     await saveDocument("warehouse", { ...doc, items }, index >= 0 ? "Позиция склада обновлена." : "Позиция склада добавлена.");
     await rerenderCurrentModule();
   }
@@ -1202,6 +1441,8 @@ export function createLiveWorkspaceController({
     };
     if (!record.itemId) throw new Error("Выберите позицию для движения.");
     ui.warehouse.movementItemId = record.itemId;
+    clearDraft("warehouse", "movement");
+    persistUiState("warehouse");
     await saveDocument("warehouse", { ...doc, movements: [record, ...(doc.movements || [])] }, "Движение по складу сохранено.");
     await rerenderCurrentModule();
   }
@@ -1230,6 +1471,8 @@ export function createLiveWorkspaceController({
     if (index >= 0) tasks[index] = record;
     else tasks.unshift(record);
     ui.tasks.taskEditId = null;
+    clearDraft("tasks", "task");
+    persistUiState("tasks");
     await saveDocument("tasks", { ...doc, tasks }, index >= 0 ? "Задача обновлена." : "Задача добавлена.");
     await rerenderCurrentModule();
   }
@@ -1253,6 +1496,8 @@ export function createLiveWorkspaceController({
     if (index >= 0) sprints[index] = record;
     else sprints.unshift(record);
     ui.tasks.sprintEditId = null;
+    clearDraft("tasks", "sprint");
+    persistUiState("tasks");
     await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "Итерация обновлена." : "Итерация добавлена.");
     await rerenderCurrentModule();
   }
@@ -1366,12 +1611,94 @@ export function createLiveWorkspaceController({
     return false;
   }
 
+  function hydrateDraftForms(moduleKey, root) {
+    if (!root) return;
+    root.querySelectorAll("[data-draft-form]").forEach((form) => {
+      const formKey = form.dataset.draftForm;
+      const idField = form.querySelector('input[name="id"]');
+      if (idField && compactText(idField.value)) return;
+      const draft = readDraft(moduleKey, formKey);
+      if (!draft || !Object.keys(draft).length) return;
+      Array.from(form.elements || []).forEach((field) => {
+        if (!field || !field.name || field.disabled) return;
+        if (field.type === "hidden") return;
+        if (field.type === "checkbox") {
+          if (draft[field.name] !== undefined) field.checked = Boolean(draft[field.name]);
+          return;
+        }
+        if ((field.value ?? "") !== "") return;
+        if (draft[field.name] !== undefined) field.value = draft[field.name];
+      });
+    });
+  }
+
+  function focusModeSection(moduleKey, root) {
+    if (!root) return;
+    const headingMap = {
+      crm: [
+        { text: "Карточка сделки", modes: "overview form" },
+        { text: "Новая сделка", modes: "overview form" },
+        { text: "Фокус недели", modes: "overview form" },
+        { text: "Воронка сделок", modes: "board" },
+        { text: "Список сделок", modes: "table" }
+      ],
+      warehouse: [
+        { text: "Новая позиция склада", modes: "form" },
+        { text: "Редактирование позиции", modes: "form" },
+        { text: "Движение по складу", modes: "form movements" },
+        { text: "Текущие остатки", modes: "overview catalog" },
+        { text: "Последние движения", modes: "overview movements" }
+      ],
+      tasks: [
+        { text: "Новая задача", modes: "form" },
+        { text: "Редактирование задачи", modes: "form" },
+        { text: "Новая итерация", modes: "form" },
+        { text: "Редактирование итерации", modes: "form" },
+        { text: "Итерации", modes: "overview form" },
+        { text: "Канбан", modes: "board" },
+        { text: "Лента задач", modes: "table" }
+      ]
+    };
+    root.querySelectorAll(".workspace-panel").forEach((panel) => {
+      if (panel.dataset.modeSection) return;
+      const heading = panel.querySelector("h4");
+      const title = String(heading?.textContent || "").trim().toLowerCase();
+      const match = (headingMap[moduleKey] || []).find((item) => title.includes(item.text.toLowerCase()));
+      if (match) panel.dataset.modeSection = match.modes;
+    });
+
+    const mode = ui[moduleKey]?.mode || "overview";
+    root.querySelectorAll("[data-mode-section]").forEach((section) => {
+      const values = String(section.dataset.modeSection || "")
+        .replaceAll(",", " ")
+        .split(" ")
+        .map((value) => value.trim())
+        .filter(Boolean);
+      const active = mode === "overview" ? values.includes("overview") : values.includes(mode);
+      section.classList.toggle("workspace-panel--active", active);
+      section.classList.toggle("workspace-panel--muted", mode !== "overview" && !active);
+    });
+
+    if (mode === "overview") return;
+    const target = root.querySelector(`[data-mode-section~="${mode}"], [data-mode-section*="${mode},"]`);
+    if (target) {
+      window.requestAnimationFrame(() => {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    }
+  }
+
   function handleInput(event, moduleKey) {
     if (!supports(moduleKey)) return false;
+    const draftForm = event.target.closest("[data-draft-form]");
+    if (draftForm) {
+      writeDraft(moduleKey, draftForm.dataset.draftForm, serializeFormDraft(draftForm));
+    }
     const target = event.target.closest("[data-live-filter]");
     if (!target) return false;
     ui[moduleKey][target.dataset.liveFilter] = target.value;
     markFiltersAsAdHoc(moduleKey);
+    persistUiState(moduleKey);
     void rerenderCurrentModule();
     return true;
   }
@@ -1382,8 +1709,13 @@ export function createLiveWorkspaceController({
     if (filterTarget) {
       ui[moduleKey][filterTarget.dataset.liveFilter] = filterTarget.value;
       markFiltersAsAdHoc(moduleKey);
+      persistUiState(moduleKey);
       await rerenderCurrentModule();
       return true;
+    }
+    const draftForm = event.target.closest("[data-draft-form]");
+    if (draftForm) {
+      writeDraft(moduleKey, draftForm.dataset.draftForm, serializeFormDraft(draftForm));
     }
     const crmStageSelect = event.target.closest("[data-crm-stage-select]");
     if (crmStageSelect) {
@@ -1469,17 +1801,73 @@ export function createLiveWorkspaceController({
       await rerenderCurrentModule();
       return true;
     }
+    const modeButton = event.target.closest("[data-live-mode]");
+    if (modeButton) {
+      ui[moduleKey].mode = modeButton.dataset.liveMode || "overview";
+      persistUiState(moduleKey);
+      await rerenderCurrentModule();
+      return true;
+    }
+    const resetFiltersButton = event.target.closest("[data-live-filters-reset]");
+    if (resetFiltersButton) {
+      Object.assign(ui[moduleKey], getDefaultFilters(moduleKey), { activeViewId: "default" });
+      persistUiState(moduleKey);
+      await rerenderCurrentModule();
+      return true;
+    }
+    const exportButton = event.target.closest("[data-module-export]");
+    if (exportButton) {
+      await exportModuleData(moduleKey);
+      return true;
+    }
+    const importButton = event.target.closest("[data-module-import]");
+    if (importButton) {
+      await importModuleData(moduleKey);
+      return true;
+    }
+    const clearDraftButton = event.target.closest("[data-module-draft-clear]");
+    if (clearDraftButton) {
+      const [draftModuleKey, draftFormKey] = String(clearDraftButton.dataset.moduleDraftClear || "").split(":");
+      if (draftModuleKey && draftFormKey) {
+        clearDraft(draftModuleKey, draftFormKey);
+        setStatus("Черновик очищен.", "success");
+        await rerenderCurrentModule();
+        return true;
+      }
+    }
 
     if (moduleKey === "crm") {
       const newButton = event.target.closest("[data-crm-new]");
       if (newButton) {
         ui.crm.editId = null;
+        ui.crm.mode = "form";
+        persistUiState("crm");
         await rerenderCurrentModule();
         return true;
       }
       const editButton = event.target.closest("[data-crm-edit]");
       if (editButton) {
         ui.crm.editId = editButton.dataset.crmEdit;
+        ui.crm.mode = "form";
+        persistUiState("crm");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const duplicateButton = event.target.closest("[data-crm-duplicate]");
+      if (duplicateButton) {
+        const source = (doc.deals || []).find((deal) => deal.id === duplicateButton.dataset.crmDuplicate);
+        if (!source) return true;
+        const copy = {
+          ...deepClone(source),
+          id: createId("deal"),
+          title: duplicateTitle(source.title),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await saveDocument("crm", { ...doc, deals: [copy, ...(doc.deals || [])] }, "Копия сделки создана.");
+        ui.crm.editId = copy.id;
+        ui.crm.mode = "form";
+        persistUiState("crm");
         await rerenderCurrentModule();
         return true;
       }
@@ -1498,18 +1886,42 @@ export function createLiveWorkspaceController({
       const newItemButton = event.target.closest("[data-warehouse-item-new]");
       if (newItemButton) {
         ui.warehouse.itemEditId = null;
+        ui.warehouse.mode = "form";
+        persistUiState("warehouse");
         await rerenderCurrentModule();
         return true;
       }
       const editItemButton = event.target.closest("[data-warehouse-item-edit]");
       if (editItemButton) {
         ui.warehouse.itemEditId = editItemButton.dataset.warehouseItemEdit;
+        ui.warehouse.mode = "form";
+        persistUiState("warehouse");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const duplicateItemButton = event.target.closest("[data-warehouse-item-duplicate]");
+      if (duplicateItemButton) {
+        const source = (doc.items || []).find((item) => item.id === duplicateItemButton.dataset.warehouseItemDuplicate);
+        if (!source) return true;
+        const copy = {
+          ...deepClone(source),
+          id: createId("item"),
+          name: duplicateTitle(source.name),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await saveDocument("warehouse", { ...doc, items: [copy, ...(doc.items || [])] }, "Копия позиции создана.");
+        ui.warehouse.itemEditId = copy.id;
+        ui.warehouse.mode = "form";
+        persistUiState("warehouse");
         await rerenderCurrentModule();
         return true;
       }
       const pickMovementButton = event.target.closest("[data-warehouse-movement-pick]");
       if (pickMovementButton) {
         ui.warehouse.movementItemId = pickMovementButton.dataset.warehouseMovementPick || "";
+        ui.warehouse.mode = "movements";
+        persistUiState("warehouse");
         await rerenderCurrentModule();
         return true;
       }
@@ -1539,12 +1951,34 @@ export function createLiveWorkspaceController({
       const newTaskButton = event.target.closest("[data-task-new]");
       if (newTaskButton) {
         ui.tasks.taskEditId = null;
+        ui.tasks.mode = "form";
+        persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
       }
       const editTaskButton = event.target.closest("[data-task-edit]");
       if (editTaskButton) {
         ui.tasks.taskEditId = editTaskButton.dataset.taskEdit;
+        ui.tasks.mode = "form";
+        persistUiState("tasks");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const duplicateTaskButton = event.target.closest("[data-task-duplicate]");
+      if (duplicateTaskButton) {
+        const source = (doc.tasks || []).find((task) => task.id === duplicateTaskButton.dataset.taskDuplicate);
+        if (!source) return true;
+        const copy = {
+          ...deepClone(source),
+          id: createId("task"),
+          title: duplicateTitle(source.title),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await saveDocument("tasks", { ...doc, tasks: [copy, ...(doc.tasks || [])] }, "Копия задачи создана.");
+        ui.tasks.taskEditId = copy.id;
+        ui.tasks.mode = "form";
+        persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
       }
@@ -1560,12 +1994,16 @@ export function createLiveWorkspaceController({
       const newSprintButton = event.target.closest("[data-sprint-new]");
       if (newSprintButton) {
         ui.tasks.sprintEditId = null;
+        ui.tasks.mode = "form";
+        persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
       }
       const editSprintButton = event.target.closest("[data-sprint-edit]");
       if (editSprintButton) {
         ui.tasks.sprintEditId = editSprintButton.dataset.sprintEdit;
+        ui.tasks.mode = "form";
+        persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
       }
@@ -1601,9 +2039,16 @@ export function createLiveWorkspaceController({
     return "";
   }
 
+  function afterRender(moduleKey, root) {
+    if (!supports(moduleKey) || !root) return;
+    hydrateDraftForms(moduleKey, root);
+    focusModeSection(moduleKey, root);
+  }
+
   return {
     supports,
     render,
+    afterRender,
     refresh,
     handleClick,
     handleInput,
@@ -1613,3 +2058,4 @@ export function createLiveWorkspaceController({
     resetFormState
   };
 }
+

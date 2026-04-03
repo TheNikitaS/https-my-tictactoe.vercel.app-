@@ -1,10 +1,10 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260403-platform-premium6";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260403-platform-premium7";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260403-platform-premium6";
+const PLATFORM_BUILD = "20260403-platform-premium7";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -447,6 +447,7 @@ const liveWorkspaceController = createLiveWorkspaceController({
   rerenderCurrentModule: async () => {
     if (!liveWorkspaceController.supports(STATE.activeModule)) return;
     DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
+    liveWorkspaceController.afterRender(STATE.activeModule, DOM.placeholderCard);
     DOM.placeholderView.classList.remove("d-none");
   },
   rerenderDashboard: () => {
@@ -1082,6 +1083,7 @@ async function openModule(key) {
 
   if (liveWorkspaceController.supports(key)) {
     DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(key);
+    liveWorkspaceController.afterRender(key, DOM.placeholderCard);
   } else {
     renderPlaceholderModule(key);
   }
@@ -1903,6 +1905,7 @@ async function refreshCurrentView() {
   if (liveWorkspaceController.supports(STATE.activeModule)) {
     await liveWorkspaceController.refresh(STATE.activeModule);
     DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
+    liveWorkspaceController.afterRender(STATE.activeModule, DOM.placeholderCard);
     DOM.placeholderView.classList.remove("d-none");
     return;
   }
