@@ -1165,6 +1165,51 @@ export function createLiveWorkspaceController({
     }) || null;
   }
 
+  function getCrmDealSourceKey(dealId) {
+    return `crm-deal:${compactText(dealId)}`;
+  }
+
+  function getWarehouseItemSourceKey(itemId) {
+    return `warehouse-item:${compactText(itemId)}`;
+  }
+
+  function buildDealReservationMap(warehouseDoc) {
+    const map = new Map();
+    (warehouseDoc?.movements || []).forEach((movement) => {
+      const sourceKey = compactText(movement?.integration?.sourceKey || movement?.sourceKey);
+      if (!sourceKey.startsWith("crm-deal:")) return;
+      if (!map.has(sourceKey)) {
+        map.set(sourceKey, {
+          qty: 0,
+          rows: []
+        });
+      }
+      const entry = map.get(sourceKey);
+      const qty = toNumber(movement.qty);
+      entry.qty += movement.kind === "release" ? -qty : qty;
+      entry.rows.push(movement);
+    });
+    return map;
+  }
+
+  function getTaskIntegrationMeta(task) {
+    const sourceApp = compactText(task?.integration?.sourceApp || "");
+    const family = compactText(task?.integration?.family || "");
+    if (sourceApp === "platform_risk_engine") {
+      if (family === "CRM") return { label: "Из CRM", moduleKey: "crm" };
+      if (family === "Склад") return { label: "Из Склада", moduleKey: "warehouse" };
+      if (family === "Продажи") return { label: "Из Продаж", moduleKey: "sales" };
+      return { label: "Из сигнала", moduleKey: "tasks" };
+    }
+    if (sourceApp === "platform_crm_manual" || compactText(task?.sourceKey).startsWith("crm-deal:")) {
+      return { label: "Связано со сделкой", moduleKey: "crm" };
+    }
+    if (sourceApp === "platform_warehouse_manual" || compactText(task?.sourceKey).startsWith("warehouse-item:")) {
+      return { label: "Связано со складом", moduleKey: "warehouse" };
+    }
+    return null;
+  }
+
   async function buildTaskSignalSnapshot(tasksDoc) {
     const [crmDoc, warehouseDoc, salesRecord] = await Promise.all([
       ensureDocument("crm"),
@@ -1301,6 +1346,8 @@ export function createLiveWorkspaceController({
 
   function renderCrmCard(doc, deal, canEdit, canManage) {
     const stage = getCrmStageMeta(deal.stage);
+    const warehouseDoc = docs.warehouse || createDefaultWarehouseDoc();
+    const reservation = buildDealReservationMap(warehouseDoc).get(getCrmDealSourceKey(deal.id));
     const integrationMeta =
       compactText(deal?.integration?.sourceApp) === EXTERNAL_SHARED_APPS.sales
         ? `<div class="workspace-card__meta">Источник: Продажи • заказ ${escapeHtml(compactText(deal?.integration?.orderNumber || "—"))}</div>`
@@ -1313,6 +1360,7 @@ export function createLiveWorkspaceController({
         </div>
         <div class="workspace-card__meta">${escapeHtml(deal.client || "Клиент не указан")} • ${escapeHtml(deal.channel || "Канал не указан")}</div>
         <div class="workspace-card__meta">${escapeHtml(deal.owner || "Ответственный не назначен")} • срок ${escapeHtml(formatDate(deal.deadline))}</div>
+        ${reservation?.qty ? `<div class="workspace-card__meta">Материалов в резерве: ${escapeHtml(formatNumber(reservation.qty))}</div>` : ""}
         ${integrationMeta}
         ${deal.note ? `<div class="workspace-card__note">${escapeHtml(deal.note)}</div>` : ""}
         ${renderCustomCardSection("crm", doc, deal, escapeHtml)}
@@ -1321,6 +1369,7 @@ export function createLiveWorkspaceController({
           <div class="workspace-card__actions">
             ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Изменить</button>` : ""}
             ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button>` : ""}
+            ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-task-from-deal="${escapeHtml(deal.id)}">Задача</button>` : ""}
             ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-crm-delete="${escapeHtml(deal.id)}">Удалить</button>` : ""}
           </div>
         </div>
@@ -1334,6 +1383,9 @@ export function createLiveWorkspaceController({
     const filters = ui.crm;
     const filtered = getFilteredCrmDeals(doc);
     const salesSnapshot = buildSalesSnapshot(await ensureExternalDoc("sales"));
+    const warehouseDoc = await ensureDocument("warehouse");
+    const warehouseSnapshot = buildWarehouseSnapshot(warehouseDoc);
+    const reservationMap = buildDealReservationMap(warehouseDoc);
     const linkedSourceKeys = new Set(
       (doc.deals || [])
         .map((deal) => compactText(deal?.integration?.sourceKey || deal?.sourceKey))
@@ -1344,6 +1396,7 @@ export function createLiveWorkspaceController({
     const openDeals = (doc.deals || []).filter((deal) => !["done", "lost"].includes(deal.stage));
     const overdueCount = openDeals.filter((deal) => normalizeDateInput(deal.deadline) && normalizeDateInput(deal.deadline) < todayString()).length;
     const editDeal = (doc.deals || []).find((deal) => deal.id === ui.crm.editId) || null;
+    const reserveDealOptions = sortByDateDesc(openDeals.length ? openDeals : doc.deals || [], "updatedAt");
     const metrics = [
       { label: "Активные сделки", value: formatNumber(openDeals.length), caption: "без закрытых и потерянных" },
       { label: "Сумма в воронке", value: formatMoney(sumBy(openDeals, (deal) => deal.amount || 0)), caption: "по текущим стадиям" },
@@ -1376,7 +1429,8 @@ export function createLiveWorkspaceController({
         ? filtered
             .map((deal) => {
               const stage = getCrmStageMeta(deal.stage);
-              return `<tr><td>${escapeHtml(deal.title || "Сделка")}</td><td>${escapeHtml(deal.client || "—")}</td><td>${escapeHtml(stage.label)}</td><td>${escapeHtml(deal.owner || "—")}</td><td>${escapeHtml(deal.channel || "—")}</td><td>${escapeHtml(formatMoney(deal.amount || 0))}</td><td>${escapeHtml(formatDate(deal.deadline))}</td>${renderCustomTableCells("crm", doc, deal, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Открыть</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button>` : ""}</div></td></tr>`;
+              const reservation = reservationMap.get(getCrmDealSourceKey(deal.id));
+              return `<tr><td><strong>${escapeHtml(deal.title || "Сделка")}</strong>${reservation?.qty ? `<div class="workspace-table__sub">Резерв: ${escapeHtml(formatNumber(reservation.qty))}</div>` : ""}</td><td>${escapeHtml(deal.client || "—")}</td><td>${escapeHtml(stage.label)}</td><td>${escapeHtml(deal.owner || "—")}</td><td>${escapeHtml(deal.channel || "—")}</td><td>${escapeHtml(formatMoney(deal.amount || 0))}</td><td>${escapeHtml(formatDate(deal.deadline))}</td>${renderCustomTableCells("crm", doc, deal, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Открыть</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-task-from-deal="${escapeHtml(deal.id)}">Задача</button>` : ""}</div></td></tr>`;
             })
             .join("")
         : `<tr><td colspan="${8 + getVisibleCustomFields("crm", doc, "showInTable").length}" class="text-muted">По текущим фильтрам сделок нет.</td></tr>`;
@@ -1422,6 +1476,16 @@ export function createLiveWorkspaceController({
             <div class="panel-heading"><div><h4>Фокус недели</h4><div class="compact-help">Быстрый срез по тем сделкам, которым прямо сейчас нужен контроль.</div></div></div>
             <div class="workspace-stage-strip">${stageSummary}</div>
             <div class="workspace-stack">${(sortByDateDesc(openDeals, "deadline").slice(0, 6) || []).map((deal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(deal.title || "Сделка")}</strong><div class="workspace-list-item__meta">${escapeHtml(deal.client || "—")} • ${escapeHtml(deal.owner || "—")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getCrmStageMeta(deal.stage).tone)}">${escapeHtml(getCrmStageMeta(deal.stage).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(deal.deadline))}</div></div></div>`).join("") || '<div class="workspace-empty">Активных сделок пока нет.</div>'}</div>
+          </section>
+        </div>` : ""}
+        ${modeIs(filters, "overview", "form") ? `<div class="workspace-grid workspace-grid--2">
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Резерв материалов под сделку</h4><div class="compact-help">Можно сразу привязать резерв склада к конкретной CRM-сделке, чтобы задача и материал не жили отдельно.</div></div></div>
+            ${canEdit ? `<form id="crmReserveForm" class="workspace-form"><div class="workspace-form-grid"><label><span>Сделка</span><select class="form-select" name="dealId" required><option value="">Выберите сделку</option>${reserveDealOptions.map((deal) => `<option value="${escapeHtml(deal.id)}" ${editDeal?.id === deal.id ? "selected" : ""}>${escapeHtml(deal.title || deal.client || "Сделка")} • ${escapeHtml(deal.client || "—")}</option>`).join("")}</select></label><label><span>Позиция склада</span><select class="form-select" name="itemId" required><option value="">Выберите материал</option>${warehouseSnapshot.items.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""} • доступно ${escapeHtml(formatNumber(item.available || 0))}</option>`).join("")}</select></label><label><span>Количество</span><input class="form-control" type="number" min="1" step="1" name="qty" required /></label><label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3" placeholder="Например: резерв под производство или монтаж"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Резервировать</button></div></form>` : renderAccessHint("crm")}
+          </section>
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Связанные резервы</h4><div class="compact-help">Последние резервы материалов, которые уже связаны со сделками CRM.</div></div></div>
+            <div class="workspace-stack">${(sortByDateDesc((warehouseDoc.movements || []).filter((movement) => compactText(movement?.integration?.sourceKey || "").startsWith("crm-deal:")), "date").slice(0, 6) || []).map((movement) => { const deal = (doc.deals || []).find((entry) => getCrmDealSourceKey(entry.id) === compactText(movement?.integration?.sourceKey || "")); const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); return `<div class="workspace-list-item"><div><strong>${escapeHtml(deal?.title || "Сделка")}</strong><div class="workspace-list-item__meta">${escapeHtml(item?.name || "Позиция")} • ${escapeHtml(movement.kind === "release" ? "снятие резерва" : "резерв")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(movement.date))}</div></div></div>`; }).join("") || '<div class="workspace-empty workspace-empty--tight">Связанных резервов пока нет.</div>'}</div>
           </section>
         </div>` : ""}
         ${modeIs(filters, "board") ? `<section class="workspace-panel">
@@ -1555,7 +1619,7 @@ export function createLiveWorkspaceController({
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Текущие остатки</h4><div class="compact-help">Доступное количество = на руках − резерв.</div></div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Позиция</th><th>Категория</th><th>На руках</th><th>Резерв</th><th>Доступно</th><th>Минимум</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.category || "—")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-item-duplicate="${escapeHtml(item.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Движение</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">Позиции не найдены. Добавьте первую запись или смените фильтр.</td></tr>`}</tbody></table></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Позиция</th><th>Категория</th><th>На руках</th><th>Резерв</th><th>Доступно</th><th>Минимум</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.category || "—")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-item-duplicate="${escapeHtml(item.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Движение</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-task-from-item="${escapeHtml(item.id)}">Задача</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">Позиции не найдены. Добавьте первую запись или смените фильтр.</td></tr>`}</tbody></table></div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Последние движения</h4><div class="compact-help">Отсюда удобно контролировать, что и когда ушло в резерв или было списано.</div></div></div>
@@ -1668,11 +1732,11 @@ export function createLiveWorkspaceController({
         </section>
         <section class="workspace-panel">
           <div class="panel-heading"><div><h4>Канбан</h4><div class="compact-help">Карточки отражают текущую загрузку команды и дают быстрый доступ к правке статуса.</div></div><div class="workspace-note">Показано: ${escapeHtml(String(filteredTasks.length))}</div></div>
-          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Задача")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Без ответственного")} • срок ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Без итерации")}</div>${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Есть блокер</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-task-duplicate="${escapeHtml(task.id)}">Копия</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">Удалить</button>` : ""}</div></div></article>`).join("") : '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
+          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => { const integration = getTaskIntegrationMeta(task); return `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Задача")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Без ответственного")} • срок ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Без итерации")}</div>${integration ? `<div class="workspace-card__meta">${escapeHtml(integration.label)} • <button class="btn btn-link btn-sm p-0 align-baseline" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">${escapeHtml(modules[integration.moduleKey]?.title || integration.moduleKey)}</button></div>` : ""}${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Есть блокер</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-task-duplicate="${escapeHtml(task.id)}">Копия</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">Удалить</button>` : ""}</div></div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
         </section>
         <section class="workspace-panel">
           <div class="panel-heading"><div><h4>Лента задач</h4><div class="compact-help">Нижняя таблица полезна для сортировки и быстрого перехода в нужную карточку.</div></div></div>
-          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задача</th><th>Статус</th><th>Ответственный</th><th>Итерация</th><th>Срок</th><th>Приоритет</th>${customHeader}<th></th></tr></thead><tbody>${filteredTasks.length ? filteredTasks.map((task) => { const status = getTaskStatusMeta(task.status); return `<tr><td><strong>${escapeHtml(task.title || "Задача")}</strong>${task.blocked ? '<div class="workspace-table__sub text-danger">Есть блокер</div>' : ""}</td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(task.owner || "—")}</td><td>${escapeHtml(task.sprint?.title || "—")}</td><td>${escapeHtml(formatDate(task.dueDate))}</td><td>${escapeHtml(getPriorityLabel(task.priority))}</td>${renderCustomTableCells("tasks", doc, task, escapeHtml)}<td class="text-end">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Открыть</button>` : ""}</td></tr>`; }).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("tasks", doc, "showInTable").length}" class="text-muted">По текущим фильтрам задач нет.</td></tr>`}</tbody></table></div>
+          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задача</th><th>Статус</th><th>Ответственный</th><th>Итерация</th><th>Срок</th><th>Приоритет</th>${customHeader}<th></th></tr></thead><tbody>${filteredTasks.length ? filteredTasks.map((task) => { const status = getTaskStatusMeta(task.status); const integration = getTaskIntegrationMeta(task); return `<tr><td><strong>${escapeHtml(task.title || "Задача")}</strong>${task.blocked ? '<div class="workspace-table__sub text-danger">Есть блокер</div>' : ""}${integration ? `<div class="workspace-table__sub">${escapeHtml(integration.label)}</div>` : ""}</td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(task.owner || "—")}</td><td>${escapeHtml(task.sprint?.title || "—")}</td><td>${escapeHtml(formatDate(task.dueDate))}</td><td>${escapeHtml(getPriorityLabel(task.priority))}</td>${renderCustomTableCells("tasks", doc, task, escapeHtml)}<td class="text-end">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Открыть</button>` : ""}${integration ? `<button class="btn btn-sm btn-outline-secondary ms-2" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">Источник</button>` : ""}</td></tr>`; }).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("tasks", doc, "showInTable").length}" class="text-muted">По текущим фильтрам задач нет.</td></tr>`}</tbody></table></div>
         </section>
         ${renderRelatedLinks("tasks")}
       </div>
@@ -1962,6 +2026,121 @@ export function createLiveWorkspaceController({
     await rerenderCurrentModule();
   }
 
+  async function createTaskFromDeal(dealId) {
+    const crmDoc = await ensureDocument("crm");
+    const tasksDoc = await ensureDocument("tasks");
+    const deal = (crmDoc.deals || []).find((entry) => entry.id === dealId);
+    if (!deal) {
+      setStatus("Сделка не найдена.", "error");
+      return;
+    }
+    const sourceKey = getCrmDealSourceKey(deal.id);
+    const exists = (tasksDoc.tasks || []).some((task) => compactText(task?.integration?.sourceKey || task?.sourceKey) === sourceKey);
+    if (exists) {
+      setStatus("Задача по этой сделке уже существует.", "success");
+      return;
+    }
+    const sprintId = getCurrentActiveSprintId(tasksDoc);
+    const record = {
+      id: createId("task"),
+      title: `Сделка: ${compactText(deal.title || deal.client || "без названия")}`,
+      owner: compactText(deal.owner),
+      status: "todo",
+      priority: deal.stage === "production" ? "urgent" : "high",
+      sprintId,
+      dueDate: normalizeDateInput(deal.deadline) || todayString(),
+      blocked: false,
+      note: `Создано из CRM. Клиент: ${compactText(deal.client || "не указан")}. Стадия: ${getCrmStageMeta(deal.stage).label}.`,
+      custom: {},
+      integration: {
+        sourceApp: "platform_crm_manual",
+        sourceKey,
+        dealId: deal.id
+      },
+      sourceKey,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    await saveDocument("tasks", { ...tasksDoc, tasks: [record, ...(tasksDoc.tasks || [])] }, "Задача по сделке создана.");
+    rerenderDashboard();
+    await rerenderCurrentModule();
+  }
+
+  async function createTaskFromWarehouseItem(itemId) {
+    const warehouseDoc = await ensureDocument("warehouse");
+    const tasksDoc = await ensureDocument("tasks");
+    const item = (warehouseDoc.items || []).find((entry) => entry.id === itemId);
+    if (!item) {
+      setStatus("Позиция склада не найдена.", "error");
+      return;
+    }
+    const sourceKey = getWarehouseItemSourceKey(item.id);
+    const exists = (tasksDoc.tasks || []).some((task) => compactText(task?.integration?.sourceKey || task?.sourceKey) === sourceKey);
+    if (exists) {
+      setStatus("Задача по этой позиции уже существует.", "success");
+      return;
+    }
+    const sprintId = getCurrentActiveSprintId(tasksDoc);
+    const record = {
+      id: createId("task"),
+      title: `Склад: ${compactText(item.name || item.sku || "позиция")}`,
+      owner: "Закупки",
+      status: "todo",
+      priority: "high",
+      sprintId,
+      dueDate: todayString(),
+      blocked: false,
+      note: `Создано из склада. SKU: ${compactText(item.sku || "—")}. Минимум: ${formatNumber(item.minStock || 0)}.`,
+      custom: {},
+      integration: {
+        sourceApp: "platform_warehouse_manual",
+        sourceKey,
+        itemId: item.id
+      },
+      sourceKey,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    await saveDocument("tasks", { ...tasksDoc, tasks: [record, ...(tasksDoc.tasks || [])] }, "Задача по позиции склада создана.");
+    rerenderDashboard();
+    await rerenderCurrentModule();
+  }
+
+  async function handleCrmReserveSubmit(form) {
+    const crmDoc = await ensureDocument("crm");
+    const warehouseDoc = await ensureDocument("warehouse");
+    const formData = new FormData(form);
+    const dealId = compactText(formData.get("dealId"));
+    const itemId = compactText(formData.get("itemId"));
+    const qty = toNumber(formData.get("qty"));
+    if (!dealId || !itemId || qty <= 0) {
+      throw new Error("Выберите сделку, позицию склада и количество.");
+    }
+    const deal = (crmDoc.deals || []).find((entry) => entry.id === dealId);
+    const item = (warehouseDoc.items || []).find((entry) => entry.id === itemId);
+    if (!deal || !item) {
+      throw new Error("Сделка или позиция склада не найдены.");
+    }
+    const movement = {
+      id: createId("move"),
+      itemId,
+      kind: "reserve",
+      qty,
+      date: normalizeDateInput(formData.get("date")) || todayString(),
+      note: compactText(formData.get("note")) || `Резерв под сделку ${compactText(deal.title || deal.client || "без названия")}`,
+      integration: {
+        sourceApp: "platform_crm_manual",
+        sourceKey: getCrmDealSourceKey(deal.id),
+        dealId: deal.id,
+        itemId: item.id
+      },
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    await saveDocument("warehouse", { ...warehouseDoc, movements: [movement, ...(warehouseDoc.movements || [])] }, "Резерв под сделку создан.");
+    await rerenderCurrentModule();
+  }
+
   async function handleBuilderSubmit(moduleKey, form) {
     const doc = await ensureDocument(moduleKey);
     const formData = new FormData(form);
@@ -2046,6 +2225,11 @@ export function createLiveWorkspaceController({
     if (event.target.id === "crmDealForm") {
       event.preventDefault();
       await handleCrmSubmit(event.target);
+      return true;
+    }
+    if (event.target.id === "crmReserveForm") {
+      event.preventDefault();
+      await handleCrmReserveSubmit(event.target);
       return true;
     }
     if (event.target.id === "warehouseItemForm") {
@@ -2302,6 +2486,11 @@ export function createLiveWorkspaceController({
         await importDealsFromSales();
         return true;
       }
+      const taskFromDealButton = event.target.closest("[data-crm-task-from-deal]");
+      if (taskFromDealButton) {
+        await createTaskFromDeal(taskFromDealButton.dataset.crmTaskFromDeal);
+        return true;
+      }
       const newButton = event.target.closest("[data-crm-new]");
       if (newButton) {
         ui.crm.editId = null;
@@ -2351,6 +2540,11 @@ export function createLiveWorkspaceController({
       const seedDemandButton = event.target.closest("[data-warehouse-seed-demand]");
       if (seedDemandButton) {
         await seedWarehouseItemsFromCalculators();
+        return true;
+      }
+      const taskFromItemButton = event.target.closest("[data-warehouse-task-from-item]");
+      if (taskFromItemButton) {
+        await createTaskFromWarehouseItem(taskFromItemButton.dataset.warehouseTaskFromItem);
         return true;
       }
       const newItemButton = event.target.closest("[data-warehouse-item-new]");
