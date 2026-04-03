@@ -162,6 +162,11 @@ const MODULE_MODE_CONFIG = {
 
 const LIVE_UI_STORAGE_PREFIX = "dom-neona:live-ui";
 const LIVE_DRAFT_STORAGE_PREFIX = "dom-neona:live-draft";
+const EXTERNAL_SHARED_APPS = {
+  sales: "sales-tracker",
+  myCalculator: "moy-calculator",
+  partnerCalculatorsPattern: "part-calculator%"
+};
 
 const moneyFormatter = new Intl.NumberFormat("ru-RU", {
   style: "currency",
@@ -752,6 +757,11 @@ export function createLiveWorkspaceController({
   schemaReadyProvider
 }) {
   const docs = { crm: null, warehouse: null, tasks: null };
+  const externalDocs = {
+    sales: null,
+    myCalculator: null,
+    partnerCalculators: null
+  };
 
   function getModuleUiKey(moduleKey) {
     return `${LIVE_UI_STORAGE_PREFIX}:${moduleKey}`;
@@ -967,6 +977,266 @@ export function createLiveWorkspaceController({
     return nextDoc;
   }
 
+  async function fetchSharedPayload(appId) {
+    if (!schemaReady()) return null;
+    const { data, error } = await supabase.from("shared_app_states").select("app_id, payload, updated_at").eq("app_id", appId).maybeSingle();
+    if (error && error.code !== "PGRST116") throw error;
+    return data || null;
+  }
+
+  async function fetchSharedPayloadsByLike(pattern) {
+    if (!schemaReady()) return [];
+    const { data, error } = await supabase.from("shared_app_states").select("app_id, payload, updated_at").like("app_id", pattern).order("app_id", { ascending: true });
+    if (error) throw error;
+    return Array.isArray(data) ? data : [];
+  }
+
+  async function ensureExternalDoc(key, force = false) {
+    if (!force && externalDocs[key] !== null) return externalDocs[key];
+    if (key === "sales") {
+      externalDocs.sales = await fetchSharedPayload(EXTERNAL_SHARED_APPS.sales);
+      return externalDocs.sales;
+    }
+    if (key === "myCalculator") {
+      externalDocs.myCalculator = await fetchSharedPayload(EXTERNAL_SHARED_APPS.myCalculator);
+      return externalDocs.myCalculator;
+    }
+    if (key === "partnerCalculators") {
+      externalDocs.partnerCalculators = await fetchSharedPayloadsByLike(EXTERNAL_SHARED_APPS.partnerCalculatorsPattern);
+      return externalDocs.partnerCalculators;
+    }
+    return null;
+  }
+
+  function normalizeSalesOrder(order) {
+    const cells = Array.isArray(order?.cells) ? order.cells : [];
+    return {
+      sourceId: compactText(order?.id) || createId("sales"),
+      rowId: compactText(order?.id),
+      orderNumber: compactText(cells[0]),
+      title: compactText(cells[1]),
+      status: compactText(cells[2]),
+      createdAt: normalizeDateInput(cells[3]),
+      amount: toNumber(cells[4]),
+      paidAmount: toNumber(cells[5]),
+      client: compactText(cells[6]),
+      phone: compactText(cells[7]),
+      city: compactText(cells[8]),
+      manager: compactText(cells[11]),
+      designer: compactText(cells[15]),
+      assembler: compactText(cells[18]),
+      installer: compactText(cells[21]),
+      leadChannel: compactText(cells[23]),
+      salesChannel: compactText(cells[24]),
+      category: compactText(cells[25]),
+      invoiceDate: normalizeDateInput(cells[32]),
+      paidDate: normalizeDateInput(cells[33]),
+      productionStart: normalizeDateInput(cells[36]),
+      productionEnd: normalizeDateInput(cells[37]),
+      deliveryDate: normalizeDateInput(cells[39]),
+      hidden: Boolean(order?.hidden),
+      assemblyTeam: Array.isArray(order?.assemblyTeam) ? order.assemblyTeam : []
+    };
+  }
+
+  function deriveSalesDealStage(order) {
+    const status = compactText(order.status).toLowerCase();
+    if (status.includes("отмен")) return "lost";
+    if (status.includes("готов")) return "done";
+    if (order.productionStart || order.productionEnd || order.paidDate) return "production";
+    if (order.invoiceDate) return "quote";
+    return "lead";
+  }
+
+  function getSalesSourceKey(order) {
+    return `sales:${compactText(order.sourceId || order.orderNumber || order.title)}`;
+  }
+
+  function buildSalesSnapshot(payloadRecord) {
+    const payload = payloadRecord?.payload && typeof payloadRecord.payload === "object" ? payloadRecord.payload : {};
+    const orders = (Array.isArray(payload.orders) ? payload.orders : [])
+      .map((order) => normalizeSalesOrder(order))
+      .filter((order) => !order.hidden && (order.orderNumber || order.title || order.client));
+    const unpaidInvoices = orders.filter((order) => order.invoiceDate && !order.paidDate);
+    const productionOrders = orders.filter((order) => deriveSalesDealStage(order) === "production");
+    const doneOrders = orders.filter((order) => deriveSalesDealStage(order) === "done");
+    const leadChannels = new Map();
+    orders.forEach((order) => {
+      const key = compactText(order.leadChannel || order.salesChannel || "Без канала");
+      leadChannels.set(key, (leadChannels.get(key) || 0) + 1);
+    });
+    return {
+      updatedAt: payloadRecord?.updated_at || "",
+      orders: sortByDateDesc(orders, "createdAt"),
+      unpaidInvoices,
+      productionOrders,
+      doneOrders,
+      channels: [...leadChannels.entries()].sort((left, right) => right[1] - left[1]).map(([label, count]) => ({ label, count }))
+    };
+  }
+
+  function getCalculatorLabel(appId) {
+    if (appId === EXTERNAL_SHARED_APPS.myCalculator) return "Мой калькулятор";
+    if (appId === "part-calculator") return "Партнерский калькулятор";
+    if (appId.startsWith("part-calculator:")) return `Партнер: ${appId.split(":")[1] || "без имени"}`;
+    return appId;
+  }
+
+  function normalizeCalculatorTabs(payloadRecord) {
+    const payload = payloadRecord?.payload && typeof payloadRecord.payload === "object" ? payloadRecord.payload : {};
+    const tabs = Array.isArray(payload.tabs) ? payload.tabs : [];
+    return tabs
+      .filter((tab) => tab && typeof tab === "object")
+      .map((tab, index) => ({
+        appId: payloadRecord?.app_id || "",
+        label: getCalculatorLabel(payloadRecord?.app_id || ""),
+        id: compactText(tab.id) || `tab_${index + 1}`,
+        name: compactText(tab.name) || `Вкладка ${index + 1}`,
+        hidden: Boolean(tab.hidden),
+        status: compactText(tab?.data?.status),
+        quantities: tab?.data?.quantities && typeof tab.data.quantities === "object" ? tab.data.quantities : {},
+        params: tab?.data?.params && typeof tab.data.params === "object" ? tab.data.params : {}
+      }));
+  }
+
+  function buildCalculatorDemandSnapshot(myCalculatorRecord, partnerCalculatorRecords) {
+    const sources = [];
+    if (myCalculatorRecord?.payload) {
+      sources.push(...normalizeCalculatorTabs(myCalculatorRecord));
+    }
+    (partnerCalculatorRecords || []).forEach((record) => {
+      sources.push(...normalizeCalculatorTabs(record));
+    });
+
+    const demandMap = new Map();
+    let activeTabs = 0;
+    let invoiceIssuedTabs = 0;
+    let invoicePaidTabs = 0;
+
+    sources.forEach((tab) => {
+      if (tab.hidden) return;
+      activeTabs += 1;
+      if (tab.status === "invoice_issued") invoiceIssuedTabs += 1;
+      if (tab.status === "invoice_paid") invoicePaidTabs += 1;
+
+      Object.entries(tab.quantities || {}).forEach(([sku, rawQty]) => {
+        const quantity = toNumber(rawQty);
+        if (quantity <= 0) return;
+        const normalizedSku = compactText(sku);
+        if (!normalizedSku) return;
+        if (!demandMap.has(normalizedSku)) {
+          demandMap.set(normalizedSku, {
+            sku: normalizedSku,
+            qtyTotal: 0,
+            tabsCount: 0,
+            sources: new Set(),
+            examples: []
+          });
+        }
+        const entry = demandMap.get(normalizedSku);
+        entry.qtyTotal += quantity;
+        entry.tabsCount += 1;
+        entry.sources.add(tab.label);
+        if (entry.examples.length < 4) {
+          entry.examples.push(`${tab.label} • ${tab.name}`);
+        }
+      });
+    });
+
+    return {
+      activeTabs,
+      invoiceIssuedTabs,
+      invoicePaidTabs,
+      demand: [...demandMap.values()]
+        .map((entry) => ({
+          ...entry,
+          sources: [...entry.sources]
+        }))
+        .sort((left, right) => right.qtyTotal - left.qtyTotal)
+    };
+  }
+
+  function findWarehouseMatch(snapshot, sku) {
+    const normalizedSku = compactText(sku).toLowerCase();
+    return snapshot.items.find((item) => {
+      const itemSku = compactText(item.sku).toLowerCase();
+      const itemName = compactText(item.name).toLowerCase();
+      return itemSku === normalizedSku || itemName === normalizedSku;
+    }) || null;
+  }
+
+  async function buildTaskSignalSnapshot(tasksDoc) {
+    const [crmDoc, warehouseDoc, salesRecord] = await Promise.all([
+      ensureDocument("crm"),
+      ensureDocument("warehouse"),
+      ensureExternalDoc("sales")
+    ]);
+    const taskSourceKeys = new Set((tasksDoc.tasks || []).map((task) => compactText(task?.integration?.sourceKey || task?.sourceKey)).filter(Boolean));
+    const today = todayString();
+    const signals = [];
+
+    (crmDoc.deals || []).forEach((deal) => {
+      if (["done", "lost"].includes(deal.stage)) return;
+      const deadline = normalizeDateInput(deal.deadline);
+      if (!deadline || deadline >= today) return;
+      signals.push({
+        sourceKey: `crm-overdue:${deal.id}`,
+        family: "CRM",
+        title: `Дожать сделку: ${compactText(deal.title || deal.client || "без названия")}`,
+        owner: compactText(deal.owner),
+        priority: "high",
+        dueDate: deadline,
+        note: `Просроченная CRM-сделка. Клиент: ${compactText(deal.client || "не указан")}. Стадия: ${getCrmStageMeta(deal.stage).label}.`,
+        alreadyExists: taskSourceKeys.has(`crm-overdue:${deal.id}`)
+      });
+    });
+
+    buildWarehouseSnapshot(warehouseDoc).lowItems.forEach((item) => {
+      const sourceKey = `warehouse-low:${item.id}`;
+      signals.push({
+        sourceKey,
+        family: "Склад",
+        title: `Пополнить склад: ${compactText(item.name || item.sku || "позиция")}`,
+        owner: "Закупки",
+        priority: "high",
+        dueDate: today,
+        note: `Доступный остаток ${formatNumber(item.available)} ниже минимума ${formatNumber(item.minStock || 0)}. SKU: ${compactText(item.sku || "—")}.`,
+        alreadyExists: taskSourceKeys.has(sourceKey)
+      });
+    });
+
+    buildSalesSnapshot(salesRecord).unpaidInvoices.slice(0, 20).forEach((order) => {
+      const sourceKey = `sales-invoice:${order.sourceId}`;
+      signals.push({
+        sourceKey,
+        family: "Продажи",
+        title: `Проверить оплату счета: ${compactText(order.orderNumber || order.title || "заказ")}`,
+        owner: compactText(order.manager),
+        priority: "urgent",
+        dueDate: order.invoiceDate || today,
+        note: `Счет выставлен ${formatDate(order.invoiceDate)}, оплаты пока нет. Клиент: ${compactText(order.client || "не указан")}.`,
+        alreadyExists: taskSourceKeys.has(sourceKey)
+      });
+    });
+
+    return {
+      total: signals.length,
+      newSignals: signals.filter((signal) => !signal.alreadyExists),
+      signals
+    };
+  }
+
+  function getCurrentActiveSprintId(doc) {
+    const sprints = sortByDateDesc(doc.sprints || [], "startDate");
+    const today = todayString();
+    const activeSprint = sprints.find((sprint) => {
+      const start = normalizeDateInput(sprint.startDate);
+      const end = normalizeDateInput(sprint.endDate);
+      return start && end && start <= today && end >= today;
+    });
+    return activeSprint?.id || "";
+  }
+
   function renderWorkspaceHeader(moduleKey) {
     const config = LIVE_MODULE_CONFIG[moduleKey];
     return `
@@ -1031,6 +1301,10 @@ export function createLiveWorkspaceController({
 
   function renderCrmCard(doc, deal, canEdit, canManage) {
     const stage = getCrmStageMeta(deal.stage);
+    const integrationMeta =
+      compactText(deal?.integration?.sourceApp) === EXTERNAL_SHARED_APPS.sales
+        ? `<div class="workspace-card__meta">Источник: Продажи • заказ ${escapeHtml(compactText(deal?.integration?.orderNumber || "—"))}</div>`
+        : "";
     return `
       <article class="workspace-card workspace-card--${escapeHtml(stage.tone)}">
         <div class="workspace-card__head">
@@ -1039,6 +1313,7 @@ export function createLiveWorkspaceController({
         </div>
         <div class="workspace-card__meta">${escapeHtml(deal.client || "Клиент не указан")} • ${escapeHtml(deal.channel || "Канал не указан")}</div>
         <div class="workspace-card__meta">${escapeHtml(deal.owner || "Ответственный не назначен")} • срок ${escapeHtml(formatDate(deal.deadline))}</div>
+        ${integrationMeta}
         ${deal.note ? `<div class="workspace-card__note">${escapeHtml(deal.note)}</div>` : ""}
         ${renderCustomCardSection("crm", doc, deal, escapeHtml)}
         <div class="workspace-card__footer">
@@ -1053,11 +1328,18 @@ export function createLiveWorkspaceController({
     `;
   }
 
-  function renderCrm(doc) {
+  async function renderCrm(doc) {
     const canEdit = hasModulePermission("crm", "edit");
     const canManage = hasModulePermission("crm", "manage");
     const filters = ui.crm;
     const filtered = getFilteredCrmDeals(doc);
+    const salesSnapshot = buildSalesSnapshot(await ensureExternalDoc("sales"));
+    const linkedSourceKeys = new Set(
+      (doc.deals || [])
+        .map((deal) => compactText(deal?.integration?.sourceKey || deal?.sourceKey))
+        .filter(Boolean)
+    );
+    const salesImportable = salesSnapshot.orders.filter((order) => !linkedSourceKeys.has(getSalesSourceKey(order)));
     const owners = [...new Set((doc.deals || []).map((deal) => compactText(deal.owner)).filter(Boolean))].sort();
     const openDeals = (doc.deals || []).filter((deal) => !["done", "lost"].includes(deal.stage));
     const overdueCount = openDeals.filter((deal) => normalizeDateInput(deal.deadline) && normalizeDateInput(deal.deadline) < todayString()).length;
@@ -1067,6 +1349,7 @@ export function createLiveWorkspaceController({
       { label: "Сумма в воронке", value: formatMoney(sumBy(openDeals, (deal) => deal.amount || 0)), caption: "по текущим стадиям" },
       { label: "В производстве", value: formatNumber((doc.deals || []).filter((deal) => deal.stage === "production").length), caption: "готовы к исполнению" },
       { label: "Просрочено", value: formatNumber(overdueCount), caption: "требуют внимания" },
+      { label: "Из Продаж", value: formatNumber(salesImportable.length), caption: "можно забрать в CRM" },
       ...getFormulaMetrics("crm", doc, filtered)
     ];
     const customHeader = renderCustomTableHeader("crm", doc, escapeHtml);
@@ -1079,6 +1362,7 @@ export function createLiveWorkspaceController({
       "crm",
       [
         canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-crm-new>Новая сделка</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-crm-import-sales>Забрать из Продаж</button>' : "",
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Воронка</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Таблица</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="crm">Экспорт JSON</button>',
@@ -1101,6 +1385,18 @@ export function createLiveWorkspaceController({
       <div class="workspace-shell">
         ${renderWorkspaceHeader("crm")}
         ${renderMetricGrid(metrics)}
+        <section class="workspace-panel workspace-panel--muted">
+          <div class="panel-heading"><div><h4>Мост с Продажами</h4><div class="compact-help">Платформа видит живые заказы из раздела Продажи и может забрать их в CRM без двойного ввода.</div></div><div class="workspace-note">Обновлено: ${escapeHtml(formatDate(salesSnapshot.updatedAt))}</div></div>
+          <div class="workspace-stage-strip">
+            <div class="workspace-stage-card"><span>Заказов в Продажах</span><strong>${escapeHtml(formatNumber(salesSnapshot.orders.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Счета без оплаты</span><strong>${escapeHtml(formatNumber(salesSnapshot.unpaidInvoices.length))}</strong></div>
+            <div class="workspace-stage-card"><span>В производстве</span><strong>${escapeHtml(formatNumber(salesSnapshot.productionOrders.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Не импортировано</span><strong>${escapeHtml(formatNumber(salesImportable.length))}</strong></div>
+          </div>
+          <div class="workspace-stack mt-3">
+            ${(salesImportable.slice(0, 6) || []).map((order) => `<div class="workspace-list-item"><div><strong>${escapeHtml(order.orderNumber || order.title || "Заказ")}</strong><div class="workspace-list-item__meta">${escapeHtml(order.client || "Клиент не указан")} • ${escapeHtml(order.leadChannel || order.salesChannel || "Без канала")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(order.amount || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(order.manager || "Без менеджера")}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Новых заказов из Продаж для импорта пока нет.</div>'}
+          </div>
+        </section>
         ${renderViewTabs("crm", doc, ui.crm, escapeHtml)}
         ${buildModeTabs("crm", escapeHtml)}
         ${actionBar}
@@ -1168,11 +1464,21 @@ export function createLiveWorkspaceController({
     };
   }
 
-  function renderWarehouse(doc) {
+  async function renderWarehouse(doc) {
     const canEdit = hasModulePermission("warehouse", "edit");
     const canManage = hasModulePermission("warehouse", "manage");
     const filters = ui.warehouse;
     const snapshot = buildWarehouseSnapshot(doc);
+    const calculatorSnapshot = buildCalculatorDemandSnapshot(
+      await ensureExternalDoc("myCalculator"),
+      await ensureExternalDoc("partnerCalculators")
+    );
+    const demandBridge = calculatorSnapshot.demand.map((entry) => {
+      const match = findWarehouseMatch(snapshot, entry.sku);
+      return { ...entry, match, low: Boolean(match?.low), missing: !match };
+    });
+    const missingDemand = demandBridge.filter((entry) => entry.missing);
+    const criticalDemand = demandBridge.filter((entry) => entry.low);
     const categories = [...new Set((doc.items || []).map((item) => compactText(item.category)).filter(Boolean))].sort();
     const filteredItems = snapshot.items.filter((item) => {
       const blob = [item.name, item.sku, item.category, item.note, ...getCustomFields("warehouse", doc).map((field) => getRecordValue(item, field.key))].join(" ");
@@ -1187,6 +1493,7 @@ export function createLiveWorkspaceController({
       { label: "На руках", value: formatNumber(snapshot.onHandTotal), caption: "общее количество" },
       { label: "В резерве", value: formatNumber(snapshot.reservedTotal), caption: "под текущие заказы" },
       { label: "Нужно пополнить", value: formatNumber(snapshot.lowItems.length), caption: "ниже минимального запаса" },
+      { label: "Из калькуляторов", value: formatNumber(calculatorSnapshot.activeTabs), caption: "активных вкладок спроса" },
       ...getFormulaMetrics("warehouse", doc, filteredItems)
     ];
     const customHeader = renderCustomTableHeader("warehouse", doc, escapeHtml);
@@ -1194,6 +1501,7 @@ export function createLiveWorkspaceController({
       "warehouse",
       [
         canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-item-new>Новая позиция</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-seed-demand>Добавить из калькуляторов</button>' : "",
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="movements">Движения</button>' : "",
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Каталог</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
@@ -1208,6 +1516,18 @@ export function createLiveWorkspaceController({
       <div class="workspace-shell">
         ${renderWorkspaceHeader("warehouse")}
         ${renderMetricGrid(metrics)}
+        <section class="workspace-panel workspace-panel--muted">
+          <div class="panel-heading"><div><h4>Спрос из калькуляторов</h4><div class="compact-help">Платформа видит активные вкладки из личного и партнерских калькуляторов и подсвечивает артикулы, которые стоит держать под рукой.</div></div><div class="workspace-note">${escapeHtml(formatNumber(calculatorSnapshot.invoiceIssuedTabs))} счетов выставлено • ${escapeHtml(formatNumber(calculatorSnapshot.invoicePaidTabs))} оплачено</div></div>
+          <div class="workspace-stage-strip">
+            <div class="workspace-stage-card"><span>Активных вкладок</span><strong>${escapeHtml(formatNumber(calculatorSnapshot.activeTabs))}</strong></div>
+            <div class="workspace-stage-card"><span>Артикулов со спросом</span><strong>${escapeHtml(formatNumber(demandBridge.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Не заведено на складе</span><strong>${escapeHtml(formatNumber(missingDemand.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Критично по остатку</span><strong>${escapeHtml(formatNumber(criticalDemand.length))}</strong></div>
+          </div>
+          <div class="workspace-stack mt-3">
+            ${(demandBridge.slice(0, 8) || []).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.match?.name || entry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.sku)} • ${escapeHtml(entry.sources.join(", ") || "Калькуляторы")}</div></div><div class="text-end"><div class="workspace-tag ${entry.missing ? "workspace-tag--warning" : entry.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(entry.qtyTotal))}</div><div class="workspace-list-item__meta mt-1">${entry.missing ? "нет позиции" : `доступно ${escapeHtml(formatNumber(entry.match?.available || 0))}`}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Спрос из калькуляторов пока не найден.</div>'}
+          </div>
+        </section>
         ${renderViewTabs("warehouse", doc, ui.warehouse, escapeHtml)}
         ${buildModeTabs("warehouse", escapeHtml)}
         ${warehouseActionBar}
@@ -1253,11 +1573,12 @@ export function createLiveWorkspaceController({
     return (doc.tasks || []).map((task) => ({ ...task, sprint: sprintMap.get(task.sprintId) || null }));
   }
 
-  function renderTasks(doc) {
+  async function renderTasks(doc) {
     const canEdit = hasModulePermission("tasks", "edit");
     const canManage = hasModulePermission("tasks", "manage");
     const filters = ui.tasks;
     const taskList = getTasksDecorated(doc);
+    const taskSignals = await buildTaskSignalSnapshot(doc);
     const sprintOptions = sortByDateDesc(doc.sprints || [], "startDate");
     const owners = [...new Set(taskList.map((task) => compactText(task.owner)).filter(Boolean))].sort();
     const filteredTasks = sortByDateDesc(taskList, "updatedAt").filter((task) => {
@@ -1279,6 +1600,7 @@ export function createLiveWorkspaceController({
       { label: "В работе", value: formatNumber(taskList.filter((task) => task.status === "in_progress").length), caption: "активное исполнение" },
       { label: "Блокеры", value: formatNumber(blockedCount), caption: "требуют решения" },
       { label: "Просрочено", value: formatNumber(overdue), caption: "срок уже прошел" },
+      { label: "Новые сигналы", value: formatNumber(taskSignals.newSignals.length), caption: "можно превратить в задачи" },
       ...getFormulaMetrics("tasks", doc, filteredTasks)
     ];
     const customHeader = renderCustomTableHeader("tasks", doc, escapeHtml);
@@ -1287,6 +1609,7 @@ export function createLiveWorkspaceController({
       [
         canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-task-new>Новая задача</button>' : "",
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-sprint-new>Новая итерация</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-task-generate-signals>Собрать из рисков</button>' : "",
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Канбан</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Лента</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="tasks">Экспорт JSON</button>',
@@ -1301,6 +1624,18 @@ export function createLiveWorkspaceController({
       <div class="workspace-shell">
         ${renderWorkspaceHeader("tasks")}
         ${renderMetricGrid(metrics)}
+        <section class="workspace-panel workspace-panel--muted">
+          <div class="panel-heading"><div><h4>Операционные сигналы</h4><div class="compact-help">Здесь собираются реальные риски из CRM, Продаж и Склада, чтобы их можно было одним действием превратить в задачи.</div></div><div class="workspace-note">Всего сигналов: ${escapeHtml(formatNumber(taskSignals.total))}</div></div>
+          <div class="workspace-stage-strip">
+            <div class="workspace-stage-card"><span>Новых задач к созданию</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Уже заведено</span><strong>${escapeHtml(formatNumber(taskSignals.signals.filter((signal) => signal.alreadyExists).length))}</strong></div>
+            <div class="workspace-stage-card"><span>Приоритет urgent</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.filter((signal) => signal.priority === "urgent").length))}</strong></div>
+            <div class="workspace-stage-card"><span>Приоритет high</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.filter((signal) => signal.priority === "high").length))}</strong></div>
+          </div>
+          <div class="workspace-stack mt-3">
+            ${(taskSignals.signals.slice(0, 8) || []).map((signal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(signal.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(signal.family)} • ${escapeHtml(signal.owner || "Без ответственного")}</div></div><div class="text-end"><div class="workspace-tag ${signal.alreadyExists ? "workspace-tag--neutral" : signal.priority === "urgent" ? "workspace-tag--danger" : "workspace-tag--warning"}">${escapeHtml(signal.alreadyExists ? "уже есть" : signal.priority)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(signal.dueDate))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Операционных сигналов пока нет.</div>'}
+          </div>
+        </section>
         ${renderViewTabs("tasks", doc, ui.tasks, escapeHtml)}
         ${buildModeTabs("tasks", escapeHtml)}
         ${tasksActionBar}
@@ -1347,14 +1682,17 @@ export function createLiveWorkspaceController({
   async function render(moduleKey) {
     if (!supports(moduleKey)) return "";
     const doc = await ensureDocument(moduleKey);
-    if (moduleKey === "crm") return renderCrm(doc);
-    if (moduleKey === "warehouse") return renderWarehouse(doc);
-    if (moduleKey === "tasks") return renderTasks(doc);
+    if (moduleKey === "crm") return await renderCrm(doc);
+    if (moduleKey === "warehouse") return await renderWarehouse(doc);
+    if (moduleKey === "tasks") return await renderTasks(doc);
     return "";
   }
 
   async function refresh(moduleKey) {
     if (!supports(moduleKey)) return;
+    externalDocs.sales = null;
+    externalDocs.myCalculator = null;
+    externalDocs.partnerCalculators = null;
     await ensureDocument(moduleKey, true);
   }
 
@@ -1499,6 +1837,128 @@ export function createLiveWorkspaceController({
     clearDraft("tasks", "sprint");
     persistUiState("tasks");
     await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "Итерация обновлена." : "Итерация добавлена.");
+    await rerenderCurrentModule();
+  }
+
+  async function importDealsFromSales() {
+    const doc = await ensureDocument("crm");
+    const salesSnapshot = buildSalesSnapshot(await ensureExternalDoc("sales", true));
+    const existingSourceKeys = new Set(
+      (doc.deals || [])
+        .map((deal) => compactText(deal?.integration?.sourceKey || deal?.sourceKey))
+        .filter(Boolean)
+    );
+    const nextDeals = [...(doc.deals || [])];
+    const importableOrders = salesSnapshot.orders.filter((order) => !existingSourceKeys.has(getSalesSourceKey(order)));
+
+    if (!importableOrders.length) {
+      setStatus("Новых заказов из Продаж для CRM нет.", "success");
+      return;
+    }
+
+    importableOrders.forEach((order) => {
+      nextDeals.unshift({
+        id: createId("deal"),
+        title: compactText(order.title || `Заказ ${order.orderNumber}`),
+        client: compactText(order.client),
+        channel: compactText(order.leadChannel || order.salesChannel),
+        owner: compactText(order.manager),
+        stage: deriveSalesDealStage(order),
+        amount: toNumber(order.amount),
+        deadline: normalizeDateInput(order.deliveryDate || order.invoiceDate || order.createdAt),
+        note: `Импорт из Продаж. Заказ ${compactText(order.orderNumber || "без номера")}${order.city ? ` • ${order.city}` : ""}${order.status ? ` • статус: ${order.status}` : ""}.`,
+        custom: {},
+        integration: {
+          sourceApp: EXTERNAL_SHARED_APPS.sales,
+          sourceKey: getSalesSourceKey(order),
+          sourceRecordId: order.sourceId,
+          orderNumber: order.orderNumber
+        },
+        sourceKey: getSalesSourceKey(order),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    });
+
+    ui.crm.mode = "table";
+    persistUiState("crm");
+    await saveDocument("crm", { ...doc, deals: nextDeals }, `Из Продаж импортировано ${importableOrders.length} сделок.`);
+    await rerenderCurrentModule();
+  }
+
+  async function seedWarehouseItemsFromCalculators() {
+    const doc = await ensureDocument("warehouse");
+    const snapshot = buildWarehouseSnapshot(doc);
+    const calculatorSnapshot = buildCalculatorDemandSnapshot(
+      await ensureExternalDoc("myCalculator", true),
+      await ensureExternalDoc("partnerCalculators", true)
+    );
+    const existingKeys = new Set(
+      snapshot.items.flatMap((item) => [compactText(item.sku).toLowerCase(), compactText(item.name).toLowerCase()]).filter(Boolean)
+    );
+    const newItems = calculatorSnapshot.demand
+      .filter((entry) => !existingKeys.has(compactText(entry.sku).toLowerCase()))
+      .map((entry) => ({
+        id: createId("item"),
+        name: `Материал ${entry.sku}`,
+        sku: entry.sku,
+        category: "Импорт из калькуляторов",
+        unit: "ед.",
+        openingStock: 0,
+        minStock: Math.max(1, Math.ceil(toNumber(entry.qtyTotal))),
+        note: `Создано из калькуляторов. Источники: ${entry.sources.join(", ")}.`,
+        custom: {},
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
+
+    if (!newItems.length) {
+      setStatus("Все артикулы из калькуляторов уже заведены на складе.", "success");
+      return;
+    }
+
+    ui.warehouse.mode = "catalog";
+    persistUiState("warehouse");
+    await saveDocument("warehouse", { ...doc, items: [...newItems, ...(doc.items || [])] }, `На склад добавлено ${newItems.length} позиций из калькуляторов.`);
+    await rerenderCurrentModule();
+  }
+
+  async function generateTasksFromSignals() {
+    const doc = await ensureDocument("tasks");
+    const taskSignals = await buildTaskSignalSnapshot(doc);
+    const sourceKeys = new Set((doc.tasks || []).map((task) => compactText(task?.integration?.sourceKey || task?.sourceKey)).filter(Boolean));
+    const sprintId = getCurrentActiveSprintId(doc);
+    const records = taskSignals.newSignals
+      .filter((signal) => !sourceKeys.has(signal.sourceKey))
+      .map((signal) => ({
+        id: createId("task"),
+        title: signal.title,
+        owner: compactText(signal.owner),
+        status: "todo",
+        priority: signal.priority,
+        sprintId,
+        dueDate: normalizeDateInput(signal.dueDate) || todayString(),
+        blocked: false,
+        note: signal.note,
+        custom: {},
+        integration: {
+          sourceApp: "platform_risk_engine",
+          sourceKey: signal.sourceKey,
+          family: signal.family
+        },
+        sourceKey: signal.sourceKey,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }));
+
+    if (!records.length) {
+      setStatus("Новых задач из рисков не найдено.", "success");
+      return;
+    }
+
+    ui.tasks.mode = "table";
+    persistUiState("tasks");
+    await saveDocument("tasks", { ...doc, tasks: [...records, ...(doc.tasks || [])] }, `Создано ${records.length} задач из операционных сигналов.`);
     await rerenderCurrentModule();
   }
 
@@ -1837,6 +2297,11 @@ export function createLiveWorkspaceController({
     }
 
     if (moduleKey === "crm") {
+      const importSalesButton = event.target.closest("[data-crm-import-sales]");
+      if (importSalesButton) {
+        await importDealsFromSales();
+        return true;
+      }
       const newButton = event.target.closest("[data-crm-new]");
       if (newButton) {
         ui.crm.editId = null;
@@ -1883,6 +2348,11 @@ export function createLiveWorkspaceController({
     }
 
     if (moduleKey === "warehouse") {
+      const seedDemandButton = event.target.closest("[data-warehouse-seed-demand]");
+      if (seedDemandButton) {
+        await seedWarehouseItemsFromCalculators();
+        return true;
+      }
       const newItemButton = event.target.closest("[data-warehouse-item-new]");
       if (newItemButton) {
         ui.warehouse.itemEditId = null;
@@ -1948,6 +2418,11 @@ export function createLiveWorkspaceController({
     }
 
     if (moduleKey === "tasks") {
+      const generateSignalsButton = event.target.closest("[data-task-generate-signals]");
+      if (generateSignalsButton) {
+        await generateTasksFromSignals();
+        return true;
+      }
       const newTaskButton = event.target.closest("[data-task-new]");
       if (newTaskButton) {
         ui.tasks.taskEditId = null;
@@ -2026,11 +2501,13 @@ export function createLiveWorkspaceController({
     if (!supports(moduleKey) || !docs[moduleKey]) return "";
     if (moduleKey === "crm") {
       const deals = docs.crm.deals || [];
-      return `${deals.length} сделок • ${formatMoney(sumBy(deals, (deal) => deal.amount || 0))}`;
+      const salesSnapshot = buildSalesSnapshot(externalDocs.sales);
+      return `${deals.length} сделок • ${formatMoney(sumBy(deals, (deal) => deal.amount || 0))}${salesSnapshot.orders.length ? ` • ${salesSnapshot.unpaidInvoices.length} счетов без оплаты` : ""}`;
     }
     if (moduleKey === "warehouse") {
       const snapshot = buildWarehouseSnapshot(docs.warehouse);
-      return `${snapshot.items.length} позиций • ${formatNumber(snapshot.availableTotal)} доступно`;
+      const calculatorSnapshot = buildCalculatorDemandSnapshot(externalDocs.myCalculator, externalDocs.partnerCalculators || []);
+      return `${snapshot.items.length} позиций • ${formatNumber(snapshot.availableTotal)} доступно${calculatorSnapshot.activeTabs ? ` • ${calculatorSnapshot.activeTabs} вкладок спроса` : ""}`;
     }
     if (moduleKey === "tasks") {
       const openCount = (docs.tasks.tasks || []).filter((task) => task.status !== "done").length;
