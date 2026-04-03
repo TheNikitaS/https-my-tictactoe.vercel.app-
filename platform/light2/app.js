@@ -2,11 +2,12 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260403-workspace-premium1";
+const LIGHT2_BUILD = "20260403-workspace-premium4";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
-  hiddenForms: "dom-neona:light2:hiddenForms"
+  hiddenForms: "dom-neona:light2:hiddenForms",
+  sectionBuilders: "dom-neona:light2:sectionBuilders"
 };
 
 const WORKBOOK_IMPORT_SHEETS = [
@@ -317,6 +318,122 @@ const SECTION_META = {
   }
 };
 
+const LIVE_SECTION_BUILDERS = {
+  settlements: {
+    filterKeys: ["partner", "status", "search"],
+    tables: {
+      main: {
+        label: "Взаиморасчеты",
+        columns: [
+          { key: "period_label", label: "Период" },
+          { key: "partner_label", label: "Партнер" },
+          { key: "salary_amount", label: "ЗП, ₽" },
+          { key: "purchase_amount", label: "Покупки, ₽" },
+          { key: "settlement_total", label: "Итог, ₽" },
+          { key: "direction", label: "Кто кому должен" },
+          { key: "status", label: "Статус" },
+          { key: "note", label: "Комментарий" },
+          { key: "updated_at", label: "Обновлено" },
+          { key: "actions", label: "Действия" }
+        ]
+      }
+    }
+  },
+  balance: {
+    filterKeys: ["account", "month", "search"],
+    tables: {
+      main: {
+        label: "Баланс",
+        columns: [
+          { key: "entry_date", label: "Дата" },
+          { key: "account_type", label: "Счет" },
+          { key: "income_amount", label: "Приход, ₽" },
+          { key: "expense_amount", label: "Расход, ₽" },
+          { key: "running_total", label: "Баланс, ₽" },
+          { key: "note", label: "Комментарий" },
+          { key: "updated_at", label: "Обновлено" },
+          { key: "actions", label: "Действия" }
+        ]
+      }
+    }
+  },
+  calendar: {
+    filterKeys: ["month", "operation", "account", "status", "search"],
+    tables: {
+      main: {
+        label: "Платежный календарь",
+        columns: [
+          { key: "payment_date", label: "Дата платежа" },
+          { key: "counterparty", label: "Контрагент" },
+          { key: "signed_amount", label: "Сумма, ₽" },
+          { key: "operation_type", label: "Тип" },
+          { key: "category", label: "Статья" },
+          { key: "account_name", label: "Счет" },
+          { key: "status", label: "Статус" },
+          { key: "note", label: "Комментарий" },
+          { key: "updated_at", label: "Обновлено" },
+          { key: "actions", label: "Действия" }
+        ]
+      }
+    }
+  },
+  assets: {
+    filterKeys: ["search", "payment_filter", "payment_search"],
+    tables: {
+      assets: {
+        label: "Активы",
+        columns: [
+          { key: "asset_name", label: "Актив" },
+          { key: "asset_value", label: "Стоимость, ₽" },
+          { key: "paid_total", label: "Выплачено, ₽" },
+          { key: "remaining_amount", label: "Остаток, ₽" },
+          { key: "note", label: "Комментарий" },
+          { key: "updated_at", label: "Обновлено" },
+          { key: "actions", label: "Действия" }
+        ]
+      },
+      payments: {
+        label: "Выплаты по активам",
+        columns: [
+          { key: "payment_date", label: "Дата выплаты" },
+          { key: "asset_label", label: "Актив" },
+          { key: "payment_amount", label: "Сумма, ₽" },
+          { key: "note", label: "Комментарий" },
+          { key: "updated_at", label: "Обновлено" },
+          { key: "actions", label: "Действия" }
+        ]
+      }
+    }
+  },
+  purchases: {
+    filterKeys: ["supplier", "category", "search"],
+    tables: {
+      main: {
+        label: "Закупки",
+        columns: [
+          { key: "supplier_name", label: "Компания" },
+          { key: "supplier_inn", label: "ИНН" },
+          { key: "city", label: "Город" },
+          { key: "category", label: "Категория" },
+          { key: "article", label: "Артикул" },
+          { key: "item_name", label: "Наименование" },
+          { key: "unit_name", label: "Ед. изм." },
+          { key: "price", label: "Цена, ₽" },
+          { key: "note", label: "Комментарий" },
+          { key: "actions", label: "Действия" }
+        ]
+      }
+    }
+  }
+};
+
+const LIGHT2_FORMULA_FORMATS = [
+  { key: "number", label: "Число" },
+  { key: "money", label: "Деньги" },
+  { key: "percent", label: "Проценты" },
+  { key: "text", label: "Текст" }
+];
+
 const STATE = {
   session: null,
   user: null,
@@ -346,6 +463,7 @@ const STATE = {
   editingAssetId: null,
   editingAssetPaymentId: null,
   editingPurchaseId: null,
+  sectionBuilders: readStoredJson(LIGHT2_UI_KEYS.sectionBuilders, {}),
   ui: {
     compactTables: readStoredBoolean(LIGHT2_UI_KEYS.compactTables, false),
     hiddenForms: readStoredJson(LIGHT2_UI_KEYS.hiddenForms, {
@@ -395,6 +513,114 @@ function readStoredString(key, fallback) {
   } catch {
     return fallback;
   }
+}
+
+function persistSectionBuilders() {
+  try {
+    window.localStorage.setItem(LIGHT2_UI_KEYS.sectionBuilders, JSON.stringify(STATE.sectionBuilders || {}));
+  } catch {
+    // Ignore storage failures in privacy modes.
+  }
+}
+
+function createDefaultSectionBuilder(sectionKey) {
+  const meta = LIVE_SECTION_BUILDERS[sectionKey];
+  if (!meta) {
+    return {
+      open: false,
+      views: [],
+      formulas: [],
+      tables: {}
+    };
+  }
+
+  const tables = Object.fromEntries(
+    Object.entries(meta.tables).map(([tableKey, tableMeta]) => [
+      tableKey,
+      tableMeta.columns.map((column) => ({
+        key: column.key,
+        label: column.label,
+        visible: column.key !== "actions"
+      }))
+    ])
+  );
+
+  return {
+    open: false,
+    views: [],
+    formulas: [],
+    tables
+  };
+}
+
+function sanitizeBuilderKey(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9а-яё_-]+/gi, "_")
+    .replace(/^_+|_+$/g, "");
+}
+
+function normalizeBuilderFormula(formula) {
+  const key = sanitizeBuilderKey(formula?.key || formula?.label);
+  const format = LIGHT2_FORMULA_FORMATS.some((item) => item.key === formula?.format) ? formula.format : "number";
+  const expression = String(formula?.expression || "").trim();
+  if (!key || !expression) return null;
+  return {
+    key,
+    label: String(formula?.label || key).trim(),
+    expression,
+    format
+  };
+}
+
+function normalizeSectionBuilder(sectionKey, raw) {
+  const fallback = createDefaultSectionBuilder(sectionKey);
+  const meta = LIVE_SECTION_BUILDERS[sectionKey];
+  if (!meta || !raw || typeof raw !== "object") return fallback;
+
+  const tables = Object.fromEntries(
+    Object.entries(meta.tables).map(([tableKey, tableMeta]) => {
+      const savedColumns = Array.isArray(raw.tables?.[tableKey]) ? raw.tables[tableKey] : [];
+      const normalized = tableMeta.columns.map((column) => {
+        const saved = savedColumns.find((item) => item?.key === column.key) || {};
+        return {
+          key: column.key,
+          label: String(saved.label || column.label).trim() || column.label,
+          visible: typeof saved.visible === "boolean" ? saved.visible : column.key !== "actions"
+        };
+      });
+      return [tableKey, normalized];
+    })
+  );
+
+  const views = Array.isArray(raw.views)
+    ? raw.views
+        .map((view) => {
+          const label = String(view?.label || "").trim();
+          const id = sanitizeBuilderKey(view?.id || label);
+          const filters = view?.filters && typeof view.filters === "object" ? view.filters : {};
+          if (!id || !label) return null;
+          return { id, label, filters };
+        })
+        .filter(Boolean)
+    : [];
+
+  const formulas = Array.isArray(raw.formulas)
+    ? raw.formulas.map((formula) => normalizeBuilderFormula(formula)).filter(Boolean)
+    : [];
+
+  return {
+    open: Boolean(raw.open),
+    views: views.filter((view, index, list) => list.findIndex((item) => item.id === view.id) === index),
+    formulas: formulas.filter((formula, index, list) => list.findIndex((item) => item.key === formula.key) === index),
+    tables
+  };
+}
+
+function getSectionBuilder(sectionKey) {
+  STATE.sectionBuilders[sectionKey] = normalizeSectionBuilder(sectionKey, STATE.sectionBuilders[sectionKey]);
+  return STATE.sectionBuilders[sectionKey];
 }
 
 function toNumber(value) {
@@ -516,6 +742,557 @@ function getOverviewSectionFootnote(key) {
   }
 
   return "Готово к работе";
+}
+
+function getLiveSectionFilterState(sectionKey) {
+  if (sectionKey === "settlements") {
+    return {
+      partner: DOM.settlementPartnerFilter?.value || "",
+      status: DOM.settlementStatusFilter?.value || "",
+      search: DOM.settlementSearch?.value || ""
+    };
+  }
+
+  if (sectionKey === "balance") {
+    const dom = getBalanceDom();
+    return {
+      account: dom.accountFilter?.value || "",
+      month: dom.monthFilter?.value || "",
+      search: dom.search?.value || ""
+    };
+  }
+
+  if (sectionKey === "calendar") {
+    const dom = getCalendarDom();
+    return {
+      month: dom.monthFilter?.value || "",
+      operation: dom.operationFilter?.value || "",
+      account: dom.accountFilter?.value || "",
+      status: dom.statusFilter?.value || "",
+      search: dom.search?.value || ""
+    };
+  }
+
+  if (sectionKey === "assets") {
+    const dom = getAssetsDom();
+    return {
+      search: dom.search?.value || "",
+      payment_filter: dom.paymentFilter?.value || "",
+      payment_search: dom.paymentSearch?.value || ""
+    };
+  }
+
+  if (sectionKey === "purchases") {
+    const dom = getPurchasesDom();
+    return {
+      supplier: dom.supplierFilter?.value || "",
+      category: dom.categoryFilter?.value || "",
+      search: dom.search?.value || ""
+    };
+  }
+
+  return {};
+}
+
+function applyLiveSectionFilterState(sectionKey, filters = {}) {
+  if (sectionKey === "settlements") {
+    if (DOM.settlementPartnerFilter) DOM.settlementPartnerFilter.value = filters.partner || "";
+    if (DOM.settlementStatusFilter) DOM.settlementStatusFilter.value = filters.status || "";
+    if (DOM.settlementSearch) DOM.settlementSearch.value = filters.search || "";
+    renderSettlements();
+    return;
+  }
+
+  if (sectionKey === "balance") {
+    const dom = getBalanceDom();
+    if (dom.accountFilter) dom.accountFilter.value = filters.account || "";
+    if (dom.monthFilter) dom.monthFilter.value = filters.month || "";
+    if (dom.search) dom.search.value = filters.search || "";
+    renderBalance();
+    return;
+  }
+
+  if (sectionKey === "calendar") {
+    const dom = getCalendarDom();
+    if (dom.monthFilter) dom.monthFilter.value = filters.month || "";
+    if (dom.operationFilter) dom.operationFilter.value = filters.operation || "";
+    if (dom.accountFilter) dom.accountFilter.value = filters.account || "";
+    if (dom.statusFilter) dom.statusFilter.value = filters.status || "";
+    if (dom.search) dom.search.value = filters.search || "";
+    renderCalendar();
+    return;
+  }
+
+  if (sectionKey === "assets") {
+    const dom = getAssetsDom();
+    if (dom.search) dom.search.value = filters.search || "";
+    if (dom.paymentFilter) dom.paymentFilter.value = filters.payment_filter || "";
+    if (dom.paymentSearch) dom.paymentSearch.value = filters.payment_search || "";
+    renderAssets();
+    return;
+  }
+
+  if (sectionKey === "purchases") {
+    const dom = getPurchasesDom();
+    if (dom.supplierFilter) dom.supplierFilter.value = filters.supplier || "";
+    if (dom.categoryFilter) dom.categoryFilter.value = filters.category || "";
+    if (dom.search) dom.search.value = filters.search || "";
+    renderPurchases();
+  }
+}
+
+function getSectionTableColumns(sectionKey, tableKey) {
+  return getSectionBuilder(sectionKey).tables?.[tableKey] || [];
+}
+
+function getVisibleSectionTableColumns(sectionKey, tableKey) {
+  return getSectionTableColumns(sectionKey, tableKey).filter((column) => column.visible);
+}
+
+function getLight2FormulaHelpers(records) {
+  const count = () => records.length;
+  const countWhere = (key, expected) =>
+    records.filter((record) => String(record?.[key] ?? "") === String(expected ?? "")).length;
+  const sum = (key) => records.reduce((total, record) => total + toNumber(record?.[key]), 0);
+  const avg = (key) => (records.length ? sum(key) / records.length : 0);
+  const min = (key) => {
+    const values = records.map((record) => toNumber(record?.[key])).filter(Number.isFinite);
+    return values.length ? Math.min(...values) : 0;
+  };
+  const max = (key) => {
+    const values = records.map((record) => toNumber(record?.[key])).filter(Number.isFinite);
+    return values.length ? Math.max(...values) : 0;
+  };
+  const percent = (part, total) => (toNumber(total) ? (toNumber(part) / toNumber(total)) * 100 : 0);
+  return { count, countWhere, sum, avg, min, max, percent, today: getTodayIso() };
+}
+
+function formatLight2FormulaValue(format, value) {
+  if (format === "money") return `${formatMoney(value)} ₽`;
+  if (format === "percent") return `${formatPlainNumber(toNumber(value), 2)}%`;
+  if (format === "text") return String(value ?? "—");
+  return formatPlainNumber(toNumber(value), 0);
+}
+
+function getSectionFormulaRecords(sectionKey) {
+  if (sectionKey === "settlements") {
+    return getVisibleSettlements().map((item) => {
+      const math = computeSettlement(item);
+      return {
+        ...item,
+        salary_amount: toNumber(item.salary_amount),
+        purchase_amount: toNumber(item.purchase_amount),
+        settlement_total: toNumber(math.total),
+        direction: math.direction,
+        partner_label: getPartnerLabel(item.partner_slug)
+      };
+    });
+  }
+
+  if (sectionKey === "balance") {
+    const runningMap = buildBalanceRunningMap();
+    return getVisibleBalanceEntries().map((entry) => ({
+      ...entry,
+      running_total: toNumber(runningMap.get(entry.id) || 0)
+    }));
+  }
+
+  if (sectionKey === "calendar") {
+    return getVisibleCalendarEntries().map((entry) => ({
+      ...entry,
+      signed_amount: toNumber(signedCalendarAmount(entry))
+    }));
+  }
+
+  if (sectionKey === "assets") {
+    const paymentTotals = buildAssetPaymentTotals();
+    return getVisibleAssets().map((asset) => {
+      const paid = toNumber(paymentTotals[asset.id] || 0);
+      return {
+        ...asset,
+        paid_total: paid,
+        remaining_amount: roundMoney(toNumber(asset.asset_value) - paid)
+      };
+    });
+  }
+
+  if (sectionKey === "purchases") {
+    return getVisiblePurchases().map((item) => ({
+      ...item,
+      price: toNumber(item.price)
+    }));
+  }
+
+  return [];
+}
+
+function getSectionFormulaCards(sectionKey) {
+  const formulas = getSectionBuilder(sectionKey).formulas || [];
+  if (!formulas.length) return "";
+  const records = getSectionFormulaRecords(sectionKey);
+  const helpers = getLight2FormulaHelpers(records);
+
+  return formulas
+    .map((formula) => {
+      try {
+        const evaluator = new Function(
+          "records",
+          "count",
+          "countWhere",
+          "sum",
+          "avg",
+          "min",
+          "max",
+          "percent",
+          "today",
+          `return (${formula.expression || "0"});`
+        );
+        const value = evaluator(
+          records,
+          helpers.count,
+          helpers.countWhere,
+          helpers.sum,
+          helpers.avg,
+          helpers.min,
+          helpers.max,
+          helpers.percent,
+          helpers.today
+        );
+        return `
+          <article class="summary-card summary-card--builder">
+            <span>${escapeHtml(formula.label)}</span>
+            <strong>${escapeHtml(formatLight2FormulaValue(formula.format, value))}</strong>
+          </article>
+        `;
+      } catch (error) {
+        return `
+          <article class="summary-card summary-card--builder">
+            <span>${escapeHtml(formula.label)}</span>
+            <strong>Ошибка</strong>
+          </article>
+        `;
+      }
+    })
+    .join("");
+}
+
+function getSectionColumnClass(columnKey) {
+  if (["salary_amount", "purchase_amount", "settlement_total", "income_amount", "expense_amount", "running_total", "signed_amount", "asset_value", "paid_total", "remaining_amount", "payment_amount", "price"].includes(columnKey)) {
+    return "text-end";
+  }
+  if (columnKey === "updated_at") return "small";
+  return "";
+}
+
+function syncSectionTableHead(sectionKey, tableKey, bodyNode) {
+  const row = bodyNode?.closest("table")?.querySelector("thead tr");
+  if (!row) return;
+  const columns = getVisibleSectionTableColumns(sectionKey, tableKey);
+  row.innerHTML = columns
+    .map((column) => `<th class="${escapeHtml(getSectionColumnClass(column.key))}">${escapeHtml(column.label)}</th>`)
+    .join("");
+}
+
+function renderConfiguredSectionRows(sectionKey, tableKey, rows, renderCell, emptyMessage, emptyTone = "muted") {
+  const columns = getVisibleSectionTableColumns(sectionKey, tableKey);
+  if (!rows.length) {
+    return `<tr><td colspan="${columns.length || 1}" class="${escapeHtml(emptyTone)}">${escapeHtml(emptyMessage)}</td></tr>`;
+  }
+
+  return rows
+    .map(
+      (row) => `
+        <tr>
+          ${columns
+            .map((column) => `<td class="${escapeHtml(getSectionColumnClass(column.key))}">${renderCell(row, column.key)}</td>`)
+            .join("")}
+        </tr>
+      `
+    )
+    .join("");
+}
+
+function renderLiveSectionBuilder(sectionKey) {
+  const strip = document.querySelector(`[data-builder-strip="${sectionKey}"]`);
+  const host = document.querySelector(`[data-builder-host="${sectionKey}"]`);
+  const meta = LIVE_SECTION_BUILDERS[sectionKey];
+  if (!strip || !host || !meta) return;
+
+  if (!isAdmin()) {
+    strip.innerHTML = "";
+    host.innerHTML = "";
+    return;
+  }
+
+  const builder = getSectionBuilder(sectionKey);
+  const viewButtons = builder.views.length
+    ? builder.views
+        .map(
+          (view) => `
+            <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-apply="${escapeHtml(sectionKey)}" data-builder-view-id="${escapeHtml(view.id)}">
+              ${escapeHtml(view.label)}
+            </button>
+          `
+        )
+        .join("")
+    : '<span class="builder-note">Сохраненных видов пока нет.</span>';
+
+  strip.innerHTML = `
+    <div class="light2-builder-strip__meta">
+      <strong>Конструктор секции</strong>
+      <span>Виды, колонки и KPI можно настраивать без правки кода.</span>
+    </div>
+    <div class="light2-builder-strip__actions">
+      ${viewButtons}
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-save="${escapeHtml(sectionKey)}">Сохранить текущий вид</button>
+      <button type="button" class="btn ${builder.open ? "btn-dark" : "btn-outline-dark"} btn-sm" data-builder-toggle="${escapeHtml(sectionKey)}">
+        ${builder.open ? "Скрыть конструктор" : "Открыть конструктор"}
+      </button>
+    </div>
+  `;
+
+  if (!builder.open) {
+    host.innerHTML = "";
+    return;
+  }
+
+  const columnCards = Object.entries(meta.tables)
+    .map(([tableKey, tableMeta]) => {
+      const columns = getSectionTableColumns(sectionKey, tableKey);
+      return `
+        <div class="builder-card">
+          <div class="builder-card__head">
+            <strong>${escapeHtml(tableMeta.label)}</strong>
+            <span>Можно переименовать и скрыть колонки.</span>
+          </div>
+          <div class="builder-column-list" data-builder-columns="${escapeHtml(sectionKey)}" data-builder-table="${escapeHtml(tableKey)}">
+            ${columns
+              .map(
+                (column) => `
+                  <label class="builder-column-row">
+                    <input type="checkbox" data-builder-column-visible="${escapeHtml(column.key)}" ${column.visible ? "checked" : ""} />
+                    <span>${escapeHtml(column.key)}</span>
+                    <input class="form-control form-control-sm" type="text" value="${escapeHtml(column.label)}" data-builder-column-label="${escapeHtml(column.key)}" />
+                  </label>
+                `
+              )
+              .join("")}
+          </div>
+          <div class="builder-actions">
+            <button type="button" class="btn btn-dark btn-sm" data-builder-columns-save="${escapeHtml(sectionKey)}" data-builder-table-save="${escapeHtml(tableKey)}">Сохранить колонки</button>
+          </div>
+        </div>
+      `;
+    })
+    .join("");
+
+  const formulas = builder.formulas.length
+    ? builder.formulas
+        .map(
+          (formula) => `
+            <div class="builder-list-item">
+              <div>
+                <strong>${escapeHtml(formula.label)}</strong>
+                <span>${escapeHtml(formula.expression)}</span>
+              </div>
+              <button type="button" class="btn btn-outline-danger btn-sm" data-builder-formula-delete="${escapeHtml(sectionKey)}" data-builder-formula-key="${escapeHtml(formula.key)}">Удалить</button>
+            </div>
+          `
+        )
+        .join("")
+    : '<div class="builder-note">Формул пока нет.</div>';
+
+  host.innerHTML = `
+    <div class="light2-builder-grid">
+      ${columnCards}
+      <div class="builder-card">
+        <div class="builder-card__head">
+          <strong>KPI и формулы</strong>
+          <span>Доступны функции: count(), countWhere(), sum(), avg(), min(), max(), percent().</span>
+        </div>
+        <div class="builder-form-grid">
+          <input class="form-control" type="text" placeholder="Ключ, например open_total" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="key" />
+          <input class="form-control" type="text" placeholder="Название карточки" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="label" />
+          <select class="form-select" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="format">
+            ${LIGHT2_FORMULA_FORMATS.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}
+          </select>
+          <input class="form-control builder-form-grid__wide" type="text" placeholder='Например: sum("signed_amount")' data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="expression" />
+          <button type="button" class="btn btn-dark btn-sm" data-builder-formula-save="${escapeHtml(sectionKey)}">Добавить формулу</button>
+        </div>
+        <div class="builder-list mt-3">${formulas}</div>
+      </div>
+      <div class="builder-card">
+        <div class="builder-card__head">
+          <strong>JSON-схема секции</strong>
+          <span>Для максимально гибкой настройки можно править секцию целиком одним JSON.</span>
+        </div>
+        <textarea class="form-control builder-schema" data-builder-schema="${escapeHtml(sectionKey)}" rows="18">${escapeHtml(JSON.stringify({
+          views: builder.views,
+          formulas: builder.formulas,
+          tables: builder.tables
+        }, null, 2))}</textarea>
+        <div class="builder-actions">
+          <button type="button" class="btn btn-dark btn-sm" data-builder-schema-save="${escapeHtml(sectionKey)}">Сохранить JSON-схему</button>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-builder-reset="${escapeHtml(sectionKey)}">Сбросить секцию</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function rerenderLiveSection(sectionKey) {
+  if (sectionKey === "settlements") {
+    renderSettlements();
+    return;
+  }
+  if (sectionKey === "balance") {
+    renderBalance();
+    return;
+  }
+  if (sectionKey === "calendar") {
+    renderCalendar();
+    return;
+  }
+  if (sectionKey === "assets") {
+    renderAssets();
+    return;
+  }
+  if (sectionKey === "purchases") {
+    renderPurchases();
+  }
+}
+
+function toggleSectionBuilder(sectionKey) {
+  const builder = getSectionBuilder(sectionKey);
+  builder.open = !builder.open;
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+}
+
+function saveCurrentSectionView(sectionKey) {
+  const label = window.prompt("Название вида");
+  if (!label) return;
+  const builder = getSectionBuilder(sectionKey);
+  const viewId = sanitizeBuilderKey(label);
+  if (!viewId) {
+    throw new Error("Не удалось создать ключ вида. Используйте название с буквами или цифрами.");
+  }
+  const filters = getLiveSectionFilterState(sectionKey);
+  builder.views = [
+    ...builder.views.filter((view) => view.id !== viewId),
+    { id: viewId, label: String(label).trim(), filters }
+  ];
+  builder.open = true;
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  setStatus(`Вид секции сохранён: ${label}.`, "success");
+}
+
+function applySectionView(sectionKey, viewId) {
+  const builder = getSectionBuilder(sectionKey);
+  const view = builder.views.find((item) => item.id === viewId);
+  if (!view) return;
+  applyLiveSectionFilterState(sectionKey, view.filters || {});
+  setStatus(`Применён вид: ${view.label}.`, "success");
+}
+
+function saveSectionColumns(sectionKey, tableKey) {
+  const host = document.querySelector(
+    `[data-builder-columns="${sectionKey}"][data-builder-table="${tableKey}"]`
+  );
+  if (!host) return;
+  const builder = getSectionBuilder(sectionKey);
+  const columns = getSectionTableColumns(sectionKey, tableKey).map((column) => {
+    const labelInput = host.querySelector(`[data-builder-column-label="${column.key}"]`);
+    const visibleInput = host.querySelector(`[data-builder-column-visible="${column.key}"]`);
+    return {
+      ...column,
+      label: String(labelInput?.value || column.label || column.key).trim() || column.key,
+      visible: Boolean(visibleInput?.checked)
+    };
+  });
+  builder.tables[tableKey] = columns;
+  builder.open = true;
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  rerenderLiveSection(sectionKey);
+  setStatus("Настройки колонок сохранены.", "success");
+}
+
+function clearSectionFormulaInputs(sectionKey) {
+  document
+    .querySelectorAll(`[data-builder-formula-input="${sectionKey}"]`)
+    .forEach((input) => {
+      if (input.tagName === "SELECT") {
+        input.value = "number";
+      } else {
+        input.value = "";
+      }
+    });
+}
+
+function saveSectionFormula(sectionKey) {
+  const values = {};
+  document
+    .querySelectorAll(`[data-builder-formula-input="${sectionKey}"]`)
+    .forEach((input) => {
+      values[input.dataset.builderField] = input.value;
+    });
+
+  const formula = normalizeBuilderFormula(values);
+  if (!formula) {
+    throw new Error("Укажите ключ, название и формулу для KPI.");
+  }
+
+  const builder = getSectionBuilder(sectionKey);
+  builder.formulas = [
+    ...builder.formulas.filter((item) => item.key !== formula.key),
+    formula
+  ];
+  builder.open = true;
+  persistSectionBuilders();
+  clearSectionFormulaInputs(sectionKey);
+  renderLiveSectionBuilder(sectionKey);
+  rerenderLiveSection(sectionKey);
+  setStatus(`KPI сохранён: ${formula.label}.`, "success");
+}
+
+function deleteSectionFormula(sectionKey, formulaKey) {
+  const builder = getSectionBuilder(sectionKey);
+  builder.formulas = builder.formulas.filter((item) => item.key !== formulaKey);
+  builder.open = true;
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  rerenderLiveSection(sectionKey);
+  setStatus("Формула удалена.", "success");
+}
+
+function saveSectionSchema(sectionKey) {
+  const textarea = document.querySelector(`[data-builder-schema="${sectionKey}"]`);
+  if (!textarea) return;
+  let parsed;
+  try {
+    parsed = JSON.parse(textarea.value);
+  } catch (error) {
+    throw new Error(`JSON не распознан: ${error.message || "ошибка синтаксиса"}`);
+  }
+
+  STATE.sectionBuilders[sectionKey] = normalizeSectionBuilder(sectionKey, {
+    ...parsed,
+    open: true
+  });
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  rerenderLiveSection(sectionKey);
+  setStatus("JSON-схема секции сохранена.", "success");
+}
+
+function resetSectionBuilder(sectionKey) {
+  STATE.sectionBuilders[sectionKey] = createDefaultSectionBuilder(sectionKey);
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  rerenderLiveSection(sectionKey);
+  setStatus("Секция сброшена к базовой конфигурации.", "success");
 }
 
 function renderLiveOverviewSummary() {
@@ -1750,6 +2527,8 @@ function renderInteractiveFinanceSections() {
         <span class="workspace-chip">Живой баланс по трем контурам</span>
       </div>
       <div class="scope-note" id="balanceScopeNote"></div>
+      <div class="light2-builder-strip" data-builder-strip="balance"></div>
+      <div class="light2-builder-host" data-builder-host="balance"></div>
       <form class="record-form" id="balanceForm">
         <div class="form-grid">
           <div>
@@ -1835,6 +2614,8 @@ function renderInteractiveFinanceSections() {
         <span class="workspace-chip">План денег и обязательств</span>
       </div>
       <div class="scope-note" id="calendarScopeNote"></div>
+      <div class="light2-builder-strip" data-builder-strip="calendar"></div>
+      <div class="light2-builder-host" data-builder-host="calendar"></div>
       <form class="record-form" id="calendarForm">
         <div class="form-grid">
           <div>
@@ -1964,6 +2745,8 @@ function renderInteractiveFinanceSections() {
         <span class="workspace-chip">Активы и график выплат</span>
       </div>
       <div class="scope-note" id="assetsScopeNote"></div>
+      <div class="light2-builder-strip" data-builder-strip="assets"></div>
+      <div class="light2-builder-host" data-builder-host="assets"></div>
       <div class="subsection-grid">
         <article class="subsection-card">
           <h3>Карточка актива</h3>
@@ -2081,6 +2864,8 @@ function renderInteractiveFinanceSections() {
         <span class="workspace-chip">Каталог поставщиков и цен</span>
       </div>
       <div class="scope-note" id="purchasesScopeNote"></div>
+      <div class="light2-builder-strip" data-builder-strip="purchases"></div>
+      <div class="light2-builder-host" data-builder-host="purchases"></div>
       <article class="subsection-card mb-3">
         <h3>Позиция закупки</h3>
         <p>Нормализованный каталог поставщиков и материалов из листа Закупки.</p>
@@ -3301,6 +4086,7 @@ function renderAssets() {
   if (!dom.assetTableBody || !dom.paymentTableBody) return;
 
   renderAssetsScopeNote();
+  renderLiveSectionBuilder("assets");
   dom.assetForm?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
   dom.paymentForm?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
   populateAssetSelectors();
@@ -3323,6 +4109,9 @@ function renderAssets() {
   const assetRows = getVisibleAssets();
   const paymentRows = getVisibleAssetPayments();
   renderAssetsSummary();
+  if (dom.summary) {
+    dom.summary.insertAdjacentHTML("beforeend", getSectionFormulaCards("assets"));
+  }
 
   dom.assetTableBody.innerHTML = assetRows.length
     ? assetRows
@@ -3377,6 +4166,7 @@ function renderPurchases() {
   if (!dom.tableBody) return;
 
   renderPurchasesScopeNote();
+  renderLiveSectionBuilder("purchases");
   dom.form?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("purchases"));
   populatePurchaseFilters();
 
@@ -3394,6 +4184,9 @@ function renderPurchases() {
 
   const rows = getVisiblePurchases();
   renderPurchasesSummary();
+  if (dom.summary) {
+    dom.summary.insertAdjacentHTML("beforeend", getSectionFormulaCards("purchases"));
+  }
 
   dom.tableBody.innerHTML = rows.length
     ? rows
@@ -3618,6 +4411,7 @@ function renderCalendarSummary(rows) {
 function renderSettlements() {
   DOM.settlementActionsHead.textContent = isAdmin() ? "Действия" : "";
   renderScopeNote();
+  renderLiveSectionBuilder("settlements");
 
   if (!STATE.schemaReady) {
     DOM.settlementTableBody.innerHTML = `<tr><td colspan="10" class="muted">Сначала выполните platform_light2_patch.sql в Supabase SQL Editor.</td></tr>`;
@@ -3627,6 +4421,7 @@ function renderSettlements() {
 
   const rows = getVisibleSettlements();
   renderSettlementSummary(rows);
+  DOM.settlementSummary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("settlements"));
 
   if (!rows.length) {
     DOM.settlementTableBody.innerHTML = `<tr><td colspan="10" class="muted">Пока нет записей для текущего фильтра.</td></tr>`;
@@ -3672,6 +4467,7 @@ function renderBalance() {
 
   dom.actionsHead.textContent = isAdmin() ? "Действия" : "";
   renderBalanceScopeNote();
+  renderLiveSectionBuilder("balance");
 
   if (!isAdmin()) {
     dom.summary.innerHTML = "";
@@ -3688,6 +4484,7 @@ function renderBalance() {
   const rows = getVisibleBalanceEntries();
   const runningMap = buildBalanceRunningMap();
   renderBalanceSummary(rows);
+  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("balance"));
 
   if (!rows.length) {
     dom.tableBody.innerHTML = `<tr><td colspan="8" class="muted">Пока нет записей для текущего фильтра.</td></tr>`;
@@ -3723,6 +4520,7 @@ function renderCalendar() {
 
   dom.actionsHead.textContent = isAdmin() ? "Действия" : "";
   renderCalendarScopeNote();
+  renderLiveSectionBuilder("calendar");
 
   if (!isAdmin()) {
     dom.summary.innerHTML = "";
@@ -3738,6 +4536,7 @@ function renderCalendar() {
 
   const rows = getVisibleCalendarEntries();
   renderCalendarSummary(rows);
+  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("calendar"));
 
   if (!rows.length) {
     dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Пока нет записей для текущего фильтра.</td></tr>`;
@@ -4624,6 +5423,446 @@ function bindEvents() {
   });
 }
 
+function renderSettlements() {
+  DOM.settlementActionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
+  renderScopeNote();
+  renderLiveSectionBuilder("settlements");
+
+  if (!STATE.schemaReady) {
+    syncSectionTableHead("settlements", "main", DOM.settlementTableBody);
+    DOM.settlementTableBody.innerHTML = renderConfiguredSectionRows(
+      "settlements",
+      "main",
+      [],
+      () => "",
+      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_patch.sql РІ Supabase SQL Editor."
+    );
+    DOM.settlementSummary.innerHTML = "";
+    return;
+  }
+
+  const rows = getVisibleSettlements();
+  renderSettlementSummary(rows);
+  DOM.settlementSummary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("settlements"));
+  syncSectionTableHead("settlements", "main", DOM.settlementTableBody);
+  DOM.settlementTableBody.innerHTML = renderConfiguredSectionRows(
+    "settlements",
+    "main",
+    rows,
+    (item, columnKey) => {
+      const math = computeSettlement(item);
+      if (columnKey === "period_label") return escapeHtml(item.period_label || "вЂ”");
+      if (columnKey === "partner_label") return escapeHtml(getPartnerLabel(item.partner_slug));
+      if (columnKey === "salary_amount") return escapeHtml(formatMoney(math.salary));
+      if (columnKey === "purchase_amount") return escapeHtml(formatMoney(math.purchase));
+      if (columnKey === "settlement_total") return escapeHtml(formatMoney(math.total));
+      if (columnKey === "direction") return escapeHtml(math.direction);
+      if (columnKey === "status") return `<span class="badge-soft ${getStatusTone(item.status)}">${escapeHtml(item.status)}</span>`;
+      if (columnKey === "note") return escapeHtml(item.note || "вЂ”");
+      if (columnKey === "updated_at") return escapeHtml(formatDateTime(item.updated_at || item.created_at));
+      if (columnKey === "actions") {
+        if (!isAdmin()) return `<span class="muted">вЂ”</span>`;
+        return `
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-settlement="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-settlement="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>
+          </div>
+        `;
+      }
+      return `<span class="muted">вЂ”</span>`;
+    },
+    "РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+  );
+}
+
+function renderBalance() {
+  const dom = getBalanceDom();
+  if (!dom.tableBody) return;
+
+  dom.actionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
+  renderBalanceScopeNote();
+  renderLiveSectionBuilder("balance");
+
+  if (!isAdmin()) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("balance", "main", dom.tableBody);
+    dom.tableBody.innerHTML = renderConfiguredSectionRows(
+      "balance",
+      "main",
+      [],
+      () => "",
+      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+    );
+    return;
+  }
+
+  if (!STATE.financeReady) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("balance", "main", dom.tableBody);
+    dom.tableBody.innerHTML = renderConfiguredSectionRows(
+      "balance",
+      "main",
+      [],
+      () => "",
+      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql РІ Supabase SQL Editor."
+    );
+    return;
+  }
+
+  const rows = getVisibleBalanceEntries();
+  const runningMap = buildBalanceRunningMap();
+  renderBalanceSummary(rows);
+  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("balance"));
+  syncSectionTableHead("balance", "main", dom.tableBody);
+  dom.tableBody.innerHTML = renderConfiguredSectionRows(
+    "balance",
+    "main",
+    rows,
+    (entry, columnKey) => {
+      if (columnKey === "entry_date") return escapeHtml(formatDate(entry.entry_date));
+      if (columnKey === "account_type") return escapeHtml(getBalanceAccountLabel(entry.account_type));
+      if (columnKey === "income_amount") return escapeHtml(formatMoney(entry.income_amount));
+      if (columnKey === "expense_amount") return escapeHtml(formatMoney(entry.expense_amount));
+      if (columnKey === "running_total") return escapeHtml(formatMoney(runningMap.get(entry.id) || 0));
+      if (columnKey === "note") return escapeHtml(entry.note || "вЂ”");
+      if (columnKey === "updated_at") return escapeHtml(formatDateTime(entry.updated_at || entry.created_at));
+      if (columnKey === "actions") {
+        return `
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-balance="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-balance="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>
+          </div>
+        `;
+      }
+      return `<span class="muted">вЂ”</span>`;
+    },
+    "РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+  );
+}
+
+function renderCalendar() {
+  const dom = getCalendarDom();
+  if (!dom.tableBody) return;
+
+  dom.actionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
+  renderCalendarScopeNote();
+  renderLiveSectionBuilder("calendar");
+
+  if (!isAdmin()) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("calendar", "main", dom.tableBody);
+    dom.tableBody.innerHTML = renderConfiguredSectionRows(
+      "calendar",
+      "main",
+      [],
+      () => "",
+      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+    );
+    return;
+  }
+
+  if (!STATE.financeReady) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("calendar", "main", dom.tableBody);
+    dom.tableBody.innerHTML = renderConfiguredSectionRows(
+      "calendar",
+      "main",
+      [],
+      () => "",
+      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql РІ Supabase SQL Editor."
+    );
+    return;
+  }
+
+  const rows = getVisibleCalendarEntries();
+  renderCalendarSummary(rows);
+  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("calendar"));
+  syncSectionTableHead("calendar", "main", dom.tableBody);
+  dom.tableBody.innerHTML = renderConfiguredSectionRows(
+    "calendar",
+    "main",
+    rows,
+    (entry, columnKey) => {
+      const signed = signedCalendarAmount(entry);
+      if (columnKey === "payment_date") return escapeHtml(formatDate(entry.payment_date));
+      if (columnKey === "counterparty") return escapeHtml(entry.counterparty || "вЂ”");
+      if (columnKey === "signed_amount") {
+        return `<span class="${signed >= 0 ? "amount-positive" : "amount-negative"}">${signed >= 0 ? "+" : ""}${escapeHtml(formatMoney(entry.amount))}</span>`;
+      }
+      if (columnKey === "operation_type") {
+        return `<span class="badge-soft ${getOperationTone(entry.operation_type)}">${escapeHtml(entry.operation_type || "вЂ”")}</span>`;
+      }
+      if (columnKey === "category") return escapeHtml(entry.category || "вЂ”");
+      if (columnKey === "account_name") return escapeHtml(entry.account_name || "вЂ”");
+      if (columnKey === "status") {
+        return `<span class="badge-soft ${getCalendarStatusTone(entry.status)}">${escapeHtml(entry.status || "вЂ”")}</span>`;
+      }
+      if (columnKey === "note") return escapeHtml(entry.note || "вЂ”");
+      if (columnKey === "updated_at") return escapeHtml(formatDateTime(entry.updated_at || entry.created_at));
+      if (columnKey === "actions") {
+        return `
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-calendar="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-calendar="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>
+          </div>
+        `;
+      }
+      return `<span class="muted">вЂ”</span>`;
+    },
+    "РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+  );
+}
+
+function renderAssets() {
+  const dom = getAssetsDom();
+  if (!dom.assetTableBody || !dom.paymentTableBody) return;
+
+  renderAssetsScopeNote();
+  renderLiveSectionBuilder("assets");
+  dom.assetForm?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
+  dom.paymentForm?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
+  populateAssetSelectors();
+
+  if (!isAdmin()) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("assets", "assets", dom.assetTableBody);
+    syncSectionTableHead("assets", "payments", dom.paymentTableBody);
+    dom.assetTableBody.innerHTML = renderConfiguredSectionRows(
+      "assets",
+      "assets",
+      [],
+      () => "",
+      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+    );
+    dom.paymentTableBody.innerHTML = renderConfiguredSectionRows(
+      "assets",
+      "payments",
+      [],
+      () => "",
+      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+    );
+    return;
+  }
+
+  if (!STATE.operationsReady) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("assets", "assets", dom.assetTableBody);
+    syncSectionTableHead("assets", "payments", dom.paymentTableBody);
+    dom.assetTableBody.innerHTML = renderConfiguredSectionRows(
+      "assets",
+      "assets",
+      [],
+      () => "",
+      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor."
+    );
+    dom.paymentTableBody.innerHTML = renderConfiguredSectionRows(
+      "assets",
+      "payments",
+      [],
+      () => "",
+      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor."
+    );
+    return;
+  }
+
+  const totals = buildAssetPaymentTotals();
+  const assetRows = getVisibleAssets();
+  const paymentRows = getVisibleAssetPayments();
+  renderAssetsSummary();
+  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("assets"));
+  syncSectionTableHead("assets", "assets", dom.assetTableBody);
+  dom.assetTableBody.innerHTML = renderConfiguredSectionRows(
+    "assets",
+    "assets",
+    assetRows,
+    (asset, columnKey) => {
+      const paid = toNumber(totals[asset.id] || 0);
+      const remaining = roundMoney(toNumber(asset.asset_value) - paid);
+      if (columnKey === "asset_name") return escapeHtml(asset.asset_name || "вЂ”");
+      if (columnKey === "asset_value") return escapeHtml(formatMoney(asset.asset_value));
+      if (columnKey === "paid_total") return escapeHtml(formatMoney(paid));
+      if (columnKey === "remaining_amount") {
+        return `<span class="${remaining <= 0 ? "amount-positive" : "amount-negative"}">${escapeHtml(formatMoney(remaining))}</span>`;
+      }
+      if (columnKey === "note") return escapeHtml(asset.note || "вЂ”");
+      if (columnKey === "updated_at") return escapeHtml(formatDateTime(asset.updated_at || asset.created_at));
+      if (columnKey === "actions") {
+        return `
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">РР·РјРµРЅРёС‚СЊ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">РЈРґР°Р»РёС‚СЊ</button>
+          </div>
+        `;
+      }
+      return `<span class="muted">вЂ”</span>`;
+    },
+    "РџРѕРєР° РЅРµС‚ Р°РєС‚РёРІРѕРІ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+  );
+  syncSectionTableHead("assets", "payments", dom.paymentTableBody);
+  dom.paymentTableBody.innerHTML = renderConfiguredSectionRows(
+    "assets",
+    "payments",
+    paymentRows,
+    (payment, columnKey) => {
+      if (columnKey === "payment_date") return escapeHtml(formatDate(payment.payment_date));
+      if (columnKey === "asset_label") return escapeHtml(getAssetLabel(payment.asset_id));
+      if (columnKey === "payment_amount") return escapeHtml(formatMoney(payment.payment_amount));
+      if (columnKey === "note") return escapeHtml(payment.note || "вЂ”");
+      if (columnKey === "updated_at") return escapeHtml(formatDateTime(payment.updated_at || payment.created_at));
+      if (columnKey === "actions") {
+        return `
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">РР·РјРµРЅРёС‚СЊ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">РЈРґР°Р»РёС‚СЊ</button>
+          </div>
+        `;
+      }
+      return `<span class="muted">вЂ”</span>`;
+    },
+    "РџРѕРєР° РЅРµС‚ РІС‹РїР»Р°С‚ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+  );
+}
+
+function renderPurchases() {
+  const dom = getPurchasesDom();
+  if (!dom.tableBody) return;
+
+  renderPurchasesScopeNote();
+  renderLiveSectionBuilder("purchases");
+  dom.form?.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("purchases"));
+  populatePurchaseFilters();
+
+  if (!isAdmin()) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("purchases", "main", dom.tableBody);
+    dom.tableBody.innerHTML = renderConfiguredSectionRows(
+      "purchases",
+      "main",
+      [],
+      () => "",
+      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+    );
+    return;
+  }
+
+  if (!STATE.operationsReady) {
+    dom.summary.innerHTML = "";
+    syncSectionTableHead("purchases", "main", dom.tableBody);
+    dom.tableBody.innerHTML = renderConfiguredSectionRows(
+      "purchases",
+      "main",
+      [],
+      () => "",
+      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor."
+    );
+    return;
+  }
+
+  const rows = getVisiblePurchases();
+  renderPurchasesSummary();
+  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("purchases"));
+  syncSectionTableHead("purchases", "main", dom.tableBody);
+  dom.tableBody.innerHTML = renderConfiguredSectionRows(
+    "purchases",
+    "main",
+    rows,
+    (item, columnKey) => {
+      if (columnKey === "supplier_name") return escapeHtml(item.supplier_name || "вЂ”");
+      if (columnKey === "supplier_inn") return escapeHtml(item.supplier_inn || "вЂ”");
+      if (columnKey === "city") return escapeHtml(item.city || "вЂ”");
+      if (columnKey === "category") return escapeHtml(item.category || "вЂ”");
+      if (columnKey === "article") return escapeHtml(item.article || "вЂ”");
+      if (columnKey === "item_name") return escapeHtml(item.item_name || "вЂ”");
+      if (columnKey === "unit_name") return escapeHtml(item.unit_name || "вЂ”");
+      if (columnKey === "price") return escapeHtml(formatMoney(item.price));
+      if (columnKey === "note") return escapeHtml(item.note || "вЂ”");
+      if (columnKey === "actions") {
+        return `
+          <div class="d-flex gap-2">
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>
+          </div>
+        `;
+      }
+      return `<span class="muted">вЂ”</span>`;
+    },
+    "РџРѕРєР° РЅРµС‚ РїРѕР·РёС†РёР№ Р·Р°РєСѓРїРєРё РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+  );
+}
+
+function bindBuilderEvents() {
+  document.body.addEventListener("click", (event) => {
+    const toggleButton = event.target.closest("[data-builder-toggle]");
+    if (toggleButton) {
+      toggleSectionBuilder(toggleButton.dataset.builderToggle);
+      return;
+    }
+
+    const saveViewButton = event.target.closest("[data-builder-view-save]");
+    if (saveViewButton) {
+      try {
+        saveCurrentSectionView(saveViewButton.dataset.builderViewSave);
+      } catch (error) {
+        setStatus(error.message || "Не удалось сохранить вид.", "error");
+      }
+      return;
+    }
+
+    const applyViewButton = event.target.closest("[data-builder-view-apply]");
+    if (applyViewButton) {
+      applySectionView(applyViewButton.dataset.builderViewApply, applyViewButton.dataset.builderViewId);
+      return;
+    }
+
+    const saveColumnsButton = event.target.closest("[data-builder-columns-save]");
+    if (saveColumnsButton) {
+      try {
+        saveSectionColumns(
+          saveColumnsButton.dataset.builderColumnsSave,
+          saveColumnsButton.dataset.builderTableSave
+        );
+      } catch (error) {
+        setStatus(error.message || "Не удалось сохранить колонки.", "error");
+      }
+      return;
+    }
+
+    const saveFormulaButton = event.target.closest("[data-builder-formula-save]");
+    if (saveFormulaButton) {
+      try {
+        saveSectionFormula(saveFormulaButton.dataset.builderFormulaSave);
+      } catch (error) {
+        setStatus(error.message || "Не удалось сохранить формулу.", "error");
+      }
+      return;
+    }
+
+    const deleteFormulaButton = event.target.closest("[data-builder-formula-delete]");
+    if (deleteFormulaButton) {
+      deleteSectionFormula(
+        deleteFormulaButton.dataset.builderFormulaDelete,
+        deleteFormulaButton.dataset.builderFormulaKey
+      );
+      return;
+    }
+
+    const saveSchemaButton = event.target.closest("[data-builder-schema-save]");
+    if (saveSchemaButton) {
+      try {
+        saveSectionSchema(saveSchemaButton.dataset.builderSchemaSave);
+      } catch (error) {
+        setStatus(error.message || "Не удалось сохранить JSON-схему.", "error");
+      }
+      return;
+    }
+
+    const resetButton = event.target.closest("[data-builder-reset]");
+    if (resetButton) {
+      resetSectionBuilder(resetButton.dataset.builderReset);
+    }
+  });
+}
+
 async function start() {
   renderOverview();
   renderTemplateSections();
@@ -4631,6 +5870,7 @@ async function start() {
   renderWorkbookSnapshotSections();
   syncSectionTabs();
   bindEvents();
+  bindBuilderEvents();
   syncWorkspaceModeUi();
   openSection(STATE.activeSection || "overview");
   void loadWorkbookSnapshot();

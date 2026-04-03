@@ -1,11 +1,11 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260403-platform-premium1";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260403-platform-premium4";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260403-platform-premium1";
-const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-2";
+const PLATFORM_BUILD = "20260403-platform-premium4";
+const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
   sidebarCollapsed: "dom-neona:platform:sidebarCollapsed"
@@ -24,6 +24,8 @@ const DOM = {
   appShell: document.getElementById("appShell"),
   authTabs: document.getElementById("authTabs"),
   authStatus: document.getElementById("authStatus"),
+  platformStatusSection: document.getElementById("platformStatusSection"),
+  platformStatus: document.getElementById("platformStatus"),
   profileCard: document.getElementById("profileCard"),
   moduleNav: document.getElementById("moduleNav"),
   viewTitle: document.getElementById("viewTitle"),
@@ -75,6 +77,10 @@ const STATE = {
   ui: {
     wideMode: readStoredBoolean(PLATFORM_UI_KEYS.wideMode, true),
     sidebarCollapsed: readStoredBoolean(PLATFORM_UI_KEYS.sidebarCollapsed, false)
+  },
+  shellStatus: {
+    message: "",
+    tone: ""
   }
 };
 
@@ -431,7 +437,7 @@ const PLACEHOLDER_BLUEPRINTS = {
 
 const liveWorkspaceController = createLiveWorkspaceController({
   supabase,
-  setStatus: setAuthStatus,
+  setStatus: setShellStatus,
   escapeHtml,
   hasModulePermission,
   hasModuleAccess,
@@ -454,6 +460,39 @@ const liveWorkspaceController = createLiveWorkspaceController({
 function setAuthStatus(message, tone = "") {
   DOM.authStatus.textContent = message;
   DOM.authStatus.className = `status-box${tone ? " " + tone : ""}`;
+  if (!DOM.appShell.classList.contains("d-none")) {
+    STATE.shellStatus = {
+      message: String(message || "").trim(),
+      tone: tone || ""
+    };
+    renderShellStatus();
+  }
+}
+
+function renderShellStatus() {
+  if (!DOM.platformStatus || !DOM.platformStatusSection) return;
+  const hasMessage = Boolean(STATE.shellStatus.message);
+  DOM.platformStatusSection.classList.toggle("d-none", !hasMessage);
+  if (!hasMessage) {
+    DOM.platformStatus.textContent = "";
+    DOM.platformStatus.className = "status-box";
+    return;
+  }
+  DOM.platformStatus.textContent = STATE.shellStatus.message;
+  DOM.platformStatus.className = `status-box${STATE.shellStatus.tone ? " " + STATE.shellStatus.tone : ""}`;
+}
+
+function setShellStatus(message, tone = "") {
+  STATE.shellStatus = {
+    message: String(message || "").trim(),
+    tone: tone || ""
+  };
+  renderShellStatus();
+}
+
+function clearShellStatus() {
+  STATE.shellStatus = { message: "", tone: "" };
+  renderShellStatus();
 }
 
 function readStoredBoolean(key, fallback) {
@@ -676,12 +715,14 @@ function showAuthPane(key) {
 function showAuthScreen() {
   DOM.authScreen.classList.remove("d-none");
   DOM.appShell.classList.add("d-none");
+  clearShellStatus();
 }
 
 function showAppShell() {
   DOM.authScreen.classList.add("d-none");
   DOM.appShell.classList.remove("d-none");
   applyShellMode();
+  renderShellStatus();
 }
 
 function renderSchemaWarning() {
@@ -986,6 +1027,7 @@ async function openModule(key) {
   renderModuleNav();
   setViewMeta(module.title, module.subtitle);
   hideViews();
+  clearShellStatus();
 
   if (module.type === "dashboard") {
     renderDashboard();
@@ -1128,7 +1170,7 @@ async function clearTableByColumn(tableName, columnName) {
 }
 
 async function performOwnerDataResetIfNeeded() {
-  if (!STATE.schemaReady || !isAdmin()) return;
+  if (!STATE.schemaReady || !isAdmin()) return false;
 
   const { data, error } = await supabase
     .from("shared_app_states")
@@ -1139,7 +1181,7 @@ async function performOwnerDataResetIfNeeded() {
   if (error && error.code !== "PGRST116") throw error;
 
   const flags = data?.payload && typeof data.payload === "object" ? data.payload : {};
-  if (flags.dataResetVersion === PLATFORM_DATA_RESET_VERSION) return;
+  if (flags.dataResetVersion === PLATFORM_DATA_RESET_VERSION) return false;
 
   const now = new Date().toISOString();
 
@@ -1208,10 +1250,13 @@ async function performOwnerDataResetIfNeeded() {
     dataResetVersion: PLATFORM_DATA_RESET_VERSION,
     resetCompletedAt: now
   });
+
+  return true;
 }
 
 async function bootstrapApp(session) {
   const previousModule = STATE.activeModule || "dashboard";
+  let didResetData = false;
   STATE.session = session;
   STATE.user = session.user;
   STATE.schemaReady = true;
@@ -1225,7 +1270,7 @@ async function bootstrapApp(session) {
     } else {
       STATE.partnerProfiles = [];
     }
-    await performOwnerDataResetIfNeeded();
+    didResetData = await performOwnerDataResetIfNeeded();
   } catch (error) {
     if (isSchemaMissing(error)) {
       STATE.schemaReady = false;
@@ -1250,6 +1295,12 @@ async function bootstrapApp(session) {
   const availableModules = moduleListFromProfile();
   const targetModule = availableModules.includes(previousModule) ? previousModule : availableModules[0] || "dashboard";
   await openModule(targetModule);
+  if (didResetData) {
+    setShellStatus(
+      "Рабочие данные очищены: ДОМ НЕОНА, CRM, Склад, Тасктрекер и Мессенджер запущены с пустого состояния.",
+      "success"
+    );
+  }
 }
 
 async function openPlatformForSession(session) {

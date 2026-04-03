@@ -1,17 +1,22 @@
 :root {
   color-scheme: light;
-  --bg: #eef3f7;
-  --panel: rgba(255, 255, 255, 0.92);
+  --bg: #edf1f5;
+  --panel: rgba(255, 255, 255, 0.94);
   --panel-strong: #ffffff;
-  --text: #173042;
-  --muted: #6b7d8c;
-  --line: #dce7ef;
-  --accent: #0b7fab;
-  --accent-strong: #0a6588;
+  --text: #162533;
+  --muted: #627282;
+  --line: #d8e0e8;
+  --accent: #a6814f;
+  --accent-strong: #7f6038;
   --success: #1f9d67;
   --danger: #c24747;
-  --shadow: 0 24px 60px rgba(23, 48, 66, 0.12);
+  --shadow: 0 30px 70px rgba(16, 28, 40, 0.12);
   --radius: 22px;
+  --sidebar-bg: #101923;
+  --sidebar-surface: rgba(255, 255, 255, 0.06);
+  --sidebar-line: rgba(255, 255, 255, 0.08);
+  --sidebar-text: #f2f5f7;
+  --sidebar-muted: rgba(242, 245, 247, 0.64);
 }
 
 * {
@@ -23,9 +28,9 @@ body {
   min-height: 100vh;
   font-family: "Segoe UI", "Trebuchet MS", sans-serif;
   background:
-    radial-gradient(circle at top left, rgba(11, 127, 171, 0.14), transparent 26%),
-    radial-gradient(circle at top right, rgba(31, 157, 103, 0.12), transparent 22%),
-    linear-gradient(180deg, #f6fafc, var(--bg));
+    radial-gradient(circle at top left, rgba(166, 129, 79, 0.12), transparent 24%),
+    radial-gradient(circle at top right, rgba(22, 37, 51, 0.08), transparent 24%),
+    linear-gradient(180deg, #f7f8fa, var(--bg));
   color: var(--text);
 }
 
@@ -188,7 +193,7 @@ body.platform-wide {
 .app-shell {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 288px minmax(0, 1fr);
   width: 100%;
   transition: grid-template-columns 0.22s ease;
 }
@@ -199,9 +204,12 @@ body.platform-wide {
 
 .sidebar {
   padding: 24px 20px;
-  border-right: 1px solid rgba(220, 231, 239, 0.86);
-  background: rgba(250, 253, 255, 0.94);
-  backdrop-filter: blur(14px);
+  border-right: 1px solid var(--sidebar-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), transparent),
+    linear-gradient(180deg, #13202c, var(--sidebar-bg));
+  color: var(--sidebar-text);
+  backdrop-filter: blur(18px);
   position: sticky;
   top: 0;
   align-self: start;
@@ -222,9 +230,9 @@ body.platform-wide {
   height: 58px;
   object-fit: contain;
   border-radius: 16px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.96);
   padding: 6px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(255, 255, 255, 0.14);
 }
 
 .brand-row strong {
@@ -234,7 +242,7 @@ body.platform-wide {
 
 .brand-row span {
   display: block;
-  color: var(--muted);
+  color: var(--sidebar-muted);
   font-size: 0.92rem;
 }
 
@@ -245,9 +253,10 @@ body.platform-wide {
 .profile-card {
   padding: 16px;
   border-radius: 18px;
-  background: linear-gradient(180deg, #fff, #f7fbfd);
-  border: 1px solid var(--line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--sidebar-line);
   margin-bottom: 18px;
+  color: var(--sidebar-text);
 }
 
 .profile-card .role-pill {
@@ -257,13 +266,13 @@ body.platform-wide {
   padding: 4px 10px;
   font-size: 0.82rem;
   font-weight: 700;
-  background: rgba(11, 127, 171, 0.1);
-  color: var(--accent-strong);
+  background: rgba(166, 129, 79, 0.18);
+  color: #f6e9d5;
 }
 
 .sidebar .section-title {
   margin: 20px 0 10px;
-  color: var(--muted);
+  color: var(--sidebar-muted);
   font-size: 0.84rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -279,7 +288,7 @@ body.platform-wide {
   border: 1px solid transparent;
   border-radius: 16px;
   background: transparent;
-  color: var(--text);
+  color: var(--sidebar-text);
   padding: 12px 14px;
   font-weight: 600;
 }
@@ -297,13 +306,13 @@ body.platform-wide {
 
 .module-nav button.active,
 .module-nav button:hover {
-  background: #fff;
-  border-color: var(--line);
-  box-shadow: 0 10px 24px rgba(23, 48, 66, 0.06);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(166, 129, 79, 0.34);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .content-shell {
-  padding: 20px;
+  padding: 14px;
   min-width: 0;
   min-height: 100vh;
   height: 100vh;
@@ -321,10 +330,10 @@ body.platform-wide .content-shell {
   justify-content: space-between;
   gap: 16px;
   padding: 18px 22px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(216, 224, 232, 0.9);
   border-radius: 24px;
-  background: rgba(255, 255, 255, 0.84);
-  box-shadow: 0 18px 46px rgba(23, 48, 66, 0.08);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 250, 252, 0.96));
+  box-shadow: 0 18px 44px rgba(16, 28, 40, 0.08);
   position: sticky;
   top: 12px;
   z-index: 30;
@@ -357,9 +366,9 @@ body.platform-wide .view-section {
 .module-card {
   padding: 20px;
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.94);
-  border: 1px solid var(--line);
-  box-shadow: 0 16px 34px rgba(23, 48, 66, 0.06);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 252, 0.96));
+  border: 1px solid rgba(216, 224, 232, 0.9);
+  box-shadow: 0 20px 46px rgba(16, 28, 40, 0.06);
 }
 
 .module-card h3 {
@@ -374,12 +383,12 @@ body.platform-wide .view-section {
 
 .module-card .meta {
   font-size: 0.92rem;
-  color: var(--accent);
+  color: var(--accent-strong);
   font-weight: 600;
 }
 
 .module-frame-wrap {
-  border: 1px solid var(--line);
+  border: 1px solid rgba(216, 224, 232, 0.9);
   background: #fff;
   border-radius: 24px;
   overflow: hidden;
@@ -744,9 +753,9 @@ body.platform-wide .view-section {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px solid var(--line);
+  border: 1px solid rgba(216, 224, 232, 0.9);
   border-radius: 20px;
-  background: linear-gradient(180deg, #fff, #f8fbfd);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 250, 0.96));
 }
 
 .workspace-toolbar__group {
