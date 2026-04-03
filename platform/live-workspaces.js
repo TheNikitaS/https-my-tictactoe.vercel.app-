@@ -1485,6 +1485,119 @@ export function createLiveWorkspaceController({
     );
   }
 
+  function buildWarehouseItemOperationCards(item, demandEntry, linkedTasks, relatedDeals) {
+    const tasks = linkedTasks || [];
+    const openTasks = tasks.filter((task) => task.status !== "done");
+    const blockedTasks = tasks.filter((task) => Boolean(task.blocked));
+    const deals = relatedDeals || [];
+    return [
+      {
+        label: "Остаток",
+        value: formatNumber(item?.available || 0),
+        caption: `${formatNumber(item?.onHand || 0)} на руках • ${formatNumber(item?.reserved || 0)} в резерве`,
+        tone: item?.low ? "danger" : "success"
+      },
+      {
+        label: "Спрос",
+        value: formatNumber(demandEntry?.qtyTotal || 0),
+        caption: demandEntry?.tabsCount ? `${formatNumber(demandEntry.tabsCount)} вкладок калькуляторов` : "спрос пока не найден",
+        tone: demandEntry?.qtyTotal ? "accent" : "neutral"
+      },
+      {
+        label: "Сделки",
+        value: formatNumber(deals.length),
+        caption: deals.length ? "материал уже участвует в CRM-сделках" : "пока не привязан к сделкам",
+        tone: deals.length ? "info" : "neutral"
+      },
+      {
+        label: "Задачи",
+        value: formatNumber(openTasks.length),
+        caption: blockedTasks.length ? `${blockedTasks.length} с блокером` : `${tasks.length} всего`,
+        tone: blockedTasks.length ? "danger" : openTasks.length ? "warning" : "neutral"
+      },
+      {
+        label: "Минимум",
+        value: formatNumber(item?.minStock || 0),
+        caption: item?.low ? "ниже безопасного остатка" : "запас в норме",
+        tone: item?.low ? "danger" : "success"
+      }
+    ];
+  }
+
+  function buildWarehouseItemTimeline(item, demandEntry, movements, linkedTasks, relatedDeals) {
+    const events = [];
+    if (item?.createdAt) {
+      events.push({
+        date: item.createdAt,
+        title: "Позиция заведена",
+        meta: `${compactText(item.name || item.sku || "Материал")} • старт ${formatNumber(item.openingStock || 0)}`,
+        tone: "neutral"
+      });
+    }
+    if (item?.updatedAt && compactText(item.updatedAt) !== compactText(item.createdAt)) {
+      events.push({
+        date: item.updatedAt,
+        title: "Карточка позиции обновлена",
+        meta: `${compactText(item.category || "без категории")} • минимум ${formatNumber(item.minStock || 0)}`,
+        tone: "neutral"
+      });
+    }
+    if (demandEntry?.qtyTotal) {
+      events.push({
+        date: new Date().toISOString(),
+        title: "Обнаружен спрос из калькуляторов",
+        meta: `${formatNumber(demandEntry.qtyTotal)} • ${compactText((demandEntry.sources || []).join(", ") || "Калькуляторы")}`,
+        tone: "accent"
+      });
+    }
+    (movements || []).forEach((movement) => {
+      const movementTitle =
+        movement.kind === "in"
+          ? "Приход материала"
+          : movement.kind === "out"
+            ? "Списание материала"
+            : movement.kind === "reserve"
+              ? "Материал зарезервирован"
+              : "Резерв снят";
+      events.push({
+        date: movement.date || movement.createdAt,
+        title: movementTitle,
+        meta: `${formatNumber(movement.qty || 0)} • ${compactText(movement.note || "Без комментария")}`,
+        tone:
+          movement.kind === "in"
+            ? "success"
+            : movement.kind === "out"
+              ? "warning"
+              : movement.kind === "reserve"
+                ? "info"
+                : "neutral",
+        moduleKey: movement.itemId ? "warehouse" : "",
+        entityId: movement.itemId || ""
+      });
+    });
+    (linkedTasks || []).forEach((task) => {
+      events.push({
+        date: task.updatedAt || task.createdAt,
+        title: "Задача по позиции",
+        meta: `${compactText(task.title || "Задача")} • ${getTaskStatusMeta(task.status).label} • ${getPriorityLabel(task.priority)}`,
+        tone: getTaskStatusMeta(task.status).tone,
+        moduleKey: "tasks",
+        entityId: task.id
+      });
+    });
+    (relatedDeals || []).forEach((deal) => {
+      events.push({
+        date: deal.updatedAt || deal.createdAt || "",
+        title: "Материал участвует в сделке",
+        meta: `${compactText(deal.title || deal.client || "Сделка")} • ${getCrmStageMeta(deal.stage).label}`,
+        tone: getCrmStageMeta(deal.stage).tone,
+        moduleKey: "crm",
+        entityId: deal.id
+      });
+    });
+    return sortByDateDesc(events.filter((event) => compactText(event.date)), "date");
+  }
+
   async function buildTaskSignalSnapshot(tasksDoc) {
     const [crmDoc, warehouseDoc, salesRecord] = await Promise.all([
       ensureDocument("crm"),
@@ -1844,9 +1957,15 @@ export function createLiveWorkspaceController({
     const canManage = hasModulePermission("warehouse", "manage");
     const filters = ui.warehouse;
     const snapshot = buildWarehouseSnapshot(doc);
+    const [myCalculatorDoc, partnerCalculatorDocs, tasksDoc, crmDoc] = await Promise.all([
+      ensureExternalDoc("myCalculator"),
+      ensureExternalDoc("partnerCalculators"),
+      ensureDocument("tasks"),
+      ensureDocument("crm")
+    ]);
     const calculatorSnapshot = buildCalculatorDemandSnapshot(
-      await ensureExternalDoc("myCalculator"),
-      await ensureExternalDoc("partnerCalculators")
+      myCalculatorDoc,
+      partnerCalculatorDocs
     );
     const demandBridge = calculatorSnapshot.demand.map((entry) => {
       const match = findWarehouseMatch(snapshot, entry.sku);
@@ -1862,6 +1981,32 @@ export function createLiveWorkspaceController({
       return true;
     });
     const editItem = (doc.items || []).find((item) => item.id === filters.itemEditId) || null;
+    const editItemSourceKey = editItem ? getWarehouseItemSourceKey(editItem.id) : "";
+    const editItemTasks = editItem ? getTasksLinkedToSource(tasksDoc, editItemSourceKey) : [];
+    const editDemandEntry = editItem
+      ? demandBridge.find((entry) => entry.match?.id === editItem.id || compactText(entry.sku).toLowerCase() === compactText(editItem.sku || editItem.name).toLowerCase()) || null
+      : null;
+    const editItemMovements = editItem
+      ? sortByDateDesc((doc.movements || []).filter((movement) => movement.itemId === editItem.id), "date")
+      : [];
+    const relatedDealIds = new Set(
+      editItemMovements
+        .map((movement) => compactText(movement?.integration?.dealId || ""))
+        .filter(Boolean)
+    );
+    const relatedDeals = editItem
+      ? sortByDateDesc(
+          (crmDoc.deals || []).filter((deal) => relatedDealIds.has(deal.id)),
+          "updatedAt"
+        )
+      : [];
+    const editItemOperationCards = editItem
+      ? buildWarehouseItemOperationCards(editItem, editDemandEntry, editItemTasks, relatedDeals)
+      : [];
+    const editItemTimeline = editItem
+      ? buildWarehouseItemTimeline(editItem, editDemandEntry, editItemMovements, editItemTasks, relatedDeals)
+      : [];
+    const editItemPrimaryTask = editItemTasks[0] || null;
     const recentMovements = sortByDateDesc(doc.movements || [], "date").slice(0, 10);
     const metrics = [
       { label: "Позиций", value: formatNumber(snapshot.items.length), caption: "в каталоге материалов" },
@@ -1927,6 +2072,25 @@ export function createLiveWorkspaceController({
             ${canEdit ? `<form id="warehouseMovementForm" class="workspace-form" data-draft-form="movement"><div class="workspace-form-grid"><label><span>Позиция</span><select class="form-select" name="itemId" required><option value="">Выберите позицию</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${filters.movementItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label><label><span>Тип</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label><label><span>Количество</span><input class="form-control" type="number" min="0" step="1" name="qty" required /></label><label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить движение</button></div></form>` : renderAccessHint("warehouse")}
           </section>
         </div>
+        ${editItem ? `<div class="workspace-grid workspace-grid--2">
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Контур позиции</h4><div class="compact-help">Собирает в одном месте остаток, спрос, сделки и задачи по текущему материалу.</div></div></div>
+            <div class="workspace-stage-strip">${editItemOperationCards.map((card) => `<div class="workspace-stage-card"><span>${escapeHtml(card.label)}</span><strong>${escapeHtml(card.value)}</strong><small class="workspace-list-item__meta">${escapeHtml(card.caption)}</small></div>`).join("")}</div>
+            <div class="workspace-card__actions mt-3">
+              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-task-from-item="${escapeHtml(editItem.id)}">${editItemPrimaryTask ? "Открыть задачу" : "Создать задачу"}</button>` : ""}
+              ${relatedDeals[0]?.id ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="crm:${escapeHtml(relatedDeals[0].id)}">Открыть сделку</button>` : ""}
+              <button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-movement-pick="${escapeHtml(editItem.id)}">Добавить движение</button>
+            </div>
+            <div class="workspace-stack mt-3">
+              <div><div class="panel-heading panel-heading--compact"><div><h4>Спрос из калькуляторов</h4><div class="compact-help">Показывает, где этот материал уже фигурирует в расчетах.</div></div></div><div class="workspace-stack">${editDemandEntry ? editDemandEntry.examples?.length ? editDemandEntry.examples.map((example) => `<div class="workspace-list-item"><div><strong>${escapeHtml(editDemandEntry.match?.name || editItem.name || editDemandEntry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml(example)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber(editDemandEntry.qtyTotal || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml((editDemandEntry.sources || []).join(", ") || "Калькуляторы")}</div></div></div>`).join("") : `<div class="workspace-list-item"><div><strong>${escapeHtml(editItem.name || editDemandEntry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml((editDemandEntry.sources || []).join(", ") || "Калькуляторы")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber(editDemandEntry.qtyTotal || 0))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">По калькуляторам спрос на эту позицию пока не найден.</div>'}</div></div>
+              <div><div class="panel-heading panel-heading--compact"><div><h4>Связанные сделки</h4><div class="compact-help">Сделки, где этот материал уже ушёл в резерв или участвует в подготовке заказа.</div></div></div><div class="workspace-stack">${relatedDeals.length ? relatedDeals.slice(0, 5).map((deal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(deal.title || "Сделка")}</strong><div class="workspace-list-item__meta">${escapeHtml(deal.client || "Клиент не указан")} • ${escapeHtml(getCrmStageMeta(deal.stage).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getCrmStageMeta(deal.stage).tone)}">${escapeHtml(formatMoney(deal.amount || 0))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="crm:${escapeHtml(deal.id)}">Открыть</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">Сделок по этой позиции пока нет.</div>'}</div></div>
+            </div>
+          </section>
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Лента позиции</h4><div class="compact-help">История собирается из карточки материала, движений, задач и связей со сделками.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editItemTimeline.length))}</div></div>
+            <div class="workspace-stack">${editItemTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">История по позиции пока пустая.</div>'}</div>
+          </section>
+        </div>` : ""}
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Текущие остатки</h4><div class="compact-help">Доступное количество = на руках − резерв.</div></div></div>
