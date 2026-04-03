@@ -2,7 +2,7 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260403-workspace-premium4";
+const LIGHT2_BUILD = "20260403-workspace-premium6";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -549,7 +549,11 @@ function createDefaultSectionBuilder(sectionKey) {
     open: false,
     views: [],
     formulas: [],
-    tables
+    tables,
+    sort: {
+      key: "",
+      direction: "asc"
+    }
   };
 }
 
@@ -600,8 +604,17 @@ function normalizeSectionBuilder(sectionKey, raw) {
           const label = String(view?.label || "").trim();
           const id = sanitizeBuilderKey(view?.id || label);
           const filters = view?.filters && typeof view.filters === "object" ? view.filters : {};
+          const sort = view?.sort && typeof view.sort === "object" ? view.sort : {};
           if (!id || !label) return null;
-          return { id, label, filters };
+          return {
+            id,
+            label,
+            filters,
+            sort: {
+              key: String(sort.key || "").trim(),
+              direction: sort.direction === "desc" ? "desc" : "asc"
+            }
+          };
         })
         .filter(Boolean)
     : [];
@@ -614,7 +627,11 @@ function normalizeSectionBuilder(sectionKey, raw) {
     open: Boolean(raw.open),
     views: views.filter((view, index, list) => list.findIndex((item) => item.id === view.id) === index),
     formulas: formulas.filter((formula, index, list) => list.findIndex((item) => item.key === formula.key) === index),
-    tables
+    tables,
+    sort: {
+      key: String(raw.sort?.key || "").trim(),
+      direction: raw.sort?.direction === "desc" ? "desc" : "asc"
+    }
   };
 }
 
@@ -841,6 +858,108 @@ function applyLiveSectionFilterState(sectionKey, filters = {}) {
   }
 }
 
+function getSectionPrimaryTableKey(sectionKey) {
+  const meta = LIVE_SECTION_BUILDERS[sectionKey];
+  if (!meta?.tables) return "";
+  return Object.keys(meta.tables)[0] || "";
+}
+
+function getSectionSortOptions(sectionKey) {
+  const tableKey = getSectionPrimaryTableKey(sectionKey);
+  if (!tableKey) return [];
+  return getSectionTableColumns(sectionKey, tableKey).filter((column) => column.key !== "actions");
+}
+
+function getSectionFilterSummary(sectionKey) {
+  const filters = getLiveSectionFilterState(sectionKey);
+  return Object.values(filters).filter((value) => String(value || "").trim()).length;
+}
+
+function getSectionSortState(sectionKey) {
+  const builder = getSectionBuilder(sectionKey);
+  return {
+    key: String(builder.sort?.key || "").trim(),
+    direction: builder.sort?.direction === "desc" ? "desc" : "asc"
+  };
+}
+
+function normalizeSortComparable(value) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (value instanceof Date && !Number.isNaN(value.getTime())) return value.getTime();
+
+  const numeric = Number(String(value ?? "").replace(/\s+/g, "").replace(",", "."));
+  if (String(value ?? "").trim() !== "" && Number.isFinite(numeric)) return numeric;
+
+  const asDate = new Date(String(value ?? ""));
+  if (!Number.isNaN(asDate.getTime()) && /\d/.test(String(value ?? ""))) return asDate.getTime();
+
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function createSectionSortResolver(sectionKey) {
+  if (sectionKey === "settlements") {
+    return (row, columnKey) => {
+      const math = computeSettlement(row);
+      if (columnKey === "partner_label") return getPartnerLabel(row.partner_slug);
+      if (columnKey === "salary_amount") return toNumber(math.salary);
+      if (columnKey === "purchase_amount") return toNumber(math.purchase);
+      if (columnKey === "settlement_total") return toNumber(math.total);
+      if (columnKey === "direction") return math.direction;
+      return row?.[columnKey];
+    };
+  }
+
+  if (sectionKey === "balance") {
+    const runningMap = buildBalanceRunningMap();
+    return (row, columnKey) => {
+      if (columnKey === "account_type") return getBalanceAccountLabel(row.account_type);
+      if (columnKey === "running_total") return toNumber(runningMap.get(row.id) || 0);
+      return row?.[columnKey];
+    };
+  }
+
+  if (sectionKey === "calendar") {
+    return (row, columnKey) => {
+      if (columnKey === "signed_amount") return toNumber(signedCalendarAmount(row));
+      return row?.[columnKey];
+    };
+  }
+
+  if (sectionKey === "assets") {
+    const paymentTotals = buildAssetPaymentTotals();
+    return (row, columnKey) => {
+      const paid = toNumber(paymentTotals[row.id] || 0);
+      if (columnKey === "paid_total") return paid;
+      if (columnKey === "remaining_amount") return roundMoney(toNumber(row.asset_value) - paid);
+      return row?.[columnKey];
+    };
+  }
+
+  if (sectionKey === "purchases") {
+    return (row, columnKey) => {
+      if (columnKey === "price") return toNumber(row.price);
+      return row?.[columnKey];
+    };
+  }
+
+  return (row, columnKey) => row?.[columnKey];
+}
+
+function sortSectionRows(sectionKey, rows) {
+  const sort = getSectionSortState(sectionKey);
+  if (!sort.key) return rows.slice();
+  const resolveValue = createSectionSortResolver(sectionKey);
+
+  return rows.slice().sort((left, right) => {
+    const leftValue = normalizeSortComparable(resolveValue(left, sort.key));
+    const rightValue = normalizeSortComparable(resolveValue(right, sort.key));
+
+    if (leftValue === rightValue) return 0;
+    if (leftValue > rightValue) return sort.direction === "desc" ? -1 : 1;
+    return sort.direction === "desc" ? 1 : -1;
+  });
+}
+
 function getSectionTableColumns(sectionKey, tableKey) {
   return getSectionBuilder(sectionKey).tables?.[tableKey] || [];
 }
@@ -1025,6 +1144,10 @@ function renderLiveSectionBuilder(sectionKey) {
   }
 
   const builder = getSectionBuilder(sectionKey);
+  const sortState = getSectionSortState(sectionKey);
+  const sortOptions = getSectionSortOptions(sectionKey);
+  const filterCount = getSectionFilterSummary(sectionKey);
+  const recordCount = getSectionFormulaRecords(sectionKey).length;
   const viewButtons = builder.views.length
     ? builder.views
         .map(
@@ -1035,16 +1158,51 @@ function renderLiveSectionBuilder(sectionKey) {
           `
         )
         .join("")
-    : '<span class="builder-note">Сохраненных видов пока нет.</span>';
+    : "";
+  const savedViews = builder.views.length
+    ? builder.views
+        .map((view) => {
+          const viewFilterCount = Object.values(view.filters || {}).filter((value) =>
+            String(value || "").trim()
+          ).length;
+          const viewSortLabel = view.sort?.key
+            ? sortOptions.find((column) => column.key === view.sort.key)?.label || view.sort.key
+            : "Без сортировки";
+          const directionLabel = view.sort?.key ? (view.sort?.direction === "desc" ? "↓" : "↑") : "";
+          return `
+            <div class="builder-view-chip">
+              <div>
+                <strong>${escapeHtml(view.label)}</strong>
+                <span>Фильтров: ${viewFilterCount} • Сортировка: ${escapeHtml(viewSortLabel)} ${directionLabel}</span>
+              </div>
+              <div class="builder-view-chip__actions">
+                <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-apply="${escapeHtml(sectionKey)}" data-builder-view-id="${escapeHtml(view.id)}">Применить</button>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-builder-view-delete="${escapeHtml(sectionKey)}" data-builder-view-id="${escapeHtml(view.id)}">Удалить</button>
+              </div>
+            </div>
+          `;
+        })
+        .join("")
+    : '<div class="builder-note">Сохранённых видов пока нет.</div>';
+  const sortOptionsHtml = [
+    '<option value="">Без сортировки</option>',
+    ...sortOptions.map(
+      (column) =>
+        `<option value="${escapeHtml(column.key)}" ${sortState.key === column.key ? "selected" : ""}>${escapeHtml(column.label)}</option>`
+    )
+  ].join("");
 
   strip.innerHTML = `
     <div class="light2-builder-strip__meta">
       <strong>Конструктор секции</strong>
-      <span>Виды, колонки и KPI можно настраивать без правки кода.</span>
+      <span>Виды, колонки, фильтры, сортировку и KPI можно настраивать без правки кода.</span>
     </div>
     <div class="light2-builder-strip__actions">
       ${viewButtons}
       <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-save="${escapeHtml(sectionKey)}">Сохранить текущий вид</button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-filters-reset="${escapeHtml(sectionKey)}">Сбросить фильтры</button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-export="${escapeHtml(sectionKey)}">Экспорт схемы</button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-import="${escapeHtml(sectionKey)}">Импорт схемы</button>
       <button type="button" class="btn ${builder.open ? "btn-dark" : "btn-outline-dark"} btn-sm" data-builder-toggle="${escapeHtml(sectionKey)}">
         ${builder.open ? "Скрыть конструктор" : "Открыть конструктор"}
       </button>
@@ -1104,6 +1262,47 @@ function renderLiveSectionBuilder(sectionKey) {
 
   host.innerHTML = `
     <div class="light2-builder-grid">
+      <div class="builder-card builder-card--wide">
+        <div class="builder-card__head">
+          <strong>Фильтры, сортировка и сохранённые виды</strong>
+          <span>Управляйте тем, как команда видит секцию: фильтры, порядок строк и пресеты для разных сценариев.</span>
+        </div>
+        <div class="overview-inline-stats builder-kpi-row">
+          <div>
+            <span>Строк в текущем срезе</span>
+            <strong>${recordCount}</strong>
+          </div>
+          <div>
+            <span>Активных фильтров</span>
+            <strong>${filterCount}</strong>
+          </div>
+          <div>
+            <span>Сохранённых видов</span>
+            <strong>${builder.views.length}</strong>
+          </div>
+        </div>
+        <div class="builder-form-grid mt-3">
+          <select class="form-select" data-builder-sort-key="${escapeHtml(sectionKey)}">
+            ${sortOptionsHtml}
+          </select>
+          <select class="form-select" data-builder-sort-direction="${escapeHtml(sectionKey)}">
+            <option value="asc" ${sortState.direction === "asc" ? "selected" : ""}>По возрастанию</option>
+            <option value="desc" ${sortState.direction === "desc" ? "selected" : ""}>По убыванию</option>
+          </select>
+          <button type="button" class="btn btn-dark btn-sm" data-builder-sort-save="${escapeHtml(sectionKey)}">Сохранить сортировку</button>
+        </div>
+        <div class="builder-actions">
+          <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-save="${escapeHtml(sectionKey)}">Сохранить вид с фильтрами</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-builder-filters-reset="${escapeHtml(sectionKey)}">Очистить фильтры секции</button>
+        </div>
+      </div>
+      <div class="builder-card">
+        <div class="builder-card__head">
+          <strong>Сохранённые виды</strong>
+          <span>Быстрые пресеты для владельца, финансового блока, сверки и любых своих сценариев.</span>
+        </div>
+        <div class="builder-list">${savedViews}</div>
+      </div>
       ${columnCards}
       <div class="builder-card">
         <div class="builder-card__head">
@@ -1124,12 +1323,13 @@ function renderLiveSectionBuilder(sectionKey) {
       <div class="builder-card">
         <div class="builder-card__head">
           <strong>JSON-схема секции</strong>
-          <span>Для максимально гибкой настройки можно править секцию целиком одним JSON.</span>
+          <span>Для максимально гибкой настройки можно править секцию целиком одним JSON или переносить конфиг между базами.</span>
         </div>
         <textarea class="form-control builder-schema" data-builder-schema="${escapeHtml(sectionKey)}" rows="18">${escapeHtml(JSON.stringify({
           views: builder.views,
           formulas: builder.formulas,
-          tables: builder.tables
+          tables: builder.tables,
+          sort: builder.sort
         }, null, 2))}</textarea>
         <div class="builder-actions">
           <button type="button" class="btn btn-dark btn-sm" data-builder-schema-save="${escapeHtml(sectionKey)}">Сохранить JSON-схему</button>
@@ -1180,7 +1380,12 @@ function saveCurrentSectionView(sectionKey) {
   const filters = getLiveSectionFilterState(sectionKey);
   builder.views = [
     ...builder.views.filter((view) => view.id !== viewId),
-    { id: viewId, label: String(label).trim(), filters }
+    {
+      id: viewId,
+      label: String(label).trim(),
+      filters,
+      sort: { ...getSectionSortState(sectionKey) }
+    }
   ];
   builder.open = true;
   persistSectionBuilders();
@@ -1192,8 +1397,103 @@ function applySectionView(sectionKey, viewId) {
   const builder = getSectionBuilder(sectionKey);
   const view = builder.views.find((item) => item.id === viewId);
   if (!view) return;
+  builder.sort = {
+    key: String(view.sort?.key || "").trim(),
+    direction: view.sort?.direction === "desc" ? "desc" : "asc"
+  };
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
   applyLiveSectionFilterState(sectionKey, view.filters || {});
   setStatus(`Применён вид: ${view.label}.`, "success");
+}
+
+function clearSectionFilters(sectionKey) {
+  applyLiveSectionFilterState(sectionKey, {});
+  setStatus("Фильтры секции очищены.", "success");
+}
+
+function saveSectionSort(sectionKey) {
+  const keyInput = document.querySelector(`[data-builder-sort-key="${sectionKey}"]`);
+  const directionInput = document.querySelector(`[data-builder-sort-direction="${sectionKey}"]`);
+  const builder = getSectionBuilder(sectionKey);
+  builder.sort = {
+    key: String(keyInput?.value || "").trim(),
+    direction: directionInput?.value === "desc" ? "desc" : "asc"
+  };
+  builder.open = true;
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  rerenderLiveSection(sectionKey);
+  setStatus("Сортировка секции сохранена.", "success");
+}
+
+function deleteSectionView(sectionKey, viewId) {
+  const builder = getSectionBuilder(sectionKey);
+  const view = builder.views.find((item) => item.id === viewId);
+  if (!view) return;
+  if (!window.confirm(`Удалить сохранённый вид "${view.label}"?`)) return;
+  builder.views = builder.views.filter((item) => item.id !== viewId);
+  builder.open = true;
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  setStatus(`Вид удалён: ${view.label}.`, "success");
+}
+
+async function exportSectionBuilder(sectionKey) {
+  const builder = getSectionBuilder(sectionKey);
+  const payload = JSON.stringify(
+    {
+      views: builder.views,
+      formulas: builder.formulas,
+      tables: builder.tables,
+      sort: builder.sort
+    },
+    null,
+    2
+  );
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(payload);
+      setStatus("JSON-схема секции скопирована в буфер обмена.", "success");
+      return;
+    } catch {
+      // Fallback below.
+    }
+  }
+
+  window.prompt("Скопируйте JSON-схему секции вручную", payload);
+  setStatus("JSON-схема секции подготовлена для копирования.", "success");
+}
+
+async function importSectionBuilder(sectionKey) {
+  let suggestion = "";
+  if (navigator.clipboard?.readText) {
+    try {
+      suggestion = await navigator.clipboard.readText();
+    } catch {
+      suggestion = "";
+    }
+  }
+
+  const raw = window.prompt("Вставьте JSON-схему секции", suggestion);
+  if (!raw) return;
+
+  let parsed;
+  try {
+    parsed = JSON.parse(raw);
+  } catch (error) {
+    throw new Error(`JSON не распознан: ${error.message || "ошибка синтаксиса"}`);
+  }
+
+  STATE.sectionBuilders[sectionKey] = normalizeSectionBuilder(sectionKey, {
+    ...parsed,
+    open: true
+  });
+  persistSectionBuilders();
+  renderLiveSectionBuilder(sectionKey);
+  rerenderLiveSection(sectionKey);
+  setStatus("JSON-схема секции импортирована.", "success");
 }
 
 function saveSectionColumns(sectionKey, tableKey) {
@@ -4419,7 +4719,7 @@ function renderSettlements() {
     return;
   }
 
-  const rows = getVisibleSettlements();
+  const rows = sortSectionRows("settlements", getVisibleSettlements());
   renderSettlementSummary(rows);
   DOM.settlementSummary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("settlements"));
 
@@ -4481,7 +4781,7 @@ function renderBalance() {
     return;
   }
 
-  const rows = getVisibleBalanceEntries();
+  const rows = sortSectionRows("balance", getVisibleBalanceEntries());
   const runningMap = buildBalanceRunningMap();
   renderBalanceSummary(rows);
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("balance"));
@@ -4534,7 +4834,7 @@ function renderCalendar() {
     return;
   }
 
-  const rows = getVisibleCalendarEntries();
+  const rows = sortSectionRows("calendar", getVisibleCalendarEntries());
   renderCalendarSummary(rows);
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("calendar"));
 
@@ -5441,7 +5741,7 @@ function renderSettlements() {
     return;
   }
 
-  const rows = getVisibleSettlements();
+  const rows = sortSectionRows("settlements", getVisibleSettlements());
   renderSettlementSummary(rows);
   DOM.settlementSummary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("settlements"));
   syncSectionTableHead("settlements", "main", DOM.settlementTableBody);
@@ -5509,7 +5809,7 @@ function renderBalance() {
     return;
   }
 
-  const rows = getVisibleBalanceEntries();
+  const rows = sortSectionRows("balance", getVisibleBalanceEntries());
   const runningMap = buildBalanceRunningMap();
   renderBalanceSummary(rows);
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("balance"));
@@ -5574,7 +5874,7 @@ function renderCalendar() {
     return;
   }
 
-  const rows = getVisibleCalendarEntries();
+  const rows = sortSectionRows("calendar", getVisibleCalendarEntries());
   renderCalendarSummary(rows);
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("calendar"));
   syncSectionTableHead("calendar", "main", dom.tableBody);
@@ -5666,7 +5966,7 @@ function renderAssets() {
   }
 
   const totals = buildAssetPaymentTotals();
-  const assetRows = getVisibleAssets();
+  const assetRows = sortSectionRows("assets", getVisibleAssets());
   const paymentRows = getVisibleAssetPayments();
   renderAssetsSummary();
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("assets"));
@@ -5758,7 +6058,7 @@ function renderPurchases() {
     return;
   }
 
-  const rows = getVisiblePurchases();
+  const rows = sortSectionRows("purchases", getVisiblePurchases());
   renderPurchasesSummary();
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("purchases"));
   syncSectionTableHead("purchases", "main", dom.tableBody);
@@ -5791,7 +6091,7 @@ function renderPurchases() {
 }
 
 function bindBuilderEvents() {
-  document.body.addEventListener("click", (event) => {
+  document.body.addEventListener("click", async (event) => {
     const toggleButton = event.target.closest("[data-builder-toggle]");
     if (toggleButton) {
       toggleSectionBuilder(toggleButton.dataset.builderToggle);
@@ -5811,6 +6111,44 @@ function bindBuilderEvents() {
     const applyViewButton = event.target.closest("[data-builder-view-apply]");
     if (applyViewButton) {
       applySectionView(applyViewButton.dataset.builderViewApply, applyViewButton.dataset.builderViewId);
+      return;
+    }
+
+    const deleteViewButton = event.target.closest("[data-builder-view-delete]");
+    if (deleteViewButton) {
+      deleteSectionView(deleteViewButton.dataset.builderViewDelete, deleteViewButton.dataset.builderViewId);
+      return;
+    }
+
+    const resetFiltersButton = event.target.closest("[data-builder-filters-reset]");
+    if (resetFiltersButton) {
+      clearSectionFilters(resetFiltersButton.dataset.builderFiltersReset);
+      return;
+    }
+
+    const saveSortButton = event.target.closest("[data-builder-sort-save]");
+    if (saveSortButton) {
+      saveSectionSort(saveSortButton.dataset.builderSortSave);
+      return;
+    }
+
+    const exportButton = event.target.closest("[data-builder-export]");
+    if (exportButton) {
+      try {
+        await exportSectionBuilder(exportButton.dataset.builderExport);
+      } catch (error) {
+        setStatus(error.message || "Не удалось экспортировать схему секции.", "error");
+      }
+      return;
+    }
+
+    const importButton = event.target.closest("[data-builder-import]");
+    if (importButton) {
+      try {
+        await importSectionBuilder(importButton.dataset.builderImport);
+      } catch (error) {
+        setStatus(error.message || "Не удалось импортировать схему секции.", "error");
+      }
       return;
     }
 
