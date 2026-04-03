@@ -405,9 +405,96 @@ function normalizeTasksDoc(payload) {
   const next = payload && typeof payload === "object" ? deepClone(payload) : createDefaultTasksDoc();
   next.builder = normalizeBuilderSchema("tasks", next.builder);
   next.sprints = Array.isArray(next.sprints) ? next.sprints : [];
-  next.tasks = Array.isArray(next.tasks) ? next.tasks.map((task) => ({ ...task, custom: task?.custom && typeof task.custom === "object" ? task.custom : {} })) : [];
+  next.tasks = Array.isArray(next.tasks)
+    ? next.tasks.map((task) => ({
+        ...task,
+        custom: task?.custom && typeof task.custom === "object" ? task.custom : {},
+        history: Array.isArray(task?.history)
+          ? task.history
+              .map((entry) => normalizeTaskHistoryEntry(entry))
+              .filter(Boolean)
+          : []
+      }))
+    : [];
   next.updatedAt = next.updatedAt || new Date().toISOString();
   return next;
+}
+
+function normalizeTaskHistoryEntry(entry) {
+  if (!entry || typeof entry !== "object") return null;
+  const date = compactText(entry.date || entry.createdAt || "");
+  const title = compactText(entry.title || entry.label || "");
+  if (!date && !title) return null;
+  return {
+    id: compactText(entry.id || ""),
+    date: date || new Date().toISOString(),
+    title: title || "Событие задачи",
+    meta: compactText(entry.meta || entry.description || ""),
+    tone: ["neutral", "success", "warning", "danger", "info", "accent"].includes(entry.tone) ? entry.tone : "neutral",
+    moduleKey: compactText(entry.moduleKey || "tasks") || "tasks",
+    entityId: compactText(entry.entityId || "")
+  };
+}
+
+function createTaskHistoryEntry({ title, meta = "", tone = "neutral", moduleKey = "tasks", entityId = "", date = new Date().toISOString() }) {
+  return normalizeTaskHistoryEntry({
+    id: createId("taskevt"),
+    date,
+    title,
+    meta,
+    tone,
+    moduleKey,
+    entityId
+  });
+}
+
+function appendTaskHistory(task, ...entries) {
+  const history = Array.isArray(task?.history)
+    ? task.history.map((entry) => normalizeTaskHistoryEntry(entry)).filter(Boolean)
+    : [];
+  entries.flat().forEach((entry) => {
+    const normalized = normalizeTaskHistoryEntry(entry);
+    if (normalized) history.push(normalized);
+  });
+  return sortByDateDesc(history, "date").slice(0, 80);
+}
+
+function buildTaskChangeMeta(previous, next, sprintOptions = []) {
+  if (!previous) return "Карточка заведена в рабочем контуре.";
+  const sprintMap = new Map((sprintOptions || []).map((sprint) => [compactText(sprint.id), compactText(sprint.title)]));
+  const changes = [];
+
+  if (compactText(previous.title) !== compactText(next.title)) changes.push("название");
+  if (compactText(previous.owner) !== compactText(next.owner)) changes.push("ответственный");
+  if (compactText(previous.status) !== compactText(next.status)) {
+    changes.push(`статус: ${getTaskStatusMeta(previous.status).label} -> ${getTaskStatusMeta(next.status).label}`);
+  }
+  if (compactText(previous.priority) !== compactText(next.priority)) {
+    changes.push(`приоритет: ${getPriorityLabel(previous.priority)} -> ${getPriorityLabel(next.priority)}`);
+  }
+  if (compactText(previous.sprintId) !== compactText(next.sprintId)) {
+    const before = sprintMap.get(compactText(previous.sprintId)) || "без итерации";
+    const after = sprintMap.get(compactText(next.sprintId)) || "без итерации";
+    changes.push(`итерация: ${before} -> ${after}`);
+  }
+  if (normalizeDateInput(previous.dueDate) !== normalizeDateInput(next.dueDate)) {
+    changes.push(`срок: ${formatDate(previous.dueDate)} -> ${formatDate(next.dueDate)}`);
+  }
+  if (Boolean(previous.blocked) !== Boolean(next.blocked)) {
+    changes.push(next.blocked ? "добавлен блокер" : "блокер снят");
+  }
+  if (compactText(previous.note) !== compactText(next.note)) changes.push("комментарий");
+  if (JSON.stringify(previous.custom || {}) !== JSON.stringify(next.custom || {})) changes.push("кастомные поля");
+
+  return changes.length ? changes.join(" • ") : "Обновлены детали карточки.";
+}
+
+function getTaskSourceLabel(context) {
+  if (!context) return "Ручная задача";
+  if (context.type === "crm" || context.type === "crm-signal") return "CRM";
+  if (context.type === "warehouse" || context.type === "warehouse-signal") return "Склад";
+  if (context.type === "sales-signal") return "Продажи";
+  return "Связанный контур";
 }
 
 function getCustomFields(moduleKey, doc) {
@@ -1342,6 +1429,152 @@ export function createLiveWorkspaceController({
     return null;
   }
 
+  function buildTaskOperationCards(task, context) {
+    const dueDate = normalizeDateInput(task?.dueDate);
+    const overdue = dueDate && dueDate < todayString() && compactText(task?.status) !== "done";
+    const sprintTitle = compactText(task?.sprint?.title || "") || "Без итерации";
+    const cards = [
+      {
+        label: "Статус",
+        value: getTaskStatusMeta(task?.status).label,
+        caption: overdue ? "срок уже просрочен" : "рабочее состояние карточки",
+        tone: overdue ? "danger" : getTaskStatusMeta(task?.status).tone
+      },
+      {
+        label: "Приоритет",
+        value: getPriorityLabel(task?.priority),
+        caption: task?.owner ? `ответственный: ${task.owner}` : "ответственный не назначен",
+        tone: task?.priority === "urgent" ? "danger" : task?.priority === "high" ? "warning" : "neutral"
+      },
+      {
+        label: "Срок",
+        value: dueDate ? formatDate(dueDate) : "Не задан",
+        caption: overdue ? "требует срочного внимания" : dueDate ? "контроль по календарю" : "дата пока не указана",
+        tone: overdue ? "danger" : dueDate ? "info" : "neutral"
+      },
+      {
+        label: "Итерация",
+        value: sprintTitle,
+        caption: sprintTitle === "Без итерации" ? "не привязана к спринту" : "рабочий цикл задачи",
+        tone: sprintTitle === "Без итерации" ? "neutral" : "accent"
+      },
+      {
+        label: "Источник",
+        value: getTaskSourceLabel(context),
+        caption: context?.title ? compactText(context.title) : "ручной контур",
+        tone: context?.tone || "neutral"
+      },
+      {
+        label: "Блокер",
+        value: task?.blocked ? "Да" : "Нет",
+        caption: task?.blocked ? "нужна помощь или решение" : "критичных блокеров нет",
+        tone: task?.blocked ? "danger" : "success"
+      }
+    ];
+
+    if (typeof context?.amount !== "undefined") {
+      cards.push({
+        label: "Сумма контура",
+        value: formatMoney(context.amount || 0),
+        caption: "связанный финансовый объём",
+        tone: "info"
+      });
+    } else if (typeof context?.available !== "undefined") {
+      cards.push({
+        label: "Доступно на складе",
+        value: formatNumber(context.available || 0),
+        caption: `${formatNumber(context.onHand || 0)} на руках • ${formatNumber(context.reserved || 0)} в резерве`,
+        tone: context?.available > 0 ? "success" : "danger"
+      });
+    }
+
+    return cards;
+  }
+
+  function buildTaskTimeline(task, context) {
+    const events = [];
+    const history = Array.isArray(task?.history)
+      ? task.history.map((entry) => normalizeTaskHistoryEntry(entry)).filter(Boolean)
+      : [];
+
+    if (!history.some((entry) => compactText(entry.title) === "Задача создана")) {
+      events.push({
+        date: task?.createdAt || new Date().toISOString(),
+        title: "Задача создана",
+        meta: compactText(task?.title || "Без названия"),
+        tone: "neutral",
+        moduleKey: "tasks",
+        entityId: task?.id || ""
+      });
+    }
+    if (task?.updatedAt && compactText(task.updatedAt) !== compactText(task.createdAt)) {
+      events.push({
+        date: task.updatedAt,
+        title: "Карточка обновлена",
+        meta: `${getTaskStatusMeta(task.status).label} • ${getPriorityLabel(task.priority)}`,
+        tone: getTaskStatusMeta(task.status).tone,
+        moduleKey: "tasks",
+        entityId: task?.id || ""
+      });
+    }
+    if (normalizeDateInput(task?.dueDate)) {
+      events.push({
+        date: normalizeDateInput(task.dueDate),
+        title: compactText(task?.status) === "done" ? "Финальный срок задачи" : "Контрольный срок",
+        meta: compactText(task?.owner || "Без ответственного"),
+        tone: compactText(task?.status) === "done" ? "success" : "warning",
+        moduleKey: "tasks",
+        entityId: task?.id || ""
+      });
+    }
+
+    events.push(...history);
+
+    if (context?.order?.invoiceDate) {
+      events.push({
+        date: context.order.invoiceDate,
+        title: "По источнику выставлен счёт",
+        meta: `${compactText(context.order.orderNumber || context.order.title || "Заказ")} • ${formatMoney(context.order.amount || 0)}`,
+        tone: "accent",
+        moduleKey: "sales"
+      });
+    }
+    if (context?.order?.paidDate) {
+      events.push({
+        date: context.order.paidDate,
+        title: "По источнику пришла оплата",
+        meta: `${compactText(context.order.orderNumber || context.order.title || "Заказ")} • ${formatMoney(context.order.paidAmount || context.order.amount || 0)}`,
+        tone: "success",
+        moduleKey: "sales"
+      });
+    }
+    (context?.reservation?.rows || []).forEach((movement) => {
+      events.push({
+        date: movement.date || movement.createdAt,
+        title: movement.kind === "release" ? "Резерв по задаче снят" : "Под задачу зарезервирован материал",
+        meta: `${formatNumber(movement.qty || 0)} • ${compactText(movement.note || "Складской резерв")}`,
+        tone: movement.kind === "release" ? "neutral" : "info",
+        moduleKey: movement.itemId ? "warehouse" : "",
+        entityId: movement.itemId || ""
+      });
+    });
+    (context?.movements || []).forEach((movement) => {
+      events.push({
+        date: movement.date || movement.createdAt,
+        title: "Складское движение по источнику",
+        meta: `${compactText(WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === movement.kind)?.label || movement.kind)} • ${formatNumber(movement.qty || 0)}`,
+        tone: movement.kind === "in" ? "success" : movement.kind === "out" ? "warning" : "info",
+        moduleKey: movement.itemId ? "warehouse" : "",
+        entityId: movement.itemId || ""
+      });
+    });
+
+    return sortByDateDesc(
+      events.filter((event) => compactText(event.date)),
+      "date"
+    );
+  }
+
   function buildDealOperationCards(deal, order, reservation, tasks) {
     const linkedTasks = tasks || [];
     const openTasks = linkedTasks.filter((task) => task.status !== "done");
@@ -2141,6 +2374,9 @@ export function createLiveWorkspaceController({
     const editTask = taskList.find((task) => task.id === filters.taskEditId) || null;
     const editSprint = (doc.sprints || []).find((sprint) => sprint.id === filters.sprintEditId) || null;
     const editTaskContext = editTask ? getTaskSourceContext(editTask, crmDoc, warehouseDoc, salesSnapshot, doc) : null;
+    const editTaskOperationCards = editTask ? buildTaskOperationCards(editTask, editTaskContext) : [];
+    const editTaskTimeline = editTask ? buildTaskTimeline(editTask, editTaskContext) : [];
+    const editTaskPrimaryRelated = editTaskContext?.relatedTasks?.[0] || null;
     const metrics = [
       { label: "Открытые задачи", value: formatNumber(openTasks.length), caption: "без завершенных" },
       { label: "В работе", value: formatNumber(taskList.filter((task) => task.status === "in_progress").length), caption: "активное исполнение" },
@@ -2208,6 +2444,36 @@ export function createLiveWorkspaceController({
             ${canEdit ? `<form id="tasksSprintForm" class="workspace-form" data-draft-form="sprint"><input type="hidden" name="id" value="${escapeHtml(editSprint?.id || "")}" /><div class="workspace-form-grid"><label><span>Название итерации</span><input class="form-control" type="text" name="title" value="${escapeHtml(editSprint?.title || "")}" required /></label><label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(editSprint?.startDate || ""))}" /></label><label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(editSprint?.endDate || ""))}" /></label></div><label><span>Цель итерации</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(editSprint?.goal || "")}</textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editSprint ? "Сохранить итерацию" : "Добавить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-sprint-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
         </div>
+        ${editTask ? `<div class="workspace-grid workspace-grid--2">
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Контур задачи</h4><div class="compact-help">Единая карточка задачи: текущее состояние, быстрые действия и весь соседний контекст без переходов между модулями.</div></div><div class="workspace-note">Обновлено ${escapeHtml(formatDate(editTask.updatedAt || editTask.createdAt))}</div></div>
+            <div class="workspace-stage-strip">${editTaskOperationCards.map((card) => `<div class="workspace-stage-card"><span>${escapeHtml(card.label)}</span><strong>${escapeHtml(card.value)}</strong><small class="workspace-list-item__meta">${escapeHtml(card.caption)}</small></div>`).join("")}</div>
+            <div class="workspace-card__actions mt-3">
+              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-set-status="${escapeHtml(editTask.id)}:${escapeHtml(editTask.status === "done" ? "todo" : "done")}">${editTask.status === "done" ? "Вернуть в работу" : "Отметить выполненной"}</button>` : ""}
+              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-toggle-blocked="${escapeHtml(editTask.id)}">${editTask.blocked ? "Снять блокер" : "Поставить блокер"}</button>` : ""}
+              ${editTaskContext?.moduleKey === "sales" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть источник</button>` : editTaskContext?.entityId ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${editTaskContext.moduleKey}:${editTaskContext.entityId}`)}">Открыть источник</button>` : ""}
+              ${editTaskPrimaryRelated ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(editTaskPrimaryRelated.id)}">Открыть связанную задачу</button>` : ""}
+            </div>
+            <div class="workspace-stack mt-3">
+              <div class="workspace-list-item">
+                <div>
+                  <strong>${escapeHtml(editTask.title || "Задача")}</strong>
+                  <div class="workspace-list-item__meta">${escapeHtml(editTask.owner || "Без ответственного")} • ${escapeHtml(editTask.sprint?.title || "Без итерации")}</div>
+                </div>
+                <div class="text-end">
+                  <div class="workspace-tag workspace-tag--${escapeHtml(getTaskStatusMeta(editTask.status).tone)}">${escapeHtml(getTaskStatusMeta(editTask.status).label)}</div>
+                  <div class="workspace-list-item__meta mt-1">${escapeHtml(getPriorityLabel(editTask.priority))}</div>
+                </div>
+              </div>
+              ${editTask.note ? `<div class="workspace-empty workspace-empty--tight">${escapeHtml(editTask.note)}</div>` : '<div class="workspace-empty workspace-empty--tight">Комментарий к задаче пока не заполнен.</div>'}
+              ${editTaskContext ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "Источник")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "Связанный объект")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(editTaskContext.tone || "neutral")}">${escapeHtml(getTaskSourceLabel(editTaskContext))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">Задача пока не привязана к CRM, складу или продажам.</div>'}
+            </div>
+          </section>
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Лента задачи</h4><div class="compact-help">Здесь собирается живая история самой задачи и событий из её источника: сделки, оплаты, резервов и складских движений.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editTaskTimeline.length))}</div></div>
+            <div class="workspace-stack">${editTaskTimeline.slice(0, 12).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">История по задаче пока пустая.</div>'}</div>
+          </section>
+        </div>` : ""}
         ${editTask && editTaskContext ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Источник задачи</h4><div class="compact-help">Карточка связи помогает понять, из какого бизнес-контекста задача пришла и куда она влияет.</div></div></div>
@@ -2392,6 +2658,33 @@ export function createLiveWorkspaceController({
       blocked: formData.get("blocked") === "on",
       note: compactText(formData.get("note")),
       custom: readCustomValuesFromForm("tasks", doc, formData, existing?.custom),
+      history: appendTaskHistory(
+        existing,
+        existing
+          ? createTaskHistoryEntry({
+              title: "Карточка задачи обновлена",
+              meta: buildTaskChangeMeta(existing, {
+                title: compactText(formData.get("title")),
+                owner: compactText(formData.get("owner")),
+                status: compactText(formData.get("status")) || "backlog",
+                priority: compactText(formData.get("priority")) || "medium",
+                sprintId: compactText(formData.get("sprintId")) || "",
+                dueDate: normalizeDateInput(formData.get("dueDate")),
+                blocked: formData.get("blocked") === "on",
+                note: compactText(formData.get("note")),
+                custom: readCustomValuesFromForm("tasks", doc, formData, existing?.custom)
+              }, doc.sprints),
+              tone: "info",
+              moduleKey: "tasks",
+              entityId: existing.id
+            })
+          : createTaskHistoryEntry({
+              title: "Задача создана",
+              meta: "Карточка заведена вручную в тасктрекере.",
+              tone: "success",
+              moduleKey: "tasks"
+            })
+      ),
       createdAt: existing?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -2429,6 +2722,25 @@ export function createLiveWorkspaceController({
     persistUiState("tasks");
     await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "Итерация обновлена." : "Итерация добавлена.");
     await rerenderCurrentModule();
+  }
+
+  async function updateTaskRecord(taskId, successMessage, mutate) {
+    const doc = await ensureDocument("tasks");
+    const tasks = [...(doc.tasks || [])];
+    const index = tasks.findIndex((task) => task.id === taskId);
+    if (index < 0) return null;
+    const current = tasks[index];
+    const updated = mutate(deepClone(current), doc);
+    if (!updated) return null;
+    tasks[index] = {
+      ...updated,
+      updatedAt: new Date().toISOString(),
+      history: Array.isArray(updated.history)
+        ? updated.history.map((entry) => normalizeTaskHistoryEntry(entry)).filter(Boolean)
+        : []
+    };
+    await saveDocument("tasks", { ...doc, tasks }, successMessage);
+    return tasks[index];
   }
 
   async function importDealsFromSales() {
@@ -2538,6 +2850,14 @@ export function createLiveWorkspaceController({
           family: signal.family
         },
         sourceKey: signal.sourceKey,
+        history: [
+          createTaskHistoryEntry({
+            title: "Задача создана из операционного сигнала",
+            meta: `${signal.family} • ${signal.note}`,
+            tone: signal.priority === "urgent" ? "danger" : "warning",
+            moduleKey: "tasks"
+          })
+        ],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }));
@@ -2594,6 +2914,15 @@ export function createLiveWorkspaceController({
         dealId: deal.id
       },
       sourceKey,
+      history: [
+        createTaskHistoryEntry({
+          title: "Задача создана из CRM",
+          meta: `Сделка: ${compactText(deal.title || deal.client || "без названия")} • ${getCrmStageMeta(deal.stage).label}`,
+          tone: deal.stage === "production" ? "warning" : "info",
+          moduleKey: "crm",
+          entityId: deal.id
+        })
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -2643,6 +2972,15 @@ export function createLiveWorkspaceController({
         itemId: item.id
       },
       sourceKey,
+      history: [
+        createTaskHistoryEntry({
+          title: "Задача создана из склада",
+          meta: `Позиция: ${compactText(item.name || item.sku || "без названия")} • минимум ${formatNumber(item.minStock || 0)}`,
+          tone: "warning",
+          moduleKey: "warehouse",
+          entityId: item.id
+        })
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -2920,12 +3258,26 @@ export function createLiveWorkspaceController({
     }
     const taskStatusSelect = event.target.closest("[data-task-status-select]");
     if (taskStatusSelect) {
-      const doc = await ensureDocument("tasks");
-      const tasks = [...(doc.tasks || [])];
-      const index = tasks.findIndex((task) => task.id === taskStatusSelect.dataset.taskStatusSelect);
-      if (index >= 0) {
-        tasks[index] = { ...tasks[index], status: taskStatusSelect.value, updatedAt: new Date().toISOString() };
-        await saveDocument("tasks", { ...doc, tasks }, "Статус задачи обновлен.");
+      const nextStatus = compactText(taskStatusSelect.value) || "todo";
+      const updatedTask = await updateTaskRecord(
+        taskStatusSelect.dataset.taskStatusSelect,
+        "Статус задачи обновлен.",
+        (task) => ({
+          ...task,
+          status: nextStatus,
+          history: appendTaskHistory(
+            task,
+            createTaskHistoryEntry({
+              title: "Статус задачи изменен",
+              meta: `${getTaskStatusMeta(task.status).label} -> ${getTaskStatusMeta(nextStatus).label}`,
+              tone: getTaskStatusMeta(nextStatus).tone,
+              moduleKey: "tasks",
+              entityId: task.id
+            })
+          )
+        })
+      );
+      if (updatedTask) {
         await rerenderCurrentModule();
       }
       return true;
@@ -3178,6 +3530,49 @@ export function createLiveWorkspaceController({
         await generateTasksFromSignals();
         return true;
       }
+      const taskSetStatusButton = event.target.closest("[data-task-set-status]");
+      if (taskSetStatusButton) {
+        const [taskId, nextStatus] = String(taskSetStatusButton.dataset.taskSetStatus || "").split(":");
+        const updatedTask = await updateTaskRecord(taskId, "Состояние задачи обновлено.", (task) => ({
+          ...task,
+          status: compactText(nextStatus) || "todo",
+          history: appendTaskHistory(
+            task,
+            createTaskHistoryEntry({
+              title: compactText(nextStatus) === "done" ? "Задача отмечена выполненной" : "Задача возвращена в работу",
+              meta: `${getTaskStatusMeta(task.status).label} -> ${getTaskStatusMeta(compactText(nextStatus) || "todo").label}`,
+              tone: compactText(nextStatus) === "done" ? "success" : "warning",
+              moduleKey: "tasks",
+              entityId: task.id
+            })
+          )
+        }));
+        if (updatedTask) {
+          await rerenderCurrentModule();
+        }
+        return true;
+      }
+      const taskToggleBlockedButton = event.target.closest("[data-task-toggle-blocked]");
+      if (taskToggleBlockedButton) {
+        const updatedTask = await updateTaskRecord(taskToggleBlockedButton.dataset.taskToggleBlocked, "Состояние блокера обновлено.", (task) => ({
+          ...task,
+          blocked: !task.blocked,
+          history: appendTaskHistory(
+            task,
+            createTaskHistoryEntry({
+              title: !task.blocked ? "Для задачи отмечен блокер" : "Блокер по задаче снят",
+              meta: !task.blocked ? "Нужна помощь или управленческое решение." : "Задача снова может двигаться без ограничений.",
+              tone: !task.blocked ? "danger" : "success",
+              moduleKey: "tasks",
+              entityId: task.id
+            })
+          )
+        }));
+        if (updatedTask) {
+          await rerenderCurrentModule();
+        }
+        return true;
+      }
       const newTaskButton = event.target.closest("[data-task-new]");
       if (newTaskButton) {
         ui.tasks.taskEditId = null;
@@ -3202,6 +3597,15 @@ export function createLiveWorkspaceController({
           ...deepClone(source),
           id: createId("task"),
           title: duplicateTitle(source.title),
+          history: [
+            createTaskHistoryEntry({
+              title: "Создана копия задачи",
+              meta: `Источник копии: ${compactText(source.title || "Задача")}`,
+              tone: "info",
+              moduleKey: "tasks",
+              entityId: source.id
+            })
+          ],
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
@@ -3242,7 +3646,24 @@ export function createLiveWorkspaceController({
         if (!window.confirm("Удалить итерацию? Задачи останутся, но отвяжутся от нее.")) return true;
         const sprintId = deleteSprintButton.dataset.sprintDelete;
         const sprints = (doc.sprints || []).filter((sprint) => sprint.id !== sprintId);
-        const tasks = (doc.tasks || []).map((task) => (task.sprintId === sprintId ? { ...task, sprintId: "" } : task));
+        const sprintTitle = compactText((doc.sprints || []).find((sprint) => sprint.id === sprintId)?.title || "Итерация");
+        const tasks = (doc.tasks || []).map((task) => (task.sprintId === sprintId
+          ? {
+              ...task,
+              sprintId: "",
+              updatedAt: new Date().toISOString(),
+              history: appendTaskHistory(
+                task,
+                createTaskHistoryEntry({
+                  title: "Итерация удалена",
+                  meta: `Задача отвязана от итерации ${sprintTitle}.`,
+                  tone: "warning",
+                  moduleKey: "tasks",
+                  entityId: task.id
+                })
+              )
+            }
+          : task));
         if (ui.tasks.sprintEditId === sprintId) ui.tasks.sprintEditId = null;
         await saveDocument("tasks", { ...doc, sprints, tasks }, "Итерация удалена.");
         await rerenderCurrentModule();
@@ -3265,8 +3686,11 @@ export function createLiveWorkspaceController({
       return `${snapshot.items.length} позиций • ${formatNumber(snapshot.availableTotal)} доступно${calculatorSnapshot.activeTabs ? ` • ${calculatorSnapshot.activeTabs} вкладок спроса` : ""}`;
     }
     if (moduleKey === "tasks") {
-      const openCount = (docs.tasks.tasks || []).filter((task) => task.status !== "done").length;
-      return `${openCount} открытых задач`;
+      const tasks = docs.tasks.tasks || [];
+      const openCount = tasks.filter((task) => task.status !== "done").length;
+      const blockedCount = tasks.filter((task) => task.status !== "done" && task.blocked).length;
+      const overdueCount = tasks.filter((task) => task.status !== "done" && normalizeDateInput(task.dueDate) && normalizeDateInput(task.dueDate) < todayString()).length;
+      return `${openCount} открытых задач${blockedCount ? ` • ${blockedCount} с блокером` : ""}${overdueCount ? ` • ${overdueCount} просрочено` : ""}`;
     }
     return "";
   }
