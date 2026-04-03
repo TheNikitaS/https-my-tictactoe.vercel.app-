@@ -2,11 +2,20 @@ import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
+const LIGHT2_BUILD = "20260403-workspace-premium1";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
   hiddenForms: "dom-neona:light2:hiddenForms"
 };
+
+const WORKBOOK_IMPORT_SHEETS = [
+  "Баланс",
+  "Платежный календарь",
+  "Активы",
+  "Закупки",
+  "Взаиморасчет с мастерами"
+];
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: {
@@ -927,7 +936,7 @@ function setImportStatus(message, tone = "") {
 function syncImportButton() {
   if (!DOM.importWorkbookButton) return;
 
-  const available = isAdmin() && STATE.workbookReady;
+  const available = isAdmin() && STATE.workbookReady && hasImportableWorkbookData();
   DOM.importWorkbookButton.disabled = STATE.importBusy || !available;
   DOM.importWorkbookButton.textContent = STATE.importBusy
     ? "Импортирую исходник..."
@@ -948,6 +957,11 @@ function syncImportButton() {
 
   if (!STATE.workbookReady) {
     setImportStatus("Подготавливаю заполненный исходник для импорта...");
+    return;
+  }
+
+  if (!hasImportableWorkbookData()) {
+    setImportStatus("Эталон ДОМ НЕОНА сейчас пустой. Платформа стартует с чистой базы, импорт пока не нужен.");
     return;
   }
 
@@ -1139,6 +1153,18 @@ function getSnapshotSheet(sectionKey) {
   const sheetName = SECTION_META[sectionKey]?.snapshotSheet;
   if (!sheetName || !STATE.workbookSnapshot?.sheets?.length) return null;
   return STATE.workbookSnapshot.sheets.find((sheet) => sheet.name === sheetName) || null;
+}
+
+function sheetHasVisibleData(sheet) {
+  return Boolean(sheet && ((sheet.nonEmpty || 0) > 0 || (sheet.rows || []).length > 0));
+}
+
+function hasImportableWorkbookData() {
+  if (!STATE.workbookReady) return false;
+  return WORKBOOK_IMPORT_SHEETS.some((name) => {
+    const sheet = getWorkbookSheetByName(name);
+    return sheetHasVisibleData(sheet);
+  });
 }
 
 function getSnapshotSearch(sectionKey) {
@@ -2236,6 +2262,16 @@ function renderWorkbookSnapshotSection(sectionKey) {
     return;
   }
 
+  if (!sheetHasVisibleData(sheet)) {
+    host.innerHTML = `
+      <div class="workspace-empty workspace-empty--sheet">
+        <strong>${escapeHtml(meta?.title || sheetName)}</strong>
+        <div class="mt-2">Раздел сейчас пустой. Вы стартуете с чистой базы и сможете заполнить его уже внутри платформы.</div>
+      </div>
+    `;
+    return;
+  }
+
   const rows = buildSnapshotRows(sheet, sectionKey);
   const headerRow = sheet.rows.find((row) => row.index <= 3) || sheet.rows[0];
   const columns = Array.from({ length: sheet.maxCol || 1 }, (_, idx) => idx + 1);
@@ -2338,7 +2374,7 @@ function renderWorkbookSnapshotSections() {
 async function loadWorkbookSnapshot() {
   if (STATE.workbookReady || STATE.workbookError) return;
   try {
-    const response = await fetch(`./workbook_snapshot.json?v=20260402-dom-neona`, { cache: "no-store" });
+    const response = await fetch(`./workbook_snapshot.json?v=${LIGHT2_BUILD}`, { cache: "no-store" });
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
@@ -2350,6 +2386,7 @@ async function loadWorkbookSnapshot() {
   }
   renderWorkbookSnapshotSections();
   renderOverview();
+  syncModuleStatus();
   syncImportButton();
 }
 
@@ -2632,6 +2669,11 @@ async function importWorkbookIntoTables() {
 
   if (!STATE.workbookReady) {
     await loadWorkbookSnapshot();
+  }
+
+  if (!hasImportableWorkbookData()) {
+    setImportStatus("Эталон пустой, поэтому импорт не требуется. Рабочие таблицы уже готовы к ручному заполнению.");
+    return;
   }
 
   if (!STATE.schemaReady || !STATE.financeReady || !STATE.operationsReady) {

@@ -1,10 +1,11 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260402-platform3";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260403-platform-premium1";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260402-platform3";
+const PLATFORM_BUILD = "20260403-platform-premium1";
+const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-2";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
   sidebarCollapsed: "dom-neona:platform:sidebarCollapsed"
@@ -122,17 +123,17 @@ const MODULES = {
   },
   crm: {
     title: "CRM",
-    subtitle: "Следующий модуль: продажи, карточки клиентов, интеграции и канбан.",
+    subtitle: "Живой коммерческий контур: сделки, стадии, карточки клиентов, вкладки и KPI-конструктор.",
     type: "placeholder"
   },
   warehouse: {
     title: "Склад",
-    subtitle: "Следующий модуль: остатки, закупки, продажи, финансы и аналитика.",
+    subtitle: "Живой складской контур: позиции, движения, резервы, дефицит и гибкие поля под ваш учет.",
     type: "placeholder"
   },
   tasks: {
     title: "Тасктрекер",
-    subtitle: "Следующий модуль: задачи, оценки, итерации и рабочие очереди.",
+    subtitle: "Живая доска задач: итерации, приоритеты, блокеры, кастомные колонки и представления.",
     type: "placeholder"
   },
   ai: {
@@ -1096,6 +1097,119 @@ async function loadRoleTemplates() {
   }
 }
 
+async function upsertSharedState(appId, payload) {
+  const { data, error } = await supabase
+    .from("shared_app_states")
+    .select("app_id")
+    .eq("app_id", appId)
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") throw error;
+
+  if (data?.app_id) {
+    const { error: updateError } = await supabase
+      .from("shared_app_states")
+      .update({ payload })
+      .eq("app_id", appId);
+    if (updateError) throw updateError;
+    return;
+  }
+
+  const { error: insertError } = await supabase.from("shared_app_states").insert({
+    app_id: appId,
+    payload
+  });
+  if (insertError) throw insertError;
+}
+
+async function clearTableByColumn(tableName, columnName) {
+  const { error } = await supabase.from(tableName).delete().not(columnName, "is", null);
+  if (error && error.code !== "42P01") throw error;
+}
+
+async function performOwnerDataResetIfNeeded() {
+  if (!STATE.schemaReady || !isAdmin()) return;
+
+  const { data, error } = await supabase
+    .from("shared_app_states")
+    .select("app_id, payload")
+    .eq("app_id", "platform_system_flags")
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") throw error;
+
+  const flags = data?.payload && typeof data.payload === "object" ? data.payload : {};
+  if (flags.dataResetVersion === PLATFORM_DATA_RESET_VERSION) return;
+
+  const now = new Date().toISOString();
+
+  await upsertSharedState("platform_crm_v1", {
+    version: 1,
+    deals: [],
+    updatedAt: now
+  });
+  await upsertSharedState("platform_crm_v2", {
+    version: 2,
+    builder: {
+      views: [{ id: "default", label: "Все сделки", filters: { search: "", stage: "all", owner: "all" } }],
+      fields: [],
+      formulas: []
+    },
+    deals: [],
+    updatedAt: now
+  });
+  await upsertSharedState("platform_warehouse_v1", {
+    version: 1,
+    items: [],
+    movements: [],
+    updatedAt: now
+  });
+  await upsertSharedState("platform_warehouse_v2", {
+    version: 2,
+    builder: {
+      views: [{ id: "default", label: "Все позиции", filters: { search: "", category: "all" } }],
+      fields: [],
+      formulas: []
+    },
+    items: [],
+    movements: [],
+    updatedAt: now
+  });
+  await upsertSharedState("platform_tasks_v1", {
+    version: 1,
+    sprints: [],
+    tasks: [],
+    updatedAt: now
+  });
+  await upsertSharedState("platform_tasks_v2", {
+    version: 2,
+    builder: {
+      views: [{ id: "default", label: "Все задачи", filters: { search: "", status: "all", sprint: "all", owner: "all" } }],
+      fields: [],
+      formulas: []
+    },
+    sprints: [],
+    tasks: [],
+    updatedAt: now
+  });
+
+  await clearTableByColumn("app_messages", "id");
+  await clearTableByColumn("app_thread_members", "thread_id");
+  await clearTableByColumn("app_threads", "id");
+  await clearTableByColumn("light2_asset_payments", "id");
+  await clearTableByColumn("light2_assets", "id");
+  await clearTableByColumn("light2_purchase_catalog", "id");
+  await clearTableByColumn("light2_balance_entries", "id");
+  await clearTableByColumn("light2_payment_calendar_entries", "id");
+  await clearTableByColumn("light2_partner_settlements", "id");
+
+  await upsertSharedState("platform_system_flags", {
+    ...flags,
+    dataResetVersion: PLATFORM_DATA_RESET_VERSION,
+    resetCompletedAt: now
+  });
+}
+
 async function bootstrapApp(session) {
   const previousModule = STATE.activeModule || "dashboard";
   STATE.session = session;
@@ -1111,6 +1225,7 @@ async function bootstrapApp(session) {
     } else {
       STATE.partnerProfiles = [];
     }
+    await performOwnerDataResetIfNeeded();
   } catch (error) {
     if (isSchemaMissing(error)) {
       STATE.schemaReady = false;
