@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260403-workspace-premium6";
+const LIGHT2_BUILD = "20260404-workspace-premium7";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -85,6 +85,39 @@ const DOM = {
   settlementActionsHead: document.getElementById("settlementActionsHead"),
   refreshSettlementsButton: document.getElementById("refreshSettlementsButton")
 };
+
+function getSettlementDom() {
+  return {
+    scopeNote: document.getElementById("scopeNote"),
+    form: document.getElementById("settlementForm"),
+    preview: document.getElementById("settlementPreview"),
+    submitButton: document.getElementById("settlementSubmitButton"),
+    resetButton: document.getElementById("settlementResetButton"),
+    partnerFilter: document.getElementById("settlementPartnerFilter"),
+    statusFilter: document.getElementById("settlementStatusFilter"),
+    search: document.getElementById("settlementSearch"),
+    summary: document.getElementById("settlementSummary"),
+    tableBody: document.getElementById("settlementTableBody"),
+    actionsHead: document.getElementById("settlementActionsHead"),
+    refreshButton: document.getElementById("refreshSettlementsButton")
+  };
+}
+
+function refreshInteractiveDomRefs() {
+  const settlementDom = getSettlementDom();
+  DOM.scopeNote = settlementDom.scopeNote;
+  DOM.settlementForm = settlementDom.form;
+  DOM.settlementPreview = settlementDom.preview;
+  DOM.settlementSubmitButton = settlementDom.submitButton;
+  DOM.settlementResetButton = settlementDom.resetButton;
+  DOM.settlementPartnerFilter = settlementDom.partnerFilter;
+  DOM.settlementStatusFilter = settlementDom.statusFilter;
+  DOM.settlementSearch = settlementDom.search;
+  DOM.settlementSummary = settlementDom.summary;
+  DOM.settlementTableBody = settlementDom.tableBody;
+  DOM.settlementActionsHead = settlementDom.actionsHead;
+  DOM.refreshSettlementsButton = settlementDom.refreshButton;
+}
 
 const SECTION_META = {
   overview: {
@@ -3859,7 +3892,9 @@ function renderPartnerSelect(select, options = {}) {
 }
 
 function updateSettlementPreview() {
-  const formData = new FormData(DOM.settlementForm);
+  const settlementDom = getSettlementDom();
+  if (!settlementDom.form || !settlementDom.preview) return;
+  const formData = new FormData(settlementDom.form);
   const draft = {
     salary_amount: formData.get("salary_amount"),
     purchase_amount: formData.get("purchase_amount"),
@@ -3867,7 +3902,7 @@ function updateSettlementPreview() {
   };
   const math = computeSettlement(draft);
 
-  DOM.settlementPreview.innerHTML = `
+  settlementDom.preview.innerHTML = `
     <span>Итог взаиморасчета</span>
     <strong>${formatMoney(math.total)} ₽</strong>
     <span>${escapeHtml(math.direction)}</span>
@@ -3875,6 +3910,10 @@ function updateSettlementPreview() {
 }
 
 function resetSettlementForm() {
+  const settlementDom = getSettlementDom();
+  if (!settlementDom.form || !settlementDom.submitButton) return;
+  DOM.settlementForm = settlementDom.form;
+  DOM.settlementSubmitButton = settlementDom.submitButton;
   STATE.editingSettlementId = null;
   DOM.settlementForm.reset();
   DOM.settlementForm.elements.status.value = "Ожидает сверки";
@@ -3891,6 +3930,9 @@ function resetSettlementForm() {
 }
 
 function renderScopeNote() {
+  const settlementDom = getSettlementDom();
+  if (!settlementDom.scopeNote) return;
+  DOM.scopeNote = settlementDom.scopeNote;
   if (!STATE.schemaReady) {
     DOM.scopeNote.textContent = "Для блока взаиморасчетов нужно один раз выполнить SQL-патч platform_light2_patch.sql.";
     return;
@@ -4971,6 +5013,7 @@ function syncModuleStatus() {
 }
 
 async function loadBootstrapData() {
+  refreshInteractiveDomRefs();
   const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
   if (sessionError) throw sessionError;
 
@@ -5359,6 +5402,8 @@ async function deletePurchase(id) {
 }
 
 function bindEvents() {
+  refreshInteractiveDomRefs();
+  const settlementDom = getSettlementDom();
   const balanceDom = getBalanceDom();
   const calendarDom = getCalendarDom();
   const assetsDom = getAssetsDom();
@@ -5429,11 +5474,11 @@ function bindEvents() {
     renderWorkbookSnapshotSection(input.dataset.snapshotSearch);
   });
 
-  DOM.settlementForm.addEventListener("input", updateSettlementPreview);
+  settlementDom.form?.addEventListener("input", updateSettlementPreview);
   balanceDom.form?.addEventListener("input", updateBalancePreview);
   calendarDom.form?.addEventListener("input", updateCalendarPreview);
 
-  DOM.settlementForm.addEventListener("submit", async (event) => {
+  settlementDom.form?.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
       await saveSettlement();
@@ -5487,7 +5532,7 @@ function bindEvents() {
     }
   });
 
-  DOM.settlementResetButton.addEventListener("click", () => {
+  settlementDom.resetButton?.addEventListener("click", () => {
     resetSettlementForm();
     renderSettlements();
   });
@@ -5517,7 +5562,7 @@ function bindEvents() {
     renderPurchases();
   });
 
-  [DOM.settlementPartnerFilter, DOM.settlementStatusFilter, DOM.settlementSearch].forEach((element) => {
+  [settlementDom.partnerFilter, settlementDom.statusFilter, settlementDom.search].forEach((element) => {
     element.addEventListener("input", renderSettlements);
     element.addEventListener("change", renderSettlements);
   });
@@ -5544,7 +5589,7 @@ function bindEvents() {
     element?.addEventListener("change", renderPurchases);
   });
 
-  DOM.refreshSettlementsButton.addEventListener("click", async () => {
+  settlementDom.refreshButton?.addEventListener("click", async () => {
     try {
       await loadSettlements();
       syncModuleStatus();
@@ -5589,7 +5634,7 @@ function bindEvents() {
     }
   });
 
-  DOM.settlementTableBody.addEventListener("click", async (event) => {
+  settlementDom.tableBody?.addEventListener("click", async (event) => {
     const editButton = event.target.closest("[data-edit-settlement]");
     if (editButton) {
       const item = STATE.settlements.find((row) => row.id === editButton.dataset.editSettlement);
@@ -6204,6 +6249,7 @@ async function start() {
   renderOverview();
   renderTemplateSections();
   renderInteractiveFinanceSections();
+  refreshInteractiveDomRefs();
   renderWorkbookSnapshotSections();
   syncSectionTabs();
   bindEvents();

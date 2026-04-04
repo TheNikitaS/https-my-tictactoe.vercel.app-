@@ -1,16 +1,17 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell22";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260404-platform-shell22";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell23";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260404-platform-shell23";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-shell22";
+const PLATFORM_BUILD = "20260404-platform-shell23";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
   sidebarCollapsed: "dom-neona:platform:sidebarCollapsed",
-  dashboardPeriod: "dom-neona:platform:dashboardPeriod"
+  dashboardPeriod: "dom-neona:platform:dashboardPeriod",
+  activeModule: "dom-neona:platform:activeModule"
 };
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -72,7 +73,8 @@ const STATE = {
   profile: null,
   schemaReady: true,
   schemaError: "",
-  activeModule: "dashboard",
+  activeModule: readStoredModuleKey(),
+  lastNonAiModule: "dashboard",
   loadedEmbedKey: null,
   loadedEmbedSrc: "",
   queuedBootstrapSignature: "",
@@ -556,6 +558,15 @@ function readStoredBoolean(key, fallback) {
   }
 }
 
+function readStoredModuleKey() {
+  try {
+    const stored = window.localStorage.getItem(PLATFORM_UI_KEYS.activeModule);
+    return stored ? String(stored) : "dashboard";
+  } catch {
+    return "dashboard";
+  }
+}
+
 function sanitizeSlug(value) {
   return String(value || "")
     .trim()
@@ -604,6 +615,14 @@ function persistShellUi() {
   try {
     window.localStorage.setItem(PLATFORM_UI_KEYS.wideMode, String(STATE.ui.wideMode));
     window.localStorage.setItem(PLATFORM_UI_KEYS.sidebarCollapsed, String(STATE.ui.sidebarCollapsed));
+  } catch {
+    // Ignore storage failures in browser privacy modes.
+  }
+}
+
+function persistActiveModule() {
+  try {
+    window.localStorage.setItem(PLATFORM_UI_KEYS.activeModule, STATE.activeModule || "dashboard");
   } catch {
     // Ignore storage failures in browser privacy modes.
   }
@@ -958,11 +977,17 @@ function renderAiModule() {
           <h2>Домовой Неоник</h2>
           <p>База знаний для сотрудников и партнеров: отвечает по платформе, рабочим процессам, внутренним данным, архиву знаний Olesia и по публичным материалам с 24lite.ru и domneon.ru.</p>
         </div>
-        <div class="ai-assistant-badges">
-          <span>Платформа</span>
-          <span>24lite.ru</span>
-          <span>domneon.ru</span>
-          <span>Архив Olesia</span>
+        <div class="ai-assistant-hero__side">
+          <div class="ai-assistant-badges">
+            <span>Платформа</span>
+            <span>24lite.ru</span>
+            <span>domneon.ru</span>
+            <span>Архив Olesia</span>
+          </div>
+          <button class="btn btn-outline-secondary btn-sm" type="button" data-ai-close>
+            <i class="bi bi-x-lg"></i>
+            <span>Закрыть</span>
+          </button>
         </div>
       </article>
 
@@ -1927,7 +1952,11 @@ async function openModule(key) {
     STATE.loadedEmbedSrc === nextSrc &&
     !DOM.embedView.classList.contains("d-none");
 
+  if (key !== "ai") {
+    STATE.lastNonAiModule = key;
+  }
   STATE.activeModule = key;
+  persistActiveModule();
   renderModuleNav();
   setViewMeta(module.title, module.subtitle);
   hideViews();
@@ -2977,6 +3006,11 @@ function bindAppEvents() {
       return;
     }
     if (STATE.activeModule === "ai") {
+      const closeButton = event.target.closest("[data-ai-close]");
+      if (closeButton) {
+        await openModule(STATE.lastNonAiModule || "dashboard");
+        return;
+      }
       const suggestion = event.target.closest("[data-ai-suggest]");
       if (suggestion) {
         await askDomovoyNeonik(suggestion.dataset.aiSuggest, "module");
