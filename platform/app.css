@@ -3124,3 +3124,923 @@ body.platform-wide #appShell .content-shell {
     max-width: none;
   }
 }
+
+/* Final shell polish: compact topbar, active KPI chart, unified auth and AI */
+body {
+  background:
+    radial-gradient(circle at top left, rgba(14, 129, 212, 0.14), transparent 22%),
+    radial-gradient(circle at top right, rgba(34, 53, 76, 0.14), transparent 24%),
+    linear-gradient(180deg, #eaf0f6, #edf2f7 48%, #f5f7fa 100%);
+}
+
+.auth-screen {
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgba(16, 126, 204, 0.2), transparent 18%),
+    linear-gradient(180deg, #0f4f8b, #1f6aa8 18%, #edf2f7 18.1%, #edf2f7 100%);
+}
+
+.auth-card {
+  width: min(1280px, calc(100vw - 40px));
+  border-radius: 34px;
+  grid-template-columns: minmax(330px, 390px) minmax(0, 1fr);
+  overflow: hidden;
+  box-shadow: 0 34px 90px rgba(9, 24, 40, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+}
+
+.auth-brand {
+  color: #f7fbff;
+  border-right: none;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0)),
+    linear-gradient(165deg, #0f5b97 0%, #1f76b7 38%, #225f96 100%);
+}
+
+.auth-logo {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  padding: 8px;
+}
+
+.auth-eyebrow,
+.auth-brand p,
+.auth-brand .auth-point {
+  color: rgba(247, 251, 255, 0.82);
+}
+
+.auth-brand h1 {
+  color: #ffffff;
+}
+
+.auth-brand .auth-point {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+.auth-brand .auth-point strong {
+  color: #ffffff;
+}
+
+.auth-forms {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), #ffffff);
+  padding: 30px 30px 26px;
+}
+
+.auth-tabs {
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.auth-tab {
+  padding: 8px 14px;
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.auth-tab.active {
+  background: linear-gradient(180deg, #133454, #1b2430);
+}
+
+.auth-forms .section-card {
+  border-radius: 24px;
+  box-shadow: 0 18px 34px rgba(19, 41, 64, 0.06);
+}
+
+.auth-forms .form-control,
+.auth-forms .form-select {
+  min-height: 46px;
+  border-radius: 14px;
+}
+
+#appShell > .platform-header {
+  grid-template-columns: minmax(150px, 210px) minmax(0, 1fr) minmax(250px, 320px);
+  gap: 6px 12px;
+  padding: 8px 16px;
+  min-height: 74px;
+  background: linear-gradient(180deg, #1567a8 0%, #1d5f9b 100%);
+  box-shadow: 0 18px 40px rgba(14, 35, 58, 0.16);
+}
+
+#appShell .platform-header__brand,
+#appShell .platform-header__nav,
+#appShell .platform-header__utility {
+  align-self: center;
+}
+
+#appShell .brand-row {
+  gap: 10px;
+}
+
+#appShell .brand-row img {
+  width: 22px;
+  height: 22px;
+  border-radius: 8px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+#appShell .brand-row strong {
+  font-size: 0.72rem;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+#appShell .brand-row span {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.54rem;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+#appShell .platform-header__nav {
+  min-width: 0;
+  overflow: hidden;
+}
+
+#appShell .module-nav.module-nav--top {
+  gap: 5px;
+  overflow: hidden;
+}
+
+#appShell .module-nav.module-nav--top button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 74px;
+  min-height: 50px;
+  padding: 5px 4px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+}
+
+#appShell .module-nav.module-nav--top button:hover,
+#appShell .module-nav.module-nav--top button.active {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+#appShell .module-nav-icon {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  font-size: 0.62rem;
+}
+
+#appShell .module-nav-main {
+  font-size: 0.58rem;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+#appShell .module-nav-mini {
+  display: none;
+}
+
+#appShell .platform-header__utility {
+  justify-self: end;
+  width: min(100%, 320px);
+}
+
+#appShell .profile-card {
+  max-width: 320px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow: none;
+}
+
+#appShell .profile-card__inner {
+  gap: 8px;
+}
+
+#appShell .profile-card__avatar {
+  width: 32px;
+  height: 32px;
+  font-size: 0.82rem;
+}
+
+#appShell .profile-card__meta strong {
+  font-size: 0.82rem;
+  line-height: 1.05;
+}
+
+#appShell .profile-card__meta > span,
+#appShell .profile-card__scope {
+  font-size: 0.64rem;
+}
+
+#appShell .profile-card .role-pill {
+  padding: 3px 7px;
+  font-size: 0.64rem;
+}
+
+#appShell .profile-card__menu-toggle {
+  width: 28px;
+  height: 28px;
+  border-radius: 10px;
+}
+
+#appShell .content-shell,
+body.platform-wide #appShell .content-shell {
+  width: min(1860px, calc(100vw - 20px));
+  padding: 12px 0 28px;
+}
+
+#appShell .topbar {
+  padding: 18px 22px;
+  min-height: 100px;
+}
+
+#appShell .topbar h2 {
+  font-size: clamp(1.48rem, 1.9vw, 2.4rem);
+}
+
+#appShell .topbar p {
+  font-size: 0.96rem;
+}
+
+#appShell .topbar__badge {
+  padding: 14px 20px;
+  min-height: 56px;
+  font-size: 0.88rem;
+}
+
+#appShell .dashboard-chart-card__controls {
+  display: grid;
+  gap: 10px;
+  justify-items: end;
+}
+
+#appShell .dashboard-periods {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 207, 217, 0.88);
+  background: rgba(249, 251, 253, 0.96);
+}
+
+#appShell .dashboard-period {
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #5f7286;
+}
+
+#appShell .dashboard-period.active {
+  background: linear-gradient(180deg, #153455, #1c2431);
+  color: #ffffff;
+}
+
+#appShell .dashboard-chart {
+  position: relative;
+  overflow: hidden;
+}
+
+#appShell .dashboard-chart__dot {
+  fill: #ffffff;
+  stroke: #1d6ead;
+  stroke-width: 4;
+}
+
+#appShell .dashboard-chart__hotspot {
+  fill: transparent;
+  cursor: pointer;
+}
+
+#appShell .dashboard-axis {
+  grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+}
+
+#appShell .dashboard-axis__item[data-chart-label] {
+  cursor: pointer;
+}
+
+#appShell .dashboard-tooltip {
+  position: absolute;
+  z-index: 3;
+  min-width: 180px;
+  display: grid;
+  gap: 3px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(21, 33, 48, 0.96);
+  color: #f6f9fc;
+  box-shadow: 0 20px 40px rgba(12, 22, 37, 0.25);
+  pointer-events: none;
+}
+
+#appShell .dashboard-tooltip strong {
+  font-size: 0.82rem;
+}
+
+#appShell .dashboard-tooltip span {
+  font-size: 0.76rem;
+  color: rgba(246, 249, 252, 0.82);
+}
+
+#appShell .admin-grid,
+#appShell .admin-stack,
+#appShell .messenger-shell,
+#appShell .view-section,
+#appShell .placeholder-card,
+#appShell .section-card {
+  min-width: 0;
+}
+
+#appShell .table-shell {
+  max-width: 100%;
+  overflow: auto;
+}
+
+#appShell .workspace-table,
+#appShell table {
+  min-width: 0;
+}
+
+#appShell .ai-assistant-shell {
+  display: grid;
+  gap: 18px;
+}
+
+#appShell .ai-assistant-hero {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  padding: 24px 26px;
+  border-radius: 24px;
+  border: 1px solid rgba(198, 206, 214, 0.86);
+  background:
+    radial-gradient(circle at top right, rgba(25, 117, 183, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(249, 251, 253, 0.98));
+  box-shadow: 0 18px 34px rgba(18, 34, 52, 0.05);
+}
+
+#appShell .ai-assistant-hero h2 {
+  margin: 4px 0 8px;
+  font-size: clamp(1.5rem, 2vw, 2.2rem);
+}
+
+#appShell .section-eyebrow {
+  color: #7b5a35;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#appShell .ai-assistant-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#appShell .ai-assistant-badges span,
+#appShell .ai-prompt-chip {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(194, 204, 214, 0.9);
+  background: rgba(255, 255, 255, 0.96);
+  color: #34516b;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+#appShell .ai-assistant-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  gap: 18px;
+}
+
+#appShell .ai-assistant-side {
+  display: grid;
+  gap: 18px;
+}
+
+#appShell .ai-prompt-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#appShell .ai-prompt-chip {
+  cursor: pointer;
+}
+
+#appShell .ai-capability-list {
+  margin: 0;
+  padding-left: 18px;
+  color: #5f7387;
+  display: grid;
+  gap: 8px;
+}
+
+#appShell .ai-chat-card {
+  display: grid;
+  gap: 16px;
+}
+
+#appShell .ai-chat-log,
+.ai-widget__messages {
+  display: grid;
+  gap: 12px;
+  min-height: 200px;
+  max-height: 420px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+#appShell .ai-message,
+.ai-widget .ai-message {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(209, 217, 225, 0.88);
+  background: #fbfcfd;
+}
+
+#appShell .ai-message--user,
+.ai-widget .ai-message--user {
+  background: rgba(23, 104, 167, 0.08);
+  border-color: rgba(23, 104, 167, 0.18);
+}
+
+#appShell .ai-message__role,
+.ai-widget .ai-message__role {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #7b5a35;
+}
+
+#appShell .ai-message__body,
+.ai-widget .ai-message__body {
+  color: #233a51;
+  line-height: 1.55;
+}
+
+#appShell .ai-message__body mark,
+.ai-widget .ai-message__body mark {
+  background: rgba(252, 218, 120, 0.64);
+  border-radius: 4px;
+  padding: 0 2px;
+}
+
+#appShell .ai-message__sources,
+.ai-widget .ai-message__sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+#appShell .ai-message__sources a,
+#appShell .ai-message__sources span,
+.ai-widget .ai-message__sources a,
+.ai-widget .ai-message__sources span {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(226, 233, 240, 0.92);
+  color: #36536d;
+  font-size: 0.74rem;
+  text-decoration: none;
+}
+
+#appShell .ai-chat-form {
+  display: grid;
+  gap: 12px;
+}
+
+#appShell .ai-chat-form__actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+#appShell .ai-empty-state,
+.ai-widget .ai-empty-state {
+  padding: 16px 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(187, 198, 208, 0.95);
+  background: rgba(250, 251, 253, 0.96);
+  color: #627688;
+}
+
+.ai-widget {
+  left: 18px;
+  bottom: 18px;
+}
+
+.ai-widget__toggle {
+  min-width: 232px;
+  min-height: 56px;
+  border-radius: 18px;
+}
+
+.ai-widget__panel {
+  width: min(420px, calc(100vw - 28px));
+  border-radius: 22px;
+}
+
+.ai-widget__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ai-widget__suggestion {
+  border: 1px solid rgba(198, 206, 214, 0.88);
+  background: rgba(249, 251, 253, 0.98);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.76rem;
+  color: #36536d;
+}
+
+.ai-widget__form {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.ai-widget__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+@media (max-width: 1500px) {
+  #appShell > .platform-header {
+    grid-template-columns: minmax(136px, 170px) minmax(0, 1fr) minmax(220px, 280px);
+  }
+
+  #appShell .module-nav.module-nav--top button {
+    max-width: 68px;
+  }
+
+  #appShell .module-nav-main {
+    font-size: 0.54rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell > .platform-header {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  #appShell .platform-header__utility {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  #appShell .platform-header__nav {
+    overflow-x: auto;
+  }
+
+  #appShell .module-nav.module-nav--top {
+    min-width: max-content;
+  }
+
+  #appShell .ai-assistant-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  #appShell .brand-row span,
+  #appShell .profile-card__scope {
+    display: none;
+  }
+
+  #appShell .topbar {
+    padding: 16px 18px;
+  }
+
+  #appShell .topbar__badge {
+    display: none;
+  }
+}
+
+/* Final shell pass: tighter top row, denser dashboard, safer overflow */
+#appShell > .platform-header {
+  grid-template-columns: minmax(132px, 180px) minmax(0, 1fr) minmax(236px, 272px);
+  gap: 4px 10px;
+  padding: 6px 14px;
+  min-height: 64px;
+}
+
+#appShell .brand-row {
+  gap: 8px;
+}
+
+#appShell .brand-row img {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  min-height: 16px;
+  border-radius: 6px;
+  padding: 1px;
+}
+
+#appShell .brand-row strong {
+  font-size: 0.68rem;
+  letter-spacing: 0.01em;
+}
+
+#appShell .brand-row span {
+  font-size: 0.54rem;
+  line-height: 1.05;
+  opacity: 0.82;
+}
+
+#appShell .platform-header__nav {
+  min-width: 0;
+}
+
+#appShell .module-nav.module-nav--top {
+  gap: 4px;
+  justify-content: space-between;
+}
+
+#appShell .module-nav.module-nav--top button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 70px;
+  min-height: 44px;
+  padding: 4px 3px;
+  border-radius: 12px;
+}
+
+#appShell .module-nav-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  font-size: 0.56rem;
+}
+
+#appShell .module-nav-main {
+  font-size: 0.54rem;
+  line-height: 1;
+  word-break: break-word;
+}
+
+#appShell .platform-header__utility {
+  width: min(100%, 272px);
+}
+
+#appShell .profile-card {
+  max-width: 272px;
+  padding: 5px 8px;
+  border-radius: 18px;
+}
+
+#appShell .profile-card__inner {
+  gap: 6px;
+}
+
+#appShell .profile-card__avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 0.78rem;
+}
+
+#appShell .profile-card__meta strong {
+  font-size: 0.78rem;
+}
+
+#appShell .profile-card__meta > span,
+#appShell .profile-card__scope {
+  font-size: 0.6rem;
+}
+
+#appShell .profile-card .role-pill {
+  padding: 2px 6px;
+  font-size: 0.6rem;
+}
+
+#appShell .profile-card__menu-toggle {
+  width: 24px;
+  height: 24px;
+}
+
+#appShell .content-shell,
+body.platform-wide #appShell .content-shell {
+  width: min(1880px, calc(100vw - 16px));
+  padding: 10px 0 24px;
+}
+
+#appShell .topbar {
+  padding: 16px 18px;
+  min-height: 86px;
+  border-radius: 24px;
+}
+
+#appShell .topbar h2 {
+  font-size: clamp(1.32rem, 1.7vw, 2rem);
+}
+
+#appShell .topbar p {
+  font-size: 0.88rem;
+}
+
+#appShell .topbar__badge {
+  padding: 10px 14px;
+  min-height: 44px;
+  font-size: 0.78rem;
+  max-width: 480px;
+}
+
+#appShell .dashboard-shell {
+  display: grid;
+  gap: 16px;
+}
+
+#appShell .dashboard-focus-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#appShell .dashboard-focus-card {
+  padding: 16px 18px;
+  border-radius: 22px;
+  border: 1px solid rgba(198, 206, 214, 0.86);
+  background: linear-gradient(180deg, rgba(255,255,255,.99), rgba(248,250,252,.97));
+  box-shadow: 0 14px 28px rgba(18, 34, 52, 0.05);
+  display: grid;
+  gap: 6px;
+}
+
+#appShell .dashboard-focus-card span {
+  color: #6a7c8f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+#appShell .dashboard-focus-card strong {
+  color: #18314a;
+  font-size: clamp(1.2rem, 1.7vw, 1.85rem);
+  line-height: 1.05;
+}
+
+#appShell .dashboard-focus-card small {
+  color: #738598;
+  font-size: 0.78rem;
+}
+
+#appShell .dashboard-focus-card--primary {
+  background:
+    linear-gradient(135deg, rgba(16, 111, 184, 0.12), rgba(255, 255, 255, 0.98)),
+    linear-gradient(180deg, rgba(255,255,255,.99), rgba(248,250,252,.97));
+  border-color: rgba(23, 104, 167, 0.18);
+}
+
+#appShell .dashboard-kpis {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#appShell .dashboard-kpi {
+  padding: 14px 16px;
+  border-radius: 20px;
+}
+
+#appShell .dashboard-chart-card__controls {
+  justify-items: end;
+}
+
+#appShell .dashboard-period-caption {
+  color: #6f8194;
+  font-size: 0.76rem;
+  font-weight: 600;
+}
+
+#appShell .dashboard-chart {
+  border-radius: 18px;
+}
+
+#appShell .dashboard-axis__item {
+  padding: 6px 4px;
+  border-radius: 12px;
+  transition: background-color 0.16s ease, transform 0.16s ease;
+}
+
+#appShell .dashboard-axis__item:hover {
+  background: rgba(21, 103, 168, 0.08);
+  transform: translateY(-1px);
+}
+
+#appShell .dashboard-tooltip {
+  box-shadow: 0 18px 36px rgba(18, 34, 52, 0.16);
+}
+
+#appShell .dashboard-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+#appShell .dashboard-modules__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+#appShell .table-shell,
+#appShell .admin-grid,
+#appShell .admin-stack,
+#appShell .section-card,
+#appShell .placeholder-card {
+  min-width: 0;
+}
+
+#appShell .table-shell {
+  overflow: auto;
+}
+
+#appShell .admin-grid {
+  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+}
+
+#appShell .admin-stack {
+  min-width: 0;
+}
+
+#appShell .admin-grid .section-card,
+#appShell .placeholder-card .section-card {
+  overflow: hidden;
+}
+
+@media (max-width: 1540px) {
+  #appShell > .platform-header {
+    grid-template-columns: minmax(124px, 164px) minmax(0, 1fr) minmax(220px, 250px);
+  }
+
+  #appShell .module-nav.module-nav--top button {
+    max-width: 64px;
+  }
+
+  #appShell .module-nav-main {
+    font-size: 0.5rem;
+  }
+}
+
+@media (max-width: 1320px) {
+  #appShell > .platform-header {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  #appShell .platform-header__utility {
+    justify-self: end;
+  }
+
+  #appShell .platform-header__nav {
+    overflow-x: auto;
+  }
+
+  #appShell .module-nav.module-nav--top {
+    min-width: max-content;
+    justify-content: flex-start;
+  }
+
+  #appShell .dashboard-focus-strip,
+  #appShell .dashboard-kpis,
+  #appShell .dashboard-panels,
+  #appShell .dashboard-modules__grid,
+  #appShell .admin-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  #appShell .dashboard-focus-strip,
+  #appShell .dashboard-kpis,
+  #appShell .dashboard-panels,
+  #appShell .dashboard-modules__grid,
+  #appShell .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell .topbar {
+    padding: 14px 16px;
+    min-height: 74px;
+  }
+}

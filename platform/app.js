@@ -1,14 +1,16 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell20";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell21";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260404-platform-shell21";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-shell20";
+const PLATFORM_BUILD = "20260404-platform-shell21";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
-  sidebarCollapsed: "dom-neona:platform:sidebarCollapsed"
+  sidebarCollapsed: "dom-neona:platform:sidebarCollapsed",
+  dashboardPeriod: "dom-neona:platform:dashboardPeriod"
 };
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -58,7 +60,10 @@ const DOM = {
   schemaWarningSection: document.getElementById("schemaWarningSection"),
   aiWidgetToggle: document.getElementById("aiWidgetToggle"),
   aiWidgetPanel: document.getElementById("aiWidgetPanel"),
-  aiWidgetClose: document.getElementById("aiWidgetClose")
+  aiWidgetClose: document.getElementById("aiWidgetClose"),
+  aiWidgetMessages: document.getElementById("aiWidgetMessages"),
+  aiWidgetForm: document.getElementById("aiWidgetForm"),
+  aiWidgetInput: document.getElementById("aiWidgetInput")
 };
 
 const STATE = {
@@ -81,13 +86,27 @@ const STATE = {
   activeThreadId: null,
   ui: {
     wideMode: readStoredBoolean(PLATFORM_UI_KEYS.wideMode, true),
-    sidebarCollapsed: readStoredBoolean(PLATFORM_UI_KEYS.sidebarCollapsed, false)
+    sidebarCollapsed: readStoredBoolean(PLATFORM_UI_KEYS.sidebarCollapsed, false),
+    dashboardPeriod: (() => {
+      try {
+        const stored = window.localStorage.getItem(PLATFORM_UI_KEYS.dashboardPeriod);
+        return ["week", "month", "year"].includes(stored) ? stored : "week";
+      } catch {
+        return "week";
+      }
+    })()
   },
   shellStatus: {
     message: "",
     tone: ""
   },
   dashboardRequestId: 0,
+  dashboardSnapshot: null,
+  ai: {
+    history: [],
+    widgetBusy: false,
+    moduleBusy: false
+  },
   menu: {
     profileOpen: false
   }
@@ -95,8 +114,8 @@ const STATE = {
 
 const MODULES = {
   dashboard: {
-    title: "Панель управления",
-    subtitle: "Ключевые показатели, сигналы и рабочие переходы по всей платформе.",
+    title: "Показатели",
+    subtitle: "Ключевые показатели, активный график и сигналы по всей платформе.",
     type: "dashboard"
   },
   sales: {
@@ -159,9 +178,11 @@ const MODULES = {
   ai: {
     title: "Домовой Неоник",
     subtitle: "Корпоративный ИИ и база знаний компании.",
-    type: "placeholder"
+    type: "ai"
   }
 };
+
+const domovoyNeonik = createDomovoyNeonik({ build: PLATFORM_BUILD });
 
 const MODULE_GROUPS = [
   "dashboard",
@@ -545,20 +566,20 @@ function sanitizeSlug(value) {
 
 function getModuleShortLabel(key) {
   const labels = {
-    dashboard: "KPI",
-    sales: "Sales",
-    my_calculator: "Calc",
-    partner_calculator: "Part",
-    light2: "Core",
-    messenger: "Chat",
-    admin: "Admin",
-    directories: "Data",
+    dashboard: "Показат.",
+    sales: "Продажи",
+    my_calculator: "Мой",
+    partner_calculator: "Партнёры",
+    light2: "Контур",
+    messenger: "Чаты",
+    admin: "Админ",
+    directories: "Данные",
     crm: "CRM",
-    warehouse: "Stock",
-    tasks: "Tasks",
-    ai: "AI"
+    warehouse: "Склад",
+    tasks: "Задачи",
+    ai: "Неоник"
   };
-  return labels[key] || "App";
+  return labels[key] || "Модуль";
 }
 
 function getModuleIconClass(key) {
@@ -719,6 +740,321 @@ function formatDashboardNumber(value) {
   return DASHBOARD_NUMBER_FORMATTER.format(Number(value) || 0);
 }
 
+function persistDashboardPeriod() {
+  try {
+    window.localStorage.setItem(PLATFORM_UI_KEYS.dashboardPeriod, STATE.ui.dashboardPeriod);
+  } catch {
+    // Ignore storage failures in private browsing modes.
+  }
+}
+
+function setDashboardPeriod(periodKey) {
+  if (!["week", "month", "year"].includes(periodKey)) return;
+  STATE.ui.dashboardPeriod = periodKey;
+  persistDashboardPeriod();
+  if (STATE.activeModule === "dashboard") {
+    renderDashboard().catch((error) => console.error("dashboard rerender error", error));
+  }
+}
+
+function buildDashboardChartAttrs(point) {
+  return `
+    data-chart-label="${escapeHtml(point.label || "")}"
+    data-chart-full-label="${escapeHtml(point.fullLabel || point.label || "")}"
+    data-chart-orders="${escapeHtml(String(point.orders || 0))}"
+    data-chart-revenue="${escapeHtml(String(point.revenue || 0))}"
+    data-chart-invoices="${escapeHtml(String(point.invoices || 0))}"
+  `;
+}
+
+function getDashboardTooltipPoint(target) {
+  if (!target?.dataset?.chartLabel) return null;
+  return {
+    label: target.dataset.chartLabel,
+    fullLabel: target.dataset.chartFullLabel || target.dataset.chartLabel,
+    orders: Number(target.dataset.chartOrders || 0),
+    revenue: Number(target.dataset.chartRevenue || 0),
+    invoices: Number(target.dataset.chartInvoices || 0)
+  };
+}
+
+function hideDashboardTooltip() {
+  const tooltip = DOM.dashboardGrid.querySelector(".dashboard-tooltip");
+  if (!tooltip) return;
+  tooltip.classList.add("d-none");
+}
+
+function showDashboardTooltip(event, point) {
+  const tooltip = DOM.dashboardGrid.querySelector(".dashboard-tooltip");
+  const chartCard = event.target.closest(".dashboard-chart-card");
+  if (!tooltip || !chartCard || !point) return;
+
+  tooltip.innerHTML = `
+    <strong>${escapeHtml(point.fullLabel || point.label || "Период")}</strong>
+    <span>Заказов: ${escapeHtml(formatDashboardNumber(point.orders))}</span>
+    <span>Выручка: ${escapeHtml(formatDashboardMoney(point.revenue))}</span>
+    <span>Счетов: ${escapeHtml(formatDashboardNumber(point.invoices))}</span>
+  `;
+
+  const rect = chartCard.getBoundingClientRect();
+  const left = Math.min(
+    Math.max(event.clientX - rect.left + 16, 16),
+    rect.width - 220
+  );
+  const top = Math.max(event.clientY - rect.top - 18, 18);
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+  tooltip.classList.remove("d-none");
+}
+
+function getAiQuickQuestions() {
+  return [
+    "Где в платформе смотреть неоплаченные счета?",
+    "Как связаны CRM, склад и задачи?",
+    "Что есть на сайте domneon.ru для клиента?",
+    "Где настраивать роли, доступы и выпадающие списки?"
+  ];
+}
+
+function buildAiContext() {
+  return {
+    snapshot: STATE.dashboardSnapshot || null,
+    profile: {
+      displayName:
+        STATE.profile?.display_name ||
+        STATE.profile?.full_name ||
+        STATE.user?.user_metadata?.display_name ||
+        STATE.user?.email ||
+        "Сотрудник",
+      role: STATE.profile?.role || "user",
+      partnerSlug: getCurrentPartnerSlug()
+    },
+    modules: moduleListFromProfile().map((key) => ({
+      key,
+      title: MODULES[key]?.title || key,
+      subtitle: MODULES[key]?.subtitle || ""
+    })),
+    documents: {
+      directories: liveWorkspaceController.getDocument("directories"),
+      crm: liveWorkspaceController.getDocument("crm"),
+      warehouse: liveWorkspaceController.getDocument("warehouse"),
+      tasks: liveWorkspaceController.getDocument("tasks")
+    }
+  };
+}
+
+function renderAiMessages(items, tokens = []) {
+  if (!items.length) {
+    return `
+      <div class="ai-empty-state">
+        <strong>Домовой Неоник готов к вопросам.</strong>
+        <p>Спрашивайте про платформу, процессы компании, 24lite.ru, domneon.ru, склад, CRM, задачи и регламенты.</p>
+      </div>
+    `;
+  }
+
+  return items
+    .map((item) => {
+      const sources = (item.sources || [])
+        .map(
+          (source) =>
+            source.url && !String(source.url).startsWith("platform://")
+              ? `
+                  <a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer noopener">
+                    ${escapeHtml(source.sourceLabel || source.title || "Источник")}
+                  </a>
+                `
+              : `
+                  <span>${escapeHtml(source.sourceLabel || source.title || "Источник")}</span>
+                `
+        )
+        .join("");
+
+      return `
+        <article class="ai-message ai-message--${escapeHtml(item.role)}">
+          <div class="ai-message__role">${item.role === "user" ? "Вы" : "Домовой Неоник"}</div>
+          <div class="ai-message__body">${domovoyNeonik.highlightText(escapeHtml(item.body || ""), tokens).replace(/\n/g, "<br>")}</div>
+          ${sources ? `<div class="ai-message__sources">${sources}</div>` : ""}
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function renderAiWidget() {
+  if (!DOM.aiWidgetPanel) return;
+  if (!DOM.aiWidgetPanel.querySelector("#aiWidgetMessages")) {
+    DOM.aiWidgetPanel.insertAdjacentHTML(
+      "beforeend",
+      `
+        <div class="ai-widget__suggestions"></div>
+        <div class="ai-widget__messages" id="aiWidgetMessages"></div>
+        <form class="ai-widget__form" id="aiWidgetForm">
+          <textarea class="form-control form-control-sm" id="aiWidgetInput" name="question" rows="2" placeholder="Задайте вопрос по платформе, процессу, модулю или сайту компании"></textarea>
+          <div class="ai-widget__actions">
+            <button class="btn btn-dark btn-sm" type="submit">Спросить</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-ai-open="ai">Открыть модуль</button>
+          </div>
+        </form>
+        <div class="ai-widget__footer">
+          <button class="btn btn-outline-secondary btn-sm" type="button" data-ai-open="crm">CRM</button>
+          <button class="btn btn-outline-secondary btn-sm" type="button" data-ai-open="warehouse">Склад</button>
+          <button class="btn btn-outline-secondary btn-sm" type="button" data-ai-open="directories">Данные</button>
+        </div>
+      `
+    );
+  }
+
+  const messagesContainer = DOM.aiWidgetPanel.querySelector("#aiWidgetMessages");
+  const form = DOM.aiWidgetPanel.querySelector("#aiWidgetForm");
+  const input = DOM.aiWidgetPanel.querySelector("#aiWidgetInput");
+  const lastAssistant = [...STATE.ai.history].reverse().find((item) => item.role === "assistant");
+  const tokens = lastAssistant?.highlights || [];
+
+  messagesContainer.innerHTML = renderAiMessages(STATE.ai.history.slice(-4), tokens);
+
+  const suggestions = getAiQuickQuestions()
+    .map(
+      (question) => `
+        <button class="ai-widget__suggestion" type="button" data-ai-suggest="${escapeHtml(question)}">${escapeHtml(question)}</button>
+      `
+    )
+    .join("");
+
+  const suggestionRow = DOM.aiWidgetPanel.querySelector(".ai-widget__suggestions");
+  if (suggestionRow) {
+    suggestionRow.innerHTML = suggestions;
+  }
+
+  if (input) {
+    input.disabled = STATE.ai.widgetBusy;
+  }
+  if (form) {
+    const button = form.querySelector('button[type="submit"]');
+    if (button) {
+      button.disabled = STATE.ai.widgetBusy;
+      button.textContent = STATE.ai.widgetBusy ? "Ищу..." : "Спросить";
+    }
+  }
+}
+
+function renderAiModule() {
+  const lastAssistant = [...STATE.ai.history].reverse().find((item) => item.role === "assistant");
+  const tokens = lastAssistant?.highlights || [];
+  const suggestions = getAiQuickQuestions()
+    .map(
+      (question) => `
+        <button class="ai-prompt-chip" type="button" data-ai-suggest="${escapeHtml(question)}">${escapeHtml(question)}</button>
+      `
+    )
+    .join("");
+
+  DOM.placeholderCard.innerHTML = `
+    <section class="ai-assistant-shell">
+      <article class="ai-assistant-hero">
+        <div>
+          <div class="section-eyebrow">Внутренний ИИ компании</div>
+          <h2>Домовой Неоник</h2>
+          <p>База знаний для сотрудников и партнеров: отвечает по платформе, рабочим процессам, внутренним данным и по публичным материалам с 24lite.ru и domneon.ru.</p>
+        </div>
+        <div class="ai-assistant-badges">
+          <span>Платформа</span>
+          <span>24lite.ru</span>
+          <span>domneon.ru</span>
+        </div>
+      </article>
+
+      <div class="ai-assistant-grid">
+        <aside class="ai-assistant-side">
+          <div class="section-card">
+            <h3>Быстрые вопросы</h3>
+            <div class="ai-prompt-list">${suggestions}</div>
+          </div>
+          <div class="section-card">
+            <h3>Что умеет</h3>
+            <ul class="ai-capability-list">
+              <li>Подсказывает, где в платформе делать нужное действие.</li>
+              <li>Ищет ответы в данных платформы и по публичным сайтам компании.</li>
+              <li>Объясняет связи между CRM, Продажами, Складом, задачами и ДОМ НЕОНА.</li>
+            </ul>
+          </div>
+        </aside>
+
+        <section class="ai-assistant-main">
+          <div class="section-card ai-chat-card">
+            <div class="panel-heading">
+              <div>
+                <h3>Диалог с базой знаний</h3>
+                <div class="compact-help">Задавайте вопросы так же, как коллеге: коротко и по делу.</div>
+              </div>
+            </div>
+            <div class="ai-chat-log" id="aiModuleMessages">${renderAiMessages(STATE.ai.history, tokens)}</div>
+            <form class="ai-chat-form" id="aiModuleForm">
+              <textarea class="form-control" id="aiModuleInput" name="question" rows="3" placeholder="Например: где смотреть неоплаченные счета и как это связано с CRM?" ${STATE.ai.moduleBusy ? "disabled" : ""}></textarea>
+              <div class="ai-chat-form__actions">
+                <button class="btn btn-dark" type="submit" ${STATE.ai.moduleBusy ? "disabled" : ""}>${STATE.ai.moduleBusy ? "Ищу ответ..." : "Спросить"}</button>
+                <button class="btn btn-outline-secondary" type="button" data-ai-clear>Очистить диалог</button>
+              </div>
+            </form>
+          </div>
+        </section>
+      </div>
+    </section>
+  `;
+}
+
+async function askDomovoyNeonik(question, origin = "module") {
+  const cleanQuestion = String(question || "").trim();
+  if (!cleanQuestion) return;
+
+  STATE.ai.history.push({
+    role: "user",
+    body: cleanQuestion,
+    createdAt: new Date().toISOString(),
+    sources: []
+  });
+
+  if (origin === "widget") {
+    STATE.ai.widgetBusy = true;
+  } else {
+    STATE.ai.moduleBusy = true;
+  }
+
+  renderAiWidget();
+  if (STATE.activeModule === "ai") {
+    renderAiModule();
+  }
+
+  try {
+    const response = await domovoyNeonik.ask(cleanQuestion, buildAiContext());
+    STATE.ai.history.push({
+      role: "assistant",
+      body: response.answer,
+      createdAt: new Date().toISOString(),
+      sources: response.sources || [],
+      highlights: response.highlights || []
+    });
+  } catch (error) {
+    STATE.ai.history.push({
+      role: "assistant",
+      body: `Не удалось собрать ответ: ${error.message || "ошибка поиска по базе знаний"}.`,
+      createdAt: new Date().toISOString(),
+      sources: []
+    });
+  } finally {
+    if (STATE.ai.history.length > 18) {
+      STATE.ai.history = STATE.ai.history.slice(-18);
+    }
+    STATE.ai.widgetBusy = false;
+    STATE.ai.moduleBusy = false;
+    renderAiWidget();
+    if (STATE.activeModule === "ai") {
+      renderAiModule();
+    }
+  }
+}
+
 function buildDashboardChartGeometry(points) {
   const chartWidth = 720;
   const chartHeight = 240;
@@ -732,11 +1068,19 @@ function buildDashboardChartGeometry(points) {
   const stepX = points.length > 1 ? innerWidth / (points.length - 1) : innerWidth;
   const barWidth = Math.max(22, Math.min(40, innerWidth / Math.max(points.length * 1.8, 1)));
 
-  const polyline = points
+  const dots = points.map((point, index) => {
+    const x = paddingX + stepX * index;
+    const y = paddingTop + innerHeight - ((Number(point.revenue) || 0) / revenueMax) * innerHeight;
+    return {
+      x,
+      y,
+      point
+    };
+  });
+
+  const polyline = dots
     .map((point, index) => {
-      const x = paddingX + stepX * index;
-      const y = paddingTop + innerHeight - ((Number(point.revenue) || 0) / revenueMax) * innerHeight;
-      return `${x},${y}`;
+      return `${point.x},${point.y}`;
     })
     .join(" ");
 
@@ -752,7 +1096,8 @@ function buildDashboardChartGeometry(points) {
       x,
       y,
       width: barWidth,
-      height: barHeight
+      height: barHeight,
+      point
     };
   });
 
@@ -768,6 +1113,7 @@ function buildDashboardChartGeometry(points) {
     polyline,
     area,
     bars,
+    dots,
     gridLines
   };
 }
@@ -921,15 +1267,18 @@ function renderModuleNav() {
   DOM.moduleNav.innerHTML = "";
   DOM.moduleNav.classList.add("module-nav--top");
   moduleListFromProfile().forEach((key) => {
+    const shortLabel = getModuleShortLabel(key);
     const button = document.createElement("button");
     button.type = "button";
     button.dataset.moduleKey = key;
-    button.dataset.shortLabel = getModuleShortLabel(key);
+    button.dataset.shortLabel = shortLabel;
+    button.title = MODULES[key].title;
+    button.setAttribute("aria-label", MODULES[key].title);
     button.classList.toggle("active", STATE.activeModule === key);
     button.innerHTML = `
       <span class="module-nav-icon"><i class="bi ${escapeHtml(getModuleIconClass(key))}"></i></span>
-      <span class="module-nav-main">${escapeHtml(MODULES[key].title)}</span>
-      <span class="module-nav-mini">${escapeHtml(getModuleShortLabel(key))}</span>
+      <span class="module-nav-main">${escapeHtml(shortLabel)}</span>
+      <span class="module-nav-mini">${escapeHtml(MODULES[key].title)}</span>
     `;
     DOM.moduleNav.appendChild(button);
   });
@@ -947,7 +1296,7 @@ function getModuleStageLabel(moduleKey) {
     crm: "Живой рабочий модуль",
     warehouse: "Живой рабочий модуль",
     tasks: "Живой рабочий модуль",
-    ai: "Концепт модуля"
+    ai: "База знаний"
   };
   return labels[moduleKey] || "Доступен";
 }
@@ -1163,6 +1512,7 @@ function renderDashboardModuleCards(moduleKeys, summaryLookup = {}) {
 async function renderDashboard() {
   const requestId = ++STATE.dashboardRequestId;
   const moduleKeys = moduleListFromProfile().filter((key) => key !== "dashboard");
+  setViewMeta("Показатели", "Ключевые показатели, динамика по периодам и сигналы по всей платформе.");
 
   DOM.dashboardGrid.innerHTML = `
     <div class="dashboard-shell">
@@ -1185,6 +1535,7 @@ async function renderDashboard() {
   }
 
   if (requestId !== STATE.dashboardRequestId) return;
+  STATE.dashboardSnapshot = snapshot;
 
   const summaryLookup = snapshot
     ? {
@@ -1209,6 +1560,32 @@ async function renderDashboard() {
     `;
     return;
   }
+
+  const periodLabels = {
+    week: "Неделя",
+    month: "Месяц",
+    year: "Год"
+  };
+  const activePeriod = ["week", "month", "year"].includes(STATE.ui.dashboardPeriod) ? STATE.ui.dashboardPeriod : "week";
+  const activeSeries = snapshot.sales.seriesByPeriod?.[activePeriod] || snapshot.sales.series || [];
+  const periodRevenue = activeSeries.reduce((sum, point) => sum + (Number(point.revenue) || 0), 0);
+  const periodOrders = activeSeries.reduce((sum, point) => sum + (Number(point.orders) || 0), 0);
+  const periodInvoices = activeSeries.reduce((sum, point) => sum + (Number(point.invoices) || 0), 0);
+  const periodAverage = periodOrders ? periodRevenue / periodOrders : 0;
+  const periodMeta = {
+    week: {
+      label: "Текущая неделя",
+      caption: "За последние 7 дней"
+    },
+    month: {
+      label: "Текущий месяц",
+      caption: "По дням за месяц"
+    },
+    year: {
+      label: "Текущий год",
+      caption: "По месяцам за год"
+    }
+  }[activePeriod];
 
   const kpis = [
     {
@@ -1249,7 +1626,7 @@ async function renderDashboard() {
     }
   ];
 
-  const geometry = buildDashboardChartGeometry(snapshot.sales.series || []);
+  const geometry = buildDashboardChartGeometry(activeSeries);
   const alerts = snapshot.alerts
     .filter((item) => hasModuleAccess(item.moduleKey))
     .map(
@@ -1319,6 +1696,29 @@ async function renderDashboard() {
 
   DOM.dashboardGrid.innerHTML = `
     <div class="dashboard-shell">
+      <section class="dashboard-focus-strip">
+        <article class="dashboard-focus-card dashboard-focus-card--primary">
+          <span>${escapeHtml(periodMeta.label)}</span>
+          <strong>${escapeHtml(formatDashboardMoney(periodRevenue))}</strong>
+          <small>${escapeHtml(periodMeta.caption)}</small>
+        </article>
+        <article class="dashboard-focus-card">
+          <span>Заказы</span>
+          <strong>${escapeHtml(formatDashboardNumber(periodOrders))}</strong>
+          <small>Новых заказов за период</small>
+        </article>
+        <article class="dashboard-focus-card">
+          <span>Счета</span>
+          <strong>${escapeHtml(formatDashboardNumber(periodInvoices))}</strong>
+          <small>Создано счетов за период</small>
+        </article>
+        <article class="dashboard-focus-card">
+          <span>Средний чек</span>
+          <strong>${escapeHtml(formatDashboardMoney(periodAverage))}</strong>
+          <small>Выручка / заказы</small>
+        </article>
+      </section>
+
       <section class="dashboard-kpis">
         ${kpis
           .map(
@@ -1337,12 +1737,24 @@ async function renderDashboard() {
         <article class="dashboard-chart-card">
           <div class="panel-heading">
             <div>
-              <h3>Показатели продаж за 7 дней</h3>
-              <div class="compact-help">Линия показывает денежный поток, столбики — количество новых заказов по дням.</div>
+              <h3>Показатели продаж</h3>
+              <div class="compact-help">Линия показывает выручку, столбики — новые заказы, наведение мышкой показывает точные значения по периоду.</div>
             </div>
-            <div class="dashboard-legend">
-              <span><i class="bi bi-graph-up-arrow"></i> Выручка</span>
-              <span><i class="bi bi-bar-chart"></i> Заказы</span>
+            <div class="dashboard-chart-card__controls">
+              <div class="dashboard-periods">
+                ${Object.entries(periodLabels)
+                  .map(
+                    ([periodKey, periodLabel]) => `
+                      <button class="dashboard-period${activePeriod === periodKey ? " active" : ""}" type="button" data-dashboard-period="${escapeHtml(periodKey)}">${escapeHtml(periodLabel)}</button>
+                    `
+                  )
+                  .join("")}
+              </div>
+              <div class="dashboard-period-caption">${escapeHtml(periodMeta.caption)}</div>
+              <div class="dashboard-legend">
+                <span><i class="bi bi-graph-up-arrow"></i> Выручка</span>
+                <span><i class="bi bi-bar-chart"></i> Заказы</span>
+              </div>
             </div>
           </div>
           <div class="dashboard-chart">
@@ -1364,13 +1776,36 @@ async function renderDashboard() {
                 )
                 .join("")}
               ${geometry.polyline ? `<polyline points="${geometry.polyline}" class="dashboard-chart__line"></polyline>` : ""}
+              ${geometry.dots
+                .map(
+                  (dot) => `
+                    <circle cx="${dot.x}" cy="${dot.y}" r="5.5" class="dashboard-chart__dot" ${buildDashboardChartAttrs(dot.point)}></circle>
+                  `
+                )
+                .join("")}
+              ${geometry.bars
+                .map(
+                  (bar) => `
+                    <rect
+                      x="${bar.x - 8}"
+                      y="18"
+                      width="${bar.width + 16}"
+                      height="${geometry.chartHeight - 38}"
+                      rx="12"
+                      class="dashboard-chart__hotspot"
+                      ${buildDashboardChartAttrs(bar.point)}
+                    ></rect>
+                  `
+                )
+                .join("")}
             </svg>
+            <div class="dashboard-tooltip d-none"></div>
           </div>
           <div class="dashboard-axis">
-            ${(snapshot.sales.series || [])
+            ${activeSeries
               .map(
                 (point) => `
-                  <div class="dashboard-axis__item">
+                  <div class="dashboard-axis__item" ${buildDashboardChartAttrs(point)}>
                     <span>${escapeHtml(point.label)}</span>
                     <strong>${escapeHtml(formatDashboardNumber(point.orders))}</strong>
                   </div>
@@ -1532,6 +1967,13 @@ async function openModule(key) {
       }
       throw error;
     }
+    return;
+  }
+
+  if (module.type === "ai") {
+    await domovoyNeonik.ensureReady();
+    renderAiModule();
+    DOM.placeholderView.classList.remove("d-none");
     return;
   }
 
@@ -1771,6 +2213,7 @@ async function bootstrapApp(session) {
   renderSchemaWarning();
   renderProfileCard();
   renderModuleNav();
+  renderAiWidget();
   await renderDashboard();
   showAppShell();
   const availableModules = moduleListFromProfile();
@@ -2356,6 +2799,12 @@ async function refreshCurrentView() {
     await renderDashboard();
     return;
   }
+  if (STATE.activeModule === "ai") {
+    renderAiWidget();
+    renderAiModule();
+    DOM.placeholderView.classList.remove("d-none");
+    return;
+  }
   if (liveWorkspaceController.supports(STATE.activeModule)) {
     await liveWorkspaceController.refresh(STATE.activeModule);
     DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
@@ -2497,9 +2946,27 @@ function bindAppEvents() {
   });
 
   DOM.dashboardGrid.addEventListener("click", async (event) => {
+    const periodButton = event.target.closest("[data-dashboard-period]");
+    if (periodButton) {
+      setDashboardPeriod(periodButton.dataset.dashboardPeriod);
+      return;
+    }
     const button = event.target.closest("[data-dashboard-open]");
     if (!button) return;
     await openModule(button.dataset.dashboardOpen);
+  });
+
+  DOM.dashboardGrid.addEventListener("mousemove", (event) => {
+    const pointTarget = event.target.closest("[data-chart-label]");
+    if (!pointTarget) {
+      hideDashboardTooltip();
+      return;
+    }
+    showDashboardTooltip(event, getDashboardTooltipPoint(pointTarget));
+  });
+
+  DOM.dashboardGrid.addEventListener("mouseleave", () => {
+    hideDashboardTooltip();
   });
 
   DOM.placeholderCard.addEventListener("click", async (event) => {
@@ -2507,6 +2974,20 @@ function bindAppEvents() {
     if (button) {
       await openModule(button.dataset.placeholderOpen);
       return;
+    }
+    if (STATE.activeModule === "ai") {
+      const suggestion = event.target.closest("[data-ai-suggest]");
+      if (suggestion) {
+        await askDomovoyNeonik(suggestion.dataset.aiSuggest, "module");
+        return;
+      }
+      const clearButton = event.target.closest("[data-ai-clear]");
+      if (clearButton) {
+        STATE.ai.history = [];
+        renderAiWidget();
+        renderAiModule();
+        return;
+      }
     }
     if (!liveWorkspaceController.supports(STATE.activeModule)) return;
     try {
@@ -2531,6 +3012,15 @@ function bindAppEvents() {
   });
 
   DOM.placeholderCard.addEventListener("submit", async (event) => {
+    if (STATE.activeModule === "ai") {
+      const form = event.target.closest("#aiModuleForm");
+      if (!form) return;
+      event.preventDefault();
+      const formData = new FormData(form);
+      form.reset();
+      await askDomovoyNeonik(formData.get("question"), "module");
+      return;
+    }
     if (!liveWorkspaceController.supports(STATE.activeModule)) return;
     try {
       await liveWorkspaceController.handleSubmit(event, STATE.activeModule);
@@ -2557,6 +3047,7 @@ function bindAppEvents() {
   });
 
   DOM.aiWidgetToggle?.addEventListener("click", () => {
+    renderAiWidget();
     DOM.aiWidgetPanel?.classList.toggle("d-none");
   });
 
@@ -2566,9 +3057,23 @@ function bindAppEvents() {
 
   DOM.aiWidgetPanel?.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-ai-open]");
-    if (!button) return;
-    DOM.aiWidgetPanel?.classList.add("d-none");
-    await openModule(button.dataset.aiOpen);
+    if (button) {
+      DOM.aiWidgetPanel?.classList.add("d-none");
+      await openModule(button.dataset.aiOpen);
+      return;
+    }
+    const suggestion = event.target.closest("[data-ai-suggest]");
+    if (!suggestion) return;
+    await askDomovoyNeonik(suggestion.dataset.aiSuggest, "widget");
+  });
+
+  DOM.aiWidgetPanel?.addEventListener("submit", async (event) => {
+    const form = event.target.closest("#aiWidgetForm");
+    if (!form) return;
+    event.preventDefault();
+    const formData = new FormData(form);
+    form.reset();
+    await askDomovoyNeonik(formData.get("question"), "widget");
   });
 
   DOM.profileCard?.addEventListener("click", async (event) => {

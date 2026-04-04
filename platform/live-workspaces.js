@@ -4216,33 +4216,67 @@ export function createLiveWorkspaceController({
     return "";
   }
 
-  function buildDashboardActivitySeries(orders) {
+  function buildDashboardActivitySeries(orders, period = "week") {
     const points = [];
     const lookup = new Map();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    for (let offset = 6; offset >= 0; offset -= 1) {
-      const date = new Date(today);
-      date.setDate(today.getDate() - offset);
-      const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-      const label = `${pad(date.getDate())}.${pad(date.getMonth() + 1)}`;
-      const point = { key, label, orders: 0, revenue: 0, invoices: 0 };
-      points.push(point);
-      lookup.set(key, point);
+    if (period === "year") {
+      for (let offset = 11; offset >= 0; offset -= 1) {
+        const date = new Date(today.getFullYear(), today.getMonth() - offset, 1);
+        const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}`;
+        const label = date.toLocaleDateString("ru-RU", { month: "short" }).replace(".", "");
+        const point = {
+          key,
+          label,
+          fullLabel: date.toLocaleDateString("ru-RU", { month: "long", year: "numeric" }),
+          orders: 0,
+          revenue: 0,
+          invoices: 0
+        };
+        points.push(point);
+        lookup.set(key, point);
+      }
+    } else {
+      const days = period === "month" ? 30 : 7;
+      for (let offset = days - 1; offset >= 0; offset -= 1) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - offset);
+        const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+        const label = period === "week"
+          ? date.toLocaleDateString("ru-RU", { weekday: "short" }).replace(".", "")
+          : `${pad(date.getDate())}.${pad(date.getMonth() + 1)}`;
+        const point = {
+          key,
+          label,
+          fullLabel: date.toLocaleDateString("ru-RU", { day: "2-digit", month: "long", year: "numeric" }),
+          orders: 0,
+          revenue: 0,
+          invoices: 0
+        };
+        points.push(point);
+        lookup.set(key, point);
+      }
     }
 
     (orders || []).forEach((order) => {
-      const createdKey = normalizeDateInput(order.createdAt);
-      if (createdKey && lookup.has(createdKey)) {
-        lookup.get(createdKey).orders += 1;
+      const createdDate = normalizeDateInput(order.createdAt);
+      if (createdDate) {
+        const createdKey = period === "year" ? createdDate.slice(0, 7) : createdDate;
+        if (lookup.has(createdKey)) {
+          lookup.get(createdKey).orders += 1;
+        }
       }
 
-      const billingKey = normalizeDateInput(order.paidDate || order.invoiceDate || order.createdAt);
-      if (billingKey && lookup.has(billingKey)) {
-        const point = lookup.get(billingKey);
-        point.revenue += toNumber(order.paidAmount || order.amount || 0);
-        if (order.invoiceDate) point.invoices += 1;
+      const billingDate = normalizeDateInput(order.paidDate || order.invoiceDate || order.createdAt);
+      if (billingDate) {
+        const billingKey = period === "year" ? billingDate.slice(0, 7) : billingDate;
+        if (lookup.has(billingKey)) {
+          const point = lookup.get(billingKey);
+          point.revenue += toNumber(order.paidAmount || order.amount || 0);
+          if (order.invoiceDate) point.invoices += 1;
+        }
       }
     });
 
@@ -4353,7 +4387,12 @@ export function createLiveWorkspaceController({
         productionCount: salesSnapshot.productionOrders.length,
         doneCount: salesSnapshot.doneOrders.length,
         channels: salesSnapshot.channels.slice(0, 5),
-        series: buildDashboardActivitySeries(salesSnapshot.orders)
+        series: buildDashboardActivitySeries(salesSnapshot.orders, "week"),
+        seriesByPeriod: {
+          week: buildDashboardActivitySeries(salesSnapshot.orders, "week"),
+          month: buildDashboardActivitySeries(salesSnapshot.orders, "month"),
+          year: buildDashboardActivitySeries(salesSnapshot.orders, "year")
+        }
       },
       crm: {
         dealsCount: deals.length,
@@ -4419,6 +4458,10 @@ export function createLiveWorkspaceController({
     handleSubmit,
     getDashboardSummary,
     getDashboardSnapshot,
+    getDocument(moduleKey) {
+      if (!supports(moduleKey) || !docs[moduleKey]) return null;
+      return deepClone(docs[moduleKey]);
+    },
     resetFormState,
     focusEntity
   };
