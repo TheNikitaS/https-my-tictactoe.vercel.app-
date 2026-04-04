@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell21";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260404-platform-shell21";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell22";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260404-platform-shell22";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-shell21";
+const PLATFORM_BUILD = "20260404-platform-shell22";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -566,14 +566,14 @@ function sanitizeSlug(value) {
 
 function getModuleShortLabel(key) {
   const labels = {
-    dashboard: "Показат.",
-    sales: "Продажи",
+    dashboard: "Показ.",
+    sales: "Прод.",
     my_calculator: "Мой",
-    partner_calculator: "Партнёры",
+    partner_calculator: "Парт.",
     light2: "Контур",
     messenger: "Чаты",
     admin: "Админ",
-    directories: "Данные",
+    directories: "Спр.",
     crm: "CRM",
     warehouse: "Склад",
     tasks: "Задачи",
@@ -956,12 +956,13 @@ function renderAiModule() {
         <div>
           <div class="section-eyebrow">Внутренний ИИ компании</div>
           <h2>Домовой Неоник</h2>
-          <p>База знаний для сотрудников и партнеров: отвечает по платформе, рабочим процессам, внутренним данным и по публичным материалам с 24lite.ru и domneon.ru.</p>
+          <p>База знаний для сотрудников и партнеров: отвечает по платформе, рабочим процессам, внутренним данным, архиву знаний Olesia и по публичным материалам с 24lite.ru и domneon.ru.</p>
         </div>
         <div class="ai-assistant-badges">
           <span>Платформа</span>
           <span>24lite.ru</span>
           <span>domneon.ru</span>
+          <span>Архив Olesia</span>
         </div>
       </article>
 
@@ -975,7 +976,7 @@ function renderAiModule() {
             <h3>Что умеет</h3>
             <ul class="ai-capability-list">
               <li>Подсказывает, где в платформе делать нужное действие.</li>
-              <li>Ищет ответы в данных платформы и по публичным сайтам компании.</li>
+              <li>Ищет ответы в данных платформы, архиве Olesia и по публичным сайтам компании.</li>
               <li>Объясняет связи между CRM, Продажами, Складом, задачами и ДОМ НЕОНА.</li>
             </ul>
           </div>
@@ -1237,7 +1238,7 @@ function renderProfileCard() {
         <span>${escapeHtml(STATE.user?.email || "—")}</span>
         <div class="profile-card__foot">
           <span class="role-pill">${escapeHtml(role)}</span>
-          <span class="profile-card__scope">scope: ${escapeHtml(partnerSlug || "общий")}</span>
+          <span class="profile-card__scope">контур: ${escapeHtml(partnerSlug || "общий")}</span>
         </div>
       </div>
       <div class="profile-card__menu">

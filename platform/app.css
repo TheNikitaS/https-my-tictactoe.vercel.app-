@@ -4044,3 +4044,615 @@ body.platform-wide #appShell .content-shell {
     min-height: 74px;
   }
 }
+
+/* Final enterprise pass: tighter header, unified live workspaces, safer width handling */
+html,
+body {
+  overflow-x: hidden;
+}
+
+#appShell.app-shell {
+  overflow-x: hidden;
+}
+
+#appShell > .platform-header {
+  grid-template-columns: minmax(148px, 188px) minmax(0, 1fr) minmax(232px, 262px);
+  gap: 6px 10px;
+  padding: 6px 12px;
+  min-height: 58px;
+  align-items: center;
+}
+
+#appShell .platform-header__brand,
+#appShell .platform-header__nav,
+#appShell .platform-header__utility {
+  align-self: center;
+}
+
+#appShell .brand-row {
+  gap: 8px;
+}
+
+#appShell .brand-row img {
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  border-radius: 5px;
+  padding: 1px;
+}
+
+#appShell .brand-row strong {
+  font-size: 0.66rem;
+  letter-spacing: 0.01em;
+}
+
+#appShell .brand-row span {
+  margin-top: 1px;
+  font-size: 0.48rem;
+  line-height: 1.15;
+}
+
+#appShell .platform-header__nav {
+  display: flex;
+  min-width: 0;
+  overflow: visible;
+}
+
+#appShell .module-nav.module-nav--top {
+  display: flex;
+  align-items: stretch;
+  gap: 4px;
+  width: 100%;
+  overflow: visible;
+}
+
+#appShell .module-nav.module-nav--top button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  min-height: 44px;
+  padding: 4px 2px;
+  border-radius: 13px;
+}
+
+#appShell .module-nav-icon {
+  width: 16px;
+  height: 16px;
+  border-radius: 6px;
+  font-size: 0.58rem;
+}
+
+#appShell .module-nav-main {
+  font-size: 0.52rem;
+  line-height: 1.03;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+#appShell .platform-header__utility {
+  justify-self: end;
+  width: min(100%, 262px);
+}
+
+#appShell .profile-card {
+  max-width: 262px;
+  min-height: 46px;
+  padding: 5px 8px;
+}
+
+#appShell .profile-card__avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 0.78rem;
+}
+
+#appShell .profile-card__meta strong {
+  font-size: 0.76rem;
+}
+
+#appShell .profile-card__meta > span,
+#appShell .profile-card__scope {
+  font-size: 0.59rem;
+}
+
+#appShell .profile-card__meta > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#appShell .profile-card .role-pill {
+  font-size: 0.6rem;
+}
+
+#appShell .profile-card__menu-toggle {
+  width: 26px;
+  height: 26px;
+}
+
+#appShell .content-shell,
+body.platform-wide #appShell .content-shell {
+  width: min(1920px, calc(100vw - 12px));
+  padding: 10px 0 26px;
+}
+
+#appShell .view-section,
+#appShell .dashboard-grid,
+#appShell .placeholder-card,
+#appShell .section-card,
+#appShell .module-frame-wrap,
+#appShell .admin-grid,
+#appShell .admin-stack,
+#appShell .table-shell {
+  min-width: 0;
+}
+
+#appShell .view-section {
+  overflow-x: hidden;
+}
+
+#appShell .topbar {
+  padding: 14px 18px;
+  min-height: 86px;
+  border-radius: 20px;
+}
+
+#appShell .topbar h2 {
+  font-size: clamp(1.32rem, 1.8vw, 2.1rem);
+}
+
+#appShell .topbar p {
+  font-size: 0.86rem;
+}
+
+#appShell .topbar__badge {
+  padding: 10px 14px;
+  min-height: 44px;
+  max-width: 420px;
+  font-size: 0.76rem;
+}
+
+#appShell .auth-card {
+  width: min(1180px, calc(100vw - 24px));
+  border-radius: 28px;
+}
+
+#appShell .dashboard-shell {
+  gap: 14px;
+}
+
+#appShell .dashboard-focus-strip {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#appShell .dashboard-kpis {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#appShell .dashboard-panels {
+  gap: 14px;
+}
+
+#appShell .dashboard-modules__grid {
+  gap: 12px;
+}
+
+#appShell .workspace-shell {
+  gap: 14px;
+  min-width: 0;
+}
+
+#appShell .workspace-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  padding: 18px 20px;
+  border-radius: 24px;
+  border: 1px solid rgba(197, 206, 214, 0.86);
+  background:
+    radial-gradient(circle at top right, rgba(27, 109, 173, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.98));
+  box-shadow: 0 18px 34px rgba(18, 34, 52, 0.05);
+}
+
+#appShell .workspace-hero__copy,
+#appShell .workspace-hero > div:first-child {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+#appShell .workspace-hero .placeholder-eyebrow,
+#appShell .workspace-hero__eyebrow {
+  color: #7b5a35;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+#appShell .workspace-hero h3 {
+  margin: 0;
+  font-size: 1.24rem;
+  line-height: 1.08;
+}
+
+#appShell .workspace-hero p {
+  margin: 0;
+  max-width: 960px;
+  color: #5f7387;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+#appShell .workspace-hero__meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-content: start;
+  gap: 8px;
+}
+
+#appShell .workspace-hero__chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 206, 214, 0.9);
+  background: rgba(255, 255, 255, 0.96);
+  color: #35516c;
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+#appShell .workspace-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#appShell .workspace-metric {
+  min-height: 108px;
+  padding: 14px 16px;
+  border-radius: 18px;
+}
+
+#appShell .workspace-metric span {
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+#appShell .workspace-metric strong {
+  font-size: 1.18rem;
+  margin-bottom: 2px;
+}
+
+#appShell .workspace-metric small {
+  font-size: 0.76rem;
+}
+
+#appShell .workspace-view-tabs,
+#appShell .workspace-mode-tabs {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow: auto;
+  padding: 2px 2px 4px;
+  scrollbar-width: thin;
+}
+
+#appShell .workspace-view-tab,
+#appShell .workspace-mode-tab {
+  padding: 8px 12px;
+  font-size: 0.77rem;
+}
+
+#appShell .workspace-command-bar {
+  padding: 12px 14px;
+  border-radius: 18px;
+  gap: 10px;
+  align-items: center;
+}
+
+#appShell .workspace-command-bar__meta {
+  flex: 1 1 280px;
+  gap: 8px;
+}
+
+#appShell .workspace-command-bar__actions {
+  flex: 1 1 360px;
+  justify-content: flex-end;
+}
+
+#appShell .workspace-command-bar__actions > *,
+#appShell .workspace-toolbar .btn,
+#appShell .workspace-form__actions .btn {
+  min-height: 38px;
+  border-radius: 12px;
+}
+
+#appShell .workspace-command-chip {
+  padding: 6px 10px;
+  font-size: 0.73rem;
+}
+
+#appShell .workspace-toolbar {
+  padding: 12px 14px;
+  border-radius: 18px;
+  gap: 10px;
+}
+
+#appShell .workspace-toolbar__group {
+  flex: 1 1 300px;
+  gap: 8px;
+  min-width: 0;
+}
+
+#appShell .workspace-toolbar__group > * {
+  flex: 1 1 180px;
+  min-width: 0;
+}
+
+#appShell .workspace-panel {
+  padding: 16px 18px;
+  border-radius: 20px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#appShell .panel-heading {
+  margin-bottom: 12px;
+}
+
+#appShell .panel-heading h4 {
+  font-size: 1rem;
+}
+
+#appShell .compact-help,
+#appShell .workspace-note,
+#appShell .workspace-list-item__meta,
+#appShell .workspace-table__sub {
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
+#appShell .workspace-grid--2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+#appShell .workspace-board--crm,
+#appShell .workspace-board--tasks {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+#appShell .workspace-stage-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+#appShell .workspace-stage-card {
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+#appShell .workspace-list-item,
+#appShell .workspace-card,
+#appShell .builder-card,
+#appShell .workspace-sprint-card {
+  min-width: 0;
+}
+
+#appShell .workspace-list-item {
+  padding: 12px 14px;
+  align-items: flex-start;
+}
+
+#appShell .workspace-form {
+  gap: 10px;
+}
+
+#appShell .workspace-form label > span {
+  font-size: 0.78rem;
+  margin-bottom: 5px;
+}
+
+#appShell .workspace-form-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+#appShell .workspace-table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+#appShell .workspace-table th,
+#appShell .workspace-table td {
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+#appShell .workspace-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(247, 250, 252, 0.98), rgba(241, 246, 250, 0.98));
+}
+
+#appShell .workspace-modal-backdrop {
+  padding: 18px;
+}
+
+#appShell .workspace-modal {
+  width: min(1240px, 100%);
+  border-radius: 24px;
+}
+
+#appShell .workspace-modal__head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  padding: 18px 20px 14px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.995), rgba(248, 250, 252, 0.985));
+}
+
+#appShell .workspace-modal__title {
+  min-width: 0;
+}
+
+#appShell .workspace-modal__head > .btn {
+  min-height: 38px;
+  border-radius: 12px;
+}
+
+#appShell .workspace-modal__body {
+  padding: 18px 20px 20px;
+  max-height: calc(100vh - 150px);
+  overflow: auto;
+}
+
+#appShell #adminView .admin-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(320px, 390px);
+  gap: 14px;
+}
+
+#appShell #adminView .table-shell {
+  overflow: auto;
+}
+
+#appShell #adminView .table-shell table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+#appShell #adminView th,
+#appShell #adminView td {
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: top;
+}
+
+#appShell #adminView .permission-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ai-widget {
+  left: 14px;
+  bottom: 14px;
+}
+
+.ai-widget__toggle {
+  min-width: 196px;
+  min-height: 48px;
+  border-radius: 16px;
+}
+
+@media (max-width: 1660px) {
+  #appShell .dashboard-kpis,
+  #appShell .workspace-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #appShell #adminView .admin-grid,
+  #appShell .workspace-grid--2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1480px) {
+  #appShell > .platform-header {
+    grid-template-columns: minmax(128px, 162px) minmax(0, 1fr) minmax(210px, 236px);
+  }
+
+  #appShell .brand-row span,
+  #appShell .profile-card__scope {
+    display: none;
+  }
+
+  #appShell .module-nav-main {
+    font-size: 0.48rem;
+  }
+}
+
+@media (max-width: 1280px) {
+  #appShell > .platform-header {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  #appShell .platform-header__utility {
+    justify-self: stretch;
+    width: 100%;
+  }
+
+  #appShell .platform-header__nav {
+    overflow-x: auto;
+  }
+
+  #appShell .module-nav.module-nav--top {
+    min-width: max-content;
+  }
+
+  #appShell .dashboard-focus-strip,
+  #appShell .dashboard-kpis,
+  #appShell .dashboard-panels,
+  #appShell .dashboard-modules__grid,
+  #appShell .workspace-metrics,
+  #appShell #adminView .permission-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  #appShell .dashboard-focus-strip,
+  #appShell .dashboard-kpis,
+  #appShell .dashboard-panels,
+  #appShell .dashboard-modules__grid,
+  #appShell .workspace-metrics,
+  #appShell #adminView .permission-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell .platform-header__utility {
+    width: 100%;
+  }
+
+  #appShell .profile-card {
+    max-width: none;
+  }
+}
+
+.auth-card {
+  width: min(1180px, calc(100vw - 24px));
+  border-radius: 28px;
+}
+
+.auth-brand {
+  padding: 22px 22px 20px;
+}
+
+.auth-logo {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+}
+
+.auth-tabs {
+  flex-wrap: wrap;
+}
+
+.auth-tab {
+  padding: 7px 12px;
+  font-size: 0.84rem;
+}
+
+.auth-forms {
+  padding: 24px 24px 22px;
+}

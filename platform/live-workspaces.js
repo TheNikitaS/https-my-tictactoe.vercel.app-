@@ -767,7 +767,7 @@ function renderBuilderPanel(moduleKey, doc, uiState, escapeHtml) {
   return `
     <section class="workspace-panel workspace-builder ${uiState.configOpen ? "" : "d-none"}">
       <div class="panel-heading">
-        <div>
+        <div class="workspace-hero__copy">
           <h4>Конструктор раздела</h4>
           <div class="compact-help">Собирайте собственные вкладки, поля и KPI без отдельной разработки базы.</div>
         </div>
@@ -2004,9 +2004,9 @@ export function createLiveWorkspaceController({
           <h3>${escapeHtml(modules[moduleKey]?.title || moduleKey)}</h3>
           <p>${escapeHtml(config.intro)}</p>
         </div>
-        <div class="placeholder-status">
-          <div class="placeholder-chip">${escapeHtml(getModuleStageLabel(moduleKey))}</div>
-          <div class="placeholder-chip">${escapeHtml(getPermissionBadgeLabel(moduleKey))}</div>
+        <div class="workspace-hero__meta">
+          <div class="workspace-hero__chip">${escapeHtml(getModuleStageLabel(moduleKey))}</div>
+          <div class="workspace-hero__chip">${escapeHtml(getPermissionBadgeLabel(moduleKey))}</div>
         </div>
       </div>
     `;
@@ -3440,7 +3440,7 @@ export function createLiveWorkspaceController({
       <div class="workspace-modal-backdrop" data-live-modal-backdrop>
         <div class="workspace-modal">
           <div class="workspace-modal__head">
-            <div>
+            <div class="workspace-modal__title">
               <h3>${escapeHtml(title)}</h3>
               ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ""}
             </div>
