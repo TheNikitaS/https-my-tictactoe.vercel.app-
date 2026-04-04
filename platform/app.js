@@ -1,10 +1,10 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-premium16";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell17";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-premium16";
+const PLATFORM_BUILD = "20260404-platform-shell17";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -574,7 +574,7 @@ function persistShellUi() {
 
 function applyShellMode() {
   document.body.classList.toggle("platform-wide", STATE.ui.wideMode);
-  DOM.appShell.classList.toggle("sidebar-collapsed", STATE.ui.sidebarCollapsed);
+  DOM.appShell.classList.toggle("sidebar-collapsed", Boolean(STATE.ui.sidebarCollapsed && DOM.sidebarToggleButton));
 
   if (DOM.sidebarToggleButton) {
     DOM.sidebarToggleButton.textContent = STATE.ui.sidebarCollapsed ? "Показать меню" : "Свернуть меню";
@@ -797,12 +797,26 @@ function renderProfileCard() {
   const roleKey = STATE.profile?.role || (STATE.schemaReady ? "user" : "standalone");
   const role = getRoleTemplate(roleKey)?.display_name || roleKey;
   const partnerSlug = getCurrentPartnerSlug();
+  const initials = String(displayName)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() || "")
+    .join("")
+    .slice(0, 2) || "DN";
 
   DOM.profileCard.innerHTML = `
-    <div class="fw-bold">${escapeHtml(displayName)}</div>
-    <div class="text-muted small mb-2">${escapeHtml(STATE.user?.email || "—")}</div>
-    <span class="role-pill">${escapeHtml(role)}</span>
-    <div class="small text-muted mt-3">Партнерский scope: ${escapeHtml(partnerSlug || "не привязан")}</div>
+    <div class="profile-card__inner">
+      <div class="profile-card__avatar">${escapeHtml(initials)}</div>
+      <div class="profile-card__meta">
+        <strong>${escapeHtml(displayName)}</strong>
+        <span>${escapeHtml(STATE.user?.email || "—")}</span>
+        <div class="profile-card__foot">
+          <span class="role-pill">${escapeHtml(role)}</span>
+          <span class="profile-card__scope">scope: ${escapeHtml(partnerSlug || "общий")}</span>
+        </div>
+      </div>
+    </div>
   `;
 }
 
