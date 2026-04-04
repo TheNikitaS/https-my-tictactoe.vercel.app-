@@ -273,8 +273,22 @@ function composeAnswer(question, matches, context) {
   ].join("\n");
 }
 
+function normalizeApiBaseUrl(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+async function parseJsonSafe(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
+
 export function createDomovoyNeonik(options = {}) {
   const build = options.build || "latest";
+  const getApiBaseUrl = typeof options.getApiBaseUrl === "function" ? options.getApiBaseUrl : () => "";
+  const getAccessToken = typeof options.getAccessToken === "function" ? options.getAccessToken : async () => "";
   let indexedDocs = [];
   let readyPromise = null;
 
@@ -342,6 +356,50 @@ export function createDomovoyNeonik(options = {}) {
       };
     }
 
+    const apiBaseUrl = normalizeApiBaseUrl(getApiBaseUrl());
+    let remoteError = "";
+    if (apiBaseUrl) {
+      try {
+        const accessToken = String((await getAccessToken()) || "").trim();
+        const response = await fetch(`${apiBaseUrl}/api/domovoy/query`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+          },
+          body: JSON.stringify({
+            question: query,
+            history: Array.isArray(context.history) ? context.history : [],
+            context
+          })
+        });
+
+        const payload = await parseJsonSafe(response);
+        if (!response.ok) {
+          remoteError = payload?.detail || payload?.message || `HTTP ${response.status}`;
+        } else if (payload?.answer) {
+          const highlights = Array.isArray(payload.highlights) && payload.highlights.length
+            ? payload.highlights
+            : tokenize(query)
+                .slice(0, 5)
+                .filter(Boolean)
+                .reduce((acc, token) => {
+                  if (!acc.some((item) => item.toLowerCase() === token.toLowerCase())) acc.push(token);
+                  return acc;
+                }, []);
+
+          return {
+            answer: payload.answer,
+            sources: Array.isArray(payload.sources) ? payload.sources : [],
+            highlights,
+            mode: payload.mode || "server"
+          };
+        }
+      } catch (error) {
+        remoteError = error?.message || "не удалось обратиться к серверному ИИ";
+      }
+    }
+
     await ensureReady();
 
     const platformDocs = createIndexRows(buildPlatformContextDocs(context));
@@ -380,7 +438,7 @@ export function createDomovoyNeonik(options = {}) {
       }, []);
 
     return {
-      answer,
+      answer: remoteError ? `${answer}\n\nСерверный ИИ сейчас недоступен, поэтому я ответил по резервной локальной базе знаний.` : answer,
       sources,
       highlights
     };

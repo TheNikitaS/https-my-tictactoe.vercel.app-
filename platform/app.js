@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell23";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260404-platform-shell23";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-ai24";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260404-platform-ai24";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-shell23";
+const PLATFORM_BUILD = "20260404-platform-ai24";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -84,6 +84,11 @@ const STATE = {
   roleTemplates: [],
   selectedUserId: null,
   editingRoleKey: null,
+  platformConfig: {
+    domovoyApiBaseUrl: "",
+    domovoyHealth: null,
+    domovoySyncAt: ""
+  },
   threads: [],
   activeThreadId: null,
   ui: {
@@ -184,7 +189,15 @@ const MODULES = {
   }
 };
 
-const domovoyNeonik = createDomovoyNeonik({ build: PLATFORM_BUILD });
+const domovoyNeonik = createDomovoyNeonik({
+  build: PLATFORM_BUILD,
+  getApiBaseUrl: () => getDomovoyApiBaseUrl(),
+  getAccessToken: async () => {
+    if (STATE.session?.access_token) return STATE.session.access_token;
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token || "";
+  }
+});
 
 const MODULE_GROUPS = [
   "dashboard",
@@ -859,7 +872,14 @@ function buildAiContext() {
       crm: liveWorkspaceController.getDocument("crm"),
       warehouse: liveWorkspaceController.getDocument("warehouse"),
       tasks: liveWorkspaceController.getDocument("tasks")
-    }
+    },
+    history: STATE.ai.history
+      .filter((item) => item.role === "user" || item.role === "assistant")
+      .slice(-8)
+      .map((item) => ({
+        role: item.role,
+        content: item.body || ""
+      }))
   };
 }
 
@@ -961,6 +981,8 @@ function renderAiWidget() {
 function renderAiModule() {
   const lastAssistant = [...STATE.ai.history].reverse().find((item) => item.role === "assistant");
   const tokens = lastAssistant?.highlights || [];
+  const apiBaseUrl = getDomovoyApiBaseUrl();
+  const apiConfigured = Boolean(apiBaseUrl);
   const suggestions = getAiQuickQuestions()
     .map(
       (question) => `
@@ -976,6 +998,11 @@ function renderAiModule() {
           <div class="section-eyebrow">Внутренний ИИ компании</div>
           <h2>Домовой Неоник</h2>
           <p>База знаний для сотрудников и партнеров: отвечает по платформе, рабочим процессам, внутренним данным, архиву знаний Olesia и по публичным материалам с 24lite.ru и domneon.ru.</p>
+          <div class="compact-help mt-2">
+            ${apiConfigured
+              ? `Серверный ИИ подключён: ${escapeHtml(apiBaseUrl)}`
+              : "Сейчас включён локальный резервный режим. Чтобы Домовой отвечал как полноценный ИИ, укажите API в админ-панели."}
+          </div>
         </div>
         <div class="ai-assistant-hero__side">
           <div class="ai-assistant-badges">
@@ -1053,7 +1080,16 @@ async function askDomovoyNeonik(question, origin = "module") {
   }
 
   try {
-    const response = await domovoyNeonik.ask(cleanQuestion, buildAiContext());
+    const context = buildAiContext();
+    context.history = STATE.ai.history
+      .slice(0, -1)
+      .filter((item) => item.role === "user" || item.role === "assistant")
+      .slice(-8)
+      .map((item) => ({
+        role: item.role,
+        content: item.body || ""
+      }));
+    const response = await domovoyNeonik.ask(cleanQuestion, context);
     STATE.ai.history.push({
       role: "assistant",
       body: response.answer,
@@ -2115,6 +2151,118 @@ async function upsertSharedState(appId, payload) {
   if (insertError) throw insertError;
 }
 
+function normalizePlatformConfig(payload = {}) {
+  const source = payload && typeof payload === "object" ? payload : {};
+  return {
+    domovoyApiBaseUrl: String(source.domovoyApiBaseUrl || "").trim().replace(/\/+$/, ""),
+    domovoyHealth: source.domovoyHealth && typeof source.domovoyHealth === "object" ? source.domovoyHealth : null,
+    domovoySyncAt: String(source.domovoySyncAt || "")
+  };
+}
+
+function getDomovoyApiBaseUrl() {
+  return String(STATE.platformConfig?.domovoyApiBaseUrl || "").trim().replace(/\/+$/, "");
+}
+
+async function loadPlatformConfig() {
+  if (!STATE.schemaReady) {
+    STATE.platformConfig = normalizePlatformConfig();
+    renderDomovoySettings();
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from("shared_app_states")
+    .select("payload")
+    .eq("app_id", "platform_global_config")
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") throw error;
+  STATE.platformConfig = normalizePlatformConfig(data?.payload);
+  renderDomovoySettings();
+}
+
+async function savePlatformConfigPatch(patch = {}) {
+  const nextConfig = normalizePlatformConfig({
+    ...STATE.platformConfig,
+    ...patch
+  });
+  await upsertSharedState("platform_global_config", nextConfig);
+  STATE.platformConfig = nextConfig;
+  renderDomovoySettings();
+}
+
+function renderDomovoySettings() {
+  const form = document.getElementById("domovoyConfigForm");
+  const statusBox = document.getElementById("domovoyConfigStatus");
+  if (!form || !statusBox) return;
+
+  const urlInput = form.elements.domovoyApiBaseUrl;
+  if (urlInput && document.activeElement !== urlInput) {
+    urlInput.value = STATE.platformConfig.domovoyApiBaseUrl || "";
+  }
+
+  const health = STATE.platformConfig.domovoyHealth;
+  const fragments = [];
+  if (STATE.platformConfig.domovoyApiBaseUrl) {
+    fragments.push(`API: ${escapeHtml(STATE.platformConfig.domovoyApiBaseUrl)}`);
+  } else {
+    fragments.push("API пока не указан");
+  }
+  if (health?.status) {
+    fragments.push(`health: ${escapeHtml(health.status)}`);
+  }
+  if (health?.mode) {
+    fragments.push(`режим: ${escapeHtml(health.mode)}`);
+  }
+  if (STATE.platformConfig.domovoySyncAt) {
+    fragments.push(`синхронизация: ${escapeHtml(formatDateTime(STATE.platformConfig.domovoySyncAt))}`);
+  }
+
+  statusBox.innerHTML = fragments.join(" • ");
+}
+
+async function checkDomovoyHealth() {
+  const apiBaseUrl = getDomovoyApiBaseUrl();
+  if (!apiBaseUrl) {
+    throw new Error("Сначала укажите HTTPS-адрес API Домового Неоника.");
+  }
+  const response = await fetch(`${apiBaseUrl}/api/domovoy/health`, {
+    method: "GET",
+    headers: { Accept: "application/json" }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.detail || payload?.message || `HTTP ${response.status}`);
+  }
+  await savePlatformConfigPatch({ domovoyHealth: payload });
+  return payload;
+}
+
+async function syncDomovoySources() {
+  const apiBaseUrl = getDomovoyApiBaseUrl();
+  if (!apiBaseUrl) {
+    throw new Error("Сначала укажите HTTPS-адрес API Домового Неоника.");
+  }
+  const accessToken = STATE.session?.access_token || (await supabase.auth.getSession()).data?.session?.access_token || "";
+  const response = await fetch(`${apiBaseUrl}/api/domovoy/sync`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+    }
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.detail || payload?.message || `HTTP ${response.status}`);
+  }
+  await savePlatformConfigPatch({
+    domovoyHealth: payload?.sources ? { ...(STATE.platformConfig.domovoyHealth || {}), sources: payload.sources } : STATE.platformConfig.domovoyHealth,
+    domovoySyncAt: new Date().toISOString()
+  });
+  return payload;
+}
+
 async function clearTableByColumn(tableName, columnName, options = {}) {
   const { error } = await supabase.from(tableName).delete().not(columnName, "is", null);
   if (!error || error.code === "42P01") return;
@@ -2218,6 +2366,7 @@ async function bootstrapApp(session) {
   try {
     STATE.profile = await ensureProfile(session.user);
     await loadRoleTemplates();
+    await loadPlatformConfig();
     if (isAdmin()) {
       await loadPartnerProfiles();
     } else {
@@ -2228,6 +2377,7 @@ async function bootstrapApp(session) {
     if (isSchemaMissing(error)) {
       STATE.schemaReady = false;
       STATE.schemaError = error.message || "таблицы платформы не найдены";
+      STATE.platformConfig = normalizePlatformConfig();
       STATE.profile = {
         display_name: session.user.user_metadata?.display_name || session.user.email,
         role: "user",
@@ -2241,6 +2391,7 @@ async function bootstrapApp(session) {
   }
 
   renderSchemaWarning();
+  renderDomovoySettings();
   renderProfileCard();
   renderModuleNav();
   renderAiWidget();
@@ -2496,6 +2647,7 @@ async function loadAdminData() {
   renderPartnerDirectory();
   renderRoleTemplatesTable();
   fillRoleTemplateForm(getRoleTemplate(STATE.editingRoleKey));
+  renderDomovoySettings();
 }
 
 async function saveUserProfile(userId) {
@@ -3260,6 +3412,41 @@ function bindAppEvents() {
       setAuthStatus("Партнер сохранен.", "success");
     } catch (error) {
       setAuthStatus(error.message || "Не удалось сохранить партнера.", "error");
+    }
+  });
+
+  document.getElementById("domovoyConfigForm")?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    try {
+      const apiBaseUrl = String(form.elements.domovoyApiBaseUrl.value || "").trim().replace(/\/+$/, "");
+      await savePlatformConfigPatch({ domovoyApiBaseUrl: apiBaseUrl });
+      setAuthStatus("Настройки Домового Неоника сохранены.", "success");
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось сохранить настройки Домового Неоника.", "error");
+    }
+  });
+
+  document.getElementById("domovoyHealthButton")?.addEventListener("click", async () => {
+    try {
+      const payload = await checkDomovoyHealth();
+      setAuthStatus(
+        payload?.mode === "llm"
+          ? "Домовой Неоник подключён к серверному ИИ."
+          : "Домовой Неоник работает, но сейчас в резервном режиме.",
+        "success"
+      );
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось проверить API Домового Неоника.", "error");
+    }
+  });
+
+  document.getElementById("domovoySyncButton")?.addEventListener("click", async () => {
+    try {
+      await syncDomovoySources();
+      setAuthStatus("Синхронизация 24lite.ru и domneon.ru запущена.", "success");
+    } catch (error) {
+      setAuthStatus(error.message || "Не удалось запустить синхронизацию Домового Неоника.", "error");
     }
   });
 

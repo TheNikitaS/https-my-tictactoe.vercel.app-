@@ -4829,3 +4829,278 @@ body.platform-wide #appShell .content-shell {
 .auth-forms {
   padding: 24px 24px 22px;
 }
+
+/* Final interior pass: auth, admin, workspaces, tables, modals */
+
+body {
+  background:
+    radial-gradient(circle at top left, rgba(255, 247, 232, 0.82), transparent 42%),
+    linear-gradient(180deg, #eef3f8 0%, #e8eef5 100%);
+}
+
+.auth-screen {
+  padding: clamp(18px, 3vw, 40px);
+  background:
+    radial-gradient(circle at top right, rgba(38, 112, 186, 0.16), transparent 26%),
+    radial-gradient(circle at bottom left, rgba(189, 135, 58, 0.14), transparent 28%),
+    linear-gradient(180deg, #eff5fb 0%, #e5edf6 100%);
+}
+
+.auth-card {
+  border-radius: 32px;
+  border: 1px solid rgba(24, 58, 102, 0.10);
+  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,254,0.98) 100%);
+  box-shadow: 0 30px 70px rgba(16, 38, 67, 0.14);
+  overflow: hidden;
+}
+
+.auth-brand {
+  background:
+    radial-gradient(circle at top left, rgba(43, 120, 196, 0.16), transparent 34%),
+    linear-gradient(180deg, #173a67 0%, #1f548d 100%);
+  color: #f5f8fd;
+}
+
+.auth-eyebrow,
+.auth-brand p,
+.auth-brand .auth-point {
+  color: rgba(233, 242, 255, 0.84);
+}
+
+.auth-brand h1,
+.auth-brand .auth-point strong {
+  color: #ffffff;
+}
+
+.auth-point {
+  border: 1px solid rgba(255,255,255,0.16);
+  background: rgba(255,255,255,0.08);
+  border-radius: 18px;
+}
+
+.auth-forms {
+  background: linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(247,249,252,0.98) 100%);
+}
+
+.auth-forms .section-card {
+  border-radius: 24px;
+  border: 1px solid rgba(24, 58, 102, 0.10);
+  background: linear-gradient(180deg, #ffffff 0%, #f9fbfd 100%);
+  box-shadow: 0 18px 44px rgba(24, 52, 92, 0.08);
+}
+
+.auth-forms .form-control,
+.auth-forms .form-select {
+  min-height: 48px;
+  border-radius: 14px;
+  border-color: rgba(27, 56, 93, 0.14);
+  box-shadow: none;
+}
+
+.auth-forms .form-control:focus,
+.auth-forms .form-select:focus {
+  border-color: rgba(32, 107, 184, 0.44);
+  box-shadow: 0 0 0 0.2rem rgba(41, 122, 203, 0.12);
+}
+
+#appShell .topbar,
+#appShell .section-card,
+#appShell .workspace-panel,
+#appShell .table-shell,
+#appShell .dashboard-chart-card,
+#appShell .dashboard-alerts-card,
+#appShell .dashboard-panel,
+#appShell .dashboard-module-card,
+#appShell .workspace-modal {
+  border: 1px solid rgba(20, 47, 81, 0.10);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(249,251,254,0.98) 100%);
+  box-shadow: 0 18px 40px rgba(23, 48, 84, 0.08);
+}
+
+#appShell .section-card,
+#appShell .workspace-panel,
+#appShell .table-shell {
+  border-radius: 24px;
+}
+
+#appShell .card-toolbar,
+#appShell .panel-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+#appShell .card-toolbar h2,
+#appShell .panel-heading h3,
+#appShell .section-card h3 {
+  margin-bottom: 6px;
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #18314d;
+}
+
+#appShell .compact-help {
+  color: #647792;
+  line-height: 1.55;
+}
+
+#appShell .table-shell {
+  padding: 14px 16px;
+}
+
+#appShell .table-shell table {
+  margin-bottom: 0;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#appShell .table-shell thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: linear-gradient(180deg, #f8fbff 0%, #eef4fb 100%);
+  color: #5b6d86;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid rgba(24, 58, 102, 0.12);
+}
+
+#appShell .table-shell tbody td {
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-color: rgba(24, 58, 102, 0.08);
+}
+
+#appShell .table-shell tbody tr:hover {
+  background: rgba(43, 122, 201, 0.04);
+}
+
+#appShell .workspace-panel,
+#appShell .section-card {
+  padding: clamp(18px, 2vw, 26px);
+}
+
+#appShell .workspace-hero {
+  border-radius: 28px;
+  border: 1px solid rgba(20, 47, 81, 0.10);
+  background:
+    radial-gradient(circle at top right, rgba(46, 124, 199, 0.10), transparent 34%),
+    linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(246,249,253,0.98) 100%);
+  box-shadow: 0 24px 54px rgba(23, 48, 84, 0.09);
+}
+
+#appShell .workspace-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px 18px;
+}
+
+#appShell .workspace-form label > span,
+#appShell .workspace-form .form-label {
+  display: block;
+  margin-bottom: 8px;
+  color: #58708c;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#appShell .workspace-form .form-control,
+#appShell .workspace-form .form-select,
+#appShell .workspace-form textarea {
+  min-height: 48px;
+  border-radius: 14px;
+  border: 1px solid rgba(23, 52, 92, 0.14);
+  background: #fbfdff;
+  box-shadow: none;
+}
+
+#appShell .workspace-form textarea {
+  min-height: 120px;
+}
+
+#appShell .workspace-form .form-control:focus,
+#appShell .workspace-form .form-select:focus,
+#appShell .workspace-form textarea:focus {
+  border-color: rgba(42, 113, 184, 0.44);
+  box-shadow: 0 0 0 0.22rem rgba(44, 123, 201, 0.12);
+}
+
+#appShell .workspace-form__actions {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#appShell .workspace-modal-backdrop {
+  backdrop-filter: blur(9px);
+  background: rgba(14, 32, 55, 0.46);
+}
+
+#appShell .workspace-modal {
+  width: min(1180px, calc(100vw - 30px));
+  max-height: calc(100vh - 34px);
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+#appShell .workspace-modal__head {
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid rgba(18, 47, 82, 0.10);
+  background:
+    radial-gradient(circle at top right, rgba(42, 114, 185, 0.08), transparent 40%),
+    linear-gradient(180deg, #ffffff 0%, #f5f8fc 100%);
+}
+
+#appShell .workspace-modal__title h3 {
+  font-size: 1.42rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+#appShell .workspace-modal__title p {
+  color: #627792;
+}
+
+#appShell .workspace-modal__body {
+  padding: 24px 28px 28px;
+  background: linear-gradient(180deg, #fbfdff 0%, #f3f7fb 100%);
+}
+
+#appShell .workspace-modal__body .workspace-form {
+  display: grid;
+  gap: 18px;
+}
+
+#appShell #adminView .admin-grid {
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 20px;
+}
+
+#appShell #adminView .section-card {
+  min-height: 0;
+}
+
+#appShell #adminView .permission-summary__stats,
+#appShell #adminView .permission-grid {
+  gap: 12px;
+}
+
+#appShell .ai-widget__panel,
+#appShell .ai-assistant-shell .section-card {
+  border: 1px solid rgba(20, 47, 81, 0.10);
+  box-shadow: 0 18px 42px rgba(23, 48, 84, 0.10);
+}
+
+@media (max-width: 1280px) {
+  #appShell #adminView .admin-grid {
+    grid-template-columns: 1fr;
+  }
+}
