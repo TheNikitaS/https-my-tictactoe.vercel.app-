@@ -2208,29 +2208,15 @@ body.platform-wide .content-shell {
   justify-self: end;
 }
 
-#appShell .platform-header__actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-#appShell .platform-header__actions .btn {
-  min-height: 40px;
-  border-radius: 12px;
-  padding: 0 14px;
-  font-weight: 600;
-  font-size: 0.92rem;
-}
-
 #appShell .sidebar-toolbar,
 #appShell .section-title {
   display: none !important;
 }
 
 #appShell .profile-card {
-  min-width: 226px;
+  min-width: 248px;
   margin: 0;
-  padding: 8px 12px;
+  padding: 8px 10px;
   border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.1);
@@ -2301,6 +2287,71 @@ body.platform-wide .content-shell {
   font-size: 0.68rem;
 }
 
+#appShell .profile-card__menu {
+  position: relative;
+  margin-left: auto;
+}
+
+#appShell .profile-card__menu-toggle {
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+#appShell .profile-card__menu-toggle:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+#appShell .profile-card__dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  min-width: 220px;
+  display: grid;
+  gap: 6px;
+  padding: 10px;
+  border-radius: 16px;
+  border: 1px solid rgba(197, 209, 221, 0.88);
+  background: rgba(255, 255, 255, 0.99);
+  box-shadow: 0 18px 36px rgba(11, 27, 42, 0.2);
+  z-index: 160;
+}
+
+#appShell .profile-card__action {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(218, 225, 233, 0.9);
+  border-radius: 12px;
+  background: #ffffff;
+  color: #17324a;
+  font-weight: 600;
+  text-align: left;
+}
+
+#appShell .profile-card__action:hover {
+  background: rgba(240, 246, 252, 0.98);
+  border-color: rgba(52, 115, 171, 0.24);
+}
+
+#appShell .profile-card__action--danger {
+  color: #9a2d2d;
+}
+
+#appShell .profile-card__action--danger:hover {
+  background: rgba(255, 245, 245, 0.98);
+  border-color: rgba(194, 71, 71, 0.22);
+}
+
 #appShell .content-shell,
 body.platform-wide #appShell .content-shell {
   width: min(1820px, calc(100% - 28px));
@@ -2308,6 +2359,7 @@ body.platform-wide #appShell .content-shell {
   padding: 20px 0 34px;
   min-height: calc(100vh - 108px);
   overflow: visible;
+  overflow-x: hidden;
 }
 
 #appShell .topbar {
@@ -2406,6 +2458,14 @@ body.platform-wide #appShell .content-shell {
   min-width: 0;
 }
 
+#appShell .admin-grid .section-card,
+#appShell .admin-grid .table-shell,
+#appShell .admin-grid .card-toolbar,
+#appShell .admin-grid .permission-card,
+#appShell .admin-grid .permission-card__flags {
+  min-width: 0;
+}
+
 #appShell .admin-stack,
 #appShell .messenger-shell,
 #appShell .permission-grid,
@@ -2421,16 +2481,29 @@ body.platform-wide #appShell .content-shell {
 }
 
 #appShell .table-shell table {
-  min-width: 720px;
+  min-width: 680px;
 }
 
 #appShell .card-toolbar > * {
   min-width: 0;
 }
 
+#appShell .permission-card__flags {
+  gap: 10px;
+}
+
+#appShell .permission-flag {
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
 @media (max-width: 1380px) {
   #appShell > .platform-header {
     grid-template-columns: minmax(170px, 220px) minmax(0, 1fr);
+  }
+
+  #appShell .admin-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -2450,10 +2523,6 @@ body.platform-wide #appShell .content-shell {
 
   #appShell .profile-card {
     min-width: 0;
-  }
-
-  #appShell .platform-header__actions {
-    flex-wrap: wrap;
   }
 
   #appShell .platform-header__nav {
@@ -2500,6 +2569,12 @@ body.platform-wide #appShell .content-shell {
     flex-direction: column;
     align-items: start;
     gap: 4px;
+  }
+
+  #appShell .profile-card__dropdown {
+    left: 0;
+    right: auto;
+    min-width: 100%;
   }
 
   #appShell .dashboard-grid {

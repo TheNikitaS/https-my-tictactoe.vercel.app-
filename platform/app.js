@@ -1,10 +1,10 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell18";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell19";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-shell18";
+const PLATFORM_BUILD = "20260404-platform-shell19";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -32,6 +32,8 @@ const DOM = {
   viewSubtitle: document.getElementById("viewSubtitle"),
   sidebarToggleButton: document.getElementById("sidebarToggleButton"),
   wideModeButton: document.getElementById("wideModeButton"),
+  refreshButton: document.getElementById("refreshButton"),
+  signOutButton: document.getElementById("signOutButton"),
   dashboardView: document.getElementById("dashboardView"),
   dashboardGrid: document.getElementById("dashboardGrid"),
   embedView: document.getElementById("embedView"),
@@ -84,6 +86,9 @@ const STATE = {
   shellStatus: {
     message: "",
     tone: ""
+  },
+  menu: {
+    profileOpen: false
   }
 };
 
@@ -599,6 +604,7 @@ function toggleWideMode() {
   STATE.ui.wideMode = !STATE.ui.wideMode;
   persistShellUi();
   applyShellMode();
+  renderProfileCard();
 }
 
 function escapeHtml(value) {
@@ -814,6 +820,25 @@ function renderProfileCard() {
         <div class="profile-card__foot">
           <span class="role-pill">${escapeHtml(role)}</span>
           <span class="profile-card__scope">scope: ${escapeHtml(partnerSlug || "общий")}</span>
+        </div>
+      </div>
+      <div class="profile-card__menu">
+        <button class="profile-card__menu-toggle" type="button" data-profile-menu-toggle aria-expanded="${STATE.menu.profileOpen ? "true" : "false"}" aria-label="Открыть меню профиля">
+          <i class="bi bi-three-dots"></i>
+        </button>
+        <div class="profile-card__dropdown${STATE.menu.profileOpen ? "" : " d-none"}">
+          <button class="profile-card__action" type="button" data-profile-action="wide">
+            <i class="bi ${STATE.ui.wideMode ? "bi-arrows-angle-contract" : "bi-arrows-angle-expand"}"></i>
+            <span>${STATE.ui.wideMode ? "Обычная ширина" : "Широкий режим"}</span>
+          </button>
+          <button class="profile-card__action" type="button" data-profile-action="refresh">
+            <i class="bi bi-arrow-clockwise"></i>
+            <span>Обновить</span>
+          </button>
+          <button class="profile-card__action profile-card__action--danger" type="button" data-profile-action="signout">
+            <i class="bi bi-box-arrow-right"></i>
+            <span>Выйти</span>
+          </button>
         </div>
       </div>
     </div>
@@ -1078,6 +1103,10 @@ function hideViews() {
 async function openModule(key) {
   if (!hasModuleAccess(key)) return;
   const module = MODULES[key];
+  if (STATE.menu.profileOpen) {
+    STATE.menu.profileOpen = false;
+    renderProfileCard();
+  }
   const nextSrc = module.type === "embed" ? (typeof module.src === "function" ? module.src() : module.src) : "";
   const sameEmbedAlreadyOpen =
     module.type === "embed" &&
@@ -2135,11 +2164,11 @@ function bindAppEvents() {
     }
   });
 
-  document.getElementById("signOutButton").addEventListener("click", async () => {
+  DOM.signOutButton?.addEventListener("click", async () => {
     await supabase.auth.signOut();
   });
 
-  document.getElementById("refreshButton").addEventListener("click", async () => {
+  DOM.refreshButton?.addEventListener("click", async () => {
     await refreshCurrentView();
   });
 
@@ -2164,6 +2193,40 @@ function bindAppEvents() {
     if (!button) return;
     DOM.aiWidgetPanel?.classList.add("d-none");
     await openModule(button.dataset.aiOpen);
+  });
+
+  DOM.profileCard?.addEventListener("click", async (event) => {
+    const toggle = event.target.closest("[data-profile-menu-toggle]");
+    if (toggle) {
+      STATE.menu.profileOpen = !STATE.menu.profileOpen;
+      renderProfileCard();
+      return;
+    }
+
+    const actionButton = event.target.closest("[data-profile-action]");
+    if (!actionButton) return;
+
+    STATE.menu.profileOpen = false;
+    const action = actionButton.dataset.profileAction;
+    if (action === "wide") {
+      toggleWideMode();
+      return;
+    }
+    if (action === "refresh") {
+      await refreshCurrentView();
+      renderProfileCard();
+      return;
+    }
+    if (action === "signout") {
+      await supabase.auth.signOut();
+    }
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!STATE.menu.profileOpen) return;
+    if (event.target.closest("#profileCard")) return;
+    STATE.menu.profileOpen = false;
+    renderProfileCard();
   });
 
   document.getElementById("reloadUsersButton").addEventListener("click", async () => {
