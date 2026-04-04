@@ -1,10 +1,10 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-premium14";
+﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-premium16";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-premium14";
+const PLATFORM_BUILD = "20260404-platform-premium16";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -53,7 +53,10 @@ const DOM = {
   messageThreadMeta: document.getElementById("messageThreadMeta"),
   placeholderView: document.getElementById("placeholderView"),
   placeholderCard: document.getElementById("placeholderCard"),
-  schemaWarningSection: document.getElementById("schemaWarningSection")
+  schemaWarningSection: document.getElementById("schemaWarningSection"),
+  aiWidgetToggle: document.getElementById("aiWidgetToggle"),
+  aiWidgetPanel: document.getElementById("aiWidgetPanel"),
+  aiWidgetClose: document.getElementById("aiWidgetClose")
 };
 
 const STATE = {
@@ -127,6 +130,11 @@ const MODULES = {
     subtitle: "Пользователи, роли, доступы и список партнеров.",
     type: "admin"
   },
+  directories: {
+    title: "Данные",
+    subtitle: "Единые справочники и выпадающие списки для всей платформы.",
+    type: "placeholder"
+  },
   crm: {
     title: "CRM",
     subtitle: "Живой коммерческий контур: сделки, стадии, карточки клиентов, вкладки и KPI-конструктор.",
@@ -157,6 +165,7 @@ const MODULE_GROUPS = [
   "light2",
   "messenger",
   "admin",
+  "directories",
   "crm",
   "warehouse",
   "tasks",
@@ -183,6 +192,7 @@ const DEFAULT_ROLE_TEMPLATES = [
       light2: { view: true, edit: true, manage: true },
       messenger: { view: true, edit: true, manage: true },
       admin: { view: true, edit: true, manage: true },
+      directories: { view: true, edit: true, manage: true },
       crm: { view: true, edit: true, manage: true },
       warehouse: { view: true, edit: true, manage: true },
       tasks: { view: true, edit: true, manage: true },
@@ -202,6 +212,7 @@ const DEFAULT_ROLE_TEMPLATES = [
       light2: { view: true, edit: true, manage: true },
       messenger: { view: true, edit: true, manage: true },
       admin: { view: true, edit: true, manage: true },
+      directories: { view: true, edit: true, manage: true },
       crm: { view: true, edit: true, manage: true },
       warehouse: { view: true, edit: true, manage: true },
       tasks: { view: true, edit: true, manage: true },
@@ -219,6 +230,7 @@ const DEFAULT_ROLE_TEMPLATES = [
       my_calculator: { view: true, edit: true, manage: false },
       partner_calculator: { view: true, edit: true, manage: false },
       light2: { view: true, edit: true, manage: false },
+      directories: { view: true, edit: true, manage: false },
       messenger: { view: true, edit: true, manage: false }
     }
   },
@@ -241,6 +253,7 @@ const DEFAULT_ROLE_TEMPLATES = [
     is_system: true,
     module_permissions: {
       dashboard: { view: true, edit: false, manage: false },
+      directories: { view: true, edit: false, manage: false },
       messenger: { view: true, edit: true, manage: false }
     }
   },
@@ -516,19 +529,38 @@ function sanitizeSlug(value) {
 
 function getModuleShortLabel(key) {
   const labels = {
-    dashboard: "ПУ",
-    sales: "Прод",
-    my_calculator: "Мой",
-    partner_calculator: "Парт",
-    light2: "Дом",
-    messenger: "Чат",
-    admin: "Адм",
+    dashboard: "KPI",
+    sales: "Sales",
+    my_calculator: "Calc",
+    partner_calculator: "Part",
+    light2: "Core",
+    messenger: "Chat",
+    admin: "Admin",
+    directories: "Data",
     crm: "CRM",
-    warehouse: "Склад",
-    tasks: "Задачи",
-    ai: "ИИ"
+    warehouse: "Stock",
+    tasks: "Tasks",
+    ai: "AI"
   };
-  return labels[key] || "Мод";
+  return labels[key] || "App";
+}
+
+function getModuleIconClass(key) {
+  const icons = {
+    dashboard: "bi-graph-up-arrow",
+    sales: "bi-bag-check",
+    my_calculator: "bi-calculator",
+    partner_calculator: "bi-people",
+    light2: "bi-building",
+    messenger: "bi-chat-dots",
+    admin: "bi-shield-check",
+    directories: "bi-sliders2",
+    crm: "bi-kanban",
+    warehouse: "bi-box-seam",
+    tasks: "bi-list-check",
+    ai: "bi-stars"
+  };
+  return icons[key] || "bi-grid";
 }
 
 function persistShellUi() {
@@ -776,6 +808,7 @@ function renderProfileCard() {
 
 function renderModuleNav() {
   DOM.moduleNav.innerHTML = "";
+  DOM.moduleNav.classList.add("module-nav--top");
   moduleListFromProfile().forEach((key) => {
     const button = document.createElement("button");
     button.type = "button";
@@ -783,6 +816,7 @@ function renderModuleNav() {
     button.dataset.shortLabel = getModuleShortLabel(key);
     button.classList.toggle("active", STATE.activeModule === key);
     button.innerHTML = `
+      <span class="module-nav-icon"><i class="bi ${escapeHtml(getModuleIconClass(key))}"></i></span>
       <span class="module-nav-main">${escapeHtml(MODULES[key].title)}</span>
       <span class="module-nav-mini">${escapeHtml(getModuleShortLabel(key))}</span>
     `;
@@ -798,6 +832,7 @@ function getModuleStageLabel(moduleKey) {
     light2: "Активно развивается",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",
+    directories: "Единый слой данных",
     crm: "Живой рабочий модуль",
     warehouse: "Живой рабочий модуль",
     tasks: "Живой рабочий модуль",
@@ -2102,6 +2137,21 @@ function bindAppEvents() {
     toggleWideMode();
   });
 
+  DOM.aiWidgetToggle?.addEventListener("click", () => {
+    DOM.aiWidgetPanel?.classList.toggle("d-none");
+  });
+
+  DOM.aiWidgetClose?.addEventListener("click", () => {
+    DOM.aiWidgetPanel?.classList.add("d-none");
+  });
+
+  DOM.aiWidgetPanel?.addEventListener("click", async (event) => {
+    const button = event.target.closest("[data-ai-open]");
+    if (!button) return;
+    DOM.aiWidgetPanel?.classList.add("d-none");
+    await openModule(button.dataset.aiOpen);
+  });
+
   document.getElementById("reloadUsersButton").addEventListener("click", async () => {
     await loadAdminData();
   });
@@ -2318,3 +2368,5 @@ init().catch((error) => {
   showAuthScreen();
   setAuthStatus(error.message || "Платформа не смогла запуститься.", "error");
 });
+
+

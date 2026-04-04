@@ -1,4 +1,5 @@
 import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
@@ -1054,29 +1055,27 @@ function getSectionFormulaCards(sectionKey) {
   return formulas
     .map((formula) => {
       try {
-        const evaluator = new Function(
-          "records",
-          "count",
-          "countWhere",
-          "sum",
-          "avg",
-          "min",
-          "max",
-          "percent",
-          "today",
-          `return (${formula.expression || "0"});`
-        );
-        const value = evaluator(
-          records,
-          helpers.count,
-          helpers.countWhere,
-          helpers.sum,
-          helpers.avg,
-          helpers.min,
-          helpers.max,
-          helpers.percent,
-          helpers.today
-        );
+        const value = evaluateSafeFormula(formula.expression || "0", {
+          variables: {
+            records,
+            today: helpers.today
+          },
+          functions: {
+            count: helpers.count,
+            countWhere: helpers.countWhere,
+            sum: helpers.sum,
+            avg: helpers.avg,
+            min: helpers.min,
+            max: helpers.max,
+            percent: helpers.percent,
+            abs: Math.abs,
+            round: Math.round,
+            ceil: Math.ceil,
+            floor: Math.floor,
+            minOf: Math.min,
+            maxOf: Math.max
+          }
+        });
         return `
           <article class="summary-card summary-card--builder">
             <span>${escapeHtml(formula.label)}</span>

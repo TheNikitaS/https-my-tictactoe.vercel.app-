@@ -1,4 +1,12 @@
-﻿const LIVE_MODULE_CONFIG = {
+import { evaluateSafeFormula } from "./shared/safe-formula.js";
+
+const LIVE_MODULE_CONFIG = {
+  directories: {
+    appId: "platform_directories_v1",
+    intro:
+      "Единые справочники платформы: каналы, сотрудники, категории, единицы измерения и любые ваши выпадающие списки.",
+    links: ["crm", "warehouse", "tasks", "light2"]
+  },
   crm: {
     appId: "platform_crm_v2",
     legacyAppId: "platform_crm_v1",
@@ -140,6 +148,10 @@ const BUILDER_META = {
 };
 
 const MODULE_MODE_CONFIG = {
+  directories: [
+    { key: "overview", label: "Обзор" },
+    { key: "lists", label: "Справочники" }
+  ],
   crm: [
     { key: "overview", label: "Обзор" },
     { key: "board", label: "Воронка" },
@@ -167,6 +179,37 @@ const EXTERNAL_SHARED_APPS = {
   myCalculator: "moy-calculator",
   partnerCalculatorsPattern: "part-calculator%"
 };
+
+const DEFAULT_DIRECTORY_LISTS = [
+  {
+    id: "crm_channels",
+    key: "crm_channels",
+    title: "Каналы CRM",
+    description: "Источники лидов и заказов.",
+    options: ["Авито", "Сайт", "Наш клиент", "VK", "Сообщество", "Рекомендации"]
+  },
+  {
+    id: "team_members",
+    key: "team_members",
+    title: "Сотрудники",
+    description: "Менеджеры, дизайнеры, мастера и ответственные.",
+    options: ["Никита Сухотин"]
+  },
+  {
+    id: "warehouse_categories",
+    key: "warehouse_categories",
+    title: "Категории склада",
+    description: "Группы товаров и материалов.",
+    options: ["Неон", "Блоки питания", "Профиль", "Крепеж", "Расходники"]
+  },
+  {
+    id: "warehouse_units",
+    key: "warehouse_units",
+    title: "Единицы измерения",
+    description: "Единицы для каталога товаров и материалов.",
+    options: ["шт", "м", "компл", "упак"]
+  }
+];
 
 const moneyFormatter = new Intl.NumberFormat("ru-RU", {
   style: "currency",
@@ -302,6 +345,7 @@ function parseSelectOptions(value) {
 }
 
 function getDefaultFilters(moduleKey) {
+  if (moduleKey === "directories") return { search: "" };
   if (moduleKey === "crm") return { search: "", stage: "all", owner: "all" };
   if (moduleKey === "warehouse") return { search: "", category: "all" };
   return { search: "", status: "all", sprint: "all", owner: "all" };
@@ -376,6 +420,29 @@ function createDefaultCrmDoc() {
   return { version: 2, builder: normalizeBuilderSchema("crm", null), deals: [], updatedAt: new Date().toISOString() };
 }
 
+function normalizeDirectoryList(list, index = 0) {
+  const key = sanitizeKey(list?.key || list?.id || list?.title || `directory_${index + 1}`);
+  if (!key) return null;
+  const options = Array.isArray(list?.options)
+    ? list.options.map((option) => compactText(option)).filter(Boolean)
+    : parseSelectOptions(list?.options);
+  return {
+    id: compactText(list?.id) || key,
+    key,
+    title: compactText(list?.title) || key,
+    description: compactText(list?.description),
+    options: [...new Set(options)]
+  };
+}
+
+function createDefaultDirectoriesDoc() {
+  return {
+    version: 1,
+    lists: DEFAULT_DIRECTORY_LISTS.map((list, index) => normalizeDirectoryList(list, index)).filter(Boolean),
+    updatedAt: new Date().toISOString()
+  };
+}
+
 function createDefaultWarehouseDoc() {
   return { version: 2, builder: normalizeBuilderSchema("warehouse", null), items: [], movements: [], updatedAt: new Date().toISOString() };
 }
@@ -388,6 +455,16 @@ function normalizeCrmDoc(payload) {
   const next = payload && typeof payload === "object" ? deepClone(payload) : createDefaultCrmDoc();
   next.builder = normalizeBuilderSchema("crm", next.builder);
   next.deals = Array.isArray(next.deals) ? next.deals.map((deal) => ({ ...deal, custom: deal?.custom && typeof deal.custom === "object" ? deal.custom : {} })) : [];
+  next.updatedAt = next.updatedAt || new Date().toISOString();
+  return next;
+}
+
+function normalizeDirectoriesDoc(payload) {
+  const next = payload && typeof payload === "object" ? deepClone(payload) : createDefaultDirectoriesDoc();
+  const baseLists = createDefaultDirectoriesDoc().lists || [];
+  const incomingLists = Array.isArray(next.lists) ? next.lists : [];
+  const merged = [...incomingLists, ...baseLists].map((list, index) => normalizeDirectoryList(list, index)).filter(Boolean);
+  next.lists = merged.filter((list, index, collection) => collection.findIndex((item) => item.key === list.key) === index);
   next.updatedAt = next.updatedAt || new Date().toISOString();
   return next;
 }
@@ -633,31 +710,29 @@ function getFormulaMetrics(moduleKey, doc, records) {
   const helpers = getFormulaHelpers(records);
   return formulas.map((formula) => {
     try {
-      const evaluator = new Function(
-        "records",
-        "helpers",
-        "count",
-        "countWhere",
-        "sum",
-        "avg",
-        "min",
-        "max",
-        "percent",
-        "today",
-        `return (${formula.expression || "0"});`
-      );
-      const value = evaluator(
-        records,
-        helpers,
-        helpers.count,
-        helpers.countWhere,
-        helpers.sum,
-        helpers.avg,
-        helpers.min,
-        helpers.max,
-        helpers.percent,
-        helpers.today
-      );
+      const value = evaluateSafeFormula(formula.expression || "0", {
+        variables: {
+          records,
+          helpers,
+          today: helpers.today
+        },
+        functions: {
+          values: helpers.values,
+          count: helpers.count,
+          countWhere: helpers.countWhere,
+          sum: helpers.sum,
+          avg: helpers.avg,
+          min: helpers.min,
+          max: helpers.max,
+          percent: helpers.percent,
+          abs: Math.abs,
+          round: Math.round,
+          ceil: Math.ceil,
+          floor: Math.floor,
+          minOf: Math.min,
+          maxOf: Math.max
+        }
+      });
       return { label: formula.label, value: formatFormulaValue(formula.format, value), caption: "Формула конструктора" };
     } catch (error) {
       return { label: formula.label, value: "Ошибка", caption: error.message || "Формула не рассчиталась" };
@@ -843,7 +918,7 @@ export function createLiveWorkspaceController({
   rerenderDashboard,
   schemaReadyProvider
 }) {
-  const docs = { crm: null, warehouse: null, tasks: null };
+  const docs = { directories: null, crm: null, warehouse: null, tasks: null };
   const externalDocs = {
     sales: null,
     myCalculator: null,
@@ -980,18 +1055,21 @@ export function createLiveWorkspaceController({
   }
 
   const ui = {
-    crm: hydrateUiState("crm", { search: "", stage: "all", owner: "all", editId: null, activeViewId: "default", configOpen: false, mode: "overview" }),
-    warehouse: hydrateUiState("warehouse", { search: "", category: "all", itemEditId: null, movementItemId: "", activeViewId: "default", configOpen: false, mode: "overview" }),
-    tasks: hydrateUiState("tasks", { search: "", status: "all", sprint: "all", owner: "all", taskEditId: null, sprintEditId: null, activeViewId: "default", configOpen: false, mode: "overview" })
+    directories: hydrateUiState("directories", { search: "", activeListId: "crm_channels", activeViewId: "default", mode: "overview", modal: "" }),
+    crm: hydrateUiState("crm", { search: "", stage: "all", owner: "all", editId: null, activeViewId: "default", configOpen: false, mode: "overview", modal: "" }),
+    warehouse: hydrateUiState("warehouse", { search: "", category: "all", itemEditId: null, movementItemId: "", activeViewId: "default", configOpen: false, mode: "overview", modal: "" }),
+    tasks: hydrateUiState("tasks", { search: "", status: "all", sprint: "all", owner: "all", taskEditId: null, sprintEditId: null, activeViewId: "default", configOpen: false, mode: "overview", modal: "" })
   };
 
   const docFactories = {
+    directories: createDefaultDirectoriesDoc,
     crm: createDefaultCrmDoc,
     warehouse: createDefaultWarehouseDoc,
     tasks: createDefaultTasksDoc
   };
 
   const docNormalizers = {
+    directories: normalizeDirectoriesDoc,
     crm: normalizeCrmDoc,
     warehouse: normalizeWarehouseDoc,
     tasks: normalizeTasksDoc
@@ -1093,6 +1171,20 @@ export function createLiveWorkspaceController({
       return externalDocs.partnerCalculators;
     }
     return null;
+  }
+
+  function getDirectoriesDoc() {
+    return docs.directories || createDefaultDirectoriesDoc();
+  }
+
+  function getDirectoryList(listKey) {
+    const normalizedKey = sanitizeKey(listKey);
+    if (!normalizedKey) return null;
+    return (getDirectoriesDoc().lists || []).find((list) => list.key === normalizedKey || list.id === normalizedKey) || null;
+  }
+
+  function getDirectoryOptions(listKey) {
+    return getDirectoryList(listKey)?.options || [];
   }
 
   function normalizeSalesOrder(order) {
@@ -1954,6 +2046,121 @@ export function createLiveWorkspaceController({
     persistUiState(moduleKey);
   }
 
+  async function renderDirectories(doc) {
+    const canEdit = hasModulePermission("directories", "edit");
+    const canManage = hasModulePermission("directories", "manage");
+    const filters = ui.directories;
+    const allLists = Array.isArray(doc.lists) ? doc.lists : [];
+    const filteredLists = allLists.filter((list) => matchesSearch([list.title, list.key, list.description, ...(list.options || [])].join(" "), filters.search));
+    const selectedList =
+      filteredLists.find((list) => list.id === filters.activeListId || list.key === filters.activeListId) ||
+      allLists.find((list) => list.id === filters.activeListId || list.key === filters.activeListId) ||
+      filteredLists[0] ||
+      allLists[0] ||
+      null;
+    const selectedOptions = selectedList?.options || [];
+    const metrics = [
+      { label: "Справочников", value: formatNumber(allLists.length), caption: "общая библиотека списков" },
+      { label: "Значений", value: formatNumber(sumBy(allLists, (list) => (list.options || []).length)), caption: "всего выпадающих значений" },
+      { label: "Каналы CRM", value: formatNumber(getDirectoryOptions("crm_channels").length), caption: "готово для лидов и продаж" },
+      { label: "Сотрудники", value: formatNumber(getDirectoryOptions("team_members").length), caption: "единый список ответственных" }
+    ];
+    const actionBar = renderActionBar(
+      "directories",
+      [
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-directory-new>Новый справочник</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="directories">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="directories">Импорт JSON</button>' : ""
+      ].filter(Boolean),
+      escapeHtml
+    );
+    return `
+      <div class="workspace-shell">
+        ${renderWorkspaceHeader("directories")}
+        ${renderMetricGrid(metrics)}
+        ${buildModeTabs("directories", escapeHtml)}
+        ${actionBar}
+        <div class="workspace-toolbar">
+          <div class="workspace-toolbar__group">
+            <input class="form-control" type="search" placeholder="Поиск по названию, ключу или значению" value="${escapeHtml(filters.search)}" data-live-filter="search" />
+          </div>
+          <div class="workspace-toolbar__group workspace-toolbar__group--end">
+            <span class="workspace-note">Справочники подключаются к формам CRM, Склада и Тасктрекера без двойной настройки.</span>
+          </div>
+        </div>
+        <div class="workspace-grid workspace-grid--3">
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Каталог</h4><div class="compact-help">Создавайте списки один раз и используйте их во всей платформе.</div></div></div>
+            <div class="workspace-stack">
+              ${filteredLists.length
+                ? filteredLists
+                    .map(
+                      (list) => `
+                        <button class="workspace-list-item workspace-list-item--button ${selectedList?.key === list.key ? "workspace-list-item--active" : ""}" type="button" data-directory-select="${escapeHtml(list.key)}">
+                          <div>
+                            <strong>${escapeHtml(list.title)}</strong>
+                            <div class="workspace-list-item__meta">${escapeHtml(list.key)} • ${escapeHtml(list.description || "Без описания")}</div>
+                          </div>
+                          <div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber((list.options || []).length))}</div></div>
+                        </button>
+                      `
+                    )
+                    .join("")
+                : '<div class="workspace-empty workspace-empty--tight">Справочники пока не найдены.</div>'}
+            </div>
+          </section>
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>${selectedList ? "Настройки списка" : "Новый список"}</h4><div class="compact-help">Ключ лучше не менять часто: на него могут ссылаться поля и выпадашки.</div></div></div>
+            ${canEdit
+              ? `<form id="directoriesListForm" class="workspace-form">
+                  <input type="hidden" name="id" value="${escapeHtml(selectedList?.id || "")}" />
+                  <div class="workspace-form-grid">
+                    <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(selectedList?.title || "")}" placeholder="Каналы CRM" required /></label>
+                    <label><span>Ключ</span><input class="form-control" type="text" name="key" value="${escapeHtml(selectedList?.key || "")}" placeholder="crm_channels" required /></label>
+                  </div>
+                  <label><span>Описание</span><textarea class="form-control" name="description" rows="3" placeholder="Для чего используется этот справочник">${escapeHtml(selectedList?.description || "")}</textarea></label>
+                  <div class="workspace-form__actions">
+                    <button class="btn btn-dark" type="submit">${selectedList ? "Сохранить список" : "Создать список"}</button>
+                    ${selectedList && canManage ? `<button class="btn btn-outline-danger" type="button" data-directory-delete="${escapeHtml(selectedList.key)}">Удалить</button>` : ""}
+                  </div>
+                </form>`
+              : renderAccessHint("directories")}
+          </section>
+          <section class="workspace-panel">
+            <div class="panel-heading"><div><h4>Значения</h4><div class="compact-help">Значения сразу появятся в ваших выпадающих списках и подсказках.</div></div></div>
+            ${selectedList
+              ? `${canEdit
+                  ? `<form id="directoriesOptionForm" class="workspace-form workspace-form--inline">
+                      <input type="hidden" name="key" value="${escapeHtml(selectedList.key)}" />
+                      <label class="workspace-form__grow"><span>Новое значение</span><input class="form-control" type="text" name="option" placeholder="Добавить значение" required /></label>
+                      <button class="btn btn-dark" type="submit">Добавить</button>
+                    </form>`
+                  : ""}
+                <div class="workspace-stack mt-3">
+                  ${selectedOptions.length
+                    ? selectedOptions
+                        .map(
+                          (option, index) => `
+                            <div class="workspace-list-item">
+                              <div>
+                                <strong>${escapeHtml(option)}</strong>
+                                <div class="workspace-list-item__meta">Позиция ${escapeHtml(String(index + 1))}</div>
+                              </div>
+                              ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-directory-option-delete="${escapeHtml(`${selectedList.key}:${option}`)}">Удалить</button>` : ""}
+                            </div>
+                          `
+                        )
+                        .join("")
+                    : '<div class="workspace-empty workspace-empty--tight">В этом списке пока нет значений.</div>'}
+                </div>`
+              : '<div class="workspace-empty workspace-empty--tight">Выберите справочник слева или создайте новый.</div>'}
+          </section>
+        </div>
+        ${renderRelatedLinks("directories")}
+      </div>
+    `;
+  }
+
   function getFilteredCrmDeals(doc) {
     const filters = ui.crm;
     return sortByDateDesc(doc.deals || [], "updatedAt").filter((deal) => {
@@ -2518,6 +2725,7 @@ export function createLiveWorkspaceController({
 
   async function render(moduleKey) {
     if (!supports(moduleKey)) return "";
+    if (moduleKey === "directories") return await renderDirectories(await ensureDocument("directories"));
     const doc = await ensureDocument(moduleKey);
     if (moduleKey === "crm") return await renderCrm(doc);
     if (moduleKey === "warehouse") return await renderWarehouse(doc);
@@ -2534,6 +2742,7 @@ export function createLiveWorkspaceController({
   }
 
   function resetFormState(moduleKey) {
+    if (ui[moduleKey]) ui[moduleKey].modal = "";
     if (moduleKey === "crm") ui.crm.editId = null;
     if (moduleKey === "warehouse") ui.warehouse.itemEditId = null;
     if (moduleKey === "tasks") {
@@ -2544,18 +2753,21 @@ export function createLiveWorkspaceController({
 
   function focusEntity(moduleKey, entity = {}) {
     if (moduleKey === "crm") {
+      ui.crm.modal = "";
       ui.crm.editId = compactText(entity.entityId || entity.dealId || entity.id);
       ui.crm.mode = "form";
       persistUiState("crm");
       return;
     }
     if (moduleKey === "warehouse") {
+      ui.warehouse.modal = "";
       ui.warehouse.itemEditId = compactText(entity.entityId || entity.itemId || entity.id);
       ui.warehouse.mode = "form";
       persistUiState("warehouse");
       return;
     }
     if (moduleKey === "tasks") {
+      ui.tasks.modal = "";
       ui.tasks.taskEditId = compactText(entity.entityId || entity.taskId || entity.id);
       ui.tasks.mode = "form";
       persistUiState("tasks");
@@ -2586,6 +2798,7 @@ export function createLiveWorkspaceController({
     if (index >= 0) deals[index] = record;
     else deals.unshift(record);
     ui.crm.editId = null;
+    ui.crm.modal = "";
     clearDraft("crm", "deal");
     persistUiState("crm");
     await saveDocument("crm", { ...doc, deals }, index >= 0 ? "Сделка обновлена." : "Сделка добавлена.");
@@ -2615,6 +2828,7 @@ export function createLiveWorkspaceController({
     if (index >= 0) items[index] = record;
     else items.unshift(record);
     ui.warehouse.itemEditId = null;
+    ui.warehouse.modal = "";
     clearDraft("warehouse", "item");
     persistUiState("warehouse");
     await saveDocument("warehouse", { ...doc, items }, index >= 0 ? "Позиция склада обновлена." : "Позиция склада добавлена.");
@@ -2636,6 +2850,7 @@ export function createLiveWorkspaceController({
     };
     if (!record.itemId) throw new Error("Выберите позицию для движения.");
     ui.warehouse.movementItemId = record.itemId;
+    ui.warehouse.modal = "";
     clearDraft("warehouse", "movement");
     persistUiState("warehouse");
     await saveDocument("warehouse", { ...doc, movements: [record, ...(doc.movements || [])] }, "Движение по складу сохранено.");
@@ -2693,6 +2908,7 @@ export function createLiveWorkspaceController({
     if (index >= 0) tasks[index] = record;
     else tasks.unshift(record);
     ui.tasks.taskEditId = null;
+    ui.tasks.modal = "";
     clearDraft("tasks", "task");
     persistUiState("tasks");
     await saveDocument("tasks", { ...doc, tasks }, index >= 0 ? "Задача обновлена." : "Задача добавлена.");
@@ -2718,9 +2934,55 @@ export function createLiveWorkspaceController({
     if (index >= 0) sprints[index] = record;
     else sprints.unshift(record);
     ui.tasks.sprintEditId = null;
+    ui.tasks.modal = "";
     clearDraft("tasks", "sprint");
     persistUiState("tasks");
     await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "Итерация обновлена." : "Итерация добавлена.");
+    await rerenderCurrentModule();
+  }
+
+  async function handleDirectoriesListSubmit(form) {
+    const doc = await ensureDocument("directories");
+    const formData = new FormData(form);
+    const incoming = normalizeDirectoryList({
+      id: formData.get("id"),
+      key: formData.get("key"),
+      title: formData.get("title"),
+      description: formData.get("description")
+    });
+    if (!incoming) {
+      throw new Error("Укажите название и ключ справочника.");
+    }
+    const lists = [...(doc.lists || [])];
+    const existingIndex = lists.findIndex((list) => list.id === incoming.id || list.key === incoming.key);
+    if (existingIndex >= 0) {
+      lists[existingIndex] = { ...lists[existingIndex], ...incoming, options: lists[existingIndex].options || [] };
+    } else {
+      lists.unshift({ ...incoming, options: [] });
+    }
+    ui.directories.activeListId = incoming.key;
+    persistUiState("directories");
+    await saveDocument("directories", { ...doc, lists }, existingIndex >= 0 ? "Справочник обновлён." : "Справочник создан.");
+    await rerenderCurrentModule();
+  }
+
+  async function handleDirectoriesOptionSubmit(form) {
+    const doc = await ensureDocument("directories");
+    const formData = new FormData(form);
+    const listKey = sanitizeKey(formData.get("key"));
+    const option = compactText(formData.get("option"));
+    if (!listKey || !option) {
+      throw new Error("Выберите справочник и укажите значение.");
+    }
+    const lists = [...(doc.lists || [])];
+    const index = lists.findIndex((list) => list.key === listKey || list.id === listKey);
+    if (index < 0) {
+      throw new Error("Справочник не найден.");
+    }
+    lists[index] = { ...lists[index], options: [...new Set([...(lists[index].options || []), option])] };
+    ui.directories.activeListId = lists[index].key;
+    persistUiState("directories");
+    await saveDocument("directories", { ...doc, lists }, "Значение добавлено в справочник.");
     await rerenderCurrentModule();
   }
 
@@ -3105,7 +3367,22 @@ export function createLiveWorkspaceController({
       await handleBuilderSubmit(moduleKey, builderForm);
       return true;
     }
+    if (event.target.id === "directoriesListForm") {
+      event.preventDefault();
+      await handleDirectoriesListSubmit(event.target);
+      return true;
+    }
+    if (event.target.id === "directoriesOptionForm") {
+      event.preventDefault();
+      await handleDirectoriesOptionSubmit(event.target);
+      return true;
+    }
     if (event.target.id === "crmDealForm") {
+      event.preventDefault();
+      await handleCrmSubmit(event.target);
+      return true;
+    }
+    if (event.target.id === "crmDealModalForm") {
       event.preventDefault();
       await handleCrmSubmit(event.target);
       return true;
@@ -3120,7 +3397,17 @@ export function createLiveWorkspaceController({
       await handleWarehouseItemSubmit(event.target);
       return true;
     }
+    if (event.target.id === "warehouseItemModalForm") {
+      event.preventDefault();
+      await handleWarehouseItemSubmit(event.target);
+      return true;
+    }
     if (event.target.id === "warehouseMovementForm") {
+      event.preventDefault();
+      await handleWarehouseMovementSubmit(event.target);
+      return true;
+    }
+    if (event.target.id === "warehouseMovementModalForm") {
       event.preventDefault();
       await handleWarehouseMovementSubmit(event.target);
       return true;
@@ -3130,12 +3417,188 @@ export function createLiveWorkspaceController({
       await handleTasksTaskSubmit(event.target);
       return true;
     }
+    if (event.target.id === "tasksTaskModalForm") {
+      event.preventDefault();
+      await handleTasksTaskSubmit(event.target);
+      return true;
+    }
     if (event.target.id === "tasksSprintForm") {
       event.preventDefault();
       await handleTasksSprintSubmit(event.target);
       return true;
     }
+    if (event.target.id === "tasksSprintModalForm") {
+      event.preventDefault();
+      await handleTasksSprintSubmit(event.target);
+      return true;
+    }
     return false;
+  }
+
+  function renderWorkspaceModalShell(title, formHtml, subtitle = "") {
+    return `
+      <div class="workspace-modal-backdrop" data-live-modal-backdrop>
+        <div class="workspace-modal">
+          <div class="workspace-modal__head">
+            <div>
+              <h3>${escapeHtml(title)}</h3>
+              ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ""}
+            </div>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-live-modal-close>Закрыть</button>
+          </div>
+          <div class="workspace-modal__body">${formHtml}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderCrmCreateModal(doc) {
+    const draft = readDraft("crm", "deal");
+    return renderWorkspaceModalShell(
+      "Новая сделка",
+      `<form id="crmDealModalForm" class="workspace-form" data-draft-form="deal">
+        <div class="workspace-form-grid">
+          <label><span>Название сделки</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue("", draft?.title))}" required /></label>
+          <label><span>Клиент</span><input class="form-control" type="text" name="client" value="${escapeHtml(draftValue("", draft?.client))}" required /></label>
+          <label><span>Канал</span><input class="form-control" type="text" name="channel" value="${escapeHtml(draftValue("", draft?.channel))}" /></label>
+          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue("", draft?.owner))}" /></label>
+          <label><span>Стадия</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${((draft?.stage || "lead") === stage.key) ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label>
+          <label><span>Сумма, ₽</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(compactText(draft?.amount || ""))}" /></label>
+          <label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(draft?.deadline || ""))}" /></label>
+        </div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
+        ${renderCustomFieldSection("crm", doc, draft, escapeHtml)}
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить сделку</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Быстрое создание сделки во всплывающем окне без ухода из текущего вида."
+    );
+  }
+
+  function renderWarehouseItemCreateModal(doc) {
+    const draft = readDraft("warehouse", "item");
+    return renderWorkspaceModalShell(
+      "Новая позиция склада",
+      `<form id="warehouseItemModalForm" class="workspace-form" data-draft-form="item">
+        <div class="workspace-form-grid">
+          <label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(draftValue("", draft?.name))}" required /></label>
+          <label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(draftValue("", draft?.sku))}" /></label>
+          <label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(draftValue("", draft?.category))}" /></label>
+          <label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(draftValue("шт", draft?.unit || "шт"))}" /></label>
+          <label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(compactText(draft?.openingStock || ""))}" /></label>
+          <label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(compactText(draft?.minStock || ""))}" /></label>
+        </div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
+        ${renderCustomFieldSection("warehouse", doc, draft, escapeHtml)}
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить позицию</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Создание товара или материала в отдельном окне по логике МойСклад."
+    );
+  }
+
+  function renderWarehouseMovementCreateModal(doc) {
+    const draft = readDraft("warehouse", "movement");
+    return renderWorkspaceModalShell(
+      "Новое движение по складу",
+      `<form id="warehouseMovementModalForm" class="workspace-form" data-draft-form="movement">
+        <div class="workspace-form-grid">
+          <label><span>Позиция</span><select class="form-select" name="itemId" required><option value="">Выберите позицию</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${(ui.warehouse.movementItemId === item.id || draft?.itemId === item.id) ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label>
+          <label><span>Тип</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draft?.kind || "in") === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Количество</span><input class="form-control" type="number" min="0" step="1" name="qty" value="${escapeHtml(compactText(draft?.qty || ""))}" required /></label>
+          <label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draft?.date || todayString()))}" /></label>
+        </div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить движение</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Приход, списание и резерв теперь можно вносить всплывающим окном."
+    );
+  }
+
+  function renderTasksTaskCreateModal(doc) {
+    const draft = readDraft("tasks", "task");
+    const sprintOptions = sortByDateDesc(doc.sprints || [], "startDate");
+    return renderWorkspaceModalShell(
+      "Новая задача",
+      `<form id="tasksTaskModalForm" class="workspace-form" data-draft-form="task">
+        <div class="workspace-form-grid">
+          <label><span>Задача</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue("", draft?.title))}" required /></label>
+          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue("", draft?.owner))}" /></label>
+          <label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draft?.status || "todo") === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draft?.priority || "medium") === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${draft?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label>
+          <label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(draft?.dueDate || ""))}" /></label>
+        </div>
+        <label class="workspace-check"><input class="form-check-input" type="checkbox" name="blocked" ${draft?.blocked ? "checked" : ""} /> <span>Есть блокер</span></label>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
+        ${renderCustomFieldSection("tasks", doc, draft, escapeHtml)}
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить задачу</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Быстрое добавление задачи без перехода в карточку."
+    );
+  }
+
+  function renderTasksSprintCreateModal() {
+    const draft = readDraft("tasks", "sprint");
+    return renderWorkspaceModalShell(
+      "Новая итерация",
+      `<form id="tasksSprintModalForm" class="workspace-form" data-draft-form="sprint">
+        <div class="workspace-form-grid">
+          <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue("", draft?.title))}" required /></label>
+          <label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(draft?.startDate || ""))}" /></label>
+          <label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(draft?.endDate || ""))}" /></label>
+        </div>
+        <label><span>Цель</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(draftValue("", draft?.goal))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить итерацию</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Итерации задают ритм работы и приоритеты команды."
+    );
+  }
+
+  function mountModuleModal(moduleKey, root) {
+    if (!root) return;
+    const modalState = compactText(ui[moduleKey]?.modal || "");
+    if (!modalState) return;
+    let html = "";
+    if (moduleKey === "crm" && modalState === "deal") {
+      html = renderCrmCreateModal(docs.crm || createDefaultCrmDoc());
+    } else if (moduleKey === "warehouse" && modalState === "item") {
+      html = renderWarehouseItemCreateModal(docs.warehouse || createDefaultWarehouseDoc());
+    } else if (moduleKey === "warehouse" && modalState === "movement") {
+      html = renderWarehouseMovementCreateModal(docs.warehouse || createDefaultWarehouseDoc());
+    } else if (moduleKey === "tasks" && modalState === "task") {
+      html = renderTasksTaskCreateModal(docs.tasks || createDefaultTasksDoc());
+    } else if (moduleKey === "tasks" && modalState === "sprint") {
+      html = renderTasksSprintCreateModal();
+    }
+    if (!html) return;
+    root.insertAdjacentHTML("beforeend", html);
+  }
+
+  function attachDirectoryDatalist(root, input, listKey) {
+    if (!root || !input) return;
+    const options = getDirectoryOptions(listKey);
+    if (!options.length) return;
+    const dataListId = `directory_${sanitizeKey(listKey)}_${sanitizeKey(input.name || "field")}`;
+    input.setAttribute("list", dataListId);
+    if (root.querySelector(`#${dataListId}`)) return;
+    const datalist = document.createElement("datalist");
+    datalist.id = dataListId;
+    datalist.innerHTML = options.map((option) => `<option value="${escapeHtml(option)}"></option>`).join("");
+    input.insertAdjacentElement("afterend", datalist);
+  }
+
+  function hydrateDirectoryFields(moduleKey, root) {
+    if (!root) return;
+    if (moduleKey === "crm") {
+      root.querySelectorAll('input[name="channel"]').forEach((input) => attachDirectoryDatalist(root, input, "crm_channels"));
+      root.querySelectorAll('input[name="owner"]').forEach((input) => attachDirectoryDatalist(root, input, "team_members"));
+    }
+    if (moduleKey === "warehouse") {
+      root.querySelectorAll('input[name="category"]').forEach((input) => attachDirectoryDatalist(root, input, "warehouse_categories"));
+      root.querySelectorAll('input[name="unit"]').forEach((input) => attachDirectoryDatalist(root, input, "warehouse_units"));
+    }
+    if (moduleKey === "tasks") {
+      root.querySelectorAll('input[name="owner"]').forEach((input) => attachDirectoryDatalist(root, input, "team_members"));
+    }
   }
 
   function hydrateDraftForms(moduleKey, root) {
@@ -3323,6 +3786,14 @@ export function createLiveWorkspaceController({
       return true;
     }
     if (event.target.closest("[data-placeholder-open]")) return false;
+    if (event.target.closest("[data-live-modal-close]") || event.target.hasAttribute("data-live-modal-backdrop")) {
+      if (ui[moduleKey]) {
+        ui[moduleKey].modal = "";
+        persistUiState(moduleKey);
+        await rerenderCurrentModule();
+      }
+      return true;
+    }
 
     const doc = await ensureDocument(moduleKey);
     const viewButton = event.target.closest("[data-builder-view]");
@@ -3393,6 +3864,52 @@ export function createLiveWorkspaceController({
       }
     }
 
+    if (moduleKey === "directories") {
+      const selectButton = event.target.closest("[data-directory-select]");
+      if (selectButton) {
+        ui.directories.activeListId = selectButton.dataset.directorySelect || "";
+        persistUiState("directories");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const newButton = event.target.closest("[data-directory-new]");
+      if (newButton) {
+        ui.directories.activeListId = "";
+        persistUiState("directories");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const deleteButton = event.target.closest("[data-directory-delete]");
+      if (deleteButton) {
+        if (!window.confirm("Удалить справочник целиком?")) return true;
+        const listKey = sanitizeKey(deleteButton.dataset.directoryDelete);
+        const lists = (doc.lists || []).filter((list) => list.key !== listKey && list.id !== listKey);
+        ui.directories.activeListId = lists[0]?.key || "";
+        persistUiState("directories");
+        await saveDocument("directories", { ...doc, lists }, "Справочник удалён.");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const deleteOptionButton = event.target.closest("[data-directory-option-delete]");
+      if (deleteOptionButton) {
+        const [listKey, optionRaw] = String(deleteOptionButton.dataset.directoryOptionDelete || "").split(":");
+        const option = compactText(optionRaw);
+        if (!listKey || !option) return true;
+        const lists = [...(doc.lists || [])];
+        const index = lists.findIndex((list) => list.key === sanitizeKey(listKey) || list.id === sanitizeKey(listKey));
+        if (index < 0) return true;
+        lists[index] = {
+          ...lists[index],
+          options: (lists[index].options || []).filter((entry) => compactText(entry) !== option)
+        };
+        ui.directories.activeListId = lists[index].key;
+        persistUiState("directories");
+        await saveDocument("directories", { ...doc, lists }, "Значение удалено из справочника.");
+        await rerenderCurrentModule();
+        return true;
+      }
+    }
+
     if (moduleKey === "crm") {
       const importSalesButton = event.target.closest("[data-crm-import-sales]");
       if (importSalesButton) {
@@ -3407,7 +3924,7 @@ export function createLiveWorkspaceController({
       const newButton = event.target.closest("[data-crm-new]");
       if (newButton) {
         ui.crm.editId = null;
-        ui.crm.mode = "form";
+        ui.crm.modal = "deal";
         persistUiState("crm");
         await rerenderCurrentModule();
         return true;
@@ -3463,7 +3980,7 @@ export function createLiveWorkspaceController({
       const newItemButton = event.target.closest("[data-warehouse-item-new]");
       if (newItemButton) {
         ui.warehouse.itemEditId = null;
-        ui.warehouse.mode = "form";
+        ui.warehouse.modal = "item";
         persistUiState("warehouse");
         await rerenderCurrentModule();
         return true;
@@ -3497,7 +4014,7 @@ export function createLiveWorkspaceController({
       const pickMovementButton = event.target.closest("[data-warehouse-movement-pick]");
       if (pickMovementButton) {
         ui.warehouse.movementItemId = pickMovementButton.dataset.warehouseMovementPick || "";
-        ui.warehouse.mode = "movements";
+        ui.warehouse.modal = "movement";
         persistUiState("warehouse");
         await rerenderCurrentModule();
         return true;
@@ -3576,7 +4093,7 @@ export function createLiveWorkspaceController({
       const newTaskButton = event.target.closest("[data-task-new]");
       if (newTaskButton) {
         ui.tasks.taskEditId = null;
-        ui.tasks.mode = "form";
+        ui.tasks.modal = "task";
         persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
@@ -3628,7 +4145,7 @@ export function createLiveWorkspaceController({
       const newSprintButton = event.target.closest("[data-sprint-new]");
       if (newSprintButton) {
         ui.tasks.sprintEditId = null;
-        ui.tasks.mode = "form";
+        ui.tasks.modal = "sprint";
         persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
@@ -3675,6 +4192,10 @@ export function createLiveWorkspaceController({
 
   function getDashboardSummary(moduleKey) {
     if (!supports(moduleKey) || !docs[moduleKey]) return "";
+    if (moduleKey === "directories") {
+      const lists = docs.directories.lists || [];
+      return `${lists.length} справочников • ${formatNumber(sumBy(lists, (list) => (list.options || []).length))} значений`;
+    }
     if (moduleKey === "crm") {
       const deals = docs.crm.deals || [];
       const salesSnapshot = buildSalesSnapshot(externalDocs.sales);
@@ -3698,6 +4219,9 @@ export function createLiveWorkspaceController({
   function afterRender(moduleKey, root) {
     if (!supports(moduleKey) || !root) return;
     hydrateDraftForms(moduleKey, root);
+    mountModuleModal(moduleKey, root);
+    hydrateDraftForms(moduleKey, root);
+    hydrateDirectoryFields(moduleKey, root);
     focusModeSection(moduleKey, root);
   }
 
