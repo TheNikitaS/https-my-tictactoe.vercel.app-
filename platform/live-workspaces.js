@@ -4216,6 +4216,189 @@ export function createLiveWorkspaceController({
     return "";
   }
 
+  function buildDashboardActivitySeries(orders) {
+    const points = [];
+    const lookup = new Map();
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let offset = 6; offset >= 0; offset -= 1) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - offset);
+      const key = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+      const label = `${pad(date.getDate())}.${pad(date.getMonth() + 1)}`;
+      const point = { key, label, orders: 0, revenue: 0, invoices: 0 };
+      points.push(point);
+      lookup.set(key, point);
+    }
+
+    (orders || []).forEach((order) => {
+      const createdKey = normalizeDateInput(order.createdAt);
+      if (createdKey && lookup.has(createdKey)) {
+        lookup.get(createdKey).orders += 1;
+      }
+
+      const billingKey = normalizeDateInput(order.paidDate || order.invoiceDate || order.createdAt);
+      if (billingKey && lookup.has(billingKey)) {
+        const point = lookup.get(billingKey);
+        point.revenue += toNumber(order.paidAmount || order.amount || 0);
+        if (order.invoiceDate) point.invoices += 1;
+      }
+    });
+
+    return points;
+  }
+
+  async function getDashboardSnapshot() {
+    if (!schemaReadyProvider()) {
+      return null;
+    }
+
+    const [directoriesDoc, crmDoc, warehouseDoc, tasksDoc, salesRecord, myCalculatorDoc, partnerCalculatorDocs] = await Promise.all([
+      ensureDocument("directories"),
+      ensureDocument("crm"),
+      ensureDocument("warehouse"),
+      ensureDocument("tasks"),
+      ensureExternalDoc("sales", true),
+      ensureExternalDoc("myCalculator", true),
+      ensureExternalDoc("partnerCalculators", true)
+    ]);
+
+    const salesSnapshot = buildSalesSnapshot(salesRecord);
+    const warehouseSnapshot = buildWarehouseSnapshot(warehouseDoc);
+    const calculatorSnapshot = buildCalculatorDemandSnapshot(myCalculatorDoc, partnerCalculatorDocs || []);
+    const taskSignals = await buildTaskSignalSnapshot(tasksDoc);
+
+    const today = todayString();
+    const currentMonthKey = today.slice(0, 7);
+
+    const deals = crmDoc?.deals || [];
+    const openDeals = deals.filter((deal) => !["done", "lost"].includes(compactText(deal.stage)));
+    const overdueDeals = openDeals.filter((deal) => {
+      const deadline = normalizeDateInput(deal.deadline);
+      return deadline && deadline < today;
+    });
+
+    const tasks = tasksDoc?.tasks || [];
+    const openTasks = tasks.filter((task) => compactText(task.status) !== "done");
+    const blockedTasks = openTasks.filter((task) => Boolean(task.blocked));
+    const overdueTasks = openTasks.filter((task) => {
+      const dueDate = normalizeDateInput(task.dueDate);
+      return dueDate && dueDate < today;
+    });
+
+    const monthOrders = salesSnapshot.orders.filter((order) => {
+      const createdAt = normalizeDateInput(order.createdAt);
+      return createdAt && createdAt.slice(0, 7) === currentMonthKey;
+    });
+
+    const monthPaidOrders = salesSnapshot.orders.filter((order) => {
+      const paidDate = normalizeDateInput(order.paidDate);
+      return paidDate && paidDate.slice(0, 7) === currentMonthKey;
+    });
+
+    const missingDemand = calculatorSnapshot.demand.filter((entry) => !findWarehouseMatch(warehouseSnapshot, entry.sku));
+    const criticalDemand = calculatorSnapshot.demand.filter((entry) => {
+      const match = findWarehouseMatch(warehouseSnapshot, entry.sku);
+      return Boolean(match?.low);
+    });
+
+    const alerts = [
+      ...salesSnapshot.unpaidInvoices.slice(0, 4).map((order) => ({
+        id: `sales-${order.sourceId}`,
+        tone: "warning",
+        moduleKey: "sales",
+        title: order.title || `Заказ ${order.orderNumber || "без номера"}`,
+        meta: `${formatMoney(order.amount || 0)} • ${compactText(order.client || "Клиент не указан")}`,
+        actionLabel: "Открыть продажи"
+      })),
+      ...warehouseSnapshot.lowItems.slice(0, 4).map((item) => ({
+        id: `warehouse-${item.id}`,
+        tone: "danger",
+        moduleKey: "warehouse",
+        title: item.name || item.sku || "Складская позиция",
+        meta: `Доступно ${formatNumber(item.available)} • минимум ${formatNumber(item.minStock || 0)}`,
+        actionLabel: "Открыть склад"
+      })),
+      ...overdueDeals.slice(0, 3).map((deal) => ({
+        id: `crm-${deal.id}`,
+        tone: "accent",
+        moduleKey: "crm",
+        title: deal.title || deal.client || "CRM-сделка",
+        meta: `${getCrmStageMeta(deal.stage).label} • срок ${formatDate(deal.deadline)}`,
+        actionLabel: "Открыть CRM"
+      })),
+      ...overdueTasks.slice(0, 3).map((task) => ({
+        id: `tasks-${task.id}`,
+        tone: "info",
+        moduleKey: "tasks",
+        title: task.title || "Задача",
+        meta: `${task.owner || "Без ответственного"} • срок ${formatDate(task.dueDate)}`,
+        actionLabel: "Открыть задачи"
+      }))
+    ].slice(0, 10);
+
+    return {
+      generatedAt: new Date().toISOString(),
+      directories: {
+        listsCount: (directoriesDoc?.lists || []).length,
+        valuesCount: sumBy(directoriesDoc?.lists || [], (list) => (list.options || []).length)
+      },
+      sales: {
+        ordersCount: salesSnapshot.orders.length,
+        monthOrdersCount: monthOrders.length,
+        monthRevenue: sumBy(monthPaidOrders, (order) => order.paidAmount || order.amount || 0),
+        unpaidInvoicesCount: salesSnapshot.unpaidInvoices.length,
+        unpaidInvoicesAmount: sumBy(salesSnapshot.unpaidInvoices, (order) => order.amount || 0),
+        productionCount: salesSnapshot.productionOrders.length,
+        doneCount: salesSnapshot.doneOrders.length,
+        channels: salesSnapshot.channels.slice(0, 5),
+        series: buildDashboardActivitySeries(salesSnapshot.orders)
+      },
+      crm: {
+        dealsCount: deals.length,
+        openDealsCount: openDeals.length,
+        overdueDealsCount: overdueDeals.length,
+        pipelineAmount: sumBy(openDeals, (deal) => deal.amount || 0),
+        stageTotals: CRM_STAGES.map((stage) => ({
+          key: stage.key,
+          label: stage.label,
+          tone: stage.tone,
+          count: deals.filter((deal) => compactText(deal.stage) === stage.key).length
+        }))
+      },
+      warehouse: {
+        itemsCount: warehouseSnapshot.items.length,
+        onHandTotal: warehouseSnapshot.onHandTotal,
+        availableTotal: warehouseSnapshot.availableTotal,
+        reservedTotal: warehouseSnapshot.reservedTotal,
+        lowCount: warehouseSnapshot.lowItems.length,
+        missingDemandCount: missingDemand.length,
+        criticalDemandCount: criticalDemand.length,
+        topDemand: calculatorSnapshot.demand.slice(0, 5)
+      },
+      tasks: {
+        totalCount: tasks.length,
+        openCount: openTasks.length,
+        blockedCount: blockedTasks.length,
+        overdueCount: overdueTasks.length,
+        signalsCount: taskSignals.newSignals.length,
+        statusTotals: TASK_STATUSES.map((status) => ({
+          key: status.key,
+          label: status.label,
+          tone: status.tone,
+          count: tasks.filter((task) => compactText(task.status) === status.key).length
+        }))
+      },
+      calculators: {
+        activeTabs: calculatorSnapshot.activeTabs,
+        invoiceIssuedTabs: calculatorSnapshot.invoiceIssuedTabs,
+        invoicePaidTabs: calculatorSnapshot.invoicePaidTabs
+      },
+      alerts
+    };
+  }
+
   function afterRender(moduleKey, root) {
     if (!supports(moduleKey) || !root) return;
     hydrateDraftForms(moduleKey, root);
@@ -4235,6 +4418,7 @@ export function createLiveWorkspaceController({
     handleChange,
     handleSubmit,
     getDashboardSummary,
+    getDashboardSnapshot,
     resetFormState,
     focusEntity
   };

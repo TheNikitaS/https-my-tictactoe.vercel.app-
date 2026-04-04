@@ -2581,3 +2581,546 @@ body.platform-wide #appShell .content-shell {
     grid-template-columns: 1fr;
   }
 }
+
+/* Compact header + KPI dashboard */
+#appShell > .platform-header {
+  grid-template-columns: minmax(180px, 220px) minmax(0, 1fr) minmax(220px, 260px);
+  align-items: center;
+  gap: 10px 12px;
+  padding: 8px 14px;
+}
+
+#appShell .platform-header__brand,
+#appShell .platform-header__nav,
+#appShell .platform-header__utility {
+  grid-row: 1;
+}
+
+#appShell .platform-header__brand {
+  grid-column: 1;
+}
+
+#appShell .platform-header__nav {
+  grid-column: 2;
+  overflow: hidden;
+}
+
+#appShell .platform-header__utility {
+  grid-column: 3;
+  justify-self: stretch;
+}
+
+#appShell .brand-row {
+  gap: 8px;
+}
+
+#appShell .brand-row img {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  padding: 4px;
+}
+
+#appShell .brand-row strong {
+  font-size: 0.96rem;
+}
+
+#appShell .brand-row span {
+  font-size: 0.67rem;
+}
+
+#appShell .module-nav.module-nav--top {
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow: hidden;
+  align-items: stretch;
+}
+
+#appShell .module-nav.module-nav--top button {
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 86px;
+  min-height: 54px;
+  padding: 6px 5px;
+  border-radius: 14px;
+}
+
+#appShell .module-nav-icon {
+  width: 20px;
+  height: 20px;
+  font-size: 0.72rem;
+  border-radius: 7px;
+}
+
+#appShell .module-nav-main {
+  font-size: 0.61rem;
+  line-height: 1.08;
+}
+
+#appShell .profile-card {
+  min-width: 0;
+  max-width: 260px;
+  margin-left: auto;
+  padding: 7px 9px;
+}
+
+#appShell .profile-card__inner {
+  gap: 8px;
+}
+
+#appShell .profile-card__avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 0.84rem;
+}
+
+#appShell .profile-card__meta strong {
+  font-size: 0.84rem;
+}
+
+#appShell .profile-card__meta > span {
+  font-size: 0.68rem;
+}
+
+#appShell .profile-card .role-pill {
+  font-size: 0.68rem;
+  padding: 3px 8px;
+}
+
+#appShell .profile-card__scope {
+  font-size: 0.66rem;
+}
+
+#appShell .profile-card__menu-toggle {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+}
+
+#appShell .content-shell,
+body.platform-wide #appShell .content-shell {
+  width: min(1840px, calc(100% - 24px));
+  padding: 14px 0 28px;
+}
+
+#appShell .view-section,
+#appShell .section-card,
+#appShell .workspace-panel,
+#appShell .module-frame-wrap {
+  min-width: 0;
+}
+
+#appShell .section-card {
+  overflow: hidden;
+}
+
+#appShell .topbar {
+  padding: 22px 26px;
+}
+
+#appShell .topbar h2 {
+  font-size: clamp(1.7rem, 2.2vw, 2.5rem);
+}
+
+#appShell .dashboard-grid {
+  display: block;
+}
+
+#appShell .dashboard-shell {
+  display: grid;
+  gap: 18px;
+}
+
+#appShell .dashboard-kpis {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 12px;
+}
+
+#appShell .dashboard-kpi {
+  padding: 18px 18px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(198, 206, 214, 0.86);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 16px 30px rgba(18, 34, 52, 0.05);
+}
+
+#appShell .dashboard-kpi span,
+#appShell .dashboard-kpi small {
+  display: block;
+}
+
+#appShell .dashboard-kpi span {
+  color: #5c6e81;
+  font-size: 0.82rem;
+  margin-bottom: 8px;
+}
+
+#appShell .dashboard-kpi strong {
+  display: block;
+  font-size: 1.36rem;
+  line-height: 1.05;
+  margin-bottom: 6px;
+}
+
+#appShell .dashboard-kpi small {
+  color: #70808f;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+#appShell .dashboard-kpi--accent strong { color: #8b6233; }
+#appShell .dashboard-kpi--warning strong { color: #a56612; }
+#appShell .dashboard-kpi--info strong { color: #1762a6; }
+#appShell .dashboard-kpi--danger strong { color: #b43a3a; }
+#appShell .dashboard-kpi--success strong { color: #1d8d61; }
+
+#appShell .dashboard-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.82fr);
+  gap: 18px;
+}
+
+#appShell .dashboard-chart-card,
+#appShell .dashboard-alerts-card,
+#appShell .dashboard-panel,
+#appShell .dashboard-module-card,
+#appShell .dashboard-fallback {
+  border-radius: 24px;
+  border: 1px solid rgba(198, 206, 214, 0.86);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 18px 34px rgba(18, 34, 52, 0.05);
+}
+
+#appShell .dashboard-chart-card,
+#appShell .dashboard-alerts-card,
+#appShell .dashboard-panel,
+#appShell .dashboard-fallback {
+  padding: 20px 22px;
+}
+
+#appShell .dashboard-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: #5e7286;
+  font-size: 0.86rem;
+}
+
+#appShell .dashboard-chart {
+  width: 100%;
+  overflow: hidden;
+}
+
+#appShell .dashboard-chart svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+#appShell .dashboard-chart__grid {
+  stroke: rgba(36, 91, 140, 0.12);
+  stroke-width: 1;
+}
+
+#appShell .dashboard-chart__label {
+  fill: #8292a0;
+  font-size: 10px;
+}
+
+#appShell .dashboard-chart__area {
+  fill: rgba(51, 126, 191, 0.1);
+}
+
+#appShell .dashboard-chart__bar {
+  fill: rgba(170, 187, 204, 0.72);
+}
+
+#appShell .dashboard-chart__line {
+  fill: none;
+  stroke: #1670b1;
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#appShell .dashboard-axis {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+
+#appShell .dashboard-axis__item {
+  text-align: center;
+}
+
+#appShell .dashboard-axis__item span {
+  display: block;
+  color: #6b7b89;
+  font-size: 0.77rem;
+}
+
+#appShell .dashboard-axis__item strong {
+  font-size: 0.86rem;
+}
+
+#appShell .dashboard-alerts {
+  display: grid;
+  gap: 10px;
+}
+
+#appShell .dashboard-alert {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid rgba(208, 216, 224, 0.9);
+  background: #fbfcfd;
+}
+
+#appShell .dashboard-alert strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+#appShell .dashboard-alert__meta {
+  color: #6a7b8a;
+  font-size: 0.83rem;
+}
+
+#appShell .dashboard-alert--warning { border-left: 4px solid #d19b43; }
+#appShell .dashboard-alert--danger { border-left: 4px solid #c24747; }
+#appShell .dashboard-alert--accent { border-left: 4px solid #3b7ac2; }
+#appShell .dashboard-alert--info { border-left: 4px solid #2a8db3; }
+
+#appShell .dashboard-panels {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+#appShell .dashboard-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+#appShell .dashboard-mini {
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(209, 217, 225, 0.88);
+  background: #fbfcfd;
+}
+
+#appShell .dashboard-mini span {
+  display: block;
+  color: #677988;
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+}
+
+#appShell .dashboard-mini strong {
+  font-size: 1rem;
+}
+
+#appShell .dashboard-mini--accent strong { color: #1762a6; }
+#appShell .dashboard-mini--warning strong { color: #a56612; }
+#appShell .dashboard-mini--danger strong { color: #b43a3a; }
+#appShell .dashboard-mini--info strong { color: #2488aa; }
+
+#appShell .dashboard-progress {
+  display: grid;
+  gap: 8px;
+}
+
+#appShell .dashboard-progress__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+
+#appShell .dashboard-progress__bar {
+  height: 9px;
+  border-radius: 999px;
+  background: rgba(217, 224, 232, 0.86);
+  overflow: hidden;
+}
+
+#appShell .dashboard-progress__bar span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #4f96d5, #1b6ead);
+}
+
+#appShell .dashboard-stack {
+  display: grid;
+  gap: 12px;
+}
+
+#appShell .dashboard-demand {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1px solid rgba(209, 217, 225, 0.88);
+  background: #fbfcfd;
+}
+
+#appShell .dashboard-demand span {
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+#appShell .dashboard-modules__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+#appShell .dashboard-module-card {
+  padding: 18px 18px 16px;
+}
+
+#appShell .dashboard-module-card__top {
+  display: flex;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 12px;
+}
+
+#appShell .dashboard-module-card__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(23, 104, 167, 0.08);
+  color: #1668a7;
+  font-size: 1rem;
+}
+
+#appShell .dashboard-module-card h4 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+#appShell .dashboard-module-card__meta {
+  color: #7a5b34;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+#appShell .dashboard-module-card p {
+  min-height: 64px;
+  margin: 0 0 14px;
+  color: #60717f;
+}
+
+#appShell .dashboard-skeleton {
+  display: grid;
+  gap: 16px;
+}
+
+#appShell .dashboard-skeleton__hero,
+#appShell .dashboard-skeleton__card {
+  border-radius: 22px;
+  background: linear-gradient(90deg, rgba(228, 234, 240, 0.92), rgba(244, 247, 250, 0.98), rgba(228, 234, 240, 0.92));
+  background-size: 200% 100%;
+  animation: dashboardPulse 1.4s linear infinite;
+}
+
+#appShell .dashboard-skeleton__hero {
+  min-height: 240px;
+}
+
+#appShell .dashboard-skeleton__row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+#appShell .dashboard-skeleton__card {
+  min-height: 170px;
+}
+
+@keyframes dashboardPulse {
+  0% { background-position: 0 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (max-width: 1500px) {
+  #appShell > .platform-header {
+    grid-template-columns: minmax(170px, 200px) minmax(0, 1fr) minmax(210px, 240px);
+  }
+
+  #appShell .dashboard-kpis {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  #appShell .dashboard-modules__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1280px) {
+  #appShell > .platform-header {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  #appShell .platform-header__brand,
+  #appShell .platform-header__nav,
+  #appShell .platform-header__utility {
+    grid-column: 1;
+  }
+
+  #appShell .platform-header__nav {
+    overflow-x: auto;
+  }
+
+  #appShell .platform-header__utility {
+    justify-self: end;
+  }
+
+  #appShell .module-nav.module-nav--top {
+    overflow-x: auto;
+  }
+
+  #appShell .dashboard-overview,
+  #appShell .dashboard-panels {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell .dashboard-modules__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  #appShell .dashboard-kpis,
+  #appShell .dashboard-mini-grid,
+  #appShell .dashboard-skeleton__row,
+  #appShell .dashboard-modules__grid {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell .dashboard-alert {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell .platform-header__utility {
+    justify-self: stretch;
+  }
+
+  #appShell .profile-card {
+    max-width: none;
+  }
+}

@@ -1,10 +1,10 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell19";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260404-platform-shell20";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260404-platform-shell19";
+const PLATFORM_BUILD = "20260404-platform-shell20";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -87,6 +87,7 @@ const STATE = {
     message: "",
     tone: ""
   },
+  dashboardRequestId: 0,
   menu: {
     profileOpen: false
   }
@@ -95,7 +96,7 @@ const STATE = {
 const MODULES = {
   dashboard: {
     title: "Панель управления",
-    subtitle: "Общий вход в калькуляторы, продажи, партнеров и новые модули платформы.",
+    subtitle: "Ключевые показатели, сигналы и рабочие переходы по всей платформе.",
     type: "dashboard"
   },
   sales: {
@@ -470,7 +471,7 @@ const liveWorkspaceController = createLiveWorkspaceController({
   },
   rerenderDashboard: () => {
     if (STATE.activeModule === "dashboard") {
-      renderDashboard();
+      void renderDashboard();
     }
   },
   schemaReadyProvider: () => STATE.schemaReady
@@ -513,6 +514,16 @@ function clearShellStatus() {
   STATE.shellStatus = { message: "", tone: "" };
   renderShellStatus();
 }
+
+const DASHBOARD_MONEY_FORMATTER = new Intl.NumberFormat("ru-RU", {
+  style: "currency",
+  currency: "RUB",
+  maximumFractionDigits: 0
+});
+
+const DASHBOARD_NUMBER_FORMATTER = new Intl.NumberFormat("ru-RU", {
+  maximumFractionDigits: 0
+});
 
 function readStoredBoolean(key, fallback) {
   try {
@@ -698,6 +709,67 @@ function formatDateTime(value) {
     dateStyle: "short",
     timeStyle: "short"
   }).format(date);
+}
+
+function formatDashboardMoney(value) {
+  return DASHBOARD_MONEY_FORMATTER.format(Number(value) || 0);
+}
+
+function formatDashboardNumber(value) {
+  return DASHBOARD_NUMBER_FORMATTER.format(Number(value) || 0);
+}
+
+function buildDashboardChartGeometry(points) {
+  const chartWidth = 720;
+  const chartHeight = 240;
+  const paddingX = 34;
+  const paddingTop = 24;
+  const paddingBottom = 26;
+  const innerWidth = chartWidth - paddingX * 2;
+  const innerHeight = chartHeight - paddingTop - paddingBottom;
+  const revenueMax = Math.max(...points.map((point) => Number(point.revenue) || 0), 1);
+  const ordersMax = Math.max(...points.map((point) => Number(point.orders) || 0), 1);
+  const stepX = points.length > 1 ? innerWidth / (points.length - 1) : innerWidth;
+  const barWidth = Math.max(22, Math.min(40, innerWidth / Math.max(points.length * 1.8, 1)));
+
+  const polyline = points
+    .map((point, index) => {
+      const x = paddingX + stepX * index;
+      const y = paddingTop + innerHeight - ((Number(point.revenue) || 0) / revenueMax) * innerHeight;
+      return `${x},${y}`;
+    })
+    .join(" ");
+
+  const area = polyline
+    ? `${paddingX},${chartHeight - paddingBottom} ${polyline} ${paddingX + stepX * Math.max(points.length - 1, 0)},${chartHeight - paddingBottom}`
+    : "";
+
+  const bars = points.map((point, index) => {
+    const barHeight = ((Number(point.orders) || 0) / ordersMax) * (innerHeight * 0.68);
+    const x = paddingX + stepX * index - barWidth / 2;
+    const y = chartHeight - paddingBottom - barHeight;
+    return {
+      x,
+      y,
+      width: barWidth,
+      height: barHeight
+    };
+  });
+
+  const gridLines = Array.from({ length: 4 }, (_, index) => {
+    const factor = index / 3;
+    const y = paddingTop + innerHeight * factor;
+    return { y, value: formatDashboardMoney(revenueMax - revenueMax * factor) };
+  });
+
+  return {
+    chartWidth,
+    chartHeight,
+    polyline,
+    area,
+    bars,
+    gridLines
+  };
 }
 
 function moduleListFromProfile() {
@@ -1066,25 +1138,329 @@ function renderPlaceholderModule(moduleKey) {
   `;
 }
 
-function renderDashboard() {
-  const cards = moduleListFromProfile()
-    .filter((key) => key !== "dashboard")
+function renderDashboardModuleCards(moduleKeys, summaryLookup = {}) {
+  return moduleKeys
     .map((key) => {
       const module = MODULES[key];
-      const liveSummary = liveWorkspaceController.getDashboardSummary(key);
+      const summary = summaryLookup[key] || liveWorkspaceController.getDashboardSummary(key) || module.subtitle;
       return `
-        <article class="module-card">
-          <h3>${escapeHtml(module.title)}</h3>
-          <p>${escapeHtml(module.subtitle)}</p>
-          <div class="meta">${escapeHtml(getModuleStageLabel(key))} • ${escapeHtml(getPermissionBadgeLabel(key))}${liveSummary ? ` • ${escapeHtml(liveSummary)}` : ""}</div>
-          <div class="mt-3">
-            <button class="btn btn-dark btn-sm" type="button" data-dashboard-open="${escapeHtml(key)}">Открыть</button>
+        <article class="dashboard-module-card">
+          <div class="dashboard-module-card__top">
+            <div class="dashboard-module-card__icon"><i class="bi ${escapeHtml(getModuleIconClass(key))}"></i></div>
+            <div>
+              <h4>${escapeHtml(module.title)}</h4>
+              <div class="dashboard-module-card__meta">${escapeHtml(getModuleStageLabel(key))} • ${escapeHtml(getPermissionBadgeLabel(key))}</div>
+            </div>
           </div>
+          <p>${escapeHtml(summary)}</p>
+          <button class="btn btn-dark btn-sm" type="button" data-dashboard-open="${escapeHtml(key)}">Открыть</button>
         </article>
       `;
-    });
+    })
+    .join("");
+}
 
-  DOM.dashboardGrid.innerHTML = cards.join("");
+async function renderDashboard() {
+  const requestId = ++STATE.dashboardRequestId;
+  const moduleKeys = moduleListFromProfile().filter((key) => key !== "dashboard");
+
+  DOM.dashboardGrid.innerHTML = `
+    <div class="dashboard-shell">
+      <section class="dashboard-skeleton">
+        <div class="dashboard-skeleton__hero"></div>
+        <div class="dashboard-skeleton__row">
+          <div class="dashboard-skeleton__card"></div>
+          <div class="dashboard-skeleton__card"></div>
+          <div class="dashboard-skeleton__card"></div>
+        </div>
+      </section>
+    </div>
+  `;
+
+  let snapshot = null;
+  try {
+    snapshot = await liveWorkspaceController.getDashboardSnapshot();
+  } catch (error) {
+    console.error("dashboard snapshot error", error);
+  }
+
+  if (requestId !== STATE.dashboardRequestId) return;
+
+  const summaryLookup = snapshot
+    ? {
+        sales: `${formatDashboardNumber(snapshot.sales.ordersCount)} заказов • ${formatDashboardNumber(snapshot.sales.unpaidInvoicesCount)} счетов без оплаты`,
+        crm: `${formatDashboardNumber(snapshot.crm.openDealsCount)} сделок в работе • ${formatDashboardMoney(snapshot.crm.pipelineAmount)}`,
+        warehouse: `${formatDashboardNumber(snapshot.warehouse.itemsCount)} позиций • ${formatDashboardNumber(snapshot.warehouse.lowCount)} в дефиците`,
+        tasks: `${formatDashboardNumber(snapshot.tasks.openCount)} задач • ${formatDashboardNumber(snapshot.tasks.blockedCount)} с блокером`,
+        directories: `${formatDashboardNumber(snapshot.directories.listsCount)} справочников • ${formatDashboardNumber(snapshot.directories.valuesCount)} значений`
+      }
+    : {};
+
+  if (!snapshot) {
+    DOM.dashboardGrid.innerHTML = `
+      <div class="dashboard-shell">
+        <section class="dashboard-fallback">
+          <div class="workspace-empty">Показатели временно недоступны. Основные модули можно открыть ниже.</div>
+        </section>
+        <section class="dashboard-modules">
+          <div class="dashboard-modules__grid">${renderDashboardModuleCards(moduleKeys, summaryLookup)}</div>
+        </section>
+      </div>
+    `;
+    return;
+  }
+
+  const kpis = [
+    {
+      label: "Выручка месяца",
+      value: formatDashboardMoney(snapshot.sales.monthRevenue),
+      meta: `${formatDashboardNumber(snapshot.sales.monthOrdersCount)} заказов в этом месяце`,
+      tone: "accent"
+    },
+    {
+      label: "Счета без оплаты",
+      value: formatDashboardNumber(snapshot.sales.unpaidInvoicesCount),
+      meta: `${formatDashboardMoney(snapshot.sales.unpaidInvoicesAmount)} ждёт оплаты`,
+      tone: "warning"
+    },
+    {
+      label: "CRM в работе",
+      value: formatDashboardNumber(snapshot.crm.openDealsCount),
+      meta: `${formatDashboardMoney(snapshot.crm.pipelineAmount)} в активной воронке`,
+      tone: "info"
+    },
+    {
+      label: "Задачи в работе",
+      value: formatDashboardNumber(snapshot.tasks.openCount),
+      meta: `${formatDashboardNumber(snapshot.tasks.blockedCount)} блокеров • ${formatDashboardNumber(snapshot.tasks.overdueCount)} просрочено`,
+      tone: "neutral"
+    },
+    {
+      label: "Дефицит склада",
+      value: formatDashboardNumber(snapshot.warehouse.lowCount),
+      meta: `${formatDashboardNumber(snapshot.warehouse.missingDemandCount)} SKU ещё не заведены`,
+      tone: "danger"
+    },
+    {
+      label: "Активные калькуляции",
+      value: formatDashboardNumber(snapshot.calculators.activeTabs),
+      meta: `${formatDashboardNumber(snapshot.calculators.invoiceIssuedTabs)} счёт выставлен • ${formatDashboardNumber(snapshot.calculators.invoicePaidTabs)} оплачено`,
+      tone: "success"
+    }
+  ];
+
+  const geometry = buildDashboardChartGeometry(snapshot.sales.series || []);
+  const alerts = snapshot.alerts
+    .filter((item) => hasModuleAccess(item.moduleKey))
+    .map(
+      (item) => `
+        <div class="dashboard-alert dashboard-alert--${escapeHtml(item.tone)}">
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            <div class="dashboard-alert__meta">${escapeHtml(item.meta)}</div>
+          </div>
+          <button class="btn btn-sm btn-outline-dark" type="button" data-dashboard-open="${escapeHtml(item.moduleKey)}">${escapeHtml(item.actionLabel || "Открыть")}</button>
+        </div>
+      `
+    )
+    .join("");
+
+  const salesChannels = (snapshot.sales.channels || [])
+    .map(
+      (channel) => `
+        <div class="dashboard-progress">
+          <div class="dashboard-progress__head">
+            <span>${escapeHtml(channel.label)}</span>
+            <strong>${escapeHtml(formatDashboardNumber(channel.count))}</strong>
+          </div>
+          <div class="dashboard-progress__bar"><span style="width:${Math.max(8, (channel.count / Math.max(snapshot.sales.ordersCount || 1, 1)) * 100)}%"></span></div>
+        </div>
+      `
+    )
+    .join("");
+
+  const stageCards = (snapshot.crm.stageTotals || [])
+    .filter((stage) => stage.count > 0)
+    .map(
+      (stage) => `
+        <div class="dashboard-mini dashboard-mini--${escapeHtml(stage.tone)}">
+          <span>${escapeHtml(stage.label)}</span>
+          <strong>${escapeHtml(formatDashboardNumber(stage.count))}</strong>
+        </div>
+      `
+    )
+    .join("");
+
+  const taskCards = (snapshot.tasks.statusTotals || [])
+    .filter((status) => status.count > 0)
+    .map(
+      (status) => `
+        <div class="dashboard-mini dashboard-mini--${escapeHtml(status.tone)}">
+          <span>${escapeHtml(status.label)}</span>
+          <strong>${escapeHtml(formatDashboardNumber(status.count))}</strong>
+        </div>
+      `
+    )
+    .join("");
+
+  const demandCards = (snapshot.warehouse.topDemand || [])
+    .map(
+      (entry) => `
+        <div class="dashboard-demand">
+          <div>
+            <strong>${escapeHtml(entry.sku)}</strong>
+            <div class="dashboard-alert__meta">${escapeHtml((entry.sources || []).slice(0, 2).join(" • ") || "Калькуляторы")}</div>
+          </div>
+          <span>${escapeHtml(formatDashboardNumber(entry.qtyTotal))}</span>
+        </div>
+      `
+    )
+    .join("");
+
+  DOM.dashboardGrid.innerHTML = `
+    <div class="dashboard-shell">
+      <section class="dashboard-kpis">
+        ${kpis
+          .map(
+            (item) => `
+              <article class="dashboard-kpi dashboard-kpi--${escapeHtml(item.tone)}">
+                <span>${escapeHtml(item.label)}</span>
+                <strong>${escapeHtml(item.value)}</strong>
+                <small>${escapeHtml(item.meta)}</small>
+              </article>
+            `
+          )
+          .join("")}
+      </section>
+
+      <section class="dashboard-overview">
+        <article class="dashboard-chart-card">
+          <div class="panel-heading">
+            <div>
+              <h3>Показатели продаж за 7 дней</h3>
+              <div class="compact-help">Линия показывает денежный поток, столбики — количество новых заказов по дням.</div>
+            </div>
+            <div class="dashboard-legend">
+              <span><i class="bi bi-graph-up-arrow"></i> Выручка</span>
+              <span><i class="bi bi-bar-chart"></i> Заказы</span>
+            </div>
+          </div>
+          <div class="dashboard-chart">
+            <svg viewBox="0 0 ${geometry.chartWidth} ${geometry.chartHeight}" role="img" aria-label="Показатели продаж за 7 дней">
+              ${geometry.gridLines
+                .map(
+                  (line) => `
+                    <line x1="34" x2="${geometry.chartWidth - 34}" y1="${line.y}" y2="${line.y}" class="dashboard-chart__grid"></line>
+                    <text x="${geometry.chartWidth - 6}" y="${line.y - 4}" text-anchor="end" class="dashboard-chart__label">${escapeHtml(line.value)}</text>
+                  `
+                )
+                .join("")}
+              ${geometry.area ? `<polygon points="${geometry.area}" class="dashboard-chart__area"></polygon>` : ""}
+              ${geometry.bars
+                .map(
+                  (bar) => `
+                    <rect x="${bar.x}" y="${bar.y}" width="${bar.width}" height="${bar.height}" rx="8" class="dashboard-chart__bar"></rect>
+                  `
+                )
+                .join("")}
+              ${geometry.polyline ? `<polyline points="${geometry.polyline}" class="dashboard-chart__line"></polyline>` : ""}
+            </svg>
+          </div>
+          <div class="dashboard-axis">
+            ${(snapshot.sales.series || [])
+              .map(
+                (point) => `
+                  <div class="dashboard-axis__item">
+                    <span>${escapeHtml(point.label)}</span>
+                    <strong>${escapeHtml(formatDashboardNumber(point.orders))}</strong>
+                  </div>
+                `
+              )
+              .join("")}
+          </div>
+        </article>
+
+        <article class="dashboard-alerts-card">
+          <div class="panel-heading">
+            <div>
+              <h3>Операционные сигналы</h3>
+              <div class="compact-help">Первые проблемы и точки внимания по продажам, CRM, складу и задачам.</div>
+            </div>
+            <div class="workspace-note">Сигналов: ${escapeHtml(formatDashboardNumber(snapshot.alerts.length))}</div>
+          </div>
+          <div class="dashboard-alerts">
+            ${alerts || '<div class="workspace-empty workspace-empty--tight">Критичных сигналов сейчас нет.</div>'}
+          </div>
+        </article>
+      </section>
+
+      <section class="dashboard-panels">
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Продажи и каналы</h3>
+              <div class="compact-help">Что даёт поток заказов и где сейчас лежат деньги.</div>
+            </div>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="sales">Открыть продажи</button>
+          </div>
+          <div class="dashboard-mini-grid">${salesChannels || '<div class="workspace-empty workspace-empty--tight">Каналы появятся после заполнения заказов.</div>'}</div>
+        </article>
+
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>CRM и этапы</h3>
+              <div class="compact-help">Куда распределена активная воронка и где нужны действия менеджеров.</div>
+            </div>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="crm">Открыть CRM</button>
+          </div>
+          <div class="dashboard-mini-grid">${stageCards || '<div class="workspace-empty workspace-empty--tight">Сделки пока не заведены.</div>'}</div>
+        </article>
+
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Склад и спрос</h3>
+              <div class="compact-help">Топ позиций по спросу из калькуляторов и зоны дефицита.</div>
+            </div>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="warehouse">Открыть склад</button>
+          </div>
+          <div class="dashboard-stack">
+            <div class="dashboard-mini-grid">
+              <div class="dashboard-mini dashboard-mini--neutral"><span>На руках</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.onHandTotal))}</strong></div>
+              <div class="dashboard-mini dashboard-mini--accent"><span>Доступно</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.availableTotal))}</strong></div>
+              <div class="dashboard-mini dashboard-mini--warning"><span>В резерве</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.reservedTotal))}</strong></div>
+              <div class="dashboard-mini dashboard-mini--danger"><span>Критичный спрос</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.criticalDemandCount))}</strong></div>
+            </div>
+            ${demandCards || '<div class="workspace-empty workspace-empty--tight">Спрос из калькуляторов ещё не сформирован.</div>'}
+          </div>
+        </article>
+
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Задачи и исполнение</h3>
+              <div class="compact-help">Срез по статусам задач и по тому, где процесс тормозит.</div>
+            </div>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="tasks">Открыть задачи</button>
+          </div>
+          <div class="dashboard-mini-grid">${taskCards || '<div class="workspace-empty workspace-empty--tight">Задачи пока не заведены.</div>'}</div>
+        </article>
+      </section>
+
+      <section class="dashboard-modules">
+        <div class="panel-heading">
+          <div>
+            <h3>Рабочие разделы платформы</h3>
+            <div class="compact-help">Быстрые переходы в модули. Доступы и статусы подтягиваются автоматически.</div>
+          </div>
+        </div>
+        <div class="dashboard-modules__grid">
+          ${renderDashboardModuleCards(moduleKeys, summaryLookup)}
+        </div>
+      </section>
+    </div>
+  `;
 }
 
 function setViewMeta(title, subtitle) {
@@ -1122,7 +1498,7 @@ async function openModule(key) {
   clearShellStatus();
 
   if (module.type === "dashboard") {
-    renderDashboard();
+    await renderDashboard();
     DOM.dashboardView.classList.remove("d-none");
     return;
   }
@@ -1395,7 +1771,7 @@ async function bootstrapApp(session) {
   renderSchemaWarning();
   renderProfileCard();
   renderModuleNav();
-  renderDashboard();
+  await renderDashboard();
   showAppShell();
   const availableModules = moduleListFromProfile();
   const targetModule = availableModules.includes(previousModule) ? previousModule : availableModules[0] || "dashboard";
@@ -1977,7 +2353,7 @@ async function refreshCurrentView() {
     return;
   }
   if (STATE.activeModule === "dashboard") {
-    renderDashboard();
+    await renderDashboard();
     return;
   }
   if (liveWorkspaceController.supports(STATE.activeModule)) {
