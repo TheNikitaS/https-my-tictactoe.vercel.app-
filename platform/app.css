@@ -5104,3 +5104,103 @@ body {
     grid-template-columns: 1fr;
   }
 }
+
+#appShell .content-shell {
+  padding: 14px 16px 24px;
+}
+
+#appShell .topbar {
+  padding: 22px 24px;
+  margin-bottom: 14px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(247, 241, 232, 0.94));
+  border: 1px solid rgba(141, 118, 81, 0.14);
+  box-shadow: 0 20px 40px rgba(23, 33, 43, 0.06);
+}
+
+#appShell .topbar h2 {
+  margin-bottom: 6px;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+}
+
+#appShell .section-card,
+#appShell .workspace-panel,
+#appShell .placeholder-card,
+#appShell .dashboard-chart-card,
+#appShell .dashboard-kpi {
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(248, 242, 234, 0.94));
+  border-color: rgba(141, 118, 81, 0.14);
+  box-shadow: 0 18px 36px rgba(23, 33, 43, 0.05);
+}
+
+#appShell .workspace-toolbar,
+#appShell .workspace-command-bar {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(247, 248, 250, 0.94));
+  border-color: rgba(216, 224, 232, 0.82);
+}
+
+#appShell .table-shell {
+  overflow: auto;
+  box-shadow: inset 0 0 0 1px rgba(141, 118, 81, 0.08);
+}
+
+#appShell .table-shell table {
+  min-width: 960px;
+}
+
+#appShell .workspace-card,
+#appShell .workspace-list-item,
+#appShell .workspace-metric,
+#appShell .workspace-sprint-card {
+  box-shadow: 0 12px 24px rgba(23, 48, 66, 0.04);
+}
+
+#appShell .workspace-modal {
+  max-width: min(1080px, calc(100vw - 48px));
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.99), rgba(247, 241, 232, 0.95));
+}
+
+#appShell .workspace-modal__head {
+  padding-bottom: 14px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid rgba(141, 118, 81, 0.12);
+}
+
+#appShell .workspace-modal__body {
+  max-height: min(78vh, 920px);
+  overflow: auto;
+  padding-right: 6px;
+}
+
+#appShell .workspace-form input,
+#appShell .workspace-form select,
+#appShell .workspace-form textarea {
+  border-radius: 14px;
+}
+
+#appShell .module-frame-wrap {
+  min-height: calc(100vh - 210px);
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid rgba(141, 118, 81, 0.14);
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(247, 241, 232, 0.94));
+  box-shadow: 0 18px 36px rgba(23, 33, 43, 0.05);
+}
+
+#appShell .module-frame {
+  min-height: calc(100vh - 210px);
+  background: transparent;
+}
+
+@media (max-width: 1100px) {
+  #appShell .content-shell {
+    padding: 12px;
+  }
+
+  #appShell .table-shell table {
+    min-width: 760px;
+  }
+
+  #appShell .workspace-modal {
+    max-width: min(100vw - 20px, 1080px);
+  }
+}

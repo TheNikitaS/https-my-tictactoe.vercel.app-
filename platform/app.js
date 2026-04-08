@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ops28";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ops28";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-board29";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-board29";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-ops28";
+const PLATFORM_BUILD = "20260408-platform-board29";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -182,6 +182,12 @@ const MODULES = {
     type: "embed",
     src: () => `./light2/index.html?v=${PLATFORM_BUILD}`
   },
+  board: {
+    title: "Доска",
+    subtitle: "Совместная визуальная доска для быстрых схем, заметок, планов и пространства команды.",
+    type: "embed",
+    src: () => `./board/index.html?v=${PLATFORM_BUILD}`
+  },
   messenger: {
     title: "Мессенджер",
     subtitle: "Личные и групповые чаты команды.",
@@ -238,6 +244,7 @@ const MODULE_GROUPS = [
   "my_calculator",
   "partner_calculator",
   "light2",
+  "board",
   "directories",
   "tasks",
   "messenger",
@@ -263,6 +270,7 @@ const DEFAULT_ROLE_TEMPLATES = [
       my_calculator: { view: true, edit: true, manage: true },
       partner_calculator: { view: true, edit: true, manage: true },
       light2: { view: true, edit: true, manage: true },
+      board: { view: true, edit: true, manage: true },
       messenger: { view: true, edit: true, manage: true },
       admin: { view: true, edit: true, manage: true },
       directories: { view: true, edit: true, manage: true },
@@ -283,6 +291,7 @@ const DEFAULT_ROLE_TEMPLATES = [
       my_calculator: { view: true, edit: true, manage: true },
       partner_calculator: { view: true, edit: true, manage: true },
       light2: { view: true, edit: true, manage: true },
+      board: { view: true, edit: true, manage: true },
       messenger: { view: true, edit: true, manage: true },
       admin: { view: true, edit: true, manage: true },
       directories: { view: true, edit: true, manage: true },
@@ -303,6 +312,7 @@ const DEFAULT_ROLE_TEMPLATES = [
       my_calculator: { view: true, edit: true, manage: false },
       partner_calculator: { view: true, edit: true, manage: false },
       light2: { view: true, edit: true, manage: false },
+      board: { view: true, edit: true, manage: false },
       directories: { view: true, edit: true, manage: false },
       messenger: { view: true, edit: true, manage: false }
     }
@@ -316,6 +326,7 @@ const DEFAULT_ROLE_TEMPLATES = [
       dashboard: { view: true, edit: false, manage: false },
       partner_calculator: { view: true, edit: true, manage: false },
       light2: { view: true, edit: false, manage: false },
+      board: { view: true, edit: true, manage: false },
       messenger: { view: true, edit: true, manage: false }
     }
   },
@@ -327,6 +338,7 @@ const DEFAULT_ROLE_TEMPLATES = [
     module_permissions: {
       dashboard: { view: true, edit: false, manage: false },
       directories: { view: true, edit: false, manage: false },
+      board: { view: true, edit: true, manage: false },
       messenger: { view: true, edit: true, manage: false }
     }
   },
@@ -632,6 +644,7 @@ function getModuleShortLabel(key) {
     my_calculator: "Мой",
     partner_calculator: "Парт.",
     light2: "Контур",
+    board: "Доска",
     messenger: "Чаты",
     admin: "Админ",
     directories: "Спр.",
@@ -654,6 +667,7 @@ function getModuleIconClass(key) {
     my_calculator: "bi-calculator",
     partner_calculator: "bi-people",
     light2: "bi-building",
+    board: "bi-easel2",
     messenger: "bi-chat-dots",
     admin: "bi-shield-check",
     directories: "bi-sliders2",
@@ -1412,6 +1426,7 @@ function getModuleStageLabel(moduleKey) {
     my_calculator: "Рабочий модуль",
     partner_calculator: "Рабочий модуль",
     light2: "Активно развивается",
+    board: "Совместная доска",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",
     directories: "Единый слой данных",
@@ -2443,8 +2458,8 @@ async function bootstrapApp(session) {
       STATE.profile = {
         display_name: session.user.user_metadata?.display_name || session.user.email,
         role: "user",
-        allowed_modules: ["dashboard", "sales", "my_calculator", "partner_calculator"],
-        module_permissions: normalizeModulePermissions(null, ["dashboard", "sales", "my_calculator", "partner_calculator"])
+        allowed_modules: ["dashboard", "sales", "my_calculator", "partner_calculator", "board"],
+        module_permissions: normalizeModulePermissions(null, ["dashboard", "sales", "my_calculator", "partner_calculator", "board"])
       };
       STATE.roleTemplates = DEFAULT_ROLE_TEMPLATES.map((item) => cloneJson(item));
     } else {
@@ -2823,7 +2838,7 @@ async function createPartner(form) {
   if (ownerUserId) {
     const nextModules = Array.from(
       new Set([
-        ...(ownerModules || ["dashboard", "sales", "my_calculator", "partner_calculator", "messenger"]),
+        ...(ownerModules || ["dashboard", "sales", "my_calculator", "partner_calculator", "messenger", "board"]),
         "light2"
       ])
     );

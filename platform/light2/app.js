@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260404-workspace-premium7";
+const LIGHT2_BUILD = "20260408-light2-board29";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -3847,6 +3847,8 @@ async function importWorkbookIntoTables() {
 function openSection(sectionKey) {
   STATE.activeSection = isSectionAllowed(sectionKey) ? sectionKey : "overview";
   persistWorkspaceUi();
+  refreshInteractiveDomRefs();
+  syncWorkspaceModeUi();
   document.querySelectorAll(".section-tab").forEach((button) => {
     button.classList.toggle("active", button.dataset.section === STATE.activeSection);
   });

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https:; img-src 'self' data: blob: https:; script-src 'self'; style-src 'self' 'unsafe-inline'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests;" />
+  <title>ДОСКА | ДОМ НЕОНА</title>
+  <link rel="icon" type="image/png" href="../../shared/assets/dom-neon-logo.png" />
+  <link href="./app.css?v=20260408-platform-board29" rel="stylesheet" />
+</head>
+<body>
+  <div class="board-shell">
+    <header class="board-hero">
+      <div>
+        <div class="board-eyebrow">Совместное пространство</div>
+        <h1>Доска ДОМ НЕОНА</h1>
+        <p>Общая визуальная поверхность для быстрых схем, стикеров, планов и рабочих раскладок команды.</p>
+      </div>
+      <div class="board-status-card">
+        <span>Онлайн</span>
+        <strong id="syncStatus">Подключение...</strong>
+        <small id="syncDetail">Доска синхронизируется между устройствами.</small>
+      </div>
+    </header>
+
+    <section class="board-toolbar">
+      <div class="board-toolbar__group">
+        <button class="toolbar-btn toolbar-btn--primary" type="button" id="addNoteButton">+ Стикер</button>
+        <button class="toolbar-btn" type="button" id="addFrameButton">+ Фрейм</button>
+        <button class="toolbar-btn" type="button" id="duplicateButton">Копия</button>
+        <button class="toolbar-btn toolbar-btn--danger" type="button" id="deleteButton">Удалить</button>
+      </div>
+      <div class="board-toolbar__group board-toolbar__group--compact">
+        <label class="toolbar-control">
+          <span>Масштаб</span>
+          <select id="zoomSelect">
+            <option value="0.8">80%</option>
+            <option value="0.9">90%</option>
+            <option value="1" selected>100%</option>
+            <option value="1.1">110%</option>
+            <option value="1.25">125%</option>
+          </select>
+        </label>
+        <button class="toolbar-btn" type="button" id="centerViewButton">Центрировать</button>
+      </div>
+    </section>
+
+    <div class="board-layout">
+      <section class="board-stage-wrap">
+        <div class="board-stage-scroll" id="boardViewport">
+          <div class="board-stage-scale" id="boardStageScale">
+            <div class="board-stage" id="boardStage"></div>
+          </div>
+        </div>
+      </section>
+
+      <aside class="board-inspector" id="boardInspector">
+        <div class="board-inspector__empty" id="emptyInspector">
+          <strong>Ничего не выбрано</strong>
+          <span>Выберите стикер или фрейм на доске, чтобы редактировать его свойства.</span>
+        </div>
+
+        <form class="board-form d-none" id="entityForm">
+          <div class="board-form__head">
+            <div>
+              <div class="board-form__eyebrow" id="entityTypeLabel">Стикер</div>
+              <h2 id="entityTitleLabel">Редактирование</h2>
+            </div>
+            <button class="toolbar-btn toolbar-btn--ghost" type="button" id="clearSelectionButton">Снять выбор</button>
+          </div>
+
+          <label>
+            <span>Название</span>
+            <input type="text" id="entityTitleInput" />
+          </label>
+
+          <label id="entityTextField">
+            <span>Текст</span>
+            <textarea id="entityTextInput" rows="8"></textarea>
+          </label>
+
+          <div class="board-form-grid">
+            <label>
+              <span>X</span>
+              <input type="number" id="entityXInput" step="10" />
+            </label>
+            <label>
+              <span>Y</span>
+              <input type="number" id="entityYInput" step="10" />
+            </label>
+            <label>
+              <span>Ширина</span>
+              <input type="number" id="entityWidthInput" step="10" min="120" />
+            </label>
+            <label>
+              <span>Высота</span>
+              <input type="number" id="entityHeightInput" step="10" min="80" />
+            </label>
+          </div>
+
+          <label>
+            <span>Цвет</span>
+            <select id="entityColorInput"></select>
+          </label>
+
+          <div class="board-form__actions">
+            <button class="toolbar-btn toolbar-btn--primary" type="submit">Применить</button>
+            <button class="toolbar-btn" type="button" id="duplicateInspectorButton">Сделать копию</button>
+          </div>
+        </form>
+      </aside>
+    </div>
+  </div>
+
+  <script src="../../shared/supabase-sync.js?v=20260408-platform-board29"></script>
+  <script type="module" src="./app.js?v=20260408-platform-board29"></script>
+</body>
+</html>
