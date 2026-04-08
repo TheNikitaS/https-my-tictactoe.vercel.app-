@@ -514,7 +514,7 @@ const STATE = {
   builderEventsBound: false,
   sectionBuilders: readStoredJson(LIGHT2_UI_KEYS.sectionBuilders, {}),
   ui: {
-    compactTables: readStoredBoolean(LIGHT2_UI_KEYS.compactTables, false),
+    compactTables: readStoredBoolean(LIGHT2_UI_KEYS.compactTables, true),
     hiddenForms: readStoredJson(LIGHT2_UI_KEYS.hiddenForms, {
       settlements: false,
       balance: false,
@@ -4010,7 +4010,7 @@ function resetBalanceForm() {
 
   STATE.editingBalanceId = null;
   dom.form.reset();
-  dom.form.elements.entry_date.value = new Date().toISOString().slice(0, 10);
+  dom.form.elements.entry_date.value = getTodayIso();
   dom.form.elements.account_type.value = "cash_card";
   dom.form.elements.income_amount.value = "0";
   dom.form.elements.expense_amount.value = "0";
@@ -4025,7 +4025,7 @@ function resetCalendarForm() {
 
   STATE.editingCalendarId = null;
   dom.form.reset();
-  dom.form.elements.payment_date.value = new Date().toISOString().slice(0, 10);
+  dom.form.elements.payment_date.value = getTodayIso();
   dom.form.elements.operation_type.value = "Расход";
   dom.form.elements.account_name.value = "Наличные / карта";
   dom.form.elements.status.value = "Платеж";
@@ -4250,7 +4250,7 @@ function resetAssetPaymentForm() {
 
   STATE.editingAssetPaymentId = null;
   dom.paymentForm.reset();
-  dom.paymentForm.elements.payment_date.value = new Date().toISOString().slice(0, 10);
+  dom.paymentForm.elements.payment_date.value = getTodayIso();
   dom.paymentForm.elements.payment_amount.value = "0";
   dom.paymentSubmitButton.textContent = "Сохранить выплату";
   dom.paymentForm.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));

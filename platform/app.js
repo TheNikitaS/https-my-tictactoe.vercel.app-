@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux32";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux32";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux33";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux33";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-ux32";
+const PLATFORM_BUILD = "20260408-platform-ux33";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -1690,10 +1690,7 @@ async function renderDashboard() {
     DOM.dashboardGrid.innerHTML = `
       <div class="dashboard-shell">
         <section class="dashboard-fallback">
-          <div class="workspace-empty">Показатели временно недоступны. Основные модули можно открыть ниже.</div>
-        </section>
-        <section class="dashboard-modules">
-          <div class="dashboard-modules__grid">${renderDashboardModuleCards(moduleKeys, summaryLookup)}</div>
+          <div class="workspace-empty">Показатели временно недоступны. Обновите страницу или откройте нужный модуль из шапки.</div>
         </section>
       </div>
     `;
@@ -1833,7 +1830,20 @@ async function renderDashboard() {
     )
     .join("");
 
-  const recentActivity = (snapshot.activity || [])
+  const recentActivityRows = (snapshot.activity || [])
+    .filter((entry) => {
+      const timestamp = new Date(entry?.date || entry?.updated_at || entry?.created_at || 0).getTime();
+      if (!Number.isFinite(timestamp)) return false;
+      const ageMs = Date.now() - timestamp;
+      return ageMs >= 0 && ageMs <= 24 * 60 * 60 * 1000;
+    })
+    .sort((left, right) => {
+      const leftTs = new Date(left?.date || left?.updated_at || left?.created_at || 0).getTime() || 0;
+      const rightTs = new Date(right?.date || right?.updated_at || right?.created_at || 0).getTime() || 0;
+      return rightTs - leftTs;
+    });
+
+  const recentActivity = recentActivityRows
     .map(
       (entry) => `
         <div class="workspace-list-item">
@@ -2044,24 +2054,12 @@ async function renderDashboard() {
           <div class="panel-heading">
             <div>
               <h3>Последняя активность</h3>
-              <div class="compact-help">Свежие изменения по продажам, CRM, складу, деньгам и задачам в одном месте.</div>
+              <div class="compact-help">Только действия за последние 24 часа, чтобы главная не разрасталась вниз.</div>
             </div>
             <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="dashboard">Обновить вид</button>
           </div>
-          <div class="workspace-stack">${recentActivity || '<div class="workspace-empty workspace-empty--tight">События появятся после первых действий в модулях.</div>'}</div>
+          <div class="workspace-stack">${recentActivity || '<div class="workspace-empty workspace-empty--tight">За последние 24 часа новых событий пока не было.</div>'}</div>
         </article>
-      </section>
-
-      <section class="dashboard-modules">
-        <div class="panel-heading">
-          <div>
-            <h3>Рабочие разделы платформы</h3>
-            <div class="compact-help">Быстрые переходы в модули. Доступы и статусы подтягиваются автоматически.</div>
-          </div>
-        </div>
-        <div class="dashboard-modules__grid">
-          ${renderDashboardModuleCards(moduleKeys, summaryLookup)}
-        </div>
       </section>
     </div>
   `;
