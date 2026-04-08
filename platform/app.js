@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux35";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux35";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux37";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux37";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-ux36";
+const PLATFORM_BUILD = "20260408-platform-ux37";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -829,6 +829,14 @@ function formatDateTime(value) {
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "short",
     timeStyle: "short"
+  }).format(date);
+}
+
+function formatDate(value) {
+  const date = value ? new Date(value) : null;
+  if (!date || Number.isNaN(date.getTime())) return "—";
+  return new Intl.DateTimeFormat("ru-RU", {
+    dateStyle: "short"
   }).format(date);
 }
 
