@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux33";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux33";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux34";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux34";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-ux33";
+const PLATFORM_BUILD = "20260408-platform-ux34";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",

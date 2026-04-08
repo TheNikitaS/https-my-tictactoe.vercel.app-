@@ -5204,3 +5204,171 @@ body {
     max-width: min(100vw - 20px, 1080px);
   }
 }
+
+/* Final dense UI pass for internal workspaces only. Keep header untouched,
+   but make the operational screens feel closer to a compact business tool. */
+#appShell .content-shell,
+#appShell .view-section,
+#appShell .dashboard-shell,
+#appShell .workspace-shell,
+#appShell .workspace-grid,
+#appShell .workspace-grid--2,
+#appShell .admin-grid,
+#appShell .workspace-panel,
+#appShell .workspace-card,
+#appShell .workspace-list-item,
+#appShell .workspace-form,
+#appShell .table-shell {
+  min-width: 0;
+}
+
+#appShell .content-shell {
+  padding: 10px;
+}
+
+#appShell .view-section {
+  margin-top: 10px;
+}
+
+#appShell .dashboard-shell,
+#appShell .workspace-shell {
+  gap: 14px;
+}
+
+#appShell .placeholder-card,
+#appShell .workspace-panel,
+#appShell .dashboard-chart-card,
+#appShell .dashboard-alerts-card,
+#appShell .dashboard-panel,
+#appShell .workspace-metric,
+#appShell .workspace-card,
+#appShell .workspace-list-item {
+  border-radius: 18px;
+}
+
+#appShell .workspace-panel,
+#appShell .dashboard-chart-card,
+#appShell .dashboard-alerts-card,
+#appShell .dashboard-panel,
+#appShell .placeholder-card {
+  padding: 16px 18px;
+}
+
+#appShell .panel-heading {
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+#appShell .panel-heading h3,
+#appShell .panel-heading h4 {
+  font-size: 1rem;
+}
+
+#appShell .workspace-note,
+#appShell .workspace-list-item__meta,
+#appShell .workspace-table__sub,
+#appShell .workspace-form label > span,
+#appShell .workspace-form .form-label,
+#appShell .compact-help {
+  font-size: 0.76rem;
+}
+
+#appShell .workspace-metric {
+  padding: 12px 14px;
+}
+
+#appShell .workspace-metric span,
+#appShell .workspace-metric small {
+  font-size: 0.76rem;
+}
+
+#appShell .workspace-metric strong,
+#appShell .dashboard-kpi strong,
+#appShell .dashboard-focus-card strong {
+  font-size: 1.12rem;
+}
+
+#appShell .workspace-card,
+#appShell .workspace-list-item {
+  padding: 10px 12px;
+}
+
+#appShell .workspace-card__head strong {
+  font-size: 0.9rem;
+}
+
+#appShell .workspace-card__meta,
+#appShell .workspace-card__note,
+#appShell .workspace-empty,
+#appShell .workspace-empty--tight {
+  font-size: 0.8rem;
+}
+
+#appShell .workspace-mode-tab,
+#appShell .workspace-command-chip,
+#appShell .workspace-tag,
+#appShell .dashboard-period {
+  padding: 7px 11px;
+  font-size: 0.76rem;
+}
+
+#appShell .workspace-command-bar {
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+}
+
+#appShell .workspace-form-grid {
+  gap: 10px;
+}
+
+#appShell .workspace-form .form-control,
+#appShell .workspace-form .form-select,
+#appShell .workspace-form textarea {
+  min-height: 36px;
+  font-size: 0.82rem;
+  padding: 0.42rem 0.65rem;
+}
+
+#appShell .workspace-form textarea {
+  min-height: 110px;
+}
+
+#appShell .workspace-form__actions .btn,
+#appShell .workspace-command-bar .btn,
+#appShell .panel-heading .btn,
+#appShell .workspace-list-item .btn,
+#appShell .workspace-card .btn {
+  min-height: 34px;
+  padding: 0.38rem 0.7rem;
+  font-size: 0.76rem;
+}
+
+#appShell .table-shell {
+  max-width: 100%;
+}
+
+#appShell .workspace-table th,
+#appShell .workspace-table td,
+#appShell .table-shell th,
+#appShell .table-shell td {
+  font-size: 0.78rem;
+}
+
+#appShell .workspace-modal {
+  max-width: min(980px, calc(100vw - 36px));
+}
+
+@media (max-width: 1100px) {
+  #appShell .content-shell {
+    padding: 8px;
+  }
+
+  #appShell .workspace-panel,
+  #appShell .dashboard-chart-card,
+  #appShell .dashboard-alerts-card,
+  #appShell .dashboard-panel,
+  #appShell .placeholder-card {
+    padding: 14px;
+  }
+}
