@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-board29";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-board29";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux31";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux31";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-board29";
+const PLATFORM_BUILD = "20260408-platform-ux31";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -1833,6 +1833,25 @@ async function renderDashboard() {
     )
     .join("");
 
+  const recentActivity = (snapshot.activity || [])
+    .map(
+      (entry) => `
+        <div class="workspace-list-item">
+          <div>
+            <strong>${escapeHtml(entry.title || "Событие платформы")}</strong>
+            <div class="workspace-list-item__meta">${escapeHtml(entry.meta || "Без деталей")}</div>
+          </div>
+          <div class="text-end">
+            <div class="workspace-tag workspace-tag--${escapeHtml(entry.tone || "neutral")}">${escapeHtml(formatDate(entry.date))}</div>
+            <div class="workspace-card__actions mt-2">
+              <button class="btn btn-sm btn-outline-dark" type="button" data-dashboard-open="${escapeHtml(entry.moduleKey || "dashboard")}">Открыть</button>
+            </div>
+          </div>
+        </div>
+      `
+    )
+    .join("");
+
   DOM.dashboardGrid.innerHTML = `
     <div class="dashboard-shell">
       <section class="dashboard-focus-strip">
@@ -2019,6 +2038,17 @@ async function renderDashboard() {
             <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="tasks">Открыть задачи</button>
           </div>
           <div class="dashboard-mini-grid">${taskCards || '<div class="workspace-empty workspace-empty--tight">Задачи пока не заведены.</div>'}</div>
+        </article>
+
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Последняя активность</h3>
+              <div class="compact-help">Свежие изменения по продажам, CRM, складу, деньгам и задачам в одном месте.</div>
+            </div>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="dashboard">Обновить вид</button>
+          </div>
+          <div class="workspace-stack">${recentActivity || '<div class="workspace-empty workspace-empty--tight">События появятся после первых действий в модулях.</div>'}</div>
         </article>
       </section>
 

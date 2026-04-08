@@ -9,6 +9,10 @@ function tokenize(text) {
   return String(text || "").match(TOKEN_RE) || [];
 }
 
+function uniqueTokens(text) {
+  return [...new Set(tokenize(String(text || "").toLowerCase()))];
+}
+
 function hashEmbedding(text) {
   const vector = new Array(VECTOR_SIZE).fill(0);
   tokenize(text.toLowerCase()).forEach((token) => {
@@ -61,6 +65,83 @@ function trimSnippet(text, query) {
   const prefix = start > 0 ? "…" : "";
   const suffix = end < source.length ? "…" : "";
   return `${prefix}${source.slice(start, end).trim()}${suffix}`;
+}
+
+function countTokenHits(queryTokens, text) {
+  const haystack = String(text || "").toLowerCase();
+  if (!haystack) return 0;
+  return queryTokens.reduce((sum, token) => {
+    if (!token || !haystack.includes(token)) return sum;
+    return sum + (token.length >= 8 ? 1.35 : 1);
+  }, 0);
+}
+
+function countPhraseHits(query, text) {
+  const question = String(query || "").toLowerCase().trim();
+  const haystack = String(text || "").toLowerCase();
+  if (!question || !haystack) return 0;
+  let hits = 0;
+  if (question.length >= 8 && haystack.includes(question)) hits += 2;
+  question
+    .split(/[?!.,;:]+/)
+    .map((item) => item.trim())
+    .filter((item) => item.length >= 10)
+    .slice(0, 3)
+    .forEach((phrase) => {
+      if (haystack.includes(phrase)) hits += 1;
+    });
+  return hits;
+}
+
+function detectQueryIntent(query) {
+  const lower = String(query || "").toLowerCase();
+  const intents = {
+    sales: ["продаж", "заказ", "счет", "счёт", "оплат", "клиент", "лид", "кп"],
+    warehouse: ["склад", "остат", "товар", "материал", "закуп", "резерв", "артикул", "sku"],
+    crm: ["crm", "сделк", "воронк", "контакт", "коммерческ"],
+    tasks: ["задач", "итерац", "блокер", "срок", "спринт"],
+    finance: ["деньг", "баланс", "платеж", "платёж", "расход", "приход", "финанс"],
+    production: ["производ", "мастер", "этап", "техкарт", "сборк"]
+  };
+  let bestIntent = "general";
+  let bestScore = 0;
+  Object.entries(intents).forEach(([intent, keywords]) => {
+    const score = keywords.reduce((sum, keyword) => sum + (lower.includes(keyword) ? 1 : 0), 0);
+    if (score > bestScore) {
+      bestScore = score;
+      bestIntent = intent;
+    }
+  });
+  return bestIntent;
+}
+
+function getKnowledgeSourceBoost(intent, row) {
+  const haystack = `${row?.sourceLabel || ""} ${row?.title || ""} ${row?.url || ""}`.toLowerCase();
+  if (!haystack) return 0;
+  const boosts = {
+    sales: ["продажи", "crm", "24lite"],
+    warehouse: ["склад", "товар", "закуп", "domneon"],
+    crm: ["crm", "сделк", "клиент"],
+    tasks: ["тасктрекер", "задач"],
+    finance: ["деньги", "баланс", "платеж", "платёж", "контур"],
+    production: ["производ", "мастер", "сборк"]
+  };
+  const matches = (boosts[intent] || []).reduce((sum, token) => sum + (haystack.includes(token) ? 1 : 0), 0);
+  return Math.min(matches * 0.035, 0.12);
+}
+
+function scoreKnowledgeRow(query, queryEmbedding, row) {
+  const queryTokens = uniqueTokens(query);
+  const text = `${row?.title || ""} ${row?.text || ""}`.toLowerCase();
+  const title = String(row?.title || "").toLowerCase();
+  const cosine = cosineSimilarity(queryEmbedding, row.embedding);
+  const tokenHits = countTokenHits(queryTokens, text);
+  const titleHits = countTokenHits(queryTokens, title);
+  const lexicalScore = queryTokens.length ? Math.min(tokenHits / Math.max(queryTokens.length, 1), 1.4) : 0;
+  const titleScore = queryTokens.length ? Math.min(titleHits / Math.max(queryTokens.length, 1), 1.4) : 0;
+  const phraseScore = Math.min(countPhraseHits(query, text), 3) / 3;
+  const sourceBoost = getKnowledgeSourceBoost(detectQueryIntent(query), row);
+  return cosine * 0.56 + lexicalScore * 0.24 + titleScore * 0.1 + phraseScore * 0.08 + sourceBoost;
 }
 
 function formatMoney(value) {
@@ -264,6 +345,26 @@ function composeAnswer(question, matches, context) {
 
   const hints = buildQueryHints(question, matches, context);
   const bullets = topMatches.map((match) => `- ${match.sourceLabel}: ${trimSnippet(match.text, question)}`);
+  const leadingSnippet = trimSnippet(topMatches[0]?.text || "", question);
+  let nextStep = "Если нужно, я могу дальше сузить ответ под конкретный модуль, заказ, материал или регламент.";
+  if (topMatches.some((match) => /crm|сделк/i.test(`${match.sourceLabel} ${match.title}`))) {
+    nextStep = "Если нужен следующий шаг по клиенту или сделке, откройте CRM и уточните стадию, срок или ответственного.";
+  } else if (topMatches.some((match) => /склад|товар|закуп|материал/i.test(`${match.sourceLabel} ${match.title}`))) {
+    nextStep = "Если нужно действие по материалам, откройте Склад и проверьте остаток, резерв или закупку.";
+  } else if (topMatches.some((match) => /продаж|счет|счёт|заказ/i.test(`${match.sourceLabel} ${match.title}`))) {
+    nextStep = "Если вопрос про заказ или оплату, откройте Продажи и уточните номер заказа, счет или статус.";
+  } else if (topMatches.some((match) => /задач|итерац|спринт/i.test(`${match.sourceLabel} ${match.title}`))) {
+    nextStep = "Если нужен контроль исполнения, откройте Тасктрекер и проверьте срок, блокер или ответственного.";
+  }
+
+  return [
+    `Коротко: ${leadingSnippet || "подходящий фрагмент найден, но вопрос лучше уточнить."}`,
+    hints.length ? `Что важно сейчас:\n${hints.map((item) => `- ${item}`).join("\n")}` : "",
+    `На что я опираюсь:\n${bullets.join("\n")}`,
+    `Что делать дальше: ${nextStep}`
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   return [
     "Вот что нашёл по базе знаний компании и текущим данным платформы:",
@@ -408,9 +509,9 @@ export function createDomovoyNeonik(options = {}) {
     const scored = allRows
       .map((row) => ({
         ...row,
-        score: cosineSimilarity(queryEmbedding, row.embedding)
+        score: scoreKnowledgeRow(query, queryEmbedding, row)
       }))
-      .filter((row) => row.score > 0.02)
+      .filter((row) => row.score > 0.065)
       .sort((a, b) => b.score - a.score)
       .slice(0, 8);
 
@@ -440,7 +541,8 @@ export function createDomovoyNeonik(options = {}) {
     return {
       answer: remoteError ? `${answer}\n\nСерверный ИИ сейчас недоступен, поэтому я ответил по резервной локальной базе знаний.` : answer,
       sources,
-      highlights
+      highlights,
+      mode: remoteError ? "local-fallback" : "local"
     };
   }
 

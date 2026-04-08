@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260408-light2-board29";
+const LIGHT2_BUILD = "20260408-light2-board30";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -117,6 +117,19 @@ function refreshInteractiveDomRefs() {
   DOM.settlementTableBody = settlementDom.tableBody;
   DOM.settlementActionsHead = settlementDom.actionsHead;
   DOM.refreshSettlementsButton = settlementDom.refreshButton;
+}
+
+function bindDomEvent(node, eventName, handler, options) {
+  if (!node || typeof node.addEventListener !== "function") return;
+  node.addEventListener(eventName, handler, options);
+}
+
+function bindDomEvents(nodes, eventNames, handler, options) {
+  const targets = (Array.isArray(nodes) ? nodes : [nodes]).filter(Boolean);
+  const names = Array.isArray(eventNames) ? eventNames : [eventNames];
+  targets.forEach((node) => {
+    names.forEach((eventName) => bindDomEvent(node, eventName, handler, options));
+  });
 }
 
 const SECTION_META = {
@@ -497,6 +510,8 @@ const STATE = {
   editingAssetId: null,
   editingAssetPaymentId: null,
   editingPurchaseId: null,
+  eventsBound: false,
+  builderEventsBound: false,
   sectionBuilders: readStoredJson(LIGHT2_UI_KEYS.sectionBuilders, {}),
   ui: {
     compactTables: readStoredBoolean(LIGHT2_UI_KEYS.compactTables, false),
@@ -5404,6 +5419,8 @@ async function deletePurchase(id) {
 }
 
 function bindEvents() {
+  if (STATE.eventsBound) return;
+  STATE.eventsBound = true;
   refreshInteractiveDomRefs();
   const settlementDom = getSettlementDom();
   const balanceDom = getBalanceDom();
@@ -5411,29 +5428,29 @@ function bindEvents() {
   const assetsDom = getAssetsDom();
   const purchasesDom = getPurchasesDom();
 
-  DOM.sectionTabs.addEventListener("click", (event) => {
+  bindDomEvent(DOM.sectionTabs, "click", (event) => {
     const button = event.target.closest("[data-section]");
     if (!button) return;
     openSection(button.dataset.section);
   });
 
-  DOM.overviewGrid.addEventListener("click", (event) => {
+  bindDomEvent(DOM.overviewGrid, "click", (event) => {
     const button = event.target.closest("[data-open-section]");
     if (!button) return;
     openSection(button.dataset.openSection);
   });
 
-  DOM.toggleCompactTablesButton?.addEventListener("click", () => {
+  bindDomEvent(DOM.toggleCompactTablesButton, "click", () => {
     STATE.ui.compactTables = !STATE.ui.compactTables;
     persistWorkspaceUi();
     syncWorkspaceModeUi();
   });
 
-  DOM.toggleAllFormsButton?.addEventListener("click", () => {
+  bindDomEvent(DOM.toggleAllFormsButton, "click", () => {
     toggleAllForms();
   });
 
-  document.body.addEventListener("click", (event) => {
+  bindDomEvent(document.body, "click", (event) => {
     const formToggleButton = event.target.closest("[data-form-toggle]");
     if (formToggleButton) {
       toggleSectionForm(formToggleButton.dataset.formToggle);
@@ -5461,7 +5478,7 @@ function bindEvents() {
     }
   });
 
-  DOM.importWorkbookButton?.addEventListener("click", async () => {
+  bindDomEvent(DOM.importWorkbookButton, "click", async () => {
     try {
       await importWorkbookIntoTables();
     } catch (error) {
@@ -5469,18 +5486,18 @@ function bindEvents() {
     }
   });
 
-  document.body.addEventListener("input", (event) => {
+  bindDomEvent(document.body, "input", (event) => {
     const input = event.target.closest("[data-snapshot-search]");
     if (!input) return;
     STATE.snapshotSearches[input.dataset.snapshotSearch] = input.value;
     renderWorkbookSnapshotSection(input.dataset.snapshotSearch);
   });
 
-  settlementDom.form?.addEventListener("input", updateSettlementPreview);
-  balanceDom.form?.addEventListener("input", updateBalancePreview);
-  calendarDom.form?.addEventListener("input", updateCalendarPreview);
+  bindDomEvent(settlementDom.form, "input", updateSettlementPreview);
+  bindDomEvent(balanceDom.form, "input", updateBalancePreview);
+  bindDomEvent(calendarDom.form, "input", updateCalendarPreview);
 
-  settlementDom.form?.addEventListener("submit", async (event) => {
+  bindDomEvent(settlementDom.form, "submit", async (event) => {
     event.preventDefault();
     try {
       await saveSettlement();
@@ -5489,7 +5506,7 @@ function bindEvents() {
     }
   });
 
-  balanceDom.form?.addEventListener("submit", async (event) => {
+  bindDomEvent(balanceDom.form, "submit", async (event) => {
     event.preventDefault();
     try {
       await saveBalanceEntry();
@@ -5498,7 +5515,7 @@ function bindEvents() {
     }
   });
 
-  calendarDom.form?.addEventListener("submit", async (event) => {
+  bindDomEvent(calendarDom.form, "submit", async (event) => {
     event.preventDefault();
     try {
       await saveCalendarEntry();
@@ -5507,7 +5524,7 @@ function bindEvents() {
     }
   });
 
-  assetsDom.assetForm?.addEventListener("submit", async (event) => {
+  bindDomEvent(assetsDom.assetForm, "submit", async (event) => {
     event.preventDefault();
     try {
       await saveAsset();
@@ -5516,7 +5533,7 @@ function bindEvents() {
     }
   });
 
-  assetsDom.paymentForm?.addEventListener("submit", async (event) => {
+  bindDomEvent(assetsDom.paymentForm, "submit", async (event) => {
     event.preventDefault();
     try {
       await saveAssetPayment();
@@ -5525,7 +5542,7 @@ function bindEvents() {
     }
   });
 
-  purchasesDom.form?.addEventListener("submit", async (event) => {
+  bindDomEvent(purchasesDom.form, "submit", async (event) => {
     event.preventDefault();
     try {
       await savePurchase();
@@ -5534,64 +5551,47 @@ function bindEvents() {
     }
   });
 
-  settlementDom.resetButton?.addEventListener("click", () => {
+  bindDomEvent(settlementDom.resetButton, "click", () => {
     resetSettlementForm();
     renderSettlements();
   });
 
-  balanceDom.resetButton?.addEventListener("click", () => {
+  bindDomEvent(balanceDom.resetButton, "click", () => {
     resetBalanceForm();
     renderBalance();
   });
 
-  calendarDom.resetButton?.addEventListener("click", () => {
+  bindDomEvent(calendarDom.resetButton, "click", () => {
     resetCalendarForm();
     renderCalendar();
   });
 
-  assetsDom.assetResetButton?.addEventListener("click", () => {
+  bindDomEvent(assetsDom.assetResetButton, "click", () => {
     resetAssetForm();
     renderAssets();
   });
 
-  assetsDom.paymentResetButton?.addEventListener("click", () => {
+  bindDomEvent(assetsDom.paymentResetButton, "click", () => {
     resetAssetPaymentForm();
     renderAssets();
   });
 
-  purchasesDom.resetButton?.addEventListener("click", () => {
+  bindDomEvent(purchasesDom.resetButton, "click", () => {
     resetPurchaseForm();
     renderPurchases();
   });
 
-  [settlementDom.partnerFilter, settlementDom.statusFilter, settlementDom.search].forEach((element) => {
-    element.addEventListener("input", renderSettlements);
-    element.addEventListener("change", renderSettlements);
-  });
-
-  [balanceDom.accountFilter, balanceDom.monthFilter, balanceDom.search].forEach((element) => {
-    element?.addEventListener("input", renderBalance);
-    element?.addEventListener("change", renderBalance);
-  });
-
-  [calendarDom.monthFilter, calendarDom.operationFilter, calendarDom.accountFilter, calendarDom.statusFilter, calendarDom.search].forEach(
-    (element) => {
-      element?.addEventListener("input", renderCalendar);
-      element?.addEventListener("change", renderCalendar);
-    }
+  bindDomEvents([settlementDom.partnerFilter, settlementDom.statusFilter, settlementDom.search], ["input", "change"], renderSettlements);
+  bindDomEvents([balanceDom.accountFilter, balanceDom.monthFilter, balanceDom.search], ["input", "change"], renderBalance);
+  bindDomEvents(
+    [calendarDom.monthFilter, calendarDom.operationFilter, calendarDom.accountFilter, calendarDom.statusFilter, calendarDom.search],
+    ["input", "change"],
+    renderCalendar
   );
+  bindDomEvents([assetsDom.search, assetsDom.paymentFilter, assetsDom.paymentSearch], ["input", "change"], renderAssets);
+  bindDomEvents([purchasesDom.supplierFilter, purchasesDom.categoryFilter, purchasesDom.search], ["input", "change"], renderPurchases);
 
-  [assetsDom.search, assetsDom.paymentFilter, assetsDom.paymentSearch].forEach((element) => {
-    element?.addEventListener("input", renderAssets);
-    element?.addEventListener("change", renderAssets);
-  });
-
-  [purchasesDom.supplierFilter, purchasesDom.categoryFilter, purchasesDom.search].forEach((element) => {
-    element?.addEventListener("input", renderPurchases);
-    element?.addEventListener("change", renderPurchases);
-  });
-
-  settlementDom.refreshButton?.addEventListener("click", async () => {
+  bindDomEvent(settlementDom.refreshButton, "click", async () => {
     try {
       await loadSettlements();
       syncModuleStatus();
@@ -5600,7 +5600,7 @@ function bindEvents() {
     }
   });
 
-  balanceDom.refreshButton?.addEventListener("click", async () => {
+  bindDomEvent(balanceDom.refreshButton, "click", async () => {
     try {
       await loadFinanceData();
       syncModuleStatus();
@@ -5609,7 +5609,7 @@ function bindEvents() {
     }
   });
 
-  calendarDom.refreshButton?.addEventListener("click", async () => {
+  bindDomEvent(calendarDom.refreshButton, "click", async () => {
     try {
       await loadFinanceData();
       syncModuleStatus();
@@ -5618,7 +5618,7 @@ function bindEvents() {
     }
   });
 
-  assetsDom.refreshButton?.addEventListener("click", async () => {
+  bindDomEvent(assetsDom.refreshButton, "click", async () => {
     try {
       await loadOperationsData();
       syncModuleStatus();
@@ -5627,7 +5627,7 @@ function bindEvents() {
     }
   });
 
-  purchasesDom.refreshButton?.addEventListener("click", async () => {
+  bindDomEvent(purchasesDom.refreshButton, "click", async () => {
     try {
       await loadOperationsData();
       syncModuleStatus();
@@ -5636,7 +5636,7 @@ function bindEvents() {
     }
   });
 
-  settlementDom.tableBody?.addEventListener("click", async (event) => {
+  bindDomEvent(settlementDom.tableBody, "click", async (event) => {
     const editButton = event.target.closest("[data-edit-settlement]");
     if (editButton) {
       const item = STATE.settlements.find((row) => row.id === editButton.dataset.editSettlement);
@@ -5658,7 +5658,7 @@ function bindEvents() {
     }
   });
 
-  balanceDom.tableBody?.addEventListener("click", async (event) => {
+  bindDomEvent(balanceDom.tableBody, "click", async (event) => {
     const editButton = event.target.closest("[data-edit-balance]");
     if (editButton) {
       const item = STATE.balanceEntries.find((row) => row.id === editButton.dataset.editBalance);
@@ -5680,7 +5680,7 @@ function bindEvents() {
     }
   });
 
-  calendarDom.tableBody?.addEventListener("click", async (event) => {
+  bindDomEvent(calendarDom.tableBody, "click", async (event) => {
     const editButton = event.target.closest("[data-edit-calendar]");
     if (editButton) {
       const item = STATE.calendarEntries.find((row) => row.id === editButton.dataset.editCalendar);
@@ -5702,7 +5702,7 @@ function bindEvents() {
     }
   });
 
-  assetsDom.assetTableBody?.addEventListener("click", async (event) => {
+  bindDomEvent(assetsDom.assetTableBody, "click", async (event) => {
     const editButton = event.target.closest("[data-edit-asset]");
     if (editButton) {
       const item = STATE.assets.find((row) => row.id === editButton.dataset.editAsset);
@@ -5724,7 +5724,7 @@ function bindEvents() {
     }
   });
 
-  assetsDom.paymentTableBody?.addEventListener("click", async (event) => {
+  bindDomEvent(assetsDom.paymentTableBody, "click", async (event) => {
     const editButton = event.target.closest("[data-edit-asset-payment]");
     if (editButton) {
       const item = STATE.assetPayments.find((row) => row.id === editButton.dataset.editAssetPayment);
@@ -5746,7 +5746,7 @@ function bindEvents() {
     }
   });
 
-  purchasesDom.tableBody?.addEventListener("click", async (event) => {
+  bindDomEvent(purchasesDom.tableBody, "click", async (event) => {
     const editButton = event.target.closest("[data-edit-purchase]");
     if (editButton) {
       const item = STATE.purchaseCatalog.find((row) => row.id === editButton.dataset.editPurchase);
@@ -6137,7 +6137,9 @@ function renderPurchases() {
 }
 
 function bindBuilderEvents() {
-  document.body.addEventListener("click", async (event) => {
+  if (STATE.builderEventsBound) return;
+  STATE.builderEventsBound = true;
+  bindDomEvent(document.body, "click", async (event) => {
     const toggleButton = event.target.closest("[data-builder-toggle]");
     if (toggleButton) {
       toggleSectionBuilder(toggleButton.dataset.builderToggle);
@@ -6254,8 +6256,13 @@ async function start() {
   refreshInteractiveDomRefs();
   renderWorkbookSnapshotSections();
   syncSectionTabs();
-  bindEvents();
-  bindBuilderEvents();
+  try {
+    bindEvents();
+    bindBuilderEvents();
+  } catch (error) {
+    console.error("light2 bind error", error);
+    setStatus(error.message || "Не удалось инициализировать интерактивные кнопки ДОМ НЕОНА.", "error");
+  }
   syncWorkspaceModeUi();
   openSection(STATE.activeSection || "overview");
   void loadWorkbookSnapshot();

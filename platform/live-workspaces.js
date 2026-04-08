@@ -2877,7 +2877,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           </div>
         </div>
         ${canManage ? renderBuilderPanel(moduleKey, doc, ui.warehouse, escapeHtml) : ""}
-        <div class="workspace-grid workspace-grid--2">
+        ${modeIs(filters, "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editItem ? "Редактирование позиции" : "Новая позиция склада"}</h4><div class="compact-help">Каталог можно использовать как общий справочник материалов для склада и будущих калькуляторов.</div></div></div>
             ${canEdit ? `<form id="warehouseItemForm" class="workspace-form" data-draft-form="item"><input type="hidden" name="id" value="${escapeHtml(editItem?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(editItem?.name || "")}" required /></label><label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(editItem?.sku || "")}" /></label><label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(editItem?.category || "")}" /></label><label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(editItem?.unit || "шт")}" /></label><label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(String(toNumber(editItem?.openingStock || 0) || ""))}" /></label><label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(String(toNumber(editItem?.minStock || 0) || ""))}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3">${escapeHtml(editItem?.note || "")}</textarea></label>${renderCustomFieldSection("warehouse", doc, editItem, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editItem ? "Сохранить позицию" : "Добавить позицию"}</button><button class="btn btn-outline-secondary" type="button" data-warehouse-item-new>Очистить форму</button></div></form>` : renderAccessHint("warehouse")}
@@ -2886,7 +2886,7 @@ function buildModeTabs(moduleKey, escapeFn) {
             <div class="panel-heading"><div><h4>Движение по складу</h4><div class="compact-help">Приход, списание и резервы лучше вносить отдельно — остатки считаются автоматически.</div></div></div>
             ${canEdit ? `<form id="warehouseMovementForm" class="workspace-form" data-draft-form="movement"><div class="workspace-form-grid"><label><span>Позиция</span><select class="form-select" name="itemId" required><option value="">Выберите позицию</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${filters.movementItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label><label><span>Тип</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label><label><span>Количество</span><input class="form-control" type="number" min="0" step="1" name="qty" required /></label><label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить движение</button></div></form>` : renderAccessHint("warehouse")}
           </section>
-        </div>
+        </div>` : ""}
         ${editItem ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Контур позиции</h4><div class="compact-help">Собирает в одном месте остаток, спрос, сделки и задачи по текущему материалу.</div></div></div>
@@ -3070,7 +3070,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           </div>
         </div>
         ${canManage ? renderBuilderPanel("tasks", doc, ui.tasks, escapeHtml) : ""}
-        <div class="workspace-grid workspace-grid--2">
+        ${modeIs(filters, "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editTask ? "Редактирование задачи" : "Новая задача"}</h4><div class="compact-help">Задачи можно вести по отделам, инициативам и проектам. Быстрый перевод между колонками остается прямо на карточках.</div></div></div>
             ${canEdit ? `<form id="tasksTaskForm" class="workspace-form" data-draft-form="task"><input type="hidden" name="id" value="${escapeHtml(editTask?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(editTask?.title || "")}" required /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editTask?.owner || "")}" /></label><label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${(editTask?.status || "backlog") === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select></label><label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((priority) => `<option value="${escapeHtml(priority.key)}" ${(editTask?.priority || "medium") === priority.key ? "selected" : ""}>${escapeHtml(priority.label)}</option>`).join("")}</select></label><label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${editTask?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label><label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(editTask?.dueDate || ""))}" /></label></div><label class="permission-flag"><input class="form-check-input" type="checkbox" name="blocked" ${editTask?.blocked ? "checked" : ""} /><span>Есть блокер / нужна помощь</span></label><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editTask?.note || "")}</textarea></label>${renderCustomFieldSection("tasks", doc, editTask, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editTask ? "Сохранить задачу" : "Добавить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-task-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
@@ -3079,7 +3079,7 @@ function buildModeTabs(moduleKey, escapeFn) {
             <div class="panel-heading"><div><h4>${editSprint ? "Редактирование итерации" : "Новая итерация"}</h4><div class="compact-help">Итерация помогает держать в фокусе ближайший рабочий цикл и распределять задачи по этапам.</div></div></div>
             ${canEdit ? `<form id="tasksSprintForm" class="workspace-form" data-draft-form="sprint"><input type="hidden" name="id" value="${escapeHtml(editSprint?.id || "")}" /><div class="workspace-form-grid"><label><span>Название итерации</span><input class="form-control" type="text" name="title" value="${escapeHtml(editSprint?.title || "")}" required /></label><label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(editSprint?.startDate || ""))}" /></label><label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(editSprint?.endDate || ""))}" /></label></div><label><span>Цель итерации</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(editSprint?.goal || "")}</textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editSprint ? "Сохранить итерацию" : "Добавить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-sprint-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
-        </div>
+        </div>` : ""}
         ${editTask ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Контур задачи</h4><div class="compact-help">Единая карточка задачи: текущее состояние, быстрые действия и весь соседний контекст без переходов между модулями.</div></div><div class="workspace-note">Обновлено ${escapeHtml(formatDate(editTask.updatedAt || editTask.createdAt))}</div></div>
@@ -4115,45 +4115,49 @@ function buildModeTabs(moduleKey, escapeFn) {
   }
 
   function renderCrmCreateModal(doc) {
+    const existing = (doc.deals || []).find((deal) => deal.id === ui.crm.editId) || null;
     const draft = readDraft("crm", "deal");
     return renderWorkspaceModalShell(
-      "Новая сделка",
+      existing ? "Редактирование сделки" : "Новая сделка",
       `<form id="crmDealModalForm" class="workspace-form" data-draft-form="deal">
+        <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>Название сделки</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue("", draft?.title))}" required /></label>
-          <label><span>Клиент</span><input class="form-control" type="text" name="client" value="${escapeHtml(draftValue("", draft?.client))}" required /></label>
-          <label><span>Канал</span><input class="form-control" type="text" name="channel" value="${escapeHtml(draftValue("", draft?.channel))}" /></label>
-          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue("", draft?.owner))}" /></label>
-          <label><span>Стадия</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${((draft?.stage || "lead") === stage.key) ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label>
-          <label><span>Сумма, ₽</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(compactText(draft?.amount || ""))}" /></label>
-          <label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(draft?.deadline || ""))}" /></label>
+          <label><span>Название сделки</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
+          <label><span>Клиент</span><input class="form-control" type="text" name="client" value="${escapeHtml(draftValue(existing?.client || "", draft?.client))}" required /></label>
+          <label><span>Канал</span><input class="form-control" type="text" name="channel" value="${escapeHtml(draftValue(existing?.channel || "", draft?.channel))}" /></label>
+          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue(existing?.owner || "", draft?.owner))}" /></label>
+          <label><span>Стадия</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${((draftValue(existing?.stage || "lead", draft?.stage || "lead")) === stage.key) ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label>
+          <label><span>Сумма, ₽</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(draftValue(existing?.amount || "", draft?.amount || ""))}" /></label>
+          <label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(draftValue(existing?.deadline || "", draft?.deadline || "")))}" /></label>
         </div>
-        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
-        ${renderCustomFieldSection("crm", doc, draft, escapeHtml)}
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить сделку</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        ${renderCustomFieldSection("crm", doc, existing || draft, escapeHtml)}
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить изменения" : "Сохранить сделку"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "Быстрое создание сделки во всплывающем окне без ухода из текущего вида."
+      existing ? "Полная карточка сделки во всплывающем окне без ухода из текущего режима." : "Быстрое создание сделки во всплывающем окне без ухода из текущего вида."
     );
   }
 
   function renderWarehouseItemCreateModal(doc) {
+    const existing = (doc.items || []).find((item) => item.id === ui.warehouse.itemEditId) || null;
     const draft = readDraft("warehouse", "item");
     return renderWorkspaceModalShell(
-      "Новая позиция склада",
+      existing ? "Редактирование позиции склада" : "Новая позиция склада",
       `<form id="warehouseItemModalForm" class="workspace-form" data-draft-form="item">
+        <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(draftValue("", draft?.name))}" required /></label>
-          <label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(draftValue("", draft?.sku))}" /></label>
-          <label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(draftValue("", draft?.category))}" /></label>
-          <label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(draftValue("шт", draft?.unit || "шт"))}" /></label>
-          <label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(compactText(draft?.openingStock || ""))}" /></label>
-          <label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(compactText(draft?.minStock || ""))}" /></label>
+          <label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(draftValue(existing?.name || "", draft?.name))}" required /></label>
+          <label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(draftValue(existing?.sku || "", draft?.sku))}" /></label>
+          <label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(draftValue(existing?.category || "", draft?.category))}" /></label>
+          <label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(draftValue(existing?.unit || "шт", draft?.unit || "шт"))}" /></label>
+          <label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(draftValue(existing?.openingStock || "", draft?.openingStock || ""))}" /></label>
+          <label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(draftValue(existing?.minStock || "", draft?.minStock || ""))}" /></label>
         </div>
-        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
-        ${renderCustomFieldSection("warehouse", doc, draft, escapeHtml)}
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить позицию</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        ${renderCustomFieldSection("warehouse", doc, existing || draft, escapeHtml)}
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить позицию" : "Сохранить позицию"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "Создание товара или материала в отдельном окне по логике МойСклад."
+      existing ? "Полная карточка складской позиции во всплывающем окне без лишнего перехода по экрану." : "Создание товара или материала в отдельном окне по логике МойСклад."
     );
   }
 
@@ -4268,42 +4272,47 @@ function buildModeTabs(moduleKey, escapeFn) {
   }
 
   function renderTasksTaskCreateModal(doc) {
+    const existing = (doc.tasks || []).find((task) => task.id === ui.tasks.taskEditId) || null;
     const draft = readDraft("tasks", "task");
     const sprintOptions = sortByDateDesc(doc.sprints || [], "startDate");
     return renderWorkspaceModalShell(
-      "Новая задача",
+      existing ? "Редактирование задачи" : "Новая задача",
       `<form id="tasksTaskModalForm" class="workspace-form" data-draft-form="task">
+        <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>Задача</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue("", draft?.title))}" required /></label>
-          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue("", draft?.owner))}" /></label>
-          <label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draft?.status || "todo") === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draft?.priority || "medium") === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${draft?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label>
-          <label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(draft?.dueDate || ""))}" /></label>
+          <label><span>Задача</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
+          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue(existing?.owner || "", draft?.owner))}" /></label>
+          <label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.status || "todo", draft?.status || "todo")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.priority || "medium", draft?.priority || "medium")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${(draftValue(existing?.sprintId || "", draft?.sprintId || "")) === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label>
+          <label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.dueDate || "", draft?.dueDate || "")))}" /></label>
         </div>
-        <label class="workspace-check"><input class="form-check-input" type="checkbox" name="blocked" ${draft?.blocked ? "checked" : ""} /> <span>Есть блокер</span></label>
-        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
-        ${renderCustomFieldSection("tasks", doc, draft, escapeHtml)}
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить задачу</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+        <label class="workspace-check"><input class="form-check-input" type="checkbox" name="blocked" ${(draftValue(existing?.blocked ? "1" : "", draft?.blocked ? "1" : "")) ? "checked" : ""} /> <span>Есть блокер</span></label>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        ${renderCustomFieldSection("tasks", doc, existing || draft, escapeHtml)}
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить задачу" : "Сохранить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "Быстрое добавление задачи без перехода в карточку."
+      existing ? "Полная карточка задачи во всплывающем окне без ухода из текущего режима." : "Быстрое добавление задачи без перехода в карточку."
     );
   }
 
   function renderTasksSprintCreateModal() {
+    const doc = docs.tasks || createDefaultTasksDoc();
+    const existing = (doc.sprints || []).find((sprint) => sprint.id === ui.tasks.sprintEditId) || null;
     const draft = readDraft("tasks", "sprint");
     return renderWorkspaceModalShell(
-      "Новая итерация",
+      existing ? "Редактирование итерации" : "Новая итерация",
       `<form id="tasksSprintModalForm" class="workspace-form" data-draft-form="sprint">
+        <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue("", draft?.title))}" required /></label>
-          <label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(draft?.startDate || ""))}" /></label>
-          <label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(draft?.endDate || ""))}" /></label>
+          <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
+          <label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.startDate || "", draft?.startDate || "")))}" /></label>
+          <label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.endDate || "", draft?.endDate || "")))}" /></label>
         </div>
-        <label><span>Цель</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(draftValue("", draft?.goal))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить итерацию</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+        <label><span>Цель</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(draftValue(existing?.goal || "", draft?.goal))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить итерацию" : "Сохранить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "Итерации задают ритм работы и приоритеты команды."
+      existing ? "Редактирование рабочего цикла команды без ухода из канбана и списка." : "Итерации задают ритм работы и приоритеты команды."
     );
   }
 
@@ -4713,7 +4722,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       const editButton = event.target.closest("[data-crm-edit]");
       if (editButton) {
         ui.crm.editId = editButton.dataset.crmEdit;
-        ui.crm.mode = "form";
+        ui.crm.modal = "deal";
         persistUiState("crm");
         await rerenderCurrentModule();
         return true;
@@ -4731,7 +4740,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         };
         await saveDocument("crm", { ...doc, deals: [copy, ...(doc.deals || [])] }, "Копия сделки создана.");
         ui.crm.editId = copy.id;
-        ui.crm.mode = "form";
+        ui.crm.modal = "deal";
         persistUiState("crm");
         await rerenderCurrentModule();
         return true;
@@ -4801,7 +4810,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       const editItemButton = event.target.closest("[data-warehouse-item-edit]");
       if (editItemButton) {
         ui.warehouse.itemEditId = editItemButton.dataset.warehouseItemEdit;
-        ui.warehouse.mode = "form";
+        ui.warehouse.modal = "item";
         persistUiState("warehouse");
         await rerenderCurrentModule();
         return true;
@@ -4855,7 +4864,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         };
         await saveDocument("warehouse", { ...doc, items: [copy, ...(doc.items || [])] }, "Копия позиции создана.");
         ui.warehouse.itemEditId = copy.id;
-        ui.warehouse.mode = "form";
+        ui.warehouse.modal = "item";
         persistUiState("warehouse");
         await rerenderCurrentModule();
         return true;
@@ -4993,7 +5002,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       const editTaskButton = event.target.closest("[data-task-edit]");
       if (editTaskButton) {
         ui.tasks.taskEditId = editTaskButton.dataset.taskEdit;
-        ui.tasks.mode = "form";
+        ui.tasks.modal = "task";
         persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
@@ -5020,7 +5029,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         };
         await saveDocument("tasks", { ...doc, tasks: [copy, ...(doc.tasks || [])] }, "Копия задачи создана.");
         ui.tasks.taskEditId = copy.id;
-        ui.tasks.mode = "form";
+        ui.tasks.modal = "task";
         persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
@@ -5045,7 +5054,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       const editSprintButton = event.target.closest("[data-sprint-edit]");
       if (editSprintButton) {
         ui.tasks.sprintEditId = editSprintButton.dataset.sprintEdit;
-        ui.tasks.mode = "form";
+        ui.tasks.modal = "sprint";
         persistUiState("tasks");
         await rerenderCurrentModule();
         return true;
@@ -5247,6 +5256,57 @@ function buildModeTabs(moduleKey, escapeFn) {
       return Boolean(match?.low);
     });
 
+    const activity = sortByDateDesc(
+      [
+        ...salesSnapshot.orders.slice(0, 8).map((order) => ({
+          id: `activity-sales-${order.sourceId || order.orderNumber || createId("sales")}`,
+          date: order.paidDate || order.invoiceDate || order.createdAt || "",
+          title: order.title || `Заказ ${order.orderNumber || "без номера"}`,
+          meta: `${order.client || "Клиент не указан"} • ${order.status || "Статус не указан"}`,
+          tone: order.isPaid ? "success" : order.isInvoiced ? "accent" : "neutral",
+          moduleKey: "sales"
+        })),
+        ...sortByDateDesc(deals, "updatedAt").slice(0, 8).map((deal) => ({
+          id: `activity-crm-${deal.id}`,
+          date: deal.updatedAt || deal.createdAt || "",
+          title: deal.title || deal.client || "Сделка",
+          meta: `${getCrmStageMeta(deal.stage).label} • ${deal.owner || "Без ответственного"}`,
+          tone: getCrmStageMeta(deal.stage).tone,
+          moduleKey: "crm"
+        })),
+        ...sortByDateDesc(warehouseDoc?.movements || [], "date").slice(0, 8).map((movement) => {
+          const item = (warehouseDoc?.items || []).find((entry) => entry.id === movement.itemId);
+          return {
+            id: `activity-move-${movement.id}`,
+            date: movement.date || movement.createdAt || "",
+            title: item?.name || movement.itemName || "Складское движение",
+            meta: `${WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === compactText(movement.kind))?.label || movement.kind || "Движение"} • ${formatNumber(movement.qty || 0)}`,
+            tone: compactText(movement.kind) === "in" ? "success" : compactText(movement.kind) === "out" ? "danger" : "info",
+            moduleKey: "warehouse"
+          };
+        }),
+        ...sortByDateDesc(warehouseDoc?.financeEntries || [], "date").slice(0, 6).map((entry) => ({
+          id: `activity-finance-${entry.id}`,
+          date: entry.date || entry.createdAt || "",
+          title: entry.counterparty || entry.account || "Денежная операция",
+          meta: `${FINANCE_ENTRY_KINDS.find((item) => item.key === compactText(entry.kind))?.label || entry.kind || "Операция"} • ${formatMoney(entry.amount || 0)}`,
+          tone: FINANCE_ENTRY_KINDS.find((item) => item.key === compactText(entry.kind))?.tone || "neutral",
+          moduleKey: "money"
+        })),
+        ...tasks.flatMap((task) =>
+          (Array.isArray(task?.history) ? task.history.map((entry) => normalizeTaskHistoryEntry(entry)).filter(Boolean).slice(0, 2) : []).map((entry) => ({
+            id: entry.id || `activity-task-${task.id}`,
+            date: entry.date || task.updatedAt || task.createdAt || "",
+            title: entry.title || task.title || "Событие задачи",
+            meta: entry.meta || `${task.owner || "Без ответственного"} • ${getTaskStatusMeta(task.status).label}`,
+            tone: entry.tone || "info",
+            moduleKey: entry.moduleKey || "tasks"
+          }))
+        )
+      ].filter((item) => compactText(item.date)),
+      "date"
+    ).slice(0, 12);
+
     const alerts = [
       ...salesSnapshot.unpaidInvoices.slice(0, 4).map((order) => ({
         id: `sales-${order.sourceId}`,
@@ -5344,6 +5404,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         invoiceIssuedTabs: calculatorSnapshot.invoiceIssuedTabs,
         invoicePaidTabs: calculatorSnapshot.invoicePaidTabs
       },
+      activity,
       alerts
     };
   }
