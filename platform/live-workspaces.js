@@ -30,6 +30,28 @@ const LIVE_MODULE_CONFIG = {
   }
 };
 
+const LIVE_MODULE_CANONICAL_MAP = {
+  products: "warehouse",
+  purchases: "warehouse",
+  money: "warehouse",
+  production: "warehouse"
+};
+
+const LIVE_MODULE_FORCED_MODE = {
+  products: "products",
+  purchases: "purchases",
+  money: "finance",
+  production: "production"
+};
+
+function resolveLiveModuleKey(moduleKey) {
+  return LIVE_MODULE_CANONICAL_MAP[moduleKey] || moduleKey;
+}
+
+function resolveLiveModuleMode(moduleKey) {
+  return LIVE_MODULE_FORCED_MODE[moduleKey] || "";
+}
+
 const CRM_STAGES = [
   { key: "lead", label: "Новый лид", tone: "neutral" },
   { key: "qualified", label: "Квалификация", tone: "info" },
@@ -190,6 +212,22 @@ const MODULE_MODE_CONFIG = {
     { key: "production", label: "Производство" },
     { key: "movements", label: "Движения" },
     { key: "form", label: "Формы" }
+  ],
+  products: [
+    { key: "overview", label: "Обзор" },
+    { key: "products", label: "Товары" }
+  ],
+  purchases: [
+    { key: "overview", label: "Обзор" },
+    { key: "purchases", label: "Закупки" }
+  ],
+  money: [
+    { key: "overview", label: "Обзор" },
+    { key: "finance", label: "Деньги" }
+  ],
+  production: [
+    { key: "overview", label: "Обзор" },
+    { key: "production", label: "Производство" }
   ],
   tasks: [
     { key: "overview", label: "Обзор" },
@@ -407,17 +445,19 @@ function parseSelectOptions(value) {
 }
 
 function getDefaultFilters(moduleKey) {
-  if (moduleKey === "directories") return { search: "" };
-  if (moduleKey === "crm") return { search: "", stage: "all", owner: "all" };
-  if (moduleKey === "warehouse") return { search: "", category: "all" };
+  const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+  if (canonicalModuleKey === "directories") return { search: "" };
+  if (canonicalModuleKey === "crm") return { search: "", stage: "all", owner: "all" };
+  if (canonicalModuleKey === "warehouse") return { search: "", category: "all" };
   return { search: "", status: "all", sprint: "all", owner: "all" };
 }
 
 function createDefaultView(moduleKey) {
+  const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
   return {
     id: "default",
-    label: BUILDER_META[moduleKey].defaultViewLabel,
-    filters: getDefaultFilters(moduleKey)
+    label: BUILDER_META[canonicalModuleKey].defaultViewLabel,
+    filters: getDefaultFilters(canonicalModuleKey)
   };
 }
 
@@ -460,15 +500,16 @@ function normalizeViewDefinition(moduleKey, view) {
 }
 
 function normalizeBuilderSchema(moduleKey, builder) {
+  const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
   const fields = Array.isArray(builder?.fields)
-    ? builder.fields.map((field) => normalizeFieldDefinition(moduleKey, field)).filter(Boolean)
+    ? builder.fields.map((field) => normalizeFieldDefinition(canonicalModuleKey, field)).filter(Boolean)
     : [];
   const formulas = Array.isArray(builder?.formulas)
     ? builder.formulas.map((formula) => normalizeFormulaDefinition(formula)).filter(Boolean)
     : [];
-  const defaultView = createDefaultView(moduleKey);
+  const defaultView = createDefaultView(canonicalModuleKey);
   const customViews = Array.isArray(builder?.views)
-    ? builder.views.map((view) => normalizeViewDefinition(moduleKey, view)).filter(Boolean)
+    ? builder.views.map((view) => normalizeViewDefinition(canonicalModuleKey, view)).filter(Boolean)
     : [];
 
   return {
@@ -837,10 +878,11 @@ function renderViewTabs(moduleKey, doc, uiState, escapeHtml) {
 }
 
 function renderBuilderPanel(moduleKey, doc, uiState, escapeHtml) {
-  const meta = BUILDER_META[moduleKey];
-  const customFields = getCustomFields(moduleKey, doc);
+  const builderModuleKey = resolveLiveModuleKey(moduleKey);
+  const meta = BUILDER_META[builderModuleKey];
+  const customFields = getCustomFields(builderModuleKey, doc);
   const formulas = doc?.builder?.formulas || [];
-  const views = getViewList(moduleKey, doc).filter((view) => view.id !== "default");
+  const views = getViewList(builderModuleKey, doc).filter((view) => view.id !== "default");
 
   return `
     <section class="workspace-panel workspace-builder ${uiState.configOpen ? "" : "d-none"}">
@@ -1004,11 +1046,11 @@ export function createLiveWorkspaceController({
   };
 
   function getModuleUiKey(moduleKey) {
-    return `${LIVE_UI_STORAGE_PREFIX}:${moduleKey}`;
+    return `${LIVE_UI_STORAGE_PREFIX}:${resolveLiveModuleKey(moduleKey)}`;
   }
 
   function getDraftKey(moduleKey, formKey) {
-    return `${LIVE_DRAFT_STORAGE_PREFIX}:${moduleKey}:${formKey}`;
+    return `${LIVE_DRAFT_STORAGE_PREFIX}:${resolveLiveModuleKey(moduleKey)}:${formKey}`;
   }
 
   function hydrateUiState(moduleKey, defaults) {
@@ -1016,14 +1058,15 @@ export function createLiveWorkspaceController({
   }
 
   function persistUiState(moduleKey) {
-    if (!supports(moduleKey)) return;
-    const state = ui[moduleKey] || {};
+    const stateKey = resolveLiveModuleKey(moduleKey);
+    if (!supports(stateKey)) return;
+    const state = ui[stateKey] || {};
     const payload = {};
     Object.keys(state).forEach((key) => {
       if (key.endsWith("Id")) return;
       payload[key] = state[key];
     });
-    writeStoredJson(getModuleUiKey(moduleKey), payload);
+    writeStoredJson(getModuleUiKey(stateKey), payload);
   }
 
   function readDraft(moduleKey, formKey) {
@@ -1063,9 +1106,9 @@ export function createLiveWorkspaceController({
     return modes.includes(current);
   }
 
-  function buildModeTabs(moduleKey, escapeFn) {
-    const uiState = ui[moduleKey];
-    const options = MODULE_MODE_CONFIG[moduleKey] || [];
+function buildModeTabs(moduleKey, escapeFn) {
+    const uiState = ui[resolveLiveModuleKey(moduleKey)] || ui[moduleKey];
+    const options = MODULE_MODE_CONFIG[moduleKey] || MODULE_MODE_CONFIG[resolveLiveModuleKey(moduleKey)] || [];
     return `
       <div class="workspace-mode-tabs" role="tablist" aria-label="Режимы раздела">
         ${options
@@ -1082,11 +1125,16 @@ export function createLiveWorkspaceController({
   }
 
   function renderActionBar(moduleKey, actions, escapeFn) {
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    const uiState = ui[canonicalModuleKey] || ui[moduleKey] || {};
+    const modeOptions = MODULE_MODE_CONFIG[moduleKey] || MODULE_MODE_CONFIG[canonicalModuleKey] || [];
+    const activeModeLabel = modeOptions.find((item) => item.key === uiState.mode)?.label || "Обзор";
+    const activeViewLabel = uiState.activeViewId === "adhoc" ? "Текущий фильтр" : "Сохраненный";
     return `
       <div class="workspace-command-bar">
         <div class="workspace-command-bar__meta">
-          <span class="workspace-command-chip">Режим: ${escapeFn((MODULE_MODE_CONFIG[moduleKey] || []).find((item) => item.key === ui[moduleKey].mode)?.label || "Обзор")}</span>
-          <span class="workspace-command-chip">Вид: ${escapeFn(ui[moduleKey].activeViewId === "adhoc" ? "Текущий фильтр" : "Сохраненный")}</span>
+          <span class="workspace-command-chip">Режим: ${escapeFn(activeModeLabel)}</span>
+          <span class="workspace-command-chip">Вид: ${escapeFn(activeViewLabel)}</span>
         </div>
         <div class="workspace-command-bar__actions">
           ${actions.join("")}
@@ -1151,6 +1199,10 @@ export function createLiveWorkspaceController({
     }),
     tasks: hydrateUiState("tasks", { search: "", status: "all", sprint: "all", owner: "all", taskEditId: null, sprintEditId: null, activeViewId: "default", configOpen: false, mode: "overview", modal: "" })
   };
+  ui.products = ui.warehouse;
+  ui.purchases = ui.warehouse;
+  ui.money = ui.warehouse;
+  ui.production = ui.warehouse;
 
   const docFactories = {
     directories: createDefaultDirectoriesDoc,
@@ -1167,7 +1219,7 @@ export function createLiveWorkspaceController({
   };
 
   function supports(moduleKey) {
-    return Boolean(LIVE_MODULE_CONFIG[moduleKey]);
+    return Boolean(LIVE_MODULE_CONFIG[resolveLiveModuleKey(moduleKey)]);
   }
 
   function schemaReady() {
@@ -1175,15 +1227,16 @@ export function createLiveWorkspaceController({
   }
 
   async function ensureDocument(moduleKey, force = false) {
-    if (!supports(moduleKey)) return null;
-    if (docs[moduleKey] && !force) return docs[moduleKey];
+    const stateKey = resolveLiveModuleKey(moduleKey);
+    if (!supports(stateKey)) return null;
+    if (docs[stateKey] && !force) return docs[stateKey];
 
     if (!schemaReady()) {
-      docs[moduleKey] = docFactories[moduleKey]();
-      return docs[moduleKey];
+      docs[stateKey] = docFactories[stateKey]();
+      return docs[stateKey];
     }
 
-    const config = LIVE_MODULE_CONFIG[moduleKey];
+    const config = LIVE_MODULE_CONFIG[stateKey];
     const appIds = [config.appId, config.legacyAppId].filter(Boolean);
     let payload = null;
 
@@ -1201,14 +1254,15 @@ export function createLiveWorkspaceController({
       }
     }
 
-    docs[moduleKey] = docNormalizers[moduleKey](payload);
-    return docs[moduleKey];
+    docs[stateKey] = docNormalizers[stateKey](payload);
+    return docs[stateKey];
   }
 
   async function saveDocument(moduleKey, payload, successMessage = "") {
-    const nextDoc = docNormalizers[moduleKey](payload);
+    const stateKey = resolveLiveModuleKey(moduleKey);
+    const nextDoc = docNormalizers[stateKey](payload);
     nextDoc.updatedAt = new Date().toISOString();
-    docs[moduleKey] = nextDoc;
+    docs[stateKey] = nextDoc;
 
     if (!schemaReady()) {
       if (successMessage) setStatus(successMessage, "success");
@@ -1216,7 +1270,7 @@ export function createLiveWorkspaceController({
       return nextDoc;
     }
 
-    const appId = LIVE_MODULE_CONFIG[moduleKey].appId;
+    const appId = LIVE_MODULE_CONFIG[stateKey].appId;
     const { data, error } = await supabase.from("shared_app_states").select("app_id").eq("app_id", appId).maybeSingle();
     if (error && error.code !== "PGRST116") throw error;
 
@@ -2087,13 +2141,13 @@ export function createLiveWorkspaceController({
   }
 
   function renderWorkspaceHeader(moduleKey) {
-    const config = LIVE_MODULE_CONFIG[moduleKey];
+    const config = LIVE_MODULE_CONFIG[moduleKey] || LIVE_MODULE_CONFIG[resolveLiveModuleKey(moduleKey)];
     return `
       <div class="workspace-hero">
         <div>
           <div class="placeholder-eyebrow">Живой рабочий модуль</div>
           <h3>${escapeHtml(modules[moduleKey]?.title || moduleKey)}</h3>
-          <p>${escapeHtml(config.intro)}</p>
+          <p>${escapeHtml(modules[moduleKey]?.subtitle || config?.intro || "")}</p>
         </div>
         <div class="workspace-hero__meta">
           <div class="workspace-hero__chip">${escapeHtml(getModuleStageLabel(moduleKey))}</div>
@@ -2116,7 +2170,7 @@ export function createLiveWorkspaceController({
   }
 
   function renderRelatedLinks(moduleKey) {
-    const config = LIVE_MODULE_CONFIG[moduleKey];
+    const config = LIVE_MODULE_CONFIG[moduleKey] || LIVE_MODULE_CONFIG[resolveLiveModuleKey(moduleKey)];
     const links = (config.links || [])
       .filter((key) => hasModuleAccess(key))
       .map((key) => `<button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="${escapeHtml(key)}">${escapeHtml(modules[key]?.title || key)}</button>`)
@@ -2125,16 +2179,18 @@ export function createLiveWorkspaceController({
   }
 
   function activateView(moduleKey, doc, viewId) {
+    const stateKey = resolveLiveModuleKey(moduleKey);
     const view = getViewList(moduleKey, doc).find((item) => item.id === viewId);
     if (!view) return;
-    Object.assign(ui[moduleKey], getDefaultFilters(moduleKey), view.filters || {});
-    ui[moduleKey].activeViewId = viewId;
-    persistUiState(moduleKey);
+    Object.assign(ui[stateKey], getDefaultFilters(stateKey), view.filters || {});
+    ui[stateKey].activeViewId = viewId;
+    persistUiState(stateKey);
   }
 
   function markFiltersAsAdHoc(moduleKey) {
-    ui[moduleKey].activeViewId = "adhoc";
-    persistUiState(moduleKey);
+    const stateKey = resolveLiveModuleKey(moduleKey);
+    ui[stateKey].activeViewId = "adhoc";
+    persistUiState(stateKey);
   }
 
   async function renderDirectories(doc) {
@@ -2507,10 +2563,19 @@ export function createLiveWorkspaceController({
     return PRODUCTION_JOB_STATUSES.find((item) => item.key === compactText(stageKey)) || PRODUCTION_JOB_STATUSES[0];
   }
 
-  async function renderWarehouse(doc) {
+  async function renderWarehouse(doc, moduleKey = "warehouse") {
     const canEdit = hasModulePermission("warehouse", "edit");
     const canManage = hasModulePermission("warehouse", "manage");
-    const filters = ui.warehouse;
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    const forcedMode = resolveLiveModuleMode(moduleKey);
+    const allowedModes = (MODULE_MODE_CONFIG[moduleKey] || MODULE_MODE_CONFIG[canonicalModuleKey] || []).map((item) => item.key);
+    const currentMode =
+      forcedMode && !allowedModes.includes(ui.warehouse.mode)
+        ? forcedMode
+        : forcedMode && !["overview", forcedMode].includes(ui.warehouse.mode)
+          ? forcedMode
+          : ui.warehouse.mode;
+    const filters = forcedMode ? { ...ui.warehouse, mode: currentMode } : ui.warehouse;
     const snapshot = buildWarehouseSnapshot(doc);
     const [myCalculatorDoc, partnerCalculatorDocs, tasksDoc, crmDoc] = await Promise.all([
       ensureExternalDoc("myCalculator"),
@@ -2548,21 +2613,27 @@ export function createLiveWorkspaceController({
     const filteredPurchases = sortByDateDesc(
       (doc.purchases || []).filter((item) => {
         const blob = [item.number, item.supplier, item.status, item.note].join(" ");
-        return matchesSearch(blob, filters.search);
+        if (!matchesSearch(blob, filters.search)) return false;
+        if (moduleKey === "purchases" && filters.category !== "all" && compactText(item.status) !== filters.category) return false;
+        return true;
       }),
       "date"
     );
     const filteredFinance = sortByDateDesc(
       (doc.financeEntries || []).filter((entry) => {
         const blob = [entry.kind, entry.account, entry.category, entry.counterparty, entry.note].join(" ");
-        return matchesSearch(blob, filters.search);
+        if (!matchesSearch(blob, filters.search)) return false;
+        if (moduleKey === "money" && filters.category !== "all" && compactText(entry.account) !== filters.category) return false;
+        return true;
       }),
       "date"
     );
     const filteredProduction = sortByDateDesc(
       (doc.productionJobs || []).filter((entry) => {
         const blob = [entry.title, entry.stage, entry.assignee, entry.note].join(" ");
-        return matchesSearch(blob, filters.search);
+        if (!matchesSearch(blob, filters.search)) return false;
+        if (moduleKey === "production" && filters.category !== "all" && compactText(entry.stage) !== filters.category) return false;
+        return true;
       }),
       "deadline"
     );
@@ -2598,18 +2669,150 @@ export function createLiveWorkspaceController({
       : [];
     const editItemPrimaryTask = editItemTasks[0] || null;
     const recentMovements = sortByDateDesc(doc.movements || [], "date").slice(0, 10);
-    const metrics = [
-      { label: "Позиций", value: formatNumber(snapshot.items.length), caption: "в каталоге материалов" },
-      { label: "На руках", value: formatNumber(snapshot.onHandTotal), caption: "общее количество" },
-      { label: "В резерве", value: formatNumber(snapshot.reservedTotal), caption: "под текущие заказы" },
-      { label: "Нужно пополнить", value: formatNumber(snapshot.lowItems.length), caption: "ниже минимального запаса" },
-      { label: "Из калькуляторов", value: formatNumber(calculatorSnapshot.activeTabs), caption: "активных вкладок спроса" },
-      ...getFormulaMetrics("warehouse", doc, filteredItems)
-    ];
+    const financeAccounts = [...new Set((doc.financeEntries || []).map((entry) => compactText(entry.account)).filter(Boolean))].sort();
+    const moduleFilterMeta = (() => {
+      if (moduleKey === "products") {
+        return {
+          placeholder: "Поиск по товару, группе, поставщику",
+          allLabel: "Все группы",
+          options: productGroups,
+          primaryButtons: canEdit
+            ? '<button class="btn btn-dark" type="button" data-warehouse-product-new>Новый товар</button><button class="btn btn-outline-dark" type="button" data-live-mode="catalog">Открыть остатки</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
+        };
+      }
+      if (moduleKey === "purchases") {
+        return {
+          placeholder: "Поиск по номеру, поставщику, статусу",
+          allLabel: "Все статусы",
+          options: WAREHOUSE_PURCHASE_STATUSES.map((status) => ({ value: status.key, label: status.label })),
+          primaryButtons: canEdit
+            ? '<button class="btn btn-dark" type="button" data-warehouse-purchase-new>Новая закупка</button><button class="btn btn-outline-dark" type="button" data-live-mode="products">Товары</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
+        };
+      }
+      if (moduleKey === "money") {
+        return {
+          placeholder: "Поиск по счету, статье, контрагенту",
+          allLabel: "Все счета",
+          options: financeAccounts,
+          primaryButtons: canEdit
+            ? '<button class="btn btn-dark" type="button" data-warehouse-finance-new>Новая операция</button><button class="btn btn-outline-dark" type="button" data-live-mode="purchases">Закупки</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
+        };
+      }
+      if (moduleKey === "production") {
+        return {
+          placeholder: "Поиск по заданию, этапу, ответственному",
+          allLabel: "Все этапы",
+          options: PRODUCTION_JOB_STATUSES.map((status) => ({ value: status.key, label: status.label })),
+          primaryButtons: canEdit
+            ? '<button class="btn btn-dark" type="button" data-warehouse-production-new>В производство</button><button class="btn btn-outline-dark" type="button" data-live-mode="products">Товары</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
+        };
+      }
+      return {
+        placeholder: "Поиск по позиции, SKU, категории",
+        allLabel: "Все категории",
+        options: categories,
+        primaryButtons: canEdit
+          ? '<button class="btn btn-dark" type="button" data-warehouse-item-new>Новая позиция</button><button class="btn btn-outline-dark" type="button" data-warehouse-movement-pick="">Новое движение</button>'
+          : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
+      };
+    })();
+    const metrics = (() => {
+      if (moduleKey === "products") {
+        return [
+          { label: "Товаров", value: formatNumber(snapshot.products.length), caption: "в продающем каталоге" },
+          { label: "Групп", value: formatNumber(productGroups.length), caption: "товарные направления" },
+          { label: "Поставщиков", value: formatNumber(new Set((doc.products || []).map((item) => compactText(item.supplier)).filter(Boolean)).size), caption: "активные контрагенты" },
+          { label: "Средняя закупка", value: formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.purchasePrice || 0) / filteredProducts.length : 0), caption: "по текущей выборке" },
+          { label: "Средняя продажа", value: formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.salePrice || 0) / filteredProducts.length : 0), caption: "по текущей выборке" },
+          { label: "Маржа", value: formatMoney(sumBy(filteredProducts, (item) => (item.salePrice || 0) - (item.purchasePrice || 0))), caption: "валовая по выборке" }
+        ];
+      }
+      if (moduleKey === "purchases") {
+        return [
+          { label: "Закупок", value: formatNumber(snapshot.purchases.length), caption: "всего в контуре" },
+          { label: "В обороте", value: formatMoney(snapshot.purchasesTotal || 0), caption: "общая сумма заказов" },
+          { label: "Принято", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "received").length), caption: "уже на складе" },
+          { label: "В пути", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "in_transit").length), caption: "еще не поступили" },
+          { label: "Черновики", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "draft").length), caption: "не отправлены поставщику" },
+          { label: "Средний чек", value: formatMoney(filteredPurchases.length ? sumBy(filteredPurchases, (item) => item.amount || 0) / filteredPurchases.length : 0), caption: "по текущей выборке" }
+        ];
+      }
+      if (moduleKey === "money") {
+        return [
+          { label: "Баланс", value: formatMoney((snapshot.incomeTotal || 0) - (snapshot.expenseTotal || 0)), caption: "приход минус расход" },
+          { label: "Приход", value: formatMoney(snapshot.incomeTotal || 0), caption: "денежный поток внутрь" },
+          { label: "Расход", value: formatMoney(snapshot.expenseTotal || 0), caption: "денежный поток наружу" },
+          { label: "Операций", value: formatNumber(filteredFinance.length), caption: "по текущей выборке" },
+          { label: "Счетов", value: formatNumber(financeAccounts.length), caption: "активные кассы и счета" },
+          { label: "Контрагентов", value: formatNumber(new Set((doc.financeEntries || []).map((entry) => compactText(entry.counterparty)).filter(Boolean)).size), caption: "в денежных операциях" }
+        ];
+      }
+      if (moduleKey === "production") {
+        return [
+          { label: "Активные", value: formatNumber(snapshot.productionActive || 0), caption: "не завершены и не на паузе" },
+          { label: "В очереди", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "queue").length), caption: "ожидают запуск" },
+          { label: "В работе", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "in_work").length), caption: "у исполнителей" },
+          { label: "Контроль", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "qa").length), caption: "на проверке" },
+          { label: "Сотрудников", value: formatNumber(new Set((doc.productionJobs || []).map((item) => compactText(item.assignee)).filter(Boolean)).size), caption: "в производственном цикле" },
+          { label: "Объем", value: formatNumber(sumBy(filteredProduction, (item) => item.qty || 0)), caption: "по текущей выборке" }
+        ];
+      }
+      return [
+        { label: "Позиций", value: formatNumber(snapshot.items.length), caption: "в каталоге материалов" },
+        { label: "На руках", value: formatNumber(snapshot.onHandTotal), caption: "общее количество" },
+        { label: "В резерве", value: formatNumber(snapshot.reservedTotal), caption: "под текущие заказы" },
+        { label: "Нужно пополнить", value: formatNumber(snapshot.lowItems.length), caption: "ниже минимального запаса" },
+        { label: "Из калькуляторов", value: formatNumber(calculatorSnapshot.activeTabs), caption: "активных вкладок спроса" },
+        ...getFormulaMetrics("warehouse", doc, filteredItems)
+      ];
+    })();
     const customHeader = renderCustomTableHeader("warehouse", doc, escapeHtml);
-    const warehouseActionBar = renderActionBar(
-      "warehouse",
-      [
+    const warehouseActionButtons = (() => {
+      if (moduleKey === "products") {
+        return [
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-product-new>Новый товар</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Закупки</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:product">Сбросить черновик товара</button>' : ""
+        ];
+      }
+      if (moduleKey === "purchases") {
+        return [
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-purchase-new>Новая закупка</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">Товары</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="finance">Деньги</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:purchase">Сбросить черновик закупки</button>' : ""
+        ];
+      }
+      if (moduleKey === "money") {
+        return [
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-finance-new>Новая операция</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Закупки</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="production">Производство</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:finance">Сбросить черновик денег</button>' : ""
+        ];
+      }
+      if (moduleKey === "production") {
+        return [
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-production-new>В производство</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">Товары</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">Сбросить черновик производства</button>' : ""
+        ];
+      }
+      return [
         canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-item-new>Новая позиция</button>' : "",
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-product-new>Новый товар</button>' : "",
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-purchase-new>Новая закупка</button>' : "",
@@ -2630,15 +2833,20 @@ export function createLiveWorkspaceController({
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:purchase">Сбросить черновик закупки</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:finance">Сбросить черновик денег</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">Сбросить черновик производства</button>' : ""
-      ].filter(Boolean),
+      ];
+    })();
+    const warehouseActionBar = renderActionBar(
+      moduleKey,
+      warehouseActionButtons.filter(Boolean),
       escapeHtml
     );
+    const showDemandPanel = moduleKey === "warehouse" || moduleKey === "products";
 
     return `
       <div class="workspace-shell">
-        ${renderWorkspaceHeader("warehouse")}
+        ${renderWorkspaceHeader(moduleKey)}
         ${renderMetricGrid(metrics)}
-        <section class="workspace-panel workspace-panel--muted">
+        ${showDemandPanel ? `<section class="workspace-panel workspace-panel--muted">
           <div class="panel-heading"><div><h4>Спрос из калькуляторов</h4><div class="compact-help">Платформа видит активные вкладки из личного и партнерских калькуляторов и подсвечивает артикулы, которые стоит держать под рукой.</div></div><div class="workspace-note">${escapeHtml(formatNumber(calculatorSnapshot.invoiceIssuedTabs))} счетов выставлено • ${escapeHtml(formatNumber(calculatorSnapshot.invoicePaidTabs))} оплачено</div></div>
           <div class="workspace-stage-strip">
             <div class="workspace-stage-card"><span>Активных вкладок</span><strong>${escapeHtml(formatNumber(calculatorSnapshot.activeTabs))}</strong></div>
@@ -2649,21 +2857,21 @@ export function createLiveWorkspaceController({
           <div class="workspace-stack mt-3">
             ${(demandBridge.slice(0, 8) || []).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.match?.name || entry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.sku)} • ${escapeHtml(entry.sources.join(", ") || "Калькуляторы")}</div></div><div class="text-end"><div class="workspace-tag ${entry.missing ? "workspace-tag--warning" : entry.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(entry.qtyTotal))}</div><div class="workspace-list-item__meta mt-1">${entry.missing ? "нет позиции" : `доступно ${escapeHtml(formatNumber(entry.match?.available || 0))}`}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Спрос из калькуляторов пока не найден.</div>'}
           </div>
-        </section>
-        ${renderViewTabs("warehouse", doc, ui.warehouse, escapeHtml)}
-        ${buildModeTabs("warehouse", escapeHtml)}
+        </section>` : ""}
+        ${renderViewTabs(moduleKey, doc, ui.warehouse, escapeHtml)}
+        ${buildModeTabs(moduleKey, escapeHtml)}
         ${warehouseActionBar}
         <div class="workspace-toolbar">
           <div class="workspace-toolbar__group">
-            <input class="form-control" type="search" placeholder="Поиск по позиции, SKU, категории" value="${escapeHtml(filters.search)}" data-live-filter="search" />
-            <select class="form-select" data-live-filter="category"><option value="all">Все категории</option>${categories.map((category) => `<option value="${escapeHtml(category)}" ${filters.category === category ? "selected" : ""}>${escapeHtml(category)}</option>`).join("")}</select>
+            <input class="form-control" type="search" placeholder="${escapeHtml(moduleFilterMeta.placeholder)}" value="${escapeHtml(filters.search)}" data-live-filter="search" />
+            <select class="form-select" data-live-filter="category"><option value="all">${escapeHtml(moduleFilterMeta.allLabel)}</option>${moduleFilterMeta.options.map((option) => { const optionValue = typeof option === "string" ? option : option.value; const optionLabel = typeof option === "string" ? option : option.label; return `<option value="${escapeHtml(optionValue)}" ${filters.category === optionValue ? "selected" : ""}>${escapeHtml(optionLabel)}</option>`; }).join("")}</select>
           </div>
           <div class="workspace-toolbar__group workspace-toolbar__group--end">
-            ${canEdit ? `<button class="btn btn-dark" type="button" data-warehouse-item-new>Новая позиция</button><button class="btn btn-outline-dark" type="button" data-warehouse-movement-pick="">Новое движение</button>` : `<span class="workspace-note">Редактирование отключено для вашей роли</span>`}
+            ${moduleFilterMeta.primaryButtons}
             ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="warehouse">${ui.warehouse.configOpen ? "Скрыть конструктор" : "Конструктор"}</button>` : ""}
           </div>
         </div>
-        ${canManage ? renderBuilderPanel("warehouse", doc, ui.warehouse, escapeHtml) : ""}
+        ${canManage ? renderBuilderPanel(moduleKey, doc, ui.warehouse, escapeHtml) : ""}
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editItem ? "Редактирование позиции" : "Новая позиция склада"}</h4><div class="compact-help">Каталог можно использовать как общий справочник материалов для склада и будущих калькуляторов.</div></div></div>
@@ -2758,7 +2966,7 @@ export function createLiveWorkspaceController({
             <div class="workspace-stack mt-3">${filteredProduction.slice(0, 6).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.title || "Производство")}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.assignee || "Без ответственного")} • ${escapeHtml(formatDate(entry.deadline))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getProductionStatusMeta(entry.stage).tone)}">${escapeHtml(getProductionStatusMeta(entry.stage).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatNumber(entry.qty || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Нет активных производственных заданий.</div>'}</div>
           </section>
         </div>` : ""}
-        ${renderRelatedLinks("warehouse")}
+        ${renderRelatedLinks(moduleKey)}
       </div>
     `;
   }
@@ -2940,49 +3148,88 @@ export function createLiveWorkspaceController({
   }
 
   async function render(moduleKey) {
-    if (!supports(moduleKey)) return "";
-    if (moduleKey === "directories") return await renderDirectories(await ensureDocument("directories"));
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (!supports(canonicalModuleKey)) return "";
+    if (canonicalModuleKey === "directories") return await renderDirectories(await ensureDocument("directories"));
     const doc = await ensureDocument(moduleKey);
-    if (moduleKey === "crm") return await renderCrm(doc);
-    if (moduleKey === "warehouse") return await renderWarehouse(doc);
-    if (moduleKey === "tasks") return await renderTasks(doc);
+    if (canonicalModuleKey === "crm") return await renderCrm(doc);
+    if (canonicalModuleKey === "warehouse") return await renderWarehouse(doc, moduleKey);
+    if (canonicalModuleKey === "tasks") return await renderTasks(doc);
     return "";
   }
 
   async function refresh(moduleKey) {
-    if (!supports(moduleKey)) return;
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (!supports(canonicalModuleKey)) return;
     externalDocs.sales = null;
     externalDocs.myCalculator = null;
     externalDocs.partnerCalculators = null;
-    await ensureDocument(moduleKey, true);
+    await ensureDocument(canonicalModuleKey, true);
   }
 
   function resetFormState(moduleKey) {
-    if (ui[moduleKey]) ui[moduleKey].modal = "";
-    if (moduleKey === "crm") ui.crm.editId = null;
-    if (moduleKey === "warehouse") ui.warehouse.itemEditId = null;
-    if (moduleKey === "tasks") {
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (ui[canonicalModuleKey]) ui[canonicalModuleKey].modal = "";
+    if (canonicalModuleKey === "crm") ui.crm.editId = null;
+    if (canonicalModuleKey === "warehouse") {
+      ui.warehouse.itemEditId = null;
+      ui.warehouse.productEditId = null;
+      ui.warehouse.purchaseEditId = null;
+      ui.warehouse.financeEditId = null;
+      ui.warehouse.productionEditId = null;
+      ui.warehouse.movementItemId = "";
+    }
+    if (canonicalModuleKey === "tasks") {
       ui.tasks.taskEditId = null;
       ui.tasks.sprintEditId = null;
     }
   }
 
   function focusEntity(moduleKey, entity = {}) {
-    if (moduleKey === "crm") {
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (canonicalModuleKey === "crm") {
       ui.crm.modal = "";
       ui.crm.editId = compactText(entity.entityId || entity.dealId || entity.id);
       ui.crm.mode = "form";
       persistUiState("crm");
       return;
     }
-    if (moduleKey === "warehouse") {
+    if (moduleKey === "products") {
+      ui.warehouse.modal = "";
+      ui.warehouse.productEditId = compactText(entity.entityId || entity.productId || entity.id);
+      ui.warehouse.mode = "products";
+      persistUiState("warehouse");
+      return;
+    }
+    if (moduleKey === "purchases") {
+      ui.warehouse.modal = "";
+      ui.warehouse.purchaseEditId = compactText(entity.entityId || entity.purchaseId || entity.id);
+      ui.warehouse.mode = "purchases";
+      persistUiState("warehouse");
+      return;
+    }
+    if (moduleKey === "money") {
+      ui.warehouse.modal = "";
+      ui.warehouse.financeEditId = compactText(entity.entityId || entity.financeId || entity.id);
+      ui.warehouse.mode = "finance";
+      persistUiState("warehouse");
+      return;
+    }
+    if (moduleKey === "production") {
+      ui.warehouse.modal = "";
+      ui.warehouse.productionEditId = compactText(entity.entityId || entity.productionId || entity.id);
+      ui.warehouse.mode = "production";
+      persistUiState("warehouse");
+      return;
+    }
+    if (canonicalModuleKey === "warehouse") {
       ui.warehouse.modal = "";
       ui.warehouse.itemEditId = compactText(entity.entityId || entity.itemId || entity.id);
       ui.warehouse.mode = "form";
       persistUiState("warehouse");
       return;
     }
-    if (moduleKey === "tasks") {
+    if (canonicalModuleKey === "tasks") {
       ui.tasks.modal = "";
       ui.tasks.taskEditId = compactText(entity.entityId || entity.taskId || entity.id);
       ui.tasks.mode = "form";
@@ -4057,26 +4304,27 @@ export function createLiveWorkspaceController({
 
   function mountModuleModal(moduleKey, root) {
     if (!root) return;
-    const modalState = compactText(ui[moduleKey]?.modal || "");
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    const modalState = compactText(ui[canonicalModuleKey]?.modal || "");
     if (!modalState) return;
     let html = "";
-    if (moduleKey === "crm" && modalState === "deal") {
+    if (canonicalModuleKey === "crm" && modalState === "deal") {
       html = renderCrmCreateModal(docs.crm || createDefaultCrmDoc());
-    } else if (moduleKey === "warehouse" && modalState === "item") {
+    } else if (canonicalModuleKey === "warehouse" && modalState === "item") {
       html = renderWarehouseItemCreateModal(docs.warehouse || createDefaultWarehouseDoc());
-    } else if (moduleKey === "warehouse" && modalState === "movement") {
+    } else if (canonicalModuleKey === "warehouse" && modalState === "movement") {
       html = renderWarehouseMovementCreateModal(docs.warehouse || createDefaultWarehouseDoc());
-    } else if (moduleKey === "warehouse" && modalState === "product") {
+    } else if (canonicalModuleKey === "warehouse" && modalState === "product") {
       html = renderWarehouseProductCreateModal(docs.warehouse || createDefaultWarehouseDoc());
-    } else if (moduleKey === "warehouse" && modalState === "purchase") {
+    } else if (canonicalModuleKey === "warehouse" && modalState === "purchase") {
       html = renderWarehousePurchaseCreateModal(docs.warehouse || createDefaultWarehouseDoc());
-    } else if (moduleKey === "warehouse" && modalState === "finance") {
+    } else if (canonicalModuleKey === "warehouse" && modalState === "finance") {
       html = renderWarehouseFinanceCreateModal(docs.warehouse || createDefaultWarehouseDoc());
-    } else if (moduleKey === "warehouse" && modalState === "production") {
+    } else if (canonicalModuleKey === "warehouse" && modalState === "production") {
       html = renderWarehouseProductionCreateModal(docs.warehouse || createDefaultWarehouseDoc());
-    } else if (moduleKey === "tasks" && modalState === "task") {
+    } else if (canonicalModuleKey === "tasks" && modalState === "task") {
       html = renderTasksTaskCreateModal(docs.tasks || createDefaultTasksDoc());
-    } else if (moduleKey === "tasks" && modalState === "sprint") {
+    } else if (canonicalModuleKey === "tasks" && modalState === "sprint") {
       html = renderTasksSprintCreateModal();
     }
     if (!html) return;
@@ -4098,11 +4346,12 @@ export function createLiveWorkspaceController({
 
   function hydrateDirectoryFields(moduleKey, root) {
     if (!root) return;
-    if (moduleKey === "crm") {
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (canonicalModuleKey === "crm") {
       root.querySelectorAll('input[name="channel"]').forEach((input) => attachDirectoryDatalist(root, input, "crm_channels"));
       root.querySelectorAll('input[name="owner"]').forEach((input) => attachDirectoryDatalist(root, input, "team_members"));
     }
-    if (moduleKey === "warehouse") {
+    if (canonicalModuleKey === "warehouse") {
       root.querySelectorAll('input[name="category"]').forEach((input) => attachDirectoryDatalist(root, input, "warehouse_categories"));
       root.querySelectorAll('input[name="unit"]').forEach((input) => attachDirectoryDatalist(root, input, "warehouse_units"));
       root.querySelectorAll('input[name="group"]').forEach((input) => attachDirectoryDatalist(root, input, "product_groups"));
@@ -4114,7 +4363,7 @@ export function createLiveWorkspaceController({
       root.querySelectorAll('input[name="counterparty"]').forEach((input) => attachDirectoryDatalist(root, input, "suppliers"));
       root.querySelectorAll('input[name="assignee"]').forEach((input) => attachDirectoryDatalist(root, input, "team_members"));
     }
-    if (moduleKey === "tasks") {
+    if (canonicalModuleKey === "tasks") {
       root.querySelectorAll('input[name="owner"]').forEach((input) => attachDirectoryDatalist(root, input, "team_members"));
     }
   }
@@ -4142,6 +4391,8 @@ export function createLiveWorkspaceController({
 
   function focusModeSection(moduleKey, root) {
     if (!root) return;
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    const headingKey = MODULE_MODE_CONFIG[moduleKey] ? moduleKey : canonicalModuleKey;
     const headingMap = {
       crm: [
         { text: "Карточка сделки", modes: "overview form" },
@@ -4175,11 +4426,11 @@ export function createLiveWorkspaceController({
       if (panel.dataset.modeSection) return;
       const heading = panel.querySelector("h4");
       const title = String(heading?.textContent || "").trim().toLowerCase();
-      const match = (headingMap[moduleKey] || []).find((item) => title.includes(item.text.toLowerCase()));
+      const match = (headingMap[headingKey] || headingMap[canonicalModuleKey] || []).find((item) => title.includes(item.text.toLowerCase()));
       if (match) panel.dataset.modeSection = match.modes;
     });
 
-    const mode = ui[moduleKey]?.mode || "overview";
+    const mode = ui[canonicalModuleKey]?.mode || "overview";
     root.querySelectorAll("[data-mode-section]").forEach((section) => {
       const values = String(section.dataset.modeSection || "")
         .replaceAll(",", " ")
@@ -4201,14 +4452,15 @@ export function createLiveWorkspaceController({
   }
 
   function handleInput(event, moduleKey) {
-    if (!supports(moduleKey)) return false;
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (!supports(canonicalModuleKey)) return false;
     const draftForm = event.target.closest("[data-draft-form]");
     if (draftForm) {
       writeDraft(moduleKey, draftForm.dataset.draftForm, serializeFormDraft(draftForm));
     }
     const target = event.target.closest("[data-live-filter]");
     if (!target) return false;
-    ui[moduleKey][target.dataset.liveFilter] = target.value;
+    ui[canonicalModuleKey][target.dataset.liveFilter] = target.value;
     markFiltersAsAdHoc(moduleKey);
     persistUiState(moduleKey);
     void rerenderCurrentModule();
@@ -4216,10 +4468,11 @@ export function createLiveWorkspaceController({
   }
 
   async function handleChange(event, moduleKey) {
-    if (!supports(moduleKey)) return false;
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (!supports(canonicalModuleKey)) return false;
     const filterTarget = event.target.closest("[data-live-filter]");
     if (filterTarget) {
-      ui[moduleKey][filterTarget.dataset.liveFilter] = filterTarget.value;
+      ui[canonicalModuleKey][filterTarget.dataset.liveFilter] = filterTarget.value;
       markFiltersAsAdHoc(moduleKey);
       persistUiState(moduleKey);
       await rerenderCurrentModule();
@@ -4290,7 +4543,8 @@ export function createLiveWorkspaceController({
   }
 
   async function handleClick(event, moduleKey) {
-    if (!supports(moduleKey)) return false;
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    if (!supports(canonicalModuleKey)) return false;
     const linkedOpenButton = event.target.closest("[data-linked-open]");
     if (linkedOpenButton) {
       const [targetModuleKey, entityId] = String(linkedOpenButton.dataset.linkedOpen || "").split(":");
@@ -4309,9 +4563,9 @@ export function createLiveWorkspaceController({
     }
     if (event.target.closest("[data-placeholder-open]")) return false;
     if (event.target.closest("[data-live-modal-close]") || event.target.hasAttribute("data-live-modal-backdrop")) {
-      if (ui[moduleKey]) {
-        ui[moduleKey].modal = "";
-        persistUiState(moduleKey);
+      if (ui[canonicalModuleKey]) {
+        ui[canonicalModuleKey].modal = "";
+        persistUiState(canonicalModuleKey);
         await rerenderCurrentModule();
       }
       return true;
@@ -4326,42 +4580,42 @@ export function createLiveWorkspaceController({
     }
     const builderToggle = event.target.closest("[data-builder-toggle]");
     if (builderToggle) {
-      ui[moduleKey].configOpen = !ui[moduleKey].configOpen;
+      ui[canonicalModuleKey].configOpen = !ui[canonicalModuleKey].configOpen;
       await rerenderCurrentModule();
       return true;
     }
     const deleteViewButton = event.target.closest("[data-builder-view-delete]");
     if (deleteViewButton) {
       await deleteBuilderEntity(moduleKey, "view", deleteViewButton.dataset.builderViewDelete);
-      ui[moduleKey].configOpen = true;
+      ui[canonicalModuleKey].configOpen = true;
       await rerenderCurrentModule();
       return true;
     }
     const deleteFieldButton = event.target.closest("[data-builder-field-delete]");
     if (deleteFieldButton) {
       await deleteBuilderEntity(moduleKey, "field", deleteFieldButton.dataset.builderFieldDelete);
-      ui[moduleKey].configOpen = true;
+      ui[canonicalModuleKey].configOpen = true;
       await rerenderCurrentModule();
       return true;
     }
     const deleteFormulaButton = event.target.closest("[data-builder-formula-delete]");
     if (deleteFormulaButton) {
       await deleteBuilderEntity(moduleKey, "formula", deleteFormulaButton.dataset.builderFormulaDelete);
-      ui[moduleKey].configOpen = true;
+      ui[canonicalModuleKey].configOpen = true;
       await rerenderCurrentModule();
       return true;
     }
     const modeButton = event.target.closest("[data-live-mode]");
     if (modeButton) {
-      ui[moduleKey].mode = modeButton.dataset.liveMode || "overview";
-      persistUiState(moduleKey);
+      ui[canonicalModuleKey].mode = modeButton.dataset.liveMode || "overview";
+      persistUiState(canonicalModuleKey);
       await rerenderCurrentModule();
       return true;
     }
     const resetFiltersButton = event.target.closest("[data-live-filters-reset]");
     if (resetFiltersButton) {
-      Object.assign(ui[moduleKey], getDefaultFilters(moduleKey), { activeViewId: "default" });
-      persistUiState(moduleKey);
+      Object.assign(ui[canonicalModuleKey], getDefaultFilters(moduleKey), { activeViewId: "default" });
+      persistUiState(canonicalModuleKey);
       await rerenderCurrentModule();
       return true;
     }
@@ -4386,7 +4640,7 @@ export function createLiveWorkspaceController({
       }
     }
 
-    if (moduleKey === "directories") {
+    if (canonicalModuleKey === "directories") {
       const selectButton = event.target.closest("[data-directory-select]");
       if (selectButton) {
         ui.directories.activeListId = selectButton.dataset.directorySelect || "";
@@ -4432,7 +4686,7 @@ export function createLiveWorkspaceController({
       }
     }
 
-    if (moduleKey === "crm") {
+    if (canonicalModuleKey === "crm") {
       const importSalesButton = event.target.closest("[data-crm-import-sales]");
       if (importSalesButton) {
         await importDealsFromSales();
@@ -4488,7 +4742,7 @@ export function createLiveWorkspaceController({
       }
     }
 
-    if (moduleKey === "warehouse") {
+    if (canonicalModuleKey === "warehouse") {
       const seedDemandButton = event.target.closest("[data-warehouse-seed-demand]");
       if (seedDemandButton) {
         await seedWarehouseItemsFromCalculators();
@@ -4674,7 +4928,7 @@ export function createLiveWorkspaceController({
       }
     }
 
-    if (moduleKey === "tasks") {
+    if (canonicalModuleKey === "tasks") {
       const generateSignalsButton = event.target.closest("[data-task-generate-signals]");
       if (generateSignalsButton) {
         await generateTasksFromSignals();
@@ -4824,7 +5078,9 @@ export function createLiveWorkspaceController({
   }
 
   function getDashboardSummary(moduleKey) {
-    if (!supports(moduleKey) || !docs[moduleKey]) return "";
+    const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+    const moduleDoc = docs[canonicalModuleKey];
+    if (!supports(canonicalModuleKey) || !moduleDoc) return "";
     if (moduleKey === "directories") {
       const lists = docs.directories.lists || [];
       return `${lists.length} справочников • ${formatNumber(sumBy(lists, (list) => (list.options || []).length))} значений`;
@@ -4838,6 +5094,22 @@ export function createLiveWorkspaceController({
       const snapshot = buildWarehouseSnapshot(docs.warehouse);
       const calculatorSnapshot = buildCalculatorDemandSnapshot(externalDocs.myCalculator, externalDocs.partnerCalculators || []);
       return `${snapshot.items.length} позиций • ${snapshot.products.length} товаров • ${snapshot.purchases.length} закупок${calculatorSnapshot.activeTabs ? ` • ${calculatorSnapshot.activeTabs} вкладок спроса` : ""}`;
+    }
+    if (moduleKey === "products") {
+      const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
+      return `${snapshot.products.length} товаров • ${formatMoney(sumBy(snapshot.products, (item) => (item.salePrice || 0) - (item.purchasePrice || 0)))} валовая маржа`;
+    }
+    if (moduleKey === "purchases") {
+      const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
+      return `${snapshot.purchases.length} закупок • ${formatMoney(snapshot.purchasesTotal || 0)} в заказах`;
+    }
+    if (moduleKey === "money") {
+      const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
+      return `${formatMoney((snapshot.incomeTotal || 0) - (snapshot.expenseTotal || 0))} баланс • ${formatMoney(snapshot.incomeTotal || 0)} приход / ${formatMoney(snapshot.expenseTotal || 0)} расход`;
+    }
+    if (moduleKey === "production") {
+      const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
+      return `${formatNumber(snapshot.productionActive || 0)} активных • ${formatNumber(snapshot.productionJobs.length)} всего заданий`;
     }
     if (moduleKey === "tasks") {
       const tasks = docs.tasks.tasks || [];
@@ -5092,8 +5364,9 @@ export function createLiveWorkspaceController({
     getDashboardSummary,
     getDashboardSnapshot,
     getDocument(moduleKey) {
-      if (!supports(moduleKey) || !docs[moduleKey]) return null;
-      return deepClone(docs[moduleKey]);
+      const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
+      if (!supports(canonicalModuleKey) || !docs[canonicalModuleKey]) return null;
+      return deepClone(docs[canonicalModuleKey]);
     },
     resetFormState,
     focusEntity

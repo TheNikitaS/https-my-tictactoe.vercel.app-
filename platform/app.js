@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-warehouse25";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-warehouse25";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ops28";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ops28";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-warehouse25";
+const PLATFORM_BUILD = "20260408-platform-ops28";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -125,11 +125,41 @@ const MODULES = {
     subtitle: "Ключевые показатели, активный график и сигналы по всей платформе.",
     type: "dashboard"
   },
+  purchases: {
+    title: "Закупки",
+    subtitle: "Заказы поставщикам, приёмки, статусы поставок и автоматическая связь со складом.",
+    type: "placeholder"
+  },
   sales: {
     title: "Продажи",
     subtitle: "Текущий рабочий модуль с заказами, ЗП и лид-метриками.",
     type: "embed",
     src: () => `../prodazhi/index.html?v=${PLATFORM_BUILD}`
+  },
+  products: {
+    title: "Товары",
+    subtitle: "Каталог товаров и услуг: группы, поставщики, цены, маржинальность и карточки номенклатуры.",
+    type: "placeholder"
+  },
+  crm: {
+    title: "CRM",
+    subtitle: "Живой коммерческий контур: сделки, стадии, карточки клиентов, вкладки и KPI-конструктор.",
+    type: "placeholder"
+  },
+  warehouse: {
+    title: "Склад",
+    subtitle: "Живой складской контур: позиции, движения, резервы, дефицит и гибкие поля под ваш учет.",
+    type: "placeholder"
+  },
+  money: {
+    title: "Деньги",
+    subtitle: "Приходы, расходы, статьи денег, контрагенты и перемещения по счетам.",
+    type: "placeholder"
+  },
+  production: {
+    title: "Производство",
+    subtitle: "Производственные задания, сроки, ответственные, этапы и контур исполнения.",
+    type: "placeholder"
   },
   my_calculator: {
     title: "Мой калькулятор",
@@ -167,16 +197,6 @@ const MODULES = {
     subtitle: "Единые справочники и выпадающие списки для всей платформы.",
     type: "placeholder"
   },
-  crm: {
-    title: "CRM",
-    subtitle: "Живой коммерческий контур: сделки, стадии, карточки клиентов, вкладки и KPI-конструктор.",
-    type: "placeholder"
-  },
-  warehouse: {
-    title: "Склад",
-    subtitle: "Живой складской контур: позиции, движения, резервы, дефицит и гибкие поля под ваш учет.",
-    type: "placeholder"
-  },
   tasks: {
     title: "Тасктрекер",
     subtitle: "Живая доска задач: итерации, приоритеты, блокеры, кастомные колонки и представления.",
@@ -187,6 +207,13 @@ const MODULES = {
     subtitle: "Корпоративный ИИ и база знаний компании.",
     type: "ai"
   }
+};
+
+const MODULE_PERMISSION_ALIASES = {
+  products: "warehouse",
+  purchases: "warehouse",
+  money: "warehouse",
+  production: "warehouse"
 };
 
 const domovoyNeonik = createDomovoyNeonik({
@@ -201,16 +228,20 @@ const domovoyNeonik = createDomovoyNeonik({
 
 const MODULE_GROUPS = [
   "dashboard",
+  "purchases",
   "sales",
+  "products",
+  "crm",
+  "warehouse",
+  "money",
+  "production",
   "my_calculator",
   "partner_calculator",
   "light2",
+  "directories",
+  "tasks",
   "messenger",
   "admin",
-  "directories",
-  "crm",
-  "warehouse",
-  "tasks",
   "ai"
 ];
 
@@ -591,15 +622,19 @@ function sanitizeSlug(value) {
 function getModuleShortLabel(key) {
   const labels = {
     dashboard: "Показ.",
+    purchases: "Закуп.",
     sales: "Прод.",
+    products: "Товары",
+    crm: "CRM",
+    warehouse: "Склад",
+    money: "Деньги",
+    production: "Произв.",
     my_calculator: "Мой",
     partner_calculator: "Парт.",
     light2: "Контур",
     messenger: "Чаты",
     admin: "Админ",
     directories: "Спр.",
-    crm: "CRM",
-    warehouse: "Склад",
     tasks: "Задачи",
     ai: "Неоник"
   };
@@ -609,15 +644,19 @@ function getModuleShortLabel(key) {
 function getModuleIconClass(key) {
   const icons = {
     dashboard: "bi-graph-up-arrow",
+    purchases: "bi-cart-check",
     sales: "bi-bag-check",
+    products: "bi-box2",
+    crm: "bi-kanban",
+    warehouse: "bi-box-seam",
+    money: "bi-wallet2",
+    production: "bi-gear-wide-connected",
     my_calculator: "bi-calculator",
     partner_calculator: "bi-people",
     light2: "bi-building",
     messenger: "bi-chat-dots",
     admin: "bi-shield-check",
     directories: "bi-sliders2",
-    crm: "bi-kanban",
-    warehouse: "bi-box-seam",
     tasks: "bi-list-check",
     ai: "bi-stars"
   };
@@ -691,11 +730,26 @@ function createEmptyPermissionMap() {
   }, {});
 }
 
+function applyPermissionAliases(permissionMap, explicitKeys = new Set()) {
+  const next = cloneJson(permissionMap);
+  Object.entries(MODULE_PERMISSION_ALIASES).forEach(([aliasKey, parentKey]) => {
+    if (explicitKeys.has(aliasKey)) return;
+    const parent = next[parentKey];
+    if (!parent) return;
+    const hasParentAccess = parent.view || parent.edit || parent.manage;
+    if (!hasParentAccess) return;
+    next[aliasKey] = { ...parent };
+  });
+  return next;
+}
+
 function normalizeModulePermissions(rawPermissions, fallbackModules = []) {
   const base = createEmptyPermissionMap();
+  const explicitKeys = new Set();
   if (rawPermissions && typeof rawPermissions === "object" && !Array.isArray(rawPermissions)) {
     Object.entries(rawPermissions).forEach(([key, value]) => {
       if (!base[key]) return;
+      explicitKeys.add(key);
       base[key] = {
         view: Boolean(value?.view),
         edit: Boolean(value?.edit),
@@ -712,7 +766,7 @@ function normalizeModulePermissions(rawPermissions, fallbackModules = []) {
     });
   }
   base.dashboard.view = true;
-  return base;
+  return applyPermissionAliases(base, explicitKeys);
 }
 
 function permissionsToAllowedModules(permissions) {
@@ -1348,15 +1402,19 @@ function renderModuleNav() {
 
 function getModuleStageLabel(moduleKey) {
   const labels = {
+    purchases: "Живой рабочий модуль",
     sales: "Рабочий модуль",
+    products: "Живой рабочий модуль",
+    crm: "Живой рабочий модуль",
+    warehouse: "Живой рабочий модуль",
+    money: "Живой рабочий модуль",
+    production: "Живой рабочий модуль",
     my_calculator: "Рабочий модуль",
     partner_calculator: "Рабочий модуль",
     light2: "Активно развивается",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",
     directories: "Единый слой данных",
-    crm: "Живой рабочий модуль",
-    warehouse: "Живой рабочий модуль",
     tasks: "Живой рабочий модуль",
     ai: "База знаний"
   };
@@ -1601,9 +1659,13 @@ async function renderDashboard() {
 
   const summaryLookup = snapshot
     ? {
+        purchases: `${formatDashboardNumber(snapshot.warehouse.purchasesCount || 0)} закупок • ${formatDashboardMoney(snapshot.warehouse.purchasesTotal || 0)}`,
         sales: `${formatDashboardNumber(snapshot.sales.ordersCount)} заказов • ${formatDashboardNumber(snapshot.sales.unpaidInvoicesCount)} счетов без оплаты`,
+        products: `${formatDashboardNumber(snapshot.warehouse.productsCount || 0)} товаров • ${formatDashboardMoney(snapshot.warehouse.catalogMargin || 0)} потенциал маржи`,
         crm: `${formatDashboardNumber(snapshot.crm.openDealsCount)} сделок в работе • ${formatDashboardMoney(snapshot.crm.pipelineAmount)}`,
         warehouse: `${formatDashboardNumber(snapshot.warehouse.itemsCount)} позиций • ${formatDashboardNumber(snapshot.warehouse.lowCount)} в дефиците`,
+        money: `${formatDashboardMoney(snapshot.warehouse.netMoney || 0)} баланс • ${formatDashboardMoney(snapshot.warehouse.incomeTotal || 0)} / ${formatDashboardMoney(snapshot.warehouse.expenseTotal || 0)}`,
+        production: `${formatDashboardNumber(snapshot.warehouse.productionActive || 0)} в работе • ${formatDashboardNumber(snapshot.warehouse.productionTotal || 0)} всего`,
         tasks: `${formatDashboardNumber(snapshot.tasks.openCount)} задач • ${formatDashboardNumber(snapshot.tasks.blockedCount)} с блокером`,
         directories: `${formatDashboardNumber(snapshot.directories.listsCount)} справочников • ${formatDashboardNumber(snapshot.directories.valuesCount)} значений`
       }
