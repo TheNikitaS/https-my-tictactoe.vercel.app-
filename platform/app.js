@@ -5,7 +5,7 @@ import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux3
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-ux35";
+const PLATFORM_BUILD = "20260408-platform-ux36";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -2495,16 +2495,53 @@ async function bootstrapApp(session) {
     }
   }
 
-  renderSchemaWarning();
-  renderDomovoySettings();
-  renderProfileCard();
-  renderModuleNav();
-  renderAiWidget();
-  await renderDashboard();
   showAppShell();
+  renderSchemaWarning();
+  try {
+    renderDomovoySettings();
+  } catch (error) {
+    console.error("Domovoy settings render failed", error);
+  }
+  try {
+    renderProfileCard();
+  } catch (error) {
+    console.error("Profile card render failed", error);
+  }
+  try {
+    renderModuleNav();
+  } catch (error) {
+    console.error("Module nav render failed", error);
+  }
+  try {
+    renderAiWidget();
+  } catch (error) {
+    console.error("AI widget render failed", error);
+  }
+  try {
+    await renderDashboard();
+  } catch (error) {
+    console.error("Dashboard render failed", error);
+    setShellStatus(
+      `Панель открыта, но часть главной страницы загрузилась с ошибкой: ${error.message || "неизвестная ошибка"}`,
+      "error"
+    );
+  }
   const availableModules = moduleListFromProfile();
   const targetModule = availableModules.includes(previousModule) ? previousModule : availableModules[0] || "dashboard";
-  await openModule(targetModule);
+  try {
+    await openModule(targetModule);
+  } catch (error) {
+    console.error("Open module failed", error);
+    DOM.dashboardView.classList.remove("d-none");
+    DOM.embedView.classList.add("d-none");
+    DOM.adminView.classList.add("d-none");
+    DOM.messengerView.classList.add("d-none");
+    DOM.placeholderView.classList.add("d-none");
+    setShellStatus(
+      `Платформа открыта, но модуль "${MODULES[targetModule]?.title || targetModule}" загрузился с ошибкой: ${error.message || "неизвестная ошибка"}`,
+      "error"
+    );
+  }
   if (didResetData) {
     setShellStatus(
       "Рабочие данные очищены: ДОМ НЕОНА, CRM, Склад, Тасктрекер и Мессенджер запущены с пустого состояния.",
@@ -2517,8 +2554,24 @@ async function openPlatformForSession(session) {
   try {
     await bootstrapApp(session);
   } catch (error) {
-    showAuthScreen();
-    setAuthStatus(error.message || "Не удалось открыть платформу.", "error");
+    console.error("Platform bootstrap failed", error);
+    STATE.session = session;
+    STATE.user = session?.user || null;
+    try {
+      showAppShell();
+      DOM.dashboardView.classList.remove("d-none");
+      DOM.embedView.classList.add("d-none");
+      DOM.adminView.classList.add("d-none");
+      DOM.messengerView.classList.add("d-none");
+      DOM.placeholderView.classList.add("d-none");
+      setShellStatus(
+        `Вход выполнен, но часть платформы не загрузилась: ${error.message || "неизвестная ошибка"}`,
+        "error"
+      );
+    } catch {
+      showAuthScreen();
+      setAuthStatus(error.message || "Не удалось открыть платформу.", "error");
+    }
   }
 }
 
