@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux34";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux34";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260408-platform-ux35";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260408-platform-ux35";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260408-platform-ux34";
+const PLATFORM_BUILD = "20260408-platform-ux35";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -3120,12 +3120,23 @@ function bindAuthEvents() {
     const formData = new FormData(event.currentTarget);
     setAuthStatus("Проверяю логин и пароль...");
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: String(formData.get("email") || "").trim(),
         password: String(formData.get("password") || "")
       });
       if (error) {
         setAuthStatus(error.message, "error");
+        return;
+      }
+      if (data?.session) {
+        setAuthStatus("Вход выполнен. Открываю платформу...", "success");
+        await openPlatformForSession(data.session);
+        return;
+      }
+      const sessionData = await supabase.auth.getSession();
+      if (sessionData?.data?.session) {
+        setAuthStatus("Вход выполнен. Открываю платформу...", "success");
+        await openPlatformForSession(sessionData.data.session);
         return;
       }
       setAuthStatus("Вход выполнен. Открываю платформу...", "success");
@@ -3177,13 +3188,18 @@ function bindAuthEvents() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     setAuthStatus("Подтверждаю код...");
-    const { error } = await supabase.auth.verifyOtp({
+    const { data, error } = await supabase.auth.verifyOtp({
       email: String(formData.get("email") || "").trim(),
       token: String(formData.get("token") || "").trim(),
       type: "email"
     });
     if (error) {
       setAuthStatus(error.message, "error");
+      return;
+    }
+    if (data?.session) {
+      setAuthStatus("Код подтвержден. Открываю платформу...", "success");
+      await openPlatformForSession(data.session);
       return;
     }
     setAuthStatus("Код подтвержден. Вход выполнен.", "success");
