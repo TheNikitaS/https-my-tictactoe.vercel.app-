@@ -2202,6 +2202,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     const canEdit = hasModulePermission("directories", "edit");
     const canManage = hasModulePermission("directories", "manage");
     const filters = ui.directories;
+    const warehouseDoc = await ensureDocument("warehouse");
+    const snapshot = buildWarehouseSnapshot(warehouseDoc || createDefaultWarehouseDoc());
     const allLists = Array.isArray(doc.lists) ? doc.lists : [];
     const filteredLists = allLists.filter((list) => matchesSearch([list.title, list.key, list.description, ...(list.options || [])].join(" "), filters.search));
     const selectedList =
@@ -2225,6 +2227,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       "directories",
       [
         canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-directory-new>Новый справочник</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-edit>Настроить список</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-option-new>Добавить значение</button>' : "",
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="directories">Экспорт JSON</button>',
         canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="directories">Импорт JSON</button>' : ""
       ].filter(Boolean),
@@ -2268,7 +2272,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${selectedList ? "Настройки списка" : "Новый список"}</h4><div class="compact-help">Ключ лучше не менять часто: на него могут ссылаться поля и выпадашки.</div></div></div>
             ${canEdit
-              ? `<form id="directoriesListForm" class="workspace-form">
+              ? `${selectedList ? `<div class="workspace-stage-strip"><div class="workspace-stage-card"><span>Ключ</span><strong>${escapeHtml(selectedList.key || "—")}</strong></div><div class="workspace-stage-card"><span>Значений</span><strong>${escapeHtml(formatNumber(selectedOptions.length))}</strong></div></div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-directory-edit>Редактировать в окне</button>${selectedList && canManage ? `<button class="btn btn-outline-danger" type="button" data-directory-delete="${escapeHtml(selectedList.key)}">Удалить</button>` : ""}</div>` : `<div class="workspace-empty workspace-empty--tight">Создайте первый справочник через всплывающее окно, чтобы не перегружать этот экран длинной формой.</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-directory-new>Создать справочник</button></div>`}<form id="directoriesListForm" class="workspace-form d-none">
                   <input type="hidden" name="id" value="${escapeHtml(selectedList?.id || "")}" />
                   <div class="workspace-form-grid">
                     <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(selectedList?.title || "")}" placeholder="Каналы CRM" required /></label>
@@ -2286,7 +2290,7 @@ function buildModeTabs(moduleKey, escapeFn) {
             <div class="panel-heading"><div><h4>Значения</h4><div class="compact-help">Значения сразу появятся в ваших выпадающих списках и подсказках.</div></div></div>
             ${selectedList
               ? `${canEdit
-                  ? `<form id="directoriesOptionForm" class="workspace-form workspace-form--inline">
+                  ? `<div class="workspace-card__actions"><button class="btn btn-dark" type="button" data-directory-option-new>Добавить значение</button><span class="workspace-note">Значение откроется в отдельной карточке и сразу попадёт во все выпадающие списки.</span></div><form id="directoriesOptionForm" class="workspace-form workspace-form--inline d-none">
                       <input type="hidden" name="key" value="${escapeHtml(selectedList.key)}" />
                       <label class="workspace-form__grow"><span>Новое значение</span><input class="form-control" type="text" name="option" placeholder="Добавить значение" required /></label>
                       <button class="btn btn-dark" type="submit">Добавить</button>
@@ -2416,6 +2420,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       [
         canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-crm-new>Новая сделка</button>' : "",
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-crm-import-sales>Забрать из Продаж</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-crm-reserve-open>Резерв под сделку</button>' : "",
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Воронка</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Таблица</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="crm">Экспорт JSON</button>',
@@ -2470,7 +2475,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "overview", "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editDeal ? "Карточка сделки" : "Новая сделка"}</h4><div class="compact-help">Карточка строится под ваш цикл: лид → квалификация → КП/счет → производство → закрытие.</div></div></div>
-            ${canEdit ? `${renderDraftBadge("crm", "deal")}<form id="crmDealForm" class="workspace-form" data-draft-form="deal"><input type="hidden" name="id" value="${escapeHtml(editDeal?.id || "")}" /><div class="workspace-form-grid"><label><span>Название сделки</span><input class="form-control" type="text" name="title" value="${escapeHtml(editDeal ? editDeal.title || "" : draftValue("", formDraft?.title))}" required /></label><label><span>Клиент</span><input class="form-control" type="text" name="client" value="${escapeHtml(editDeal ? editDeal.client || "" : draftValue("", formDraft?.client))}" required /></label><label><span>Канал</span><input class="form-control" type="text" name="channel" value="${escapeHtml(editDeal ? editDeal.channel || "" : draftValue("", formDraft?.channel))}" /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editDeal ? editDeal.owner || "" : draftValue("", formDraft?.owner))}" /></label><label><span>Стадия</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${((editDeal?.stage || formDraft?.stage || "lead") === stage.key) ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label><label><span>Сумма, ₽</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(editDeal ? String(toNumber(editDeal.amount || 0) || "") : compactText(formDraft?.amount || ""))}" /></label><label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(editDeal ? normalizeDateInput(editDeal.deadline || "") : normalizeDateInput(formDraft?.deadline || ""))}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editDeal ? editDeal.note || "" : draftValue("", formDraft?.note))}</textarea></label>${renderCustomFieldSection("crm", doc, editDeal || formDraft, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editDeal ? "Сохранить изменения" : "Добавить сделку"}</button><button class="btn btn-outline-secondary" type="button" data-crm-new>Очистить форму</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-duplicate="${escapeHtml(editDeal.id)}">Сделать копию</button>` : ""}</div></form>` : renderAccessHint("crm")}
+            ${canEdit ? `${renderDraftBadge("crm", "deal")}<div class="workspace-empty workspace-empty--tight">${editDeal ? "Сделка уже выбрана и открыта в фокусе справа. Для редактирования используйте всплывающую карточку, чтобы не перегружать экран." : "Создавайте сделки через всплывающую карточку. Так обзор остаётся чистым, а сама форма не ломает ритм работы."}</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-crm-new>${editDeal ? "Новая сделка" : "Создать сделку"}</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-edit="${escapeHtml(editDeal.id)}">Редактировать в окне</button><button class="btn btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(editDeal.id)}">Сделать копию</button>` : ""}</div>${editDeal ? `<div class="workspace-stage-strip mt-3"><div class="workspace-stage-card"><span>Клиент</span><strong>${escapeHtml(editDeal.client || "—")}</strong></div><div class="workspace-stage-card"><span>Ответственный</span><strong>${escapeHtml(editDeal.owner || "—")}</strong></div><div class="workspace-stage-card"><span>Срок</span><strong>${escapeHtml(formatDate(editDeal.deadline))}</strong></div></div>` : ""}` : renderAccessHint("crm")}
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editDeal ? "Связанный контур сделки" : "Фокус недели"}</h4><div class="compact-help">${editDeal ? "Источник, задачи и резерв материалов собраны рядом с карточкой, чтобы по сделке не приходилось бегать по модулям." : "Быстрый срез по тем сделкам, которым прямо сейчас нужен контроль."}</div></div></div>
@@ -2486,7 +2491,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "overview", "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Резерв материалов под сделку</h4><div class="compact-help">Можно сразу привязать резерв склада к конкретной CRM-сделке, чтобы задача и материал не жили отдельно.</div></div></div>
-            ${canEdit ? `<form id="crmReserveForm" class="workspace-form"><div class="workspace-form-grid"><label><span>Сделка</span><select class="form-select" name="dealId" required><option value="">Выберите сделку</option>${reserveDealOptions.map((deal) => `<option value="${escapeHtml(deal.id)}" ${editDeal?.id === deal.id ? "selected" : ""}>${escapeHtml(deal.title || deal.client || "Сделка")} • ${escapeHtml(deal.client || "—")}</option>`).join("")}</select></label><label><span>Позиция склада</span><select class="form-select" name="itemId" required><option value="">Выберите материал</option>${warehouseSnapshot.items.map((item) => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""} • доступно ${escapeHtml(formatNumber(item.available || 0))}</option>`).join("")}</select></label><label><span>Количество</span><input class="form-control" type="number" min="1" step="1" name="qty" required /></label><label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3" placeholder="Например: резерв под производство или монтаж"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Резервировать</button></div></form>` : renderAccessHint("crm")}
+            ${canEdit ? `<div class="workspace-empty workspace-empty--tight">Резерв материалов теперь открывается отдельной всплывающей карточкой: меньше визуального шума и удобнее работать на ноутбуке.</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-crm-reserve-open>Открыть резерв</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-reserve-open>Резерв под выбранную сделку</button>` : ""}</div>` : renderAccessHint("crm")}
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Связанные резервы</h4><div class="compact-help">Последние резервы материалов, которые уже связаны со сделками CRM.</div></div></div>
@@ -3603,6 +3608,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       lists.unshift({ ...incoming, options: [] });
     }
     ui.directories.activeListId = incoming.key;
+    ui.directories.modal = "";
     persistUiState("directories");
     await saveDocument("directories", { ...doc, lists }, existingIndex >= 0 ? "Справочник обновлён." : "Справочник создан.");
     await rerenderCurrentModule();
@@ -3623,6 +3629,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     }
     lists[index] = { ...lists[index], options: [...new Set([...(lists[index].options || []), option])] };
     ui.directories.activeListId = lists[index].key;
+    ui.directories.modal = "";
     persistUiState("directories");
     await saveDocument("directories", { ...doc, lists }, "Значение добавлено в справочник.");
     await rerenderCurrentModule();
@@ -3908,6 +3915,9 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (!deal || !item) {
       throw new Error("Сделка или позиция склада не найдены.");
     }
+    ui.crm.modal = "";
+    clearDraft("crm", "reserve");
+    persistUiState("crm");
     const movement = {
       id: createId("move"),
       itemId,
@@ -4112,6 +4122,71 @@ function buildModeTabs(moduleKey, escapeFn) {
         </div>
       </div>
     `;
+  }
+
+  function renderCrmReserveModal(crmDoc, warehouseDoc) {
+    const reserveDealOptions = sortByDateDesc(
+      (crmDoc.deals || []).length ? crmDoc.deals || [] : [],
+      "updatedAt"
+    );
+    const draft = readDraft("crm", "reserve");
+    const selectedDealId = compactText(draft?.dealId || ui.crm.editId || "");
+    return renderWorkspaceModalShell(
+      "Резерв материалов под сделку",
+      `<form id="crmReserveForm" class="workspace-form" data-draft-form="reserve">
+        <div class="workspace-form-grid">
+          <label><span>Сделка</span><select class="form-select" name="dealId" required><option value="">Выберите сделку</option>${reserveDealOptions.map((deal) => `<option value="${escapeHtml(deal.id)}" ${selectedDealId === deal.id ? "selected" : ""}>${escapeHtml(deal.title || deal.client || "Сделка")} • ${escapeHtml(deal.client || "—")}</option>`).join("")}</select></label>
+          <label><span>Позиция склада</span><select class="form-select" name="itemId" required><option value="">Выберите материал</option>${(warehouseDoc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${compactText(draft?.itemId || "") === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""} • доступно ${escapeHtml(formatNumber(toNumber(item.available || item.openingStock || 0)))}</option>`).join("")}</select></label>
+          <label><span>Количество</span><input class="form-control" type="number" min="1" step="1" name="qty" value="${escapeHtml(compactText(draft?.qty || ""))}" required /></label>
+          <label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draft?.date || todayString()))}" /></label>
+        </div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="3" placeholder="Например: резерв под производство или монтаж">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Резервировать</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Отдельное окно для быстрого резерва материалов под сделку без перегруза основного экрана."
+    );
+  }
+
+  function renderDirectoriesListModal(doc) {
+    const selectedList =
+      (doc.lists || []).find((list) => list.id === ui.directories.activeListId || list.key === ui.directories.activeListId) ||
+      null;
+    return renderWorkspaceModalShell(
+      selectedList ? "Редактирование справочника" : "Новый справочник",
+      `<form id="directoriesListForm" class="workspace-form">
+        <input type="hidden" name="id" value="${escapeHtml(selectedList?.id || "")}" />
+        <div class="workspace-form-grid">
+          <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(selectedList?.title || "")}" placeholder="Например: Каналы CRM" required /></label>
+          <label><span>Ключ</span><input class="form-control" type="text" name="key" value="${escapeHtml(selectedList?.key || "")}" placeholder="crm_channels" required /></label>
+        </div>
+        <label><span>Описание</span><textarea class="form-control" name="description" rows="3" placeholder="Где и для чего используется этот список">${escapeHtml(selectedList?.description || "")}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${selectedList ? "Сохранить справочник" : "Создать справочник"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Справочник создаётся один раз и потом используется в формах CRM, склада, задач и других разделов."
+    );
+  }
+
+  function renderDirectoriesOptionModal(doc) {
+    const selectedList =
+      (doc.lists || []).find((list) => list.id === ui.directories.activeListId || list.key === ui.directories.activeListId) ||
+      null;
+    if (!selectedList) {
+      return renderWorkspaceModalShell(
+        "Сначала выберите справочник",
+        `<div class="workspace-empty workspace-empty--tight">Выберите справочник в каталоге, а затем добавляйте значения.</div>`,
+        "Значения всегда добавляются в конкретный справочник."
+      );
+    }
+    return renderWorkspaceModalShell(
+      "Новое значение справочника",
+      `<form id="directoriesOptionForm" class="workspace-form">
+        <input type="hidden" name="key" value="${escapeHtml(selectedList.key)}" />
+        <label><span>Справочник</span><input class="form-control" type="text" value="${escapeHtml(selectedList.title)}" disabled /></label>
+        <label><span>Новое значение</span><input class="form-control" type="text" name="option" placeholder="Добавить значение" required /></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Добавить значение</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
+      </form>`,
+      "Значение сразу появится в выпадающих списках платформы."
+    );
   }
 
   function renderCrmCreateModal(doc) {
@@ -4324,6 +4399,12 @@ function buildModeTabs(moduleKey, escapeFn) {
     let html = "";
     if (canonicalModuleKey === "crm" && modalState === "deal") {
       html = renderCrmCreateModal(docs.crm || createDefaultCrmDoc());
+    } else if (canonicalModuleKey === "crm" && modalState === "reserve") {
+      html = renderCrmReserveModal(docs.crm || createDefaultCrmDoc(), docs.warehouse || createDefaultWarehouseDoc());
+    } else if (canonicalModuleKey === "directories" && modalState === "list") {
+      html = renderDirectoriesListModal(docs.directories || createDefaultDirectoriesDoc());
+    } else if (canonicalModuleKey === "directories" && modalState === "option") {
+      html = renderDirectoriesOptionModal(docs.directories || createDefaultDirectoriesDoc());
     } else if (canonicalModuleKey === "warehouse" && modalState === "item") {
       html = renderWarehouseItemCreateModal(docs.warehouse || createDefaultWarehouseDoc());
     } else if (canonicalModuleKey === "warehouse" && modalState === "movement") {
@@ -4665,6 +4746,21 @@ function buildModeTabs(moduleKey, escapeFn) {
       const newButton = event.target.closest("[data-directory-new]");
       if (newButton) {
         ui.directories.activeListId = "";
+        ui.directories.modal = "list";
+        persistUiState("directories");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const editButton = event.target.closest("[data-directory-edit]");
+      if (editButton) {
+        ui.directories.modal = "list";
+        persistUiState("directories");
+        await rerenderCurrentModule();
+        return true;
+      }
+      const newOptionButton = event.target.closest("[data-directory-option-new]");
+      if (newOptionButton) {
+        ui.directories.modal = "option";
         persistUiState("directories");
         await rerenderCurrentModule();
         return true;
@@ -4704,6 +4800,13 @@ function buildModeTabs(moduleKey, escapeFn) {
       const importSalesButton = event.target.closest("[data-crm-import-sales]");
       if (importSalesButton) {
         await importDealsFromSales();
+        return true;
+      }
+      const reserveOpenButton = event.target.closest("[data-crm-reserve-open]");
+      if (reserveOpenButton) {
+        ui.crm.modal = "reserve";
+        persistUiState("crm");
+        await rerenderCurrentModule();
         return true;
       }
       const taskFromDealButton = event.target.closest("[data-crm-task-from-deal]");
