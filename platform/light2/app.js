@@ -1996,6 +1996,19 @@ function isOperationsSchemaMissing(error) {
   );
 }
 
+function withTimeout(promise, timeoutMs, timeoutMessage) {
+  let timerId = null;
+  const timeoutPromise = new Promise((_, reject) => {
+    timerId = window.setTimeout(() => {
+      reject(new Error(timeoutMessage || "Превышено время ожидания ответа."));
+    }, timeoutMs);
+  });
+
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    if (timerId) window.clearTimeout(timerId);
+  });
+}
+
 function getCurrentPartnerSlug() {
   if (STATE.profile?.partner_slug) return STATE.profile.partner_slug;
   const linkedPartner = STATE.partnerProfiles.find((partner) => partner.owner_user_id === STATE.user?.id);
@@ -5049,16 +5062,29 @@ async function loadBootstrapData() {
   STATE.session = sessionData.session;
   STATE.user = sessionData.session.user;
 
-  const [{ data: profile, error: profileError }, { data: partners, error: partnersError }] = await Promise.all([
-    supabase.from("app_profiles").select("*").eq("id", STATE.user.id).maybeSingle(),
-    supabase.from("partner_profiles").select("*").order("display_name", { ascending: true })
-  ]);
+  const fallbackProfile = {
+    id: STATE.user.id,
+    display_name: STATE.user.user_metadata?.display_name || STATE.user.email || "Пользователь",
+    full_name: STATE.user.user_metadata?.display_name || "",
+    role: "user",
+    partner_slug: null
+  };
 
-  if (profileError && profileError.code !== "PGRST116") throw profileError;
-  if (partnersError) throw partnersError;
+  let profileResult = null;
+  try {
+    profileResult = await withTimeout(
+      supabase.from("app_profiles").select("*").eq("id", STATE.user.id).maybeSingle(),
+      6000,
+      "Не удалось вовремя загрузить профиль пользователя."
+    );
+  } catch (error) {
+    console.warn("light2 profile load fallback", error);
+  }
 
-  STATE.profile = profile || null;
-  STATE.partnerProfiles = partners || [];
+  if (profileResult?.error && profileResult.error.code !== "PGRST116") throw profileResult.error;
+
+  STATE.profile = profileResult?.data || fallbackProfile;
+  STATE.partnerProfiles = [];
   updateHero();
   syncSectionTabs();
   renderOverview();
@@ -5072,6 +5098,25 @@ async function loadBootstrapData() {
   resetAssetForm();
   resetAssetPaymentForm();
   resetPurchaseForm();
+
+  void (async () => {
+    try {
+      const partnersResult = await withTimeout(
+        supabase.from("partner_profiles").select("*").order("display_name", { ascending: true }),
+        6000,
+        "Не удалось вовремя загрузить справочник партнеров."
+      );
+      if (partnersResult?.error) throw partnersResult.error;
+      STATE.partnerProfiles = partnersResult?.data || [];
+      updateHero();
+      renderOverview();
+      renderPartnerSelect(DOM.settlementPartnerFilter, { includeAll: true });
+      renderPartnerSelect(DOM.settlementForm.elements.partner_slug);
+    } catch (error) {
+      console.warn("light2 partner directory fallback", error);
+    }
+  })();
+
   return true;
 }
 
@@ -6270,9 +6315,21 @@ async function start() {
   try {
     const ready = await loadBootstrapData();
     if (!ready) return;
-    await loadSettlements();
-    await loadFinanceData();
-    await loadOperationsData();
+    const loaders = [
+      ["Взаиморасчеты", loadSettlements],
+      ["Финансы", loadFinanceData],
+      ["Активы и закупки", loadOperationsData]
+    ];
+
+    for (const [label, loader] of loaders) {
+      try {
+        await loader();
+      } catch (error) {
+        console.error(`light2 loader failed: ${label}`, error);
+        setStatus(error.message || `Не удалось загрузить блок "${label}".`, "error");
+      }
+    }
+
     syncModuleStatus();
     syncImportButton();
   } catch (error) {
