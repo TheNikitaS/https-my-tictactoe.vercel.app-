@@ -3,12 +3,13 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260408-light2-board30";
+const LIGHT2_BUILD = "20260410-light2-restore39";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
   hiddenForms: "dom-neona:light2:hiddenForms",
-  sectionBuilders: "dom-neona:light2:sectionBuilders"
+  sectionBuilders: "dom-neona:light2:sectionBuilders",
+  restoreStamp: "dom-neona:light2:restoreStamp"
 };
 
 const WORKBOOK_IMPORT_SHEETS = [
@@ -495,6 +496,8 @@ const STATE = {
   workbookSnapshot: null,
   workbookReady: false,
   workbookError: "",
+  autoRestoreAttempted: false,
+  autoRestoreCompleted: false,
   snapshotSearches: {},
   importBusy: false,
   activeSection: readStoredString(LIGHT2_UI_KEYS.activeSection, "overview"),
@@ -2302,6 +2305,71 @@ function hasImportableWorkbookData() {
     const sheet = getWorkbookSheetByName(name);
     return sheetHasVisibleData(sheet);
   });
+}
+
+function hasLiveContourData() {
+  return Boolean(
+    STATE.settlements.length ||
+      STATE.balanceEntries.length ||
+      STATE.calendarEntries.length ||
+      STATE.assets.length ||
+      STATE.assetPayments.length ||
+      STATE.purchaseCatalog.length
+  );
+}
+
+function getContourRestoreStamp() {
+  if (!STATE.workbookSnapshot?.generatedAt || !STATE.workbookSnapshot?.workbook) return "";
+  return `${STATE.workbookSnapshot.generatedAt}:${STATE.workbookSnapshot.workbook}`;
+}
+
+function readContourRestoreStamp() {
+  return readStoredString(LIGHT2_UI_KEYS.restoreStamp, "");
+}
+
+function persistContourRestoreStamp() {
+  try {
+    const stamp = getContourRestoreStamp();
+    if (stamp) {
+      window.localStorage.setItem(LIGHT2_UI_KEYS.restoreStamp, stamp);
+    }
+  } catch {
+    // Ignore localStorage failures in privacy modes.
+  }
+}
+
+function shouldAutoRestoreContourData() {
+  return (
+    isAdmin() &&
+    !STATE.importBusy &&
+    STATE.workbookReady &&
+    hasImportableWorkbookData() &&
+    STATE.schemaReady &&
+    STATE.financeReady &&
+    STATE.operationsReady &&
+    !hasLiveContourData() &&
+    readContourRestoreStamp() !== getContourRestoreStamp()
+  );
+}
+
+async function maybeAutoRestoreContourData() {
+  if (STATE.autoRestoreAttempted || !shouldAutoRestoreContourData()) {
+    return false;
+  }
+
+  STATE.autoRestoreAttempted = true;
+  setImportStatus("Живые таблицы Контур пусты. Возвращаю данные из исходного ЛАЙТ 2...");
+
+  try {
+    await importWorkbookIntoTables();
+    STATE.autoRestoreCompleted = true;
+    persistContourRestoreStamp();
+    return true;
+  } catch (error) {
+    console.error("light2 auto restore failed", error);
+    setStatus(error.message || "Не удалось автоматически вернуть данные Контур.", "error");
+    return false;
+  }
 }
 
 function getSnapshotSearch(sectionKey) {
@@ -6310,11 +6378,11 @@ async function start() {
   }
   syncWorkspaceModeUi();
   openSection(STATE.activeSection || "overview");
-  void loadWorkbookSnapshot();
 
   try {
     const ready = await loadBootstrapData();
     if (!ready) return;
+    await loadWorkbookSnapshot();
     const loaders = [
       ["Взаиморасчеты", loadSettlements],
       ["Финансы", loadFinanceData],
@@ -6330,6 +6398,7 @@ async function start() {
       }
     }
 
+    await maybeAutoRestoreContourData();
     syncModuleStatus();
     syncImportButton();
   } catch (error) {
