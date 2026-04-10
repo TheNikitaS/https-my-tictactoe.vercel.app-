@@ -237,6 +237,10 @@ const MODULE_MODE_CONFIG = {
   ]
 };
 
+if (Array.isArray(MODULE_MODE_CONFIG.warehouse) && !MODULE_MODE_CONFIG.warehouse.some((item) => item.key === "history")) {
+  MODULE_MODE_CONFIG.warehouse.splice(2, 0, { key: "history", label: "История" });
+}
+
 const LIVE_UI_STORAGE_PREFIX = "dom-neona:live-ui";
 const LIVE_DRAFT_STORAGE_PREFIX = "dom-neona:live-draft";
 const EXTERNAL_SHARED_APPS = {
@@ -2073,6 +2077,81 @@ function buildModeTabs(moduleKey, escapeFn) {
     return sortByDateDesc(events.filter((event) => compactText(event.date)), "date");
   }
 
+  function buildWarehouseHistoryEntries(doc) {
+    const itemLookup = new Map((doc.items || []).map((item) => [item.id, item]));
+    const entries = [];
+
+    (doc.movements || []).forEach((movement) => {
+      const meta =
+        movement.kind === "in"
+          ? { label: "Приход", tone: "success" }
+          : movement.kind === "out"
+            ? { label: "Списание", tone: "warning" }
+            : movement.kind === "reserve"
+              ? { label: "Резерв", tone: "info" }
+              : { label: "Снятие резерва", tone: "neutral" };
+      const item = itemLookup.get(movement.itemId);
+      entries.push({
+        id: `movement:${movement.id}`,
+        date: movement.date || movement.createdAt || "",
+        family: "movement",
+        label: meta.label,
+        title: item?.name || item?.sku || "Складская позиция",
+        meta: `${formatNumber(movement.qty || 0)} • ${compactText(movement.note || "Без комментария")}`,
+        tone: meta.tone,
+        amount: movement.qty || 0,
+        action: movement.itemId ? { type: "item", id: movement.itemId } : { type: "mode", mode: "movements" }
+      });
+    });
+
+    (doc.purchases || []).forEach((purchase) => {
+      const meta = getPurchaseStatusMeta(purchase.status);
+      entries.push({
+        id: `purchase:${purchase.id}`,
+        date: purchase.date || purchase.updatedAt || purchase.createdAt || "",
+        family: "purchase",
+        label: "Закупка",
+        title: purchase.number || purchase.supplier || "Закупка",
+        meta: `${meta.label} • ${purchase.supplier || "Без поставщика"}`,
+        tone: meta.tone,
+        amount: purchase.amount || 0,
+        action: { type: "purchase", id: purchase.id }
+      });
+    });
+
+    (doc.financeEntries || []).forEach((entry) => {
+      const meta = getFinanceKindMeta(entry.kind);
+      entries.push({
+        id: `finance:${entry.id}`,
+        date: entry.date || entry.updatedAt || entry.createdAt || "",
+        family: "finance",
+        label: meta.label,
+        title: entry.category || entry.counterparty || entry.account || "Денежная операция",
+        meta: `${entry.account || "Без счета"} • ${entry.counterparty || "Без контрагента"}`,
+        tone: meta.tone,
+        amount: entry.amount || 0,
+        action: { type: "finance", id: entry.id }
+      });
+    });
+
+    (doc.productionJobs || []).forEach((job) => {
+      const meta = getProductionStatusMeta(job.stage);
+      entries.push({
+        id: `production:${job.id}`,
+        date: job.deadline || job.updatedAt || job.createdAt || "",
+        family: "production",
+        label: "Производство",
+        title: job.title || job.itemLabel || "Производственное задание",
+        meta: `${meta.label} • ${job.assignee || "Без ответственного"}`,
+        tone: meta.tone,
+        amount: job.qty || 0,
+        action: { type: "production", id: job.id }
+      });
+    });
+
+    return sortByDateDesc(entries.filter((entry) => compactText(entry.date)), "date");
+  }
+
   async function buildTaskSignalSnapshot(tasksDoc) {
     const [crmDoc, warehouseDoc, salesRecord] = await Promise.all([
       ensureDocument("crm"),
@@ -2679,8 +2758,29 @@ function buildModeTabs(moduleKey, escapeFn) {
       : [];
     const editItemPrimaryTask = editItemTasks[0] || null;
     const recentMovements = sortByDateDesc(doc.movements || [], "date").slice(0, 10);
+    const historyEntries = buildWarehouseHistoryEntries(doc);
+    const historyTypeOptions = [
+      { value: "movement", label: "Движения" },
+      { value: "purchase", label: "Закупки" },
+      { value: "finance", label: "Деньги" },
+      { value: "production", label: "Производство" }
+    ];
+    const filteredHistory = historyEntries.filter((entry) => {
+      const blob = [entry.label, entry.title, entry.meta, entry.family].join(" ");
+      if (!matchesSearch(blob, filters.search)) return false;
+      if (currentMode === "history" && filters.category !== "all" && compactText(entry.family) !== filters.category) return false;
+      return true;
+    });
     const financeAccounts = [...new Set((doc.financeEntries || []).map((entry) => compactText(entry.account)).filter(Boolean))].sort();
     const moduleFilterMeta = (() => {
+      if (moduleKey === "warehouse" && currentMode === "history") {
+        return {
+          placeholder: "Поиск по истории, комментарию, счету, закупке или движению",
+          allLabel: "Все события",
+          options: historyTypeOptions,
+          primaryButtons: '<button class="btn btn-outline-dark" type="button" data-live-mode="overview">К обзору</button><button class="btn btn-outline-dark" type="button" data-live-mode="movements">Движения</button>'
+        };
+      }
       if (moduleKey === "products") {
         return {
           placeholder: "Поиск по товару, группе, поставщику",
@@ -2845,18 +2945,23 @@ function buildModeTabs(moduleKey, escapeFn) {
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">Сбросить черновик производства</button>' : ""
       ];
     })();
+    if (moduleKey === "warehouse" && !warehouseActionButtons.some((action) => String(action).includes('data-live-mode="history"'))) {
+      warehouseActionButtons.splice(10, 0, '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="history">История</button>');
+    }
     const warehouseActionBar = renderActionBar(
       moduleKey,
       warehouseActionButtons.filter(Boolean),
       escapeHtml
     );
-    const showDemandPanel = moduleKey === "warehouse" || moduleKey === "products";
+    const showDemandPanel =
+      (moduleKey === "warehouse" || moduleKey === "products") &&
+      modeIs(filters, "overview", "catalog", "products");
 
     return `
       <div class="workspace-shell">
         ${renderWorkspaceHeader(moduleKey)}
         ${renderMetricGrid(metrics)}
-        ${showDemandPanel ? `<section class="workspace-panel workspace-panel--muted">
+        ${showDemandPanel ? `<section class="workspace-panel workspace-panel--muted" data-mode-section="overview catalog products">
           <div class="panel-heading"><div><h4>Спрос из калькуляторов</h4><div class="compact-help">Платформа видит активные вкладки из личного и партнерских калькуляторов и подсвечивает артикулы, которые стоит держать под рукой.</div></div><div class="workspace-note">${escapeHtml(formatNumber(calculatorSnapshot.invoiceIssuedTabs))} счетов выставлено • ${escapeHtml(formatNumber(calculatorSnapshot.invoicePaidTabs))} оплачено</div></div>
           <div class="workspace-stage-strip">
             <div class="workspace-stage-card"><span>Активных вкладок</span><strong>${escapeHtml(formatNumber(calculatorSnapshot.activeTabs))}</strong></div>
@@ -2882,6 +2987,52 @@ function buildModeTabs(moduleKey, escapeFn) {
           </div>
         </div>
         ${canManage ? renderBuilderPanel(moduleKey, doc, ui.warehouse, escapeHtml) : ""}
+        ${modeIs(filters, "history") ? `<section class="workspace-panel workspace-panel--active" data-mode-section="history">
+          <div class="panel-heading">
+            <div>
+              <h4>История склада</h4>
+              <div class="compact-help">Единая лента склада, закупок, денег и производства. Здесь удобно проверять последние действия без переходов по разделам.</div>
+            </div>
+            <div class="workspace-note">Событий: ${escapeHtml(formatNumber(filteredHistory.length))}</div>
+          </div>
+          <div class="workspace-stage-strip">
+            <div class="workspace-stage-card"><span>Всего</span><strong>${escapeHtml(formatNumber(historyEntries.length))}</strong><small class="workspace-list-item__meta">в единой истории</small></div>
+            <div class="workspace-stage-card"><span>За 24 часа</span><strong>${escapeHtml(formatNumber(filteredHistory.filter((entry) => Date.now() - new Date(entry.date).getTime() <= 24 * 60 * 60 * 1000).length))}</strong><small class="workspace-list-item__meta">последняя активность</small></div>
+            <div class="workspace-stage-card"><span>По закупкам</span><strong>${escapeHtml(formatNumber(filteredHistory.filter((entry) => entry.family === "purchase").length))}</strong><small class="workspace-list-item__meta">в текущем фильтре</small></div>
+            <div class="workspace-stage-card"><span>Деньги</span><strong>${escapeHtml(formatMoney(sumBy(filteredHistory.filter((entry) => entry.family === "finance"), (entry) => entry.amount || 0)))}</strong><small class="workspace-list-item__meta">сумма операций</small></div>
+          </div>
+          <div class="workspace-grid workspace-grid--2 mt-3">
+            <section class="workspace-panel workspace-panel--active" data-mode-section="history">
+              <div class="panel-heading panel-heading--compact">
+                <div>
+                  <h4>Последние события</h4>
+                  <div class="compact-help">Лента показывает последнее движение по складу, платеж, закупку или производственное действие.</div>
+                </div>
+              </div>
+              <div class="workspace-stack">
+                ${filteredHistory.slice(0, 18).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.label)} • ${escapeHtml(entry.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(entry.tone || "neutral")}">${escapeHtml(formatDate(entry.date))}</div><div class="workspace-list-item__meta mt-1">${entry.family === "finance" ? escapeHtml(formatMoney(entry.amount || 0)) : escapeHtml(formatNumber(entry.amount || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">По выбранным фильтрам история пока пустая.</div>'}
+              </div>
+            </section>
+            <section class="workspace-panel workspace-panel--active" data-mode-section="history">
+              <div class="panel-heading panel-heading--compact">
+                <div>
+                  <h4>Журнал действий</h4>
+                  <div class="compact-help">Быстрый переход прямо в нужную сущность: позицию, закупку, операцию или производство.</div>
+                </div>
+              </div>
+              <div class="table-shell">
+                <table class="table table-sm align-middle workspace-table">
+                  <thead>
+                    <tr><th>Дата</th><th>Тип</th><th>Событие</th><th>Детали</th><th>Значение</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    ${filteredHistory.length ? filteredHistory.map((entry) => `<tr><td>${escapeHtml(formatDate(entry.date))}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(entry.tone || "neutral")}">${escapeHtml(entry.label)}</span></td><td><strong>${escapeHtml(entry.title)}</strong></td><td>${escapeHtml(entry.meta || "—")}</td><td>${entry.family === "finance" ? escapeHtml(formatMoney(entry.amount || 0)) : escapeHtml(formatNumber(entry.amount || 0))}</td><td class="text-end">${entry.action?.type === "item" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "purchase" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-purchase-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "finance" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-finance-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "production" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-production-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "mode" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-live-mode="${escapeHtml(entry.action.mode)}">Открыть</button>` : ""}</td></tr>`).join("") : '<tr><td colspan="6" class="text-muted">По текущим фильтрам история пуста.</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </div>
+        </section>` : ""}
         ${modeIs(filters, "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editItem ? "Редактирование позиции" : "Новая позиция склада"}</h4><div class="compact-help">Каталог можно использовать как общий справочник материалов для склада и будущих калькуляторов.</div></div></div>

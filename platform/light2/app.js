@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260410-light2-restore39";
+const LIGHT2_BUILD = "20260410-light2-timeout40";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -5189,10 +5189,11 @@ async function loadBootstrapData() {
 }
 
 async function loadSettlements() {
-  const { data, error } = await supabase
-    .from("light2_partner_settlements")
-    .select("*")
-    .order("updated_at", { ascending: false });
+  const { data, error } = await withTimeout(
+    supabase.from("light2_partner_settlements").select("*").order("updated_at", { ascending: false }),
+    7000,
+    "Не удалось вовремя загрузить взаиморасчеты ДОМ НЕОНА."
+  );
 
   if (error) {
     if (isSchemaMissing(error)) {
@@ -5217,17 +5218,26 @@ async function loadSettlements() {
 }
 
 async function loadFinanceData() {
-  const balanceResult = await supabase
-    .from("light2_balance_entries")
-    .select("*")
-    .order("entry_date", { ascending: false })
-    .order("updated_at", { ascending: false });
-
-  const calendarResult = await supabase
-    .from("light2_payment_calendar_entries")
-    .select("*")
-    .order("payment_date", { ascending: true })
-    .order("updated_at", { ascending: false });
+  const [balanceResult, calendarResult] = await Promise.all([
+    withTimeout(
+      supabase
+        .from("light2_balance_entries")
+        .select("*")
+        .order("entry_date", { ascending: false })
+        .order("updated_at", { ascending: false }),
+      7000,
+      "Не удалось вовремя загрузить баланс ДОМ НЕОНА."
+    ),
+    withTimeout(
+      supabase
+        .from("light2_payment_calendar_entries")
+        .select("*")
+        .order("payment_date", { ascending: true })
+        .order("updated_at", { ascending: false }),
+      7000,
+      "Не удалось вовремя загрузить платежный календарь ДОМ НЕОНА."
+    )
+  ]);
 
   if (balanceResult.error || calendarResult.error) {
     const error = balanceResult.error || calendarResult.error;
@@ -5255,9 +5265,29 @@ async function loadFinanceData() {
 
 async function loadOperationsData() {
   const [assetsResult, paymentsResult, purchasesResult] = await Promise.all([
-    supabase.from("light2_assets").select("*").order("asset_name", { ascending: true }),
-    supabase.from("light2_asset_payments").select("*").order("payment_date", { ascending: false }).order("updated_at", { ascending: false }),
-    supabase.from("light2_purchase_catalog").select("*").order("supplier_name", { ascending: true }).order("item_name", { ascending: true })
+    withTimeout(
+      supabase.from("light2_assets").select("*").order("asset_name", { ascending: true }),
+      7000,
+      "Не удалось вовремя загрузить активы ДОМ НЕОНА."
+    ),
+    withTimeout(
+      supabase
+        .from("light2_asset_payments")
+        .select("*")
+        .order("payment_date", { ascending: false })
+        .order("updated_at", { ascending: false }),
+      7000,
+      "Не удалось вовремя загрузить выплаты по активам ДОМ НЕОНА."
+    ),
+    withTimeout(
+      supabase
+        .from("light2_purchase_catalog")
+        .select("*")
+        .order("supplier_name", { ascending: true })
+        .order("item_name", { ascending: true }),
+      7000,
+      "Не удалось вовремя загрузить закупки ДОМ НЕОНА."
+    )
   ]);
 
   if (assetsResult.error || paymentsResult.error || purchasesResult.error) {
