@@ -5461,14 +5461,44 @@ function buildModeTabs(moduleKey, escapeFn) {
       return null;
     }
 
-    const [directoriesDoc, crmDoc, warehouseDoc, tasksDoc, salesRecord, myCalculatorDoc, partnerCalculatorDocs] = await Promise.all([
+    const loadLight2Rows = async (tableName) => {
+      try {
+        const { data, error } = await supabase.from(tableName).select("*");
+        if (error) return [];
+        return Array.isArray(data) ? data : [];
+      } catch {
+        return [];
+      }
+    };
+
+    const [
+      directoriesDoc,
+      crmDoc,
+      warehouseDoc,
+      tasksDoc,
+      salesRecord,
+      myCalculatorDoc,
+      partnerCalculatorDocs,
+      light2Settlements,
+      light2BalanceEntries,
+      light2CalendarEntries,
+      light2Assets,
+      light2AssetPayments,
+      light2Purchases
+    ] = await Promise.all([
       ensureDocument("directories"),
       ensureDocument("crm"),
       ensureDocument("warehouse"),
       ensureDocument("tasks"),
       ensureExternalDoc("sales", true),
       ensureExternalDoc("myCalculator", true),
-      ensureExternalDoc("partnerCalculators", true)
+      ensureExternalDoc("partnerCalculators", true),
+      loadLight2Rows("light2_partner_settlements"),
+      loadLight2Rows("light2_balance_entries"),
+      loadLight2Rows("light2_payment_calendar_entries"),
+      loadLight2Rows("light2_assets"),
+      loadLight2Rows("light2_asset_payments"),
+      loadLight2Rows("light2_purchase_catalog")
     ]);
 
     const salesSnapshot = buildSalesSnapshot(salesRecord);
@@ -5509,6 +5539,34 @@ function buildModeTabs(moduleKey, escapeFn) {
       const match = findWarehouseMatch(warehouseSnapshot, entry.sku);
       return Boolean(match?.low);
     });
+
+    const contourClosedStatuses = new Set(["Взаиморасчет произведен", "Архив"].map((value) => compactText(value)));
+    const contourOpenSettlements = (light2Settlements || []).filter((entry) => !contourClosedStatuses.has(compactText(entry.status)));
+    const contourSettlementsPayout = roundMoney(
+      contourOpenSettlements.reduce((sum, entry) => {
+        const total = roundMoney(toNumber(entry.salary_amount) - toNumber(entry.purchase_amount));
+        return total > 0 ? sum + total : sum;
+      }, 0)
+    );
+    const contourBalanceTotal = roundMoney(
+      (light2BalanceEntries || []).reduce((sum, entry) => sum + toNumber(entry.income_amount) - toNumber(entry.expense_amount), 0)
+    );
+    const contourCalendarIncoming = roundMoney(
+      sumBy(
+        (light2CalendarEntries || []).filter((entry) => compactText(entry.operation_type) === compactText("Приход")),
+        (entry) => entry.amount
+      )
+    );
+    const contourCalendarOutgoing = roundMoney(
+      sumBy(
+        (light2CalendarEntries || []).filter((entry) => compactText(entry.operation_type) === compactText("Расход")),
+        (entry) => entry.amount
+      )
+    );
+    const contourAssetsValue = roundMoney(sumBy(light2Assets || [], (entry) => entry.asset_value));
+    const contourAssetsPaid = roundMoney(sumBy(light2AssetPayments || [], (entry) => entry.payment_amount));
+    const contourAssetsRemaining = roundMoney(contourAssetsValue - contourAssetsPaid);
+    const contourSuppliers = new Set((light2Purchases || []).map((entry) => compactText(entry.supplier_name)).filter(Boolean));
 
     const activity = sortByDateDesc(
       [
@@ -5639,6 +5697,21 @@ function buildModeTabs(moduleKey, escapeFn) {
         missingDemandCount: missingDemand.length,
         criticalDemandCount: criticalDemand.length,
         topDemand: calculatorSnapshot.demand.slice(0, 5)
+      },
+      light2: {
+        settlementsCount: (light2Settlements || []).length,
+        openSettlementsCount: contourOpenSettlements.length,
+        settlementsPayout: contourSettlementsPayout,
+        balanceEntriesCount: (light2BalanceEntries || []).length,
+        balanceTotal: contourBalanceTotal,
+        calendarEntriesCount: (light2CalendarEntries || []).length,
+        calendarIncoming: contourCalendarIncoming,
+        calendarOutgoing: contourCalendarOutgoing,
+        assetsCount: (light2Assets || []).length,
+        assetsValue: contourAssetsValue,
+        assetsRemaining: contourAssetsRemaining,
+        purchasesCount: (light2Purchases || []).length,
+        suppliersCount: contourSuppliers.size
       },
       tasks: {
         totalCount: tasks.length,

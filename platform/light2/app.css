@@ -567,14 +567,16 @@ body {
 
 .snapshot-cell {
   position: relative;
-  min-width: 120px;
-  vertical-align: top;
+  min-width: 108px;
+  vertical-align: middle;
 }
 
 .snapshot-cell span {
   display: block;
   white-space: pre-wrap;
   word-break: break-word;
+  line-height: 1.24;
+  padding-right: 12px;
 }
 
 .snapshot-cell.cell-number,
@@ -584,12 +586,13 @@ body {
 
 .formula-dot {
   position: absolute;
-  top: 7px;
-  right: 7px;
-  width: 7px;
-  height: 7px;
+  top: 4px;
+  right: 4px;
+  width: 4px;
+  height: 4px;
   border-radius: 50%;
   background: var(--accent);
+  opacity: 0.45;
 }
 
 .table-shell thead th {
@@ -1309,14 +1312,14 @@ body {
 }
 
 .table-shell table {
-  min-width: 820px;
+  min-width: 780px;
 }
 
 .table-shell th,
 .table-shell td {
-  font-size: 0.82rem;
-  padding-top: 0.48rem;
-  padding-bottom: 0.48rem;
+  font-size: 0.8rem;
+  padding-top: 0.42rem;
+  padding-bottom: 0.42rem;
 }
 
 .form-grid,

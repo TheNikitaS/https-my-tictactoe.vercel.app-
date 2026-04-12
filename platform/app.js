@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260412-platform-suite45";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260412-platform-suite45";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260412-platform-suite46";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260412-platform-suite46";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260412-platform-suite45";
+const PLATFORM_BUILD = "20260412-platform-suite46";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -1689,6 +1689,7 @@ async function renderDashboard() {
         warehouse: `${formatDashboardNumber(snapshot.warehouse.itemsCount)} позиций • ${formatDashboardNumber(snapshot.warehouse.lowCount)} в дефиците`,
         money: `${formatDashboardMoney(snapshot.warehouse.netMoney || 0)} баланс • ${formatDashboardMoney(snapshot.warehouse.incomeTotal || 0)} / ${formatDashboardMoney(snapshot.warehouse.expenseTotal || 0)}`,
         production: `${formatDashboardNumber(snapshot.warehouse.productionActive || 0)} в работе • ${formatDashboardNumber(snapshot.warehouse.productionTotal || 0)} всего`,
+        light2: `${formatDashboardMoney(snapshot.light2.balanceTotal || 0)} баланс • ${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате`,
         tasks: `${formatDashboardNumber(snapshot.tasks.openCount)} задач • ${formatDashboardNumber(snapshot.tasks.blockedCount)} с блокером`,
         directories: `${formatDashboardNumber(snapshot.directories.listsCount)} справочников • ${formatDashboardNumber(snapshot.directories.valuesCount)} значений`
       }
@@ -1749,6 +1750,12 @@ async function renderDashboard() {
       value: formatDashboardNumber(snapshot.crm.openDealsCount),
       meta: `${formatDashboardMoney(snapshot.crm.pipelineAmount)} в активной воронке`,
       tone: "info"
+    },
+    {
+      label: "Контур компании",
+      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
+      meta: `${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате • ${formatDashboardNumber(snapshot.light2.openSettlementsCount || 0)} открытых взаиморасчетов`,
+      tone: "accent"
     },
     {
       label: "Задачи в работе",
@@ -1833,6 +1840,48 @@ async function renderDashboard() {
             <div class="dashboard-alert__meta">${escapeHtml((entry.sources || []).slice(0, 2).join(" • ") || "Калькуляторы")}</div>
           </div>
           <span>${escapeHtml(formatDashboardNumber(entry.qtyTotal))}</span>
+        </div>
+      `
+    )
+    .join("");
+
+  const contourCards = [
+    {
+      label: "Баланс",
+      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
+      tone: "neutral"
+    },
+    {
+      label: "К выплате",
+      value: formatDashboardMoney(snapshot.light2.settlementsPayout || 0),
+      tone: "warning"
+    },
+    {
+      label: "Платежи",
+      value: formatDashboardNumber(snapshot.light2.calendarEntriesCount || 0),
+      tone: "info"
+    },
+    {
+      label: "Активы",
+      value: formatDashboardMoney(snapshot.light2.assetsRemaining || 0),
+      tone: "success"
+    },
+    {
+      label: "Закупки",
+      value: formatDashboardNumber(snapshot.light2.purchasesCount || 0),
+      tone: "accent"
+    },
+    {
+      label: "Поставщики",
+      value: formatDashboardNumber(snapshot.light2.suppliersCount || 0),
+      tone: "neutral"
+    }
+  ]
+    .map(
+      (item) => `
+        <div class="dashboard-mini dashboard-mini--${escapeHtml(item.tone)}">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.value)}</strong>
         </div>
       `
     )
@@ -2026,6 +2075,17 @@ async function renderDashboard() {
             <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="crm">Открыть CRM</button>
           </div>
           <div class="dashboard-mini-grid">${stageCards || '<div class="workspace-empty workspace-empty--tight">Сделки пока не заведены.</div>'}</div>
+        </article>
+
+        <article class="dashboard-panel">
+          <div class="panel-heading">
+            <div>
+              <h3>Контур компании</h3>
+              <div class="compact-help">Связка по балансу, платежам, активам, закупкам и взаиморасчетам из ДОМ НЕОНА.</div>
+            </div>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть контур</button>
+          </div>
+          <div class="dashboard-mini-grid">${contourCards || '<div class="workspace-empty workspace-empty--tight">Контур ещё не наполнился данными.</div>'}</div>
         </article>
 
         <article class="dashboard-panel">

@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260412-light2-safe45";
+const LIGHT2_BUILD = "20260412-light2-safe47";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -868,7 +868,7 @@ function applyLiveSectionFilterState(sectionKey, filters = {}) {
     if (DOM.settlementPartnerFilter) DOM.settlementPartnerFilter.value = filters.partner || "";
     if (DOM.settlementStatusFilter) DOM.settlementStatusFilter.value = filters.status || "";
     if (DOM.settlementSearch) DOM.settlementSearch.value = filters.search || "";
-    renderSettlements();
+    renderSettlementSection();
     return;
   }
 
@@ -877,7 +877,7 @@ function applyLiveSectionFilterState(sectionKey, filters = {}) {
     if (dom.accountFilter) dom.accountFilter.value = filters.account || "";
     if (dom.monthFilter) dom.monthFilter.value = filters.month || "";
     if (dom.search) dom.search.value = filters.search || "";
-    renderBalance();
+    renderBalanceSection();
     return;
   }
 
@@ -888,7 +888,7 @@ function applyLiveSectionFilterState(sectionKey, filters = {}) {
     if (dom.accountFilter) dom.accountFilter.value = filters.account || "";
     if (dom.statusFilter) dom.statusFilter.value = filters.status || "";
     if (dom.search) dom.search.value = filters.search || "";
-    renderCalendar();
+    renderCalendarSection();
     return;
   }
 
@@ -1392,15 +1392,15 @@ function renderLiveSectionBuilder(sectionKey) {
 
 function rerenderLiveSection(sectionKey) {
   if (sectionKey === "settlements") {
-    renderSettlements();
+    renderSettlementSection();
     return;
   }
   if (sectionKey === "balance") {
-    renderBalance();
+    renderBalanceSection();
     return;
   }
   if (sectionKey === "calendar") {
-    renderCalendar();
+    renderCalendarSection();
     return;
   }
   if (sectionKey === "assets") {
@@ -4910,7 +4910,7 @@ function renderCalendarSummary(rows) {
   `;
 }
 
-function renderSettlementsConfigured() {
+function renderSettlementSection() {
   DOM.settlementActionsHead.textContent = isAdmin() ? "Действия" : "";
   renderScopeNote();
   renderLiveSectionBuilder("settlements");
@@ -4963,7 +4963,7 @@ function renderSettlementsConfigured() {
     .join("");
 }
 
-function renderBalanceConfigured() {
+function renderBalanceSection() {
   const dom = getBalanceDom();
   if (!dom.tableBody) return;
 
@@ -5016,7 +5016,7 @@ function renderBalanceConfigured() {
     .join("");
 }
 
-function renderCalendarConfigured() {
+function renderCalendarSection() {
   const dom = getCalendarDom();
   if (!dom.tableBody) return;
 
@@ -5300,7 +5300,7 @@ async function loadSettlements() {
       STATE.schemaError = error.message || "Таблица light2_partner_settlements не найдена.";
       setModuleState("Нужен SQL-патч");
       setStatus("Чтобы включить рабочий блок взаиморасчетов, выполните platform_light2_patch.sql в Supabase SQL Editor.", "warning");
-      renderSettlements();
+      renderSettlementSection();
       renderOverview();
       return;
     }
@@ -5312,7 +5312,7 @@ async function loadSettlements() {
   STATE.settlements = data || [];
   setModuleState("Готово");
   setStatus("ДОМ НЕОНА загружен. Взаиморасчеты уже работают внутри платформы.", "success");
-  renderSettlements();
+  renderSettlementSection();
   renderOverview();
 }
 
@@ -5345,8 +5345,8 @@ async function loadFinanceData() {
       STATE.financeError = error.message || "Таблицы финансовых блоков не найдены.";
       STATE.balanceEntries = [];
       STATE.calendarEntries = [];
-      renderBalance();
-      renderCalendar();
+      renderBalanceSection();
+      renderCalendarSection();
       renderOverview();
       return;
     }
@@ -5357,8 +5357,8 @@ async function loadFinanceData() {
   STATE.financeError = "";
   STATE.balanceEntries = balanceResult.data || [];
   STATE.calendarEntries = calendarResult.data || [];
-  renderBalance();
-  renderCalendar();
+  renderBalanceSection();
+  renderCalendarSection();
   renderOverview();
 }
 
@@ -5795,17 +5795,17 @@ function bindEvents() {
 
   bindDomEvent(settlementDom.resetButton, "click", () => {
     resetSettlementForm();
-    renderSettlements();
+    renderSettlementSection();
   });
 
   bindDomEvent(balanceDom.resetButton, "click", () => {
     resetBalanceForm();
-    renderBalance();
+    renderBalanceSection();
   });
 
   bindDomEvent(calendarDom.resetButton, "click", () => {
     resetCalendarForm();
-    renderCalendar();
+    renderCalendarSection();
   });
 
   bindDomEvent(assetsDom.assetResetButton, "click", () => {
@@ -5823,12 +5823,12 @@ function bindEvents() {
     renderPurchases();
   });
 
-  bindDomEvents([settlementDom.partnerFilter, settlementDom.statusFilter, settlementDom.search], ["input", "change"], renderSettlements);
-  bindDomEvents([balanceDom.accountFilter, balanceDom.monthFilter, balanceDom.search], ["input", "change"], renderBalance);
+  bindDomEvents([settlementDom.partnerFilter, settlementDom.statusFilter, settlementDom.search], ["input", "change"], renderSettlementSection);
+  bindDomEvents([balanceDom.accountFilter, balanceDom.monthFilter, balanceDom.search], ["input", "change"], renderBalanceSection);
   bindDomEvents(
     [calendarDom.monthFilter, calendarDom.operationFilter, calendarDom.accountFilter, calendarDom.statusFilter, calendarDom.search],
     ["input", "change"],
-    renderCalendar
+    renderCalendarSection
   );
   bindDomEvents([assetsDom.search, assetsDom.paymentFilter, assetsDom.paymentSearch], ["input", "change"], renderAssets);
   bindDomEvents([purchasesDom.supplierFilter, purchasesDom.categoryFilter, purchasesDom.search], ["input", "change"], renderPurchases);
@@ -6009,196 +6009,6 @@ function bindEvents() {
       setStatus(error.message || "Не удалось удалить позицию закупки.", "error");
     }
   });
-}
-
-function renderSettlements() {
-  DOM.settlementActionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
-  renderScopeNote();
-  renderLiveSectionBuilder("settlements");
-
-  if (!STATE.schemaReady) {
-    syncSectionTableHead("settlements", "main", DOM.settlementTableBody);
-    DOM.settlementTableBody.innerHTML = renderConfiguredSectionRows(
-      "settlements",
-      "main",
-      [],
-      () => "",
-      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_patch.sql РІ Supabase SQL Editor."
-    );
-    DOM.settlementSummary.innerHTML = "";
-    return;
-  }
-
-  const rows = sortSectionRows("settlements", getVisibleSettlements());
-  renderSettlementSummary(rows);
-  DOM.settlementSummary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("settlements"));
-  syncSectionTableHead("settlements", "main", DOM.settlementTableBody);
-  DOM.settlementTableBody.innerHTML = renderConfiguredSectionRows(
-    "settlements",
-    "main",
-    rows,
-    (item, columnKey) => {
-      const math = computeSettlement(item);
-      if (columnKey === "period_label") return escapeHtml(item.period_label || "вЂ”");
-      if (columnKey === "partner_label") return escapeHtml(getPartnerLabel(item.partner_slug));
-      if (columnKey === "salary_amount") return escapeHtml(formatMoney(math.salary));
-      if (columnKey === "purchase_amount") return escapeHtml(formatMoney(math.purchase));
-      if (columnKey === "settlement_total") return escapeHtml(formatMoney(math.total));
-      if (columnKey === "direction") return escapeHtml(math.direction);
-      if (columnKey === "status") return `<span class="badge-soft ${getStatusTone(item.status)}">${escapeHtml(item.status)}</span>`;
-      if (columnKey === "note") return escapeHtml(item.note || "вЂ”");
-      if (columnKey === "updated_at") return escapeHtml(formatDateTime(item.updated_at || item.created_at));
-      if (columnKey === "actions") {
-        if (!isAdmin()) return `<span class="muted">вЂ”</span>`;
-        return `
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-settlement="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-settlement="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>
-          </div>
-        `;
-      }
-      return `<span class="muted">вЂ”</span>`;
-    },
-    "РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
-  );
-}
-
-function renderBalance() {
-  const dom = getBalanceDom();
-  if (!dom.tableBody) return;
-
-  dom.actionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
-  renderBalanceScopeNote();
-  renderLiveSectionBuilder("balance");
-
-  if (!isAdmin()) {
-    dom.summary.innerHTML = "";
-    syncSectionTableHead("balance", "main", dom.tableBody);
-    dom.tableBody.innerHTML = renderConfiguredSectionRows(
-      "balance",
-      "main",
-      [],
-      () => "",
-      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
-    );
-    return;
-  }
-
-  if (!STATE.financeReady) {
-    dom.summary.innerHTML = "";
-    syncSectionTableHead("balance", "main", dom.tableBody);
-    dom.tableBody.innerHTML = renderConfiguredSectionRows(
-      "balance",
-      "main",
-      [],
-      () => "",
-      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql РІ Supabase SQL Editor."
-    );
-    return;
-  }
-
-  const rows = sortSectionRows("balance", getVisibleBalanceEntries());
-  const runningMap = buildBalanceRunningMap();
-  renderBalanceSummary(rows);
-  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("balance"));
-  syncSectionTableHead("balance", "main", dom.tableBody);
-  dom.tableBody.innerHTML = renderConfiguredSectionRows(
-    "balance",
-    "main",
-    rows,
-    (entry, columnKey) => {
-      if (columnKey === "entry_date") return escapeHtml(formatDate(entry.entry_date));
-      if (columnKey === "account_type") return escapeHtml(getBalanceAccountLabel(entry.account_type));
-      if (columnKey === "income_amount") return escapeHtml(formatMoney(entry.income_amount));
-      if (columnKey === "expense_amount") return escapeHtml(formatMoney(entry.expense_amount));
-      if (columnKey === "running_total") return escapeHtml(formatMoney(runningMap.get(entry.id) || 0));
-      if (columnKey === "note") return escapeHtml(entry.note || "вЂ”");
-      if (columnKey === "updated_at") return escapeHtml(formatDateTime(entry.updated_at || entry.created_at));
-      if (columnKey === "actions") {
-        return `
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-balance="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-balance="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>
-          </div>
-        `;
-      }
-      return `<span class="muted">вЂ”</span>`;
-    },
-    "РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
-  );
-}
-
-function renderCalendar() {
-  const dom = getCalendarDom();
-  if (!dom.tableBody) return;
-
-  dom.actionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
-  renderCalendarScopeNote();
-  renderLiveSectionBuilder("calendar");
-
-  if (!isAdmin()) {
-    dom.summary.innerHTML = "";
-    syncSectionTableHead("calendar", "main", dom.tableBody);
-    dom.tableBody.innerHTML = renderConfiguredSectionRows(
-      "calendar",
-      "main",
-      [],
-      () => "",
-      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
-    );
-    return;
-  }
-
-  if (!STATE.financeReady) {
-    dom.summary.innerHTML = "";
-    syncSectionTableHead("calendar", "main", dom.tableBody);
-    dom.tableBody.innerHTML = renderConfiguredSectionRows(
-      "calendar",
-      "main",
-      [],
-      () => "",
-      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql РІ Supabase SQL Editor."
-    );
-    return;
-  }
-
-  const rows = sortSectionRows("calendar", getVisibleCalendarEntries());
-  renderCalendarSummary(rows);
-  dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("calendar"));
-  syncSectionTableHead("calendar", "main", dom.tableBody);
-  dom.tableBody.innerHTML = renderConfiguredSectionRows(
-    "calendar",
-    "main",
-    rows,
-    (entry, columnKey) => {
-      const signed = signedCalendarAmount(entry);
-      if (columnKey === "payment_date") return escapeHtml(formatDate(entry.payment_date));
-      if (columnKey === "counterparty") return escapeHtml(entry.counterparty || "вЂ”");
-      if (columnKey === "signed_amount") {
-        return `<span class="${signed >= 0 ? "amount-positive" : "amount-negative"}">${signed >= 0 ? "+" : ""}${escapeHtml(formatMoney(entry.amount))}</span>`;
-      }
-      if (columnKey === "operation_type") {
-        return `<span class="badge-soft ${getOperationTone(entry.operation_type)}">${escapeHtml(entry.operation_type || "вЂ”")}</span>`;
-      }
-      if (columnKey === "category") return escapeHtml(entry.category || "вЂ”");
-      if (columnKey === "account_name") return escapeHtml(entry.account_name || "вЂ”");
-      if (columnKey === "status") {
-        return `<span class="badge-soft ${getCalendarStatusTone(entry.status)}">${escapeHtml(entry.status || "вЂ”")}</span>`;
-      }
-      if (columnKey === "note") return escapeHtml(entry.note || "вЂ”");
-      if (columnKey === "updated_at") return escapeHtml(formatDateTime(entry.updated_at || entry.created_at));
-      if (columnKey === "actions") {
-        return `
-          <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-calendar="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-calendar="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>
-          </div>
-        `;
-      }
-      return `<span class="muted">вЂ”</span>`;
-    },
-    "РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
-  );
 }
 
 function renderAssetsConfigured() {
