@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260412-platform-suite46";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260412-platform-suite46";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260412-platform-suite47";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260412-platform-suite47";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260412-platform-suite46";
+const PLATFORM_BUILD = "20260412-platform-suite47";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -2337,6 +2337,22 @@ function getDomovoyApiBaseUrl() {
   return String(STATE.platformConfig?.domovoyApiBaseUrl || "").trim().replace(/\/+$/, "");
 }
 
+function isLocalDomovoyHttpUrl(value) {
+  return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(String(value || "").trim());
+}
+
+function getDomovoyTransportWarning(apiBaseUrl) {
+  const normalized = String(apiBaseUrl || "").trim();
+  if (!normalized) return "";
+  if (window.location.protocol === "https:" && /^http:\/\//i.test(normalized)) {
+    if (isLocalDomovoyHttpUrl(normalized)) {
+      return "Платформа открыта по HTTPS, а Домовой Неоник указан как локальный HTTP API. Для онлайн-версии браузер обычно блокирует такой вызов. Используйте публичный HTTPS-адрес бота.";
+    }
+    return "Платформа открыта по HTTPS, а API указан по HTTP. Браузер может заблокировать такой вызов. Лучше использовать HTTPS-адрес.";
+  }
+  return "";
+}
+
 async function loadPlatformConfig() {
   if (!STATE.schemaReady) {
     STATE.platformConfig = normalizePlatformConfig();
@@ -2391,6 +2407,10 @@ function renderDomovoySettings() {
   if (STATE.platformConfig.domovoySyncAt) {
     fragments.push(`синхронизация: ${escapeHtml(formatDateTime(STATE.platformConfig.domovoySyncAt))}`);
   }
+  const transportWarning = getDomovoyTransportWarning(STATE.platformConfig.domovoyApiBaseUrl);
+  if (transportWarning) {
+    fragments.push(`внимание: ${escapeHtml(transportWarning)}`);
+  }
 
   statusBox.innerHTML = fragments.join(" • ");
 }
@@ -2398,7 +2418,11 @@ function renderDomovoySettings() {
 async function checkDomovoyHealth() {
   const apiBaseUrl = getDomovoyApiBaseUrl();
   if (!apiBaseUrl) {
-    throw new Error("Сначала укажите HTTPS-адрес API Домового Неоника.");
+    throw new Error("Сначала укажите адрес API Домового Неоника.");
+  }
+  const transportWarning = getDomovoyTransportWarning(apiBaseUrl);
+  if (transportWarning) {
+    throw new Error(transportWarning);
   }
   const response = await fetch(`${apiBaseUrl}/api/domovoy/health`, {
     method: "GET",
@@ -2415,7 +2439,11 @@ async function checkDomovoyHealth() {
 async function syncDomovoySources() {
   const apiBaseUrl = getDomovoyApiBaseUrl();
   if (!apiBaseUrl) {
-    throw new Error("Сначала укажите HTTPS-адрес API Домового Неоника.");
+    throw new Error("Сначала укажите адрес API Домового Неоника.");
+  }
+  const transportWarning = getDomovoyTransportWarning(apiBaseUrl);
+  if (transportWarning) {
+    throw new Error(transportWarning);
   }
   const accessToken = STATE.session?.access_token || (await supabase.auth.getSession()).data?.session?.access_token || "";
   const response = await fetch(`${apiBaseUrl}/api/domovoy/sync`, {
@@ -3673,8 +3701,8 @@ function bindAppEvents() {
     try {
       const payload = await checkDomovoyHealth();
       setAuthStatus(
-        payload?.mode === "llm"
-          ? "Домовой Неоник подключён к серверному ИИ."
+        payload?.mode && payload.mode !== "fallback"
+          ? `Домовой Неоник подключён к серверному ИИ (${payload.mode}).`
           : "Домовой Неоник работает, но сейчас в резервном режиме.",
         "success"
       );

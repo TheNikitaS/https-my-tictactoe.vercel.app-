@@ -378,6 +378,21 @@ function normalizeApiBaseUrl(value) {
   return String(value || "").trim().replace(/\/+$/, "");
 }
 
+function isLocalHttpApi(url) {
+  return /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(String(url || "").trim());
+}
+
+function getMixedContentWarning(apiBaseUrl) {
+  if (!apiBaseUrl) return "";
+  if (window.location.protocol === "https:" && /^http:\/\//i.test(apiBaseUrl)) {
+    if (isLocalHttpApi(apiBaseUrl)) {
+      return "Платформа открыта по HTTPS, а Домовой Неоник указан как локальный HTTP API. Браузер обычно блокирует такой вызов. Для онлайн-платформы нужен публичный HTTPS-адрес бота.";
+    }
+    return "Платформа открыта по HTTPS, а адрес Домового Неоника задан по HTTP. Нужен HTTPS-адрес API.";
+  }
+  return "";
+}
+
 async function parseJsonSafe(response) {
   try {
     return await response.json();
@@ -458,8 +473,8 @@ export function createDomovoyNeonik(options = {}) {
     }
 
     const apiBaseUrl = normalizeApiBaseUrl(getApiBaseUrl());
-    let remoteError = "";
-    if (apiBaseUrl) {
+    let remoteError = getMixedContentWarning(apiBaseUrl);
+    if (apiBaseUrl && !remoteError) {
       try {
         const accessToken = String((await getAccessToken()) || "").trim();
         const response = await fetch(`${apiBaseUrl}/api/domovoy/query`, {
