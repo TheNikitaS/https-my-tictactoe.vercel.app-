@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260410-light2-timeout40";
+const LIGHT2_BUILD = "20260412-light2-safe42";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -3587,11 +3587,19 @@ function renderWorkbookSnapshotSections() {
 async function loadWorkbookSnapshot() {
   if (STATE.workbookReady || STATE.workbookError) return;
   try {
-    const response = await fetch(`./workbook_snapshot.json?v=${LIGHT2_BUILD}`, { cache: "no-store" });
+    const response = await withTimeout(
+      fetch(`./workbook_snapshot.json?v=${LIGHT2_BUILD}`, { cache: "no-store" }),
+      6000,
+      "Не удалось вовремя загрузить эталон Контур."
+    );
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    STATE.workbookSnapshot = await response.json();
+    STATE.workbookSnapshot = await withTimeout(
+      response.json(),
+      4000,
+      "Не удалось вовремя прочитать snapshot Контур."
+    );
     STATE.workbookReady = true;
     STATE.workbookError = "";
   } catch (error) {
@@ -5112,7 +5120,11 @@ function syncModuleStatus() {
 
 async function loadBootstrapData() {
   refreshInteractiveDomRefs();
-  const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+  const { data: sessionData, error: sessionError } = await withTimeout(
+    supabase.auth.getSession(),
+    6000,
+    "Не удалось вовремя проверить сессию пользователя."
+  );
   if (sessionError) throw sessionError;
 
   if (!sessionData.session) {
@@ -5186,6 +5198,31 @@ async function loadBootstrapData() {
   })();
 
   return true;
+}
+
+async function loadContourBlocks() {
+  const loaders = [
+    ["Взаиморасчеты", loadSettlements],
+    ["Финансы", loadFinanceData],
+    ["Активы и закупки", loadOperationsData]
+  ];
+
+  const results = await Promise.allSettled(
+    loaders.map(async ([label, loader]) => {
+      try {
+        await withTimeout(
+          loader(),
+          9000,
+          `Блок "${label}" не успел загрузиться вовремя.`
+        );
+      } catch (error) {
+        console.error(`light2 loader failed: ${label}`, error);
+        setStatus(error.message || `Не удалось загрузить блок "${label}".`, "error");
+      }
+    })
+  );
+
+  return results;
 }
 
 async function loadSettlements() {
@@ -6393,12 +6430,21 @@ function bindBuilderEvents() {
 }
 
 async function start() {
-  renderOverview();
-  renderTemplateSections();
-  renderInteractiveFinanceSections();
-  refreshInteractiveDomRefs();
-  renderWorkbookSnapshotSections();
-  syncSectionTabs();
+  const runStartupStep = (label, fn) => {
+    try {
+      fn();
+    } catch (error) {
+      console.error(`light2 startup step failed: ${label}`, error);
+      setStatus(error.message || `Ошибка на шаге "${label}".`, "error");
+    }
+  };
+
+  runStartupStep("overview", () => renderOverview());
+  runStartupStep("template-sections", () => renderTemplateSections());
+  runStartupStep("interactive-finance", () => renderInteractiveFinanceSections());
+  runStartupStep("dom-refs", () => refreshInteractiveDomRefs());
+  runStartupStep("snapshot-sections", () => renderWorkbookSnapshotSections());
+  runStartupStep("section-tabs", () => syncSectionTabs());
   try {
     bindEvents();
     bindBuilderEvents();
@@ -6406,29 +6452,30 @@ async function start() {
     console.error("light2 bind error", error);
     setStatus(error.message || "Не удалось инициализировать интерактивные кнопки ДОМ НЕОНА.", "error");
   }
-  syncWorkspaceModeUi();
-  openSection(STATE.activeSection || "overview");
+  runStartupStep("workspace-mode", () => syncWorkspaceModeUi());
+  runStartupStep("open-section", () => openSection(STATE.activeSection || "overview"));
 
   try {
-    const ready = await loadBootstrapData();
+    const ready = await withTimeout(
+      loadBootstrapData(),
+      9000,
+      "Не удалось вовремя подготовить профиль и сессию Контур."
+    );
     if (!ready) return;
-    await loadWorkbookSnapshot();
-    const loaders = [
-      ["Взаиморасчеты", loadSettlements],
-      ["Финансы", loadFinanceData],
-      ["Активы и закупки", loadOperationsData]
-    ];
-
-    for (const [label, loader] of loaders) {
-      try {
-        await loader();
-      } catch (error) {
-        console.error(`light2 loader failed: ${label}`, error);
-        setStatus(error.message || `Не удалось загрузить блок "${label}".`, "error");
-      }
+    await withTimeout(
+      loadWorkbookSnapshot(),
+      8000,
+      "Не удалось вовремя загрузить snapshot Контур."
+    );
+    await loadContourBlocks();
+    const restored = await withTimeout(
+      maybeAutoRestoreContourData(),
+      12000,
+      "Не удалось вовремя восстановить живые данные Контур."
+    );
+    if (restored) {
+      await loadContourBlocks();
     }
-
-    await maybeAutoRestoreContourData();
     syncModuleStatus();
     syncImportButton();
   } catch (error) {

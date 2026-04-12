@@ -5417,3 +5417,202 @@ body {
 #appShell .workspace-table strong {
   font-size: 0.84rem;
 }
+
+#appShell .workspace-shell {
+  gap: 12px;
+}
+
+#appShell .workspace-grid {
+  gap: 12px;
+}
+
+#appShell .workspace-panel {
+  padding: 14px 15px;
+  border-radius: 18px;
+}
+
+#appShell .workspace-metrics {
+  gap: 10px;
+}
+
+#appShell .workspace-metric {
+  padding: 12px 13px;
+  border-radius: 16px;
+}
+
+#appShell .workspace-metric span,
+#appShell .workspace-metric small {
+  font-size: 0.74rem;
+}
+
+#appShell .workspace-metric strong {
+  font-size: 1rem;
+}
+
+#appShell .workspace-list-item {
+  padding: 10px 11px;
+  border-radius: 14px;
+}
+
+#appShell .workspace-card,
+#appShell .workspace-sprint-card {
+  padding: 10px 11px;
+  border-radius: 14px;
+}
+
+#appShell .workspace-lane {
+  padding: 10px;
+  border-radius: 16px;
+}
+
+#appShell .workspace-stage-card {
+  padding: 10px 11px;
+  border-radius: 14px;
+}
+
+#appShell .workspace-card__head strong {
+  font-size: 0.83rem;
+}
+
+#appShell .workspace-toolbar {
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 16px;
+}
+
+#appShell .workspace-toolbar .form-control,
+#appShell .workspace-toolbar .form-select {
+  min-height: 32px;
+  font-size: 0.78rem;
+}
+
+#appShell .workspace-toolbar .btn,
+#appShell .workspace-panel .btn,
+#appShell .table-shell .btn {
+  min-height: 32px;
+  font-size: 0.74rem;
+}
+
+#appShell .workspace-table th,
+#appShell .workspace-table td,
+#appShell .table-shell th,
+#appShell .table-shell td {
+  padding: 0.42rem 0.48rem;
+  font-size: 0.76rem;
+}
+
+#appShell .table-shell thead th {
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+#appShell .workspace-board--crm {
+  grid-template-columns: repeat(3, minmax(240px, 1fr));
+}
+
+#appShell .workspace-board--tasks {
+  grid-template-columns: repeat(5, minmax(210px, 1fr));
+}
+
+#appShell .admin-grid,
+#appShell .dashboard-grid,
+#appShell .content-grid {
+  min-width: 0;
+}
+
+#appShell .admin-grid > *,
+#appShell .dashboard-grid > *,
+#appShell .content-grid > * {
+  min-width: 0;
+}
+
+#appShell .dashboard-shell {
+  gap: 14px;
+}
+
+#appShell .dashboard-focus-strip,
+#appShell .dashboard-kpis,
+#appShell .dashboard-panels {
+  gap: 12px;
+}
+
+#appShell .dashboard-focus-card,
+#appShell .dashboard-kpi,
+#appShell .dashboard-panel,
+#appShell .dashboard-chart-card,
+#appShell .dashboard-alerts-card,
+#appShell .dashboard-module-card {
+  padding: 14px 15px;
+  border-radius: 18px;
+}
+
+#appShell .dashboard-focus-card strong,
+#appShell .dashboard-kpi strong {
+  font-size: 1rem;
+}
+
+#appShell .dashboard-focus-card span,
+#appShell .dashboard-focus-card small,
+#appShell .dashboard-kpi span,
+#appShell .dashboard-kpi small,
+#appShell .dashboard-panel .compact-help,
+#appShell .dashboard-alert__meta,
+#appShell .dashboard-mini span {
+  font-size: 0.74rem;
+}
+
+#appShell .dashboard-panel h3,
+#appShell .dashboard-chart-card h3,
+#appShell .dashboard-alerts-card h3 {
+  font-size: 0.92rem;
+}
+
+#appShell .dashboard-chart {
+  min-height: 280px;
+}
+
+#appShell .dashboard-tooltip {
+  font-size: 0.72rem;
+  padding: 8px 10px;
+  border-radius: 12px;
+}
+
+#appShell .workspace-empty,
+#appShell .workspace-empty--tight {
+  padding: 12px 13px;
+  border-radius: 14px;
+  font-size: 0.76rem;
+}
+
+#appShell .workspace-table th,
+#appShell .workspace-table td,
+#appShell .table-shell th,
+#appShell .table-shell td {
+  overflow-wrap: anywhere;
+  vertical-align: top;
+}
+
+#appShell .table-shell {
+  overflow: auto;
+  scrollbar-width: thin;
+}
+
+#appShell .admin-grid .workspace-table td,
+#appShell .admin-grid .workspace-table th {
+  font-size: 0.74rem;
+}
+
+#appShell .admin-grid .workspace-panel,
+#appShell .dashboard-grid .workspace-panel {
+  min-width: 0;
+}
+
+#appShell .workspace-note,
+#appShell .workspace-table__sub {
+  font-size: 0.72rem;
+}
+
+#appShell .workspace-card__meta,
+#appShell .workspace-list-item__meta {
+  font-size: 0.72rem;
+}
