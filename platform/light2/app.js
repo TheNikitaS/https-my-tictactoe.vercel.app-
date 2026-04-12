@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260412-light2-safe42";
+const LIGHT2_BUILD = "20260412-light2-safe43";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -2059,11 +2059,13 @@ function getStatusTone(status) {
 }
 
 function setStatus(message, tone = "") {
+  if (!DOM.statusBox) return;
   DOM.statusBox.textContent = message;
   DOM.statusBox.className = `status-card${tone ? ` ${tone}` : ""}`;
 }
 
 function setModuleState(label) {
+  if (!DOM.moduleState) return;
   DOM.moduleState.textContent = label;
 }
 
@@ -3396,15 +3398,21 @@ function updateHero() {
     STATE.user?.email ||
     "Не определен";
 
-  DOM.userDisplay.textContent = displayName;
+  if (DOM.userDisplay) {
+    DOM.userDisplay.textContent = displayName;
+  }
 
   if (isAdmin()) {
-    DOM.accessMode.textContent = "Владелец / админ";
+    if (DOM.accessMode) {
+      DOM.accessMode.textContent = "Владелец / админ";
+    }
     return;
   }
 
   const partnerSlug = getCurrentPartnerSlug();
-  DOM.accessMode.textContent = partnerSlug ? `Партнер: ${getPartnerLabel(partnerSlug)}` : "Ограниченный доступ";
+  if (DOM.accessMode) {
+    DOM.accessMode.textContent = partnerSlug ? `Партнер: ${getPartnerLabel(partnerSlug)}` : "Ограниченный доступ";
+  }
 }
 
 function renderOverview() {
@@ -5120,6 +5128,13 @@ function syncModuleStatus() {
 
 async function loadBootstrapData() {
   refreshInteractiveDomRefs();
+  const runBootstrapUiStep = (label, fn) => {
+    try {
+      fn();
+    } catch (error) {
+      console.warn(`light2 bootstrap ui step failed: ${label}`, error);
+    }
+  };
   const { data: sessionData, error: sessionError } = await withTimeout(
     supabase.auth.getSession(),
     6000,
@@ -5165,19 +5180,19 @@ async function loadBootstrapData() {
 
   STATE.profile = profileResult?.data || fallbackProfile;
   STATE.partnerProfiles = [];
-  updateHero();
-  syncSectionTabs();
-  renderOverview();
+  runBootstrapUiStep("hero", () => updateHero());
+  runBootstrapUiStep("section-tabs", () => syncSectionTabs());
+  runBootstrapUiStep("overview", () => renderOverview());
   syncImportButton();
 
-  renderPartnerSelect(DOM.settlementPartnerFilter, { includeAll: true });
-  renderPartnerSelect(DOM.settlementForm.elements.partner_slug);
-  resetSettlementForm();
-  resetBalanceForm();
-  resetCalendarForm();
-  resetAssetForm();
-  resetAssetPaymentForm();
-  resetPurchaseForm();
+  runBootstrapUiStep("partner-filter", () => renderPartnerSelect(DOM.settlementPartnerFilter, { includeAll: true }));
+  runBootstrapUiStep("partner-form-select", () => renderPartnerSelect(DOM.settlementForm?.elements?.partner_slug));
+  runBootstrapUiStep("reset-settlement-form", () => resetSettlementForm());
+  runBootstrapUiStep("reset-balance-form", () => resetBalanceForm());
+  runBootstrapUiStep("reset-calendar-form", () => resetCalendarForm());
+  runBootstrapUiStep("reset-asset-form", () => resetAssetForm());
+  runBootstrapUiStep("reset-asset-payment-form", () => resetAssetPaymentForm());
+  runBootstrapUiStep("reset-purchase-form", () => resetPurchaseForm());
 
   void (async () => {
     try {
@@ -5188,10 +5203,10 @@ async function loadBootstrapData() {
       );
       if (partnersResult?.error) throw partnersResult.error;
       STATE.partnerProfiles = partnersResult?.data || [];
-      updateHero();
-      renderOverview();
-      renderPartnerSelect(DOM.settlementPartnerFilter, { includeAll: true });
-      renderPartnerSelect(DOM.settlementForm.elements.partner_slug);
+      runBootstrapUiStep("hero-partners", () => updateHero());
+      runBootstrapUiStep("overview-partners", () => renderOverview());
+      runBootstrapUiStep("partner-filter-refresh", () => renderPartnerSelect(DOM.settlementPartnerFilter, { includeAll: true }));
+      runBootstrapUiStep("partner-form-refresh", () => renderPartnerSelect(DOM.settlementForm?.elements?.partner_slug));
     } catch (error) {
       console.warn("light2 partner directory fallback", error);
     }
