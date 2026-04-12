@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260412-light2-safe44";
+const LIGHT2_BUILD = "20260412-light2-safe45";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -4910,7 +4910,7 @@ function renderCalendarSummary(rows) {
   `;
 }
 
-function renderSettlements() {
+function renderSettlementsConfigured() {
   DOM.settlementActionsHead.textContent = isAdmin() ? "Действия" : "";
   renderScopeNote();
   renderLiveSectionBuilder("settlements");
@@ -4963,7 +4963,7 @@ function renderSettlements() {
     .join("");
 }
 
-function renderBalance() {
+function renderBalanceConfigured() {
   const dom = getBalanceDom();
   if (!dom.tableBody) return;
 
@@ -5016,7 +5016,7 @@ function renderBalance() {
     .join("");
 }
 
-function renderCalendar() {
+function renderCalendarConfigured() {
   const dom = getCalendarDom();
   if (!dom.tableBody) return;
 
@@ -6201,7 +6201,7 @@ function renderCalendar() {
   );
 }
 
-function renderAssets() {
+function renderAssetsConfigured() {
   const dom = getAssetsDom();
   if (!dom.assetTableBody || !dom.paymentTableBody) return;
 
@@ -6311,7 +6311,7 @@ function renderAssets() {
   );
 }
 
-function renderPurchases() {
+function renderPurchasesConfigured() {
   const dom = getPurchasesDom();
   if (!dom.tableBody) return;
 
