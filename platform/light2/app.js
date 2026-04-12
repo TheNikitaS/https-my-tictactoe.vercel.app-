@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260412-light2-safe43";
+const LIGHT2_BUILD = "20260412-light2-safe44";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -2067,6 +2067,53 @@ function setStatus(message, tone = "") {
 function setModuleState(label) {
   if (!DOM.moduleState) return;
   DOM.moduleState.textContent = label;
+}
+
+async function activateReadonlyFallback(reason) {
+  try {
+    if (!STATE.workbookSnapshot) {
+      await withTimeout(
+        loadWorkbookSnapshot(),
+        8000,
+        "Не удалось вовремя загрузить snapshot Контур для резервного режима."
+      );
+    }
+  } catch (error) {
+    console.warn("light2 readonly fallback snapshot load failed", error);
+  }
+
+  if (!STATE.profile) {
+    STATE.profile = {
+      id: null,
+      display_name: STATE.user?.email || "Резервный режим",
+      full_name: "",
+      role: "user",
+      partner_slug: null
+    };
+  }
+
+  if (DOM.userDisplay) {
+    DOM.userDisplay.textContent =
+      STATE.profile?.display_name ||
+      STATE.user?.email ||
+      "Резервный режим";
+  }
+
+  if (DOM.accessMode) {
+    DOM.accessMode.textContent = "Просмотр snapshot";
+  }
+
+  renderOverview();
+  renderWorkbookSnapshotSections();
+  syncSectionTabs();
+  openSection("overview");
+  syncWorkspaceModeUi();
+  syncImportButton();
+  setModuleState("Резервный режим");
+  setStatus(
+    `Контур открыт в резервном режиме. Живые таблицы временно недоступны, но данные из исходного файла уже доступны для просмотра.${reason?.message ? ` Причина: ${reason.message}` : ""}`,
+    "warning"
+  );
 }
 
 function setImportStatus(message, tone = "") {
@@ -6445,6 +6492,8 @@ function bindBuilderEvents() {
 }
 
 async function start() {
+  setModuleState("Старт...");
+  setStatus("Запускаю Контур и подключаю рабочие блоки...", "");
   const runStartupStep = (label, fn) => {
     try {
       fn();
@@ -6476,7 +6525,10 @@ async function start() {
       9000,
       "Не удалось вовремя подготовить профиль и сессию Контур."
     );
-    if (!ready) return;
+    if (!ready) {
+      await activateReadonlyFallback(new Error("Сессия платформы недоступна для живого режима."));
+      return;
+    }
     await withTimeout(
       loadWorkbookSnapshot(),
       8000,
@@ -6499,5 +6551,22 @@ async function start() {
     syncImportButton();
   }
 }
+
+window.setTimeout(async () => {
+  const stillBooting =
+    /Проверяю|Загрузка|Старт/i.test(String(DOM.userDisplay?.textContent || "")) ||
+    /Проверяю|Загрузка|Старт/i.test(String(DOM.accessMode?.textContent || "")) ||
+    /Загрузка|Старт/i.test(String(DOM.moduleState?.textContent || "")) ||
+    /Загружаю структуру модуля/i.test(String(DOM.statusBox?.textContent || ""));
+
+  if (!stillBooting) return;
+
+  console.warn("light2 bootstrap guard activated");
+  try {
+    await activateReadonlyFallback(new Error("Контур не завершил старт вовремя."));
+  } catch (error) {
+    console.error("light2 bootstrap guard failed", error);
+  }
+}, 12000);
 
 start();
