@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260412-platform-suite47";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260412-platform-suite47";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260413-platform-suite49";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-suite49";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260412-platform-suite47";
+const PLATFORM_BUILD = "20260413-platform-suite49";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -112,7 +112,9 @@ const STATE = {
   ai: {
     history: [],
     widgetBusy: false,
-    moduleBusy: false
+    moduleBusy: false,
+    loadedSignature: "",
+    loadingHistory: false
   },
   menu: {
     profileOpen: false
@@ -925,6 +927,54 @@ function getAiQuickQuestions() {
   ];
 }
 
+function getAiHistoryScopeSignature() {
+  return `${STATE.user?.id || "guest"}:${STATE.profile?.partner_slug || getCurrentPartnerSlug() || ""}`;
+}
+
+function normalizeAiHistoryEntries(items) {
+  return (Array.isArray(items) ? items : [])
+    .filter((item) => item && (item.role === "user" || item.role === "assistant"))
+    .map((item) => ({
+      role: item.role,
+      body: String(item.body || item.content || "").trim(),
+      createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+      sources: Array.isArray(item.sources) ? item.sources : [],
+      highlights: Array.isArray(item.highlights) ? item.highlights : [],
+      mode: item.mode || "server",
+      usedExternalKnowledge: Boolean(item.usedExternalKnowledge),
+      needsKnowledgeUpdate: Boolean(item.needsKnowledgeUpdate),
+      knowledgeStatus: item.knowledgeStatus || "unknown"
+    }))
+    .filter((item) => item.body)
+    .slice(-40);
+}
+
+function setAiHistory(history) {
+  STATE.ai.history = normalizeAiHistoryEntries(history);
+}
+
+async function ensureDomovoyHistoryLoaded(force = false) {
+  if (!STATE.session || !STATE.user || !STATE.schemaReady) return;
+  const signature = getAiHistoryScopeSignature();
+  if (!force && (STATE.ai.loadedSignature === signature || STATE.ai.loadingHistory)) return;
+
+  STATE.ai.loadingHistory = true;
+  try {
+    const payload = await domovoyNeonik.loadHistory();
+    setAiHistory(payload?.history || []);
+    STATE.ai.loadedSignature = signature;
+  } catch (error) {
+    console.error("Domovoy history load failed", error);
+    if (force) throw error;
+  } finally {
+    STATE.ai.loadingHistory = false;
+    renderAiWidget();
+    if (STATE.activeModule === "ai") {
+      renderAiModule();
+    }
+  }
+}
+
 function buildAiContext() {
   return {
     snapshot: STATE.dashboardSnapshot || null,
@@ -994,13 +1044,17 @@ function renderAiMessages(items, tokens = []) {
         )
         .join("");
 
+      const bodyHtml =
+        item.role === "assistant"
+          ? escapeHtml(item.body || "").replace(/\n/g, "<br>")
+          : domovoyNeonik.highlightText(escapeHtml(item.body || ""), tokens).replace(/\n/g, "<br>");
       return `
-        <article class="ai-message ai-message--${escapeHtml(item.role)}">
-          <div class="ai-message__role">${item.role === "user" ? "Вы" : "Домовой Неоник"}</div>
-          <div class="ai-message__body">${domovoyNeonik.highlightText(escapeHtml(item.body || ""), tokens).replace(/\n/g, "<br>")}</div>
-          ${metaNotes ? `<div class="ai-message__meta">${metaNotes}</div>` : ""}
-          ${sources ? `<div class="ai-message__sources">${sources}</div>` : ""}
-        </article>
+          <article class="ai-message ai-message--${escapeHtml(item.role)}">
+            <div class="ai-message__role">${item.role === "user" ? "Вы" : "Домовой Неоник"}</div>
+            <div class="ai-message__body">${bodyHtml}</div>
+            ${metaNotes ? `<div class="ai-message__meta">${metaNotes}</div>` : ""}
+            ${sources ? `<div class="ai-message__sources">${sources}</div>` : ""}
+          </article>
       `;
     })
     .join("");
@@ -1146,6 +1200,7 @@ function renderAiModule() {
 async function askDomovoyNeonik(question, origin = "module") {
   const cleanQuestion = String(question || "").trim();
   if (!cleanQuestion) return;
+  await ensureDomovoyHistoryLoaded();
 
   STATE.ai.history.push({
     role: "user",
@@ -1176,17 +1231,22 @@ async function askDomovoyNeonik(question, origin = "module") {
         content: item.body || ""
       }));
     const response = await domovoyNeonik.ask(cleanQuestion, context);
-    STATE.ai.history.push({
-      role: "assistant",
-      body: response.answer,
-      createdAt: new Date().toISOString(),
-      sources: response.sources || [],
-      highlights: response.highlights || [],
-      mode: response.mode || "server",
-      usedExternalKnowledge: Boolean(response.usedExternalKnowledge),
-      needsKnowledgeUpdate: Boolean(response.needsKnowledgeUpdate),
-      knowledgeStatus: response.knowledgeStatus || "unknown"
-    });
+    if (Array.isArray(response.history) && response.history.length) {
+      setAiHistory(response.history);
+      STATE.ai.loadedSignature = getAiHistoryScopeSignature();
+    } else {
+      STATE.ai.history.push({
+        role: "assistant",
+        body: response.answer,
+        createdAt: new Date().toISOString(),
+        sources: response.sources || [],
+        highlights: response.highlights || [],
+        mode: response.mode || "server",
+        usedExternalKnowledge: Boolean(response.usedExternalKnowledge),
+        needsKnowledgeUpdate: Boolean(response.needsKnowledgeUpdate),
+        knowledgeStatus: response.knowledgeStatus || "unknown"
+      });
+    }
   } catch (error) {
     STATE.ai.history.push({
       role: "assistant",
@@ -1195,9 +1255,7 @@ async function askDomovoyNeonik(question, origin = "module") {
       sources: []
     });
   } finally {
-    if (STATE.ai.history.length > 18) {
-      STATE.ai.history = STATE.ai.history.slice(-18);
-    }
+    setAiHistory(STATE.ai.history);
     STATE.ai.widgetBusy = false;
     STATE.ai.moduleBusy = false;
     renderAiWidget();
@@ -2225,6 +2283,7 @@ async function openModule(key) {
 
   if (module.type === "ai") {
     await domovoyNeonik.ensureReady();
+    await ensureDomovoyHistoryLoaded();
     renderAiModule();
     DOM.placeholderView.classList.remove("d-none");
     return;
@@ -2572,9 +2631,14 @@ async function performOwnerDataResetIfNeeded() {
 
 async function bootstrapApp(session) {
   const previousModule = STATE.activeModule || "dashboard";
+  const previousUserId = STATE.user?.id || "";
   let didResetData = false;
   STATE.session = session;
   STATE.user = session.user;
+  if (previousUserId && previousUserId !== session.user?.id) {
+    STATE.ai.history = [];
+    STATE.ai.loadedSignature = "";
+  }
   STATE.schemaReady = true;
   STATE.schemaError = "";
 
@@ -3250,6 +3314,7 @@ async function refreshCurrentView() {
     return;
   }
   if (STATE.activeModule === "ai") {
+    await ensureDomovoyHistoryLoaded(true);
     renderAiWidget();
     renderAiModule();
     DOM.placeholderView.classList.remove("d-none");
@@ -3454,7 +3519,14 @@ function bindAppEvents() {
       }
       const clearButton = event.target.closest("[data-ai-clear]");
       if (clearButton) {
-        STATE.ai.history = [];
+        try {
+          const payload = await domovoyNeonik.clearHistory();
+          setAiHistory(payload?.history || []);
+          STATE.ai.loadedSignature = getAiHistoryScopeSignature();
+        } catch (error) {
+          setAuthStatus(error.message || "Не удалось очистить историю Домового Неоника.", "error");
+          return;
+        }
         renderAiWidget();
         renderAiModule();
         return;
@@ -3525,7 +3597,8 @@ function bindAppEvents() {
     toggleWideMode();
   });
 
-  DOM.aiWidgetToggle?.addEventListener("click", () => {
+  DOM.aiWidgetToggle?.addEventListener("click", async () => {
+    await ensureDomovoyHistoryLoaded();
     renderAiWidget();
     DOM.aiWidgetPanel?.classList.toggle("d-none");
   });
@@ -3809,6 +3882,9 @@ async function init() {
       STATE.roleTemplates = [];
       STATE.selectedUserId = null;
       STATE.editingRoleKey = null;
+      STATE.ai.history = [];
+      STATE.ai.loadedSignature = "";
+      STATE.ai.loadingHistory = false;
       showAuthScreen();
       setAuthStatus("Вы вышли из системы.");
       return;

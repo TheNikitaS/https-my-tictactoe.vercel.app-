@@ -511,7 +511,8 @@ export function createDomovoyNeonik(options = {}) {
             mode: payload.mode || "server",
             usedExternalKnowledge: Boolean(payload.usedExternalKnowledge),
             needsKnowledgeUpdate: Boolean(payload.needsKnowledgeUpdate),
-            knowledgeStatus: payload.knowledgeStatus || "unknown"
+            knowledgeStatus: payload.knowledgeStatus || "unknown",
+            history: Array.isArray(payload.history) ? payload.history : []
           };
         }
       } catch (error) {
@@ -578,9 +579,60 @@ export function createDomovoyNeonik(options = {}) {
     return result;
   }
 
+  async function loadHistory() {
+    const apiBaseUrl = normalizeApiBaseUrl(getApiBaseUrl());
+    const remoteError = getMixedContentWarning(apiBaseUrl);
+    if (!apiBaseUrl || remoteError) {
+      return { history: [], source: "unavailable", error: remoteError || "" };
+    }
+
+    const accessToken = String((await getAccessToken()) || "").trim();
+    const response = await fetch(`${apiBaseUrl}/api/domovoy/history`, {
+      method: "GET",
+      headers: {
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+      }
+    });
+    const payload = await parseJsonSafe(response);
+    if (!response.ok) {
+      throw new Error(payload?.detail || payload?.message || `HTTP ${response.status}`);
+    }
+    return {
+      history: Array.isArray(payload?.history) ? payload.history : [],
+      source: "server"
+    };
+  }
+
+  async function clearHistory() {
+    const apiBaseUrl = normalizeApiBaseUrl(getApiBaseUrl());
+    const remoteError = getMixedContentWarning(apiBaseUrl);
+    if (!apiBaseUrl || remoteError) {
+      return { history: [], source: "unavailable", error: remoteError || "" };
+    }
+
+    const accessToken = String((await getAccessToken()) || "").trim();
+    const response = await fetch(`${apiBaseUrl}/api/domovoy/history/clear`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
+      }
+    });
+    const payload = await parseJsonSafe(response);
+    if (!response.ok) {
+      throw new Error(payload?.detail || payload?.message || `HTTP ${response.status}`);
+    }
+    return {
+      history: Array.isArray(payload?.history) ? payload.history : [],
+      source: "server"
+    };
+  }
+
   return {
     ensureReady,
     ask,
-    highlightText
+    highlightText,
+    loadHistory,
+    clearHistory
   };
 }
