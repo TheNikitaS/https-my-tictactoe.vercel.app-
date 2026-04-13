@@ -971,6 +971,14 @@ function renderAiMessages(items, tokens = []) {
 
   return items
     .map((item) => {
+      const metaNotes = [
+        item.usedExternalKnowledge ? "Ответ дополнен внешними знаниями Gemini." : "",
+        item.needsKnowledgeUpdate ? "Во внутренней базе знаний не хватило данных — это стоит добавить." : ""
+      ]
+        .filter(Boolean)
+        .map((note) => `<div class="compact-help">${escapeHtml(note)}</div>`)
+        .join("");
+
       const sources = (item.sources || [])
         .map(
           (source) =>
@@ -990,6 +998,7 @@ function renderAiMessages(items, tokens = []) {
         <article class="ai-message ai-message--${escapeHtml(item.role)}">
           <div class="ai-message__role">${item.role === "user" ? "Вы" : "Домовой Неоник"}</div>
           <div class="ai-message__body">${domovoyNeonik.highlightText(escapeHtml(item.body || ""), tokens).replace(/\n/g, "<br>")}</div>
+          ${metaNotes ? `<div class="ai-message__meta">${metaNotes}</div>` : ""}
           ${sources ? `<div class="ai-message__sources">${sources}</div>` : ""}
         </article>
       `;
@@ -1104,7 +1113,8 @@ function renderAiModule() {
             <h3>Что умеет</h3>
             <ul class="ai-capability-list">
               <li>Подсказывает, где в платформе делать нужное действие.</li>
-              <li>Ищет ответы в данных платформы, архиве Olesia и по публичным сайтам компании.</li>
+              <li>Сначала ищет ответ в данных платформы, архиве Olesia и на сайтах компании.</li>
+              <li>Если внутренних данных не хватает, дополняет ответ Gemini и помечает, что стоит добавить в базу знаний.</li>
               <li>Объясняет связи между CRM, Продажами, Складом, задачами и ДОМ НЕОНА.</li>
             </ul>
           </div>
@@ -1120,7 +1130,7 @@ function renderAiModule() {
             </div>
             <div class="ai-chat-log" id="aiModuleMessages">${renderAiMessages(STATE.ai.history, tokens)}</div>
             <form class="ai-chat-form" id="aiModuleForm">
-              <textarea class="form-control" id="aiModuleInput" name="question" rows="3" placeholder="Например: где смотреть неоплаченные счета и как это связано с CRM?" ${STATE.ai.moduleBusy ? "disabled" : ""}></textarea>
+              <textarea class="form-control" id="aiModuleInput" name="question" rows="3" placeholder="Например: где смотреть неоплаченные счета и как это связано с CRM? Enter — отправить, Shift+Enter — новая строка." ${STATE.ai.moduleBusy ? "disabled" : ""}></textarea>
               <div class="ai-chat-form__actions">
                 <button class="btn btn-dark" type="submit" ${STATE.ai.moduleBusy ? "disabled" : ""}>${STATE.ai.moduleBusy ? "Ищу ответ..." : "Спросить"}</button>
                 <button class="btn btn-outline-secondary" type="button" data-ai-clear>Очистить диалог</button>
@@ -1171,7 +1181,11 @@ async function askDomovoyNeonik(question, origin = "module") {
       body: response.answer,
       createdAt: new Date().toISOString(),
       sources: response.sources || [],
-      highlights: response.highlights || []
+      highlights: response.highlights || [],
+      mode: response.mode || "server",
+      usedExternalKnowledge: Boolean(response.usedExternalKnowledge),
+      needsKnowledgeUpdate: Boolean(response.needsKnowledgeUpdate),
+      knowledgeStatus: response.knowledgeStatus || "unknown"
     });
   } catch (error) {
     STATE.ai.history.push({
@@ -3487,6 +3501,14 @@ function bindAppEvents() {
     }
   });
 
+  DOM.placeholderCard.addEventListener("keydown", async (event) => {
+    if (STATE.activeModule !== "ai") return;
+    const input = event.target.closest("#aiModuleInput");
+    if (!input || event.key !== "Enter" || event.shiftKey) return;
+    event.preventDefault();
+    input.closest("#aiModuleForm")?.requestSubmit();
+  });
+
   DOM.signOutButton?.addEventListener("click", async () => {
     await supabase.auth.signOut();
   });
@@ -3531,6 +3553,13 @@ function bindAppEvents() {
     const formData = new FormData(form);
     form.reset();
     await askDomovoyNeonik(formData.get("question"), "widget");
+  });
+
+  DOM.aiWidgetPanel?.addEventListener("keydown", (event) => {
+    const input = event.target.closest("#aiWidgetInput");
+    if (!input || event.key !== "Enter" || event.shiftKey) return;
+    event.preventDefault();
+    input.closest("#aiWidgetForm")?.requestSubmit();
   });
 
   DOM.profileCard?.addEventListener("click", async (event) => {

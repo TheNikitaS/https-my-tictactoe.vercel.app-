@@ -508,7 +508,10 @@ export function createDomovoyNeonik(options = {}) {
             answer: payload.answer,
             sources: Array.isArray(payload.sources) ? payload.sources : [],
             highlights,
-            mode: payload.mode || "server"
+            mode: payload.mode || "server",
+            usedExternalKnowledge: Boolean(payload.usedExternalKnowledge),
+            needsKnowledgeUpdate: Boolean(payload.needsKnowledgeUpdate),
+            knowledgeStatus: payload.knowledgeStatus || "unknown"
           };
         }
       } catch (error) {
@@ -557,7 +560,10 @@ export function createDomovoyNeonik(options = {}) {
       answer: remoteError ? `${answer}\n\nСерверный ИИ сейчас недоступен, поэтому я ответил по резервной локальной базе знаний.` : answer,
       sources,
       highlights,
-      mode: remoteError ? "local-fallback" : "local"
+      mode: remoteError ? "local-fallback" : "local",
+      usedExternalKnowledge: false,
+      needsKnowledgeUpdate: scored.length < 3,
+      knowledgeStatus: scored.length >= 5 ? "strong" : scored.length >= 3 ? "partial" : "missing"
     };
   }
 
