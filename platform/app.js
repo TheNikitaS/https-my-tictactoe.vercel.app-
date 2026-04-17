@@ -5,7 +5,7 @@ import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-sui
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260413-platform-suite49";
+const PLATFORM_BUILD = "20260417-platform-suite51";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -645,7 +645,7 @@ function getModuleShortLabel(key) {
     production: "Произв.",
     my_calculator: "Мой",
     partner_calculator: "Парт.",
-    light2: "Контур",
+    light2: "Метрики",
     board: "Доска",
     messenger: "Чаты",
     admin: "Админ",
@@ -1505,7 +1505,7 @@ function getModuleStageLabel(moduleKey) {
     production: "Живой рабочий модуль",
     my_calculator: "Рабочий модуль",
     partner_calculator: "Рабочий модуль",
-    light2: "Активно развивается",
+      light2: "Финансовый контур",
     board: "Совместная доска",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",
@@ -1824,7 +1824,7 @@ async function renderDashboard() {
       tone: "info"
     },
     {
-      label: "Контур компании",
+        label: "Метрики компании",
       value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
       meta: `${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате • ${formatDashboardNumber(snapshot.light2.openSettlementsCount || 0)} открытых взаиморасчетов`,
       tone: "accent"
@@ -2152,10 +2152,10 @@ async function renderDashboard() {
         <article class="dashboard-panel">
           <div class="panel-heading">
             <div>
-              <h3>Контур компании</h3>
+                <h3>Метрики компании</h3>
               <div class="compact-help">Связка по балансу, платежам, активам, закупкам и взаиморасчетам из ДОМ НЕОНА.</div>
             </div>
-            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть контур</button>
+              <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть метрики</button>
           </div>
           <div class="dashboard-mini-grid">${contourCards || '<div class="workspace-empty workspace-empty--tight">Контур ещё не наполнился данными.</div>'}</div>
         </article>

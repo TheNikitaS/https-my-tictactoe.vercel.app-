@@ -12,14 +12,19 @@
         #tabs-container { display: flex; flex-wrap: wrap; padding: 0.5rem; background-color: #dce1e6; }
         .tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer; position: relative; margin-right: 5px; border-radius: 5px 5px 0 0; }
         .tab.active { background-color: #fff; border-bottom-color: #fff; font-weight: bold; }
+        .tab.tab-done { background-color: #dcfce7; border-color: #86efac; }
+        .tab.active.tab-done { background-color: #bbf7d0; }
         .tab-title { display: inline-block; min-width: 60px; padding: 2px 4px; border-radius: 4px; }
         .tab-title.editing { background: #fff; outline: 2px solid #86b7fe; cursor: text; }
         .tab-actions { display: inline-flex; align-items: center; gap: 6px; }
-        .tab-action { border: 0; background: transparent; font-weight: 600; cursor: pointer; user-select: none; line-height: 1; }
-        .tab-hide-btn { padding: 3px 8px; border-radius: 999px; background: #e9ecef; color: #495057; font-size: 0.75rem; }
-        .tab-hide-btn:hover { background: #d0d7de; color: #212529; }
-        .tab-copy-btn { padding: 3px 8px; border-radius: 999px; background: #e7f5ff; color: #0b7285; font-size: 0.75rem; }
-        .tab-copy-btn:hover { background: #d0ebff; color: #0a58ca; }
+        .tab-action { border: 0; background: transparent; cursor: pointer; user-select: none; line-height: 1; padding: 0; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: #495057; }
+        .tab-action svg { width: 16px; height: 16px; pointer-events: none; }
+        .tab-hide-btn { color: #212529; }
+        .tab-hide-btn:hover { background: #e9ecef; color: #111827; }
+        .tab-copy-btn { color: #0b7285; }
+        .tab-copy-btn:hover { background: #e7f5ff; color: #0a58ca; }
+        .tab-done-btn { color: #2f9e44; }
+        .tab-done-btn:hover { background: #dcfce7; color: #2b8a3e; }
         .tab-delete-btn { padding: 0; color: #999; font-size: 1rem; }
         .tab-delete-btn:hover { color: #c0392b; }
         .hidden-tabs-wrap { display: none; flex-wrap: wrap; gap: 8px; align-items: center; padding: 0.5rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
@@ -29,16 +34,24 @@
         .summary-item { display: flex; justify-content: space-between; padding: 0.2rem 0.5rem; font-size: 1rem;}
         .summary-item strong { font-size: 1.1rem; }
         .param-card { background-color: #e8f5e9; }
+        .catalog-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 1rem; }
+        .catalog-toolbar .toolbar-field { min-width: 240px; flex: 1 1 240px; }
         .category-header { font-weight: bold; padding: 0.5rem; margin-top: 1rem; border-bottom: 2px solid #ddd; display: flex; justify-content: space-between; align-items: center;}
-        .item-row { display: grid; grid-template-columns: 80px 1fr 90px 40px 80px 110px; gap: 8px; align-items: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid #eee; }
+        .item-row { display: grid; grid-template-columns: 80px 1fr 90px 40px 80px 110px 70px; gap: 8px; align-items: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid #eee; }
         .item-row:hover { background-color: #fdfde7; }
         .item-row-header { font-weight: bold; color: #6c757d; font-size: 0.8rem; }
         .item-row input { text-align: center; padding: 0.25rem; font-size: 0.9rem; }
+        .item-actions { display: flex; gap: 6px; justify-content: flex-end; }
+        .item-action { border: 0; background: transparent; color: #6c757d; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; }
+        .item-action:hover { background: #eef2f6; color: #212529; }
+        .item-action.item-action-delete:hover { color: #c0392b; background: #fdeaea; }
+        .item-row.item-hidden { display: none; }
         .notes-card { height: 95%; }
         #client-offer, #notes { width: 100%; }
         .read-only { background-color: #f1f1f1; border: 0; }
         #required-power-display { font-weight: bold; color: #c0392b; }
         .sync-status { padding: 0.35rem 0.75rem; color: #6c757d; font-size: 0.85rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
+        .toolbar-note { color: #6c757d; font-size: 0.82rem; }
     </style>
 </head>
 <body>
@@ -173,9 +186,116 @@ const sessionKey = 'calculatorSession_Final_Corrected';
 const cloudAppId = 'moy-calculator';
 let syncManager = null;
 let suppressCloudSync = false;
+const ITEM_PRICING_OPTIONS = [
+    { key: 'goods', label: 'Товары' },
+    { key: 'design', label: 'Дизайн' },
+    { key: 'assembly', label: 'Сборка' },
+    { key: 'montage', label: 'Монтаж' },
+    { key: 'pass', label: 'Без наценки' }
+];
+const CRITICAL_AUTO_IDS = new Set(['SUB01', 'WORK02', 'WORK03', 'WORK05', '750641', 'WORK06']);
+const BASE_CATALOG = db.map((item) => ({
+    ...item,
+    hidden: false,
+    deleted: false,
+    custom: false,
+    pricingKind: inferPricingKind(item)
+}));
+
+function inferPricingKind(item) {
+    if (item.category === 'Материалы' && item.subcategory === 'Производство подложки') return 'assembly';
+    if (item.category === 'Материалы') return 'goods';
+    if (item.subcategory === 'Дизайн макета') return 'design';
+    if (item.subcategory === 'Сборка') return 'assembly';
+    if (item.subcategory === 'Монтаж') return 'montage';
+    return 'pass';
+}
+
+function cloneCatalog(items = BASE_CATALOG) {
+    return items.map((item) => ({ ...item }));
+}
+
+function createTabData(rawData = {}) {
+    return {
+        quantities: { ...(rawData.quantities || {}) },
+        params: { ...(rawData.params || {}) },
+        coeffs: { ...(rawData.coeffs || {}) },
+        notes: String(rawData.notes || ''),
+        done: Boolean(rawData.done),
+        catalog: normalizeCatalog(rawData.catalog)
+    };
+}
+
+function normalizeCatalog(rawCatalog) {
+    const savedItems = Array.isArray(rawCatalog) ? rawCatalog : [];
+    const savedMap = new Map(savedItems.filter((item) => item?.id).map((item) => [item.id, item]));
+    const catalog = BASE_CATALOG.map((item) => {
+        const saved = savedMap.get(item.id) || {};
+        return {
+            ...item,
+            ...saved,
+            cost: Number(saved.cost ?? item.cost) || 0,
+            hidden: Boolean(saved.hidden),
+            deleted: Boolean(saved.deleted),
+            custom: false,
+            pricingKind: saved.pricingKind || item.pricingKind || inferPricingKind(item)
+        };
+    });
+
+    savedItems
+        .filter((item) => item?.id && !savedMap.has(`__${item.id}`) && !BASE_CATALOG.some((base) => base.id === item.id))
+        .forEach((item) => {
+            catalog.push({
+                ...item,
+                cost: Number(item.cost) || 0,
+                hidden: Boolean(item.hidden),
+                deleted: Boolean(item.deleted),
+                custom: true,
+                pricingKind: item.pricingKind || 'goods'
+            });
+        });
+
+    return catalog;
+}
+
+function getActiveTab() {
+    return state.tabs.find((tab) => tab.id === state.activeTabId) || null;
+}
+
+function getActiveCatalog() {
+    return getActiveTab()?.data?.catalog || cloneCatalog();
+}
+
+function iconMarkup(type) {
+    if (type === 'hide') {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3.2"/></svg>';
+    }
+    if (type === 'copy') {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><rect x="4" y="4" width="11" height="11" rx="2"/></svg>';
+    }
+    if (type === 'done') {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>';
+    }
+    if (type === 'trash') {
+        return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
+    }
+    return '';
+}
+
+function syncCatalogFromDom(activeTab) {
+    if (!activeTab?.data?.catalog) return;
+    const catalogById = new Map(activeTab.data.catalog.map((item) => [item.id, item]));
+    document.querySelectorAll('.item-row[data-item-id]').forEach((row) => {
+        const itemId = row.dataset.itemId;
+        const item = catalogById.get(itemId);
+        if (!item) return;
+        const costInput = row.querySelector('.cost-input');
+        item.cost = Number(costInput?.value) || 0;
+    });
+}
 
 function createDefaultState() {
-    return { activeTabId: 'tab1', tabs: [{ id: 'tab1', name: 'Вывеска 1', data: {}, hidden: false }], nextTabNum: 2 };
+    return { activeTabId: 'tab1', tabs: [{ id: 'tab1', name: 'Вывеска 1', data: createTabData(), hidden: false }], nextTabNum: 2 };
 }
 
 function normalizeState(rawState) {
@@ -185,7 +305,7 @@ function normalizeState(rawState) {
         ? base.tabs.map((tab, index) => ({
             id: tab?.id || `tab${index + 1}`,
             name: (String(tab?.name || '').trim() || `Вывеска ${index + 1}`),
-            data: tab?.data && typeof tab.data === 'object' ? tab.data : {},
+            data: createTabData(tab?.data),
             hidden: !!tab?.hidden
         }))
         : fallback.tabs;
@@ -301,7 +421,7 @@ function renderTabs() {
     container.innerHTML = '';
     state.tabs.filter(tab => !tab.hidden).forEach(tab => {
         const tabEl = document.createElement('div');
-        tabEl.className = `tab ${tab.id === state.activeTabId ? 'active' : ''}`;
+        tabEl.className = `tab ${tab.id === state.activeTabId ? 'active' : ''} ${tab?.data?.done ? 'tab-done' : ''}`.trim();
 
         const tabName = document.createElement('span');
         tabName.className = 'tab-title';
@@ -342,26 +462,34 @@ function renderTabs() {
         const hideBtn = document.createElement('button');
         hideBtn.type = 'button';
         hideBtn.className = 'tab-action tab-hide-btn';
-        hideBtn.textContent = 'Скрыть';
+        hideBtn.innerHTML = iconMarkup('hide');
         hideBtn.title = 'Скрыть вкладку';
         hideBtn.onclick = (e) => { e.stopPropagation(); hideTab(tab.id); };
 
         const copyBtn = document.createElement('button');
         copyBtn.type = 'button';
         copyBtn.className = 'tab-action tab-copy-btn';
-        copyBtn.textContent = 'Копия';
+        copyBtn.innerHTML = iconMarkup('copy');
         copyBtn.title = 'Скопировать вкладку';
         copyBtn.onclick = (e) => { e.stopPropagation(); copyTab(tab.id); };
+
+        const doneBtn = document.createElement('button');
+        doneBtn.type = 'button';
+        doneBtn.className = 'tab-action tab-done-btn';
+        doneBtn.innerHTML = iconMarkup('done');
+        doneBtn.title = tab?.data?.done ? 'Снять отметку готово' : 'Отметить вкладку как готовую';
+        doneBtn.onclick = (e) => { e.stopPropagation(); toggleTabDone(tab.id); };
 
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.className = 'tab-action tab-delete-btn';
-        closeBtn.textContent = '×';
+        closeBtn.innerHTML = iconMarkup('trash');
         closeBtn.title = 'Удалить вкладку';
         closeBtn.onclick = (e) => { e.stopPropagation(); deleteTab(tab.id); };
 
         actions.appendChild(hideBtn);
         actions.appendChild(copyBtn);
+        actions.appendChild(doneBtn);
         actions.appendChild(closeBtn);
         tabEl.appendChild(actions);
         container.appendChild(tabEl);
@@ -453,7 +581,7 @@ function finishTabRename(tab, tabName, shouldSave) {
 function addTab() {
     saveActiveTabData();
     const newTabId = `tab${state.nextTabNum++}`;
-    state.tabs.push({ id: newTabId, name: `Вывеска ${state.tabs.length + 1}`, data: {}, hidden: false });
+    state.tabs.push({ id: newTabId, name: `Вывеска ${state.tabs.length + 1}`, data: createTabData(), hidden: false });
     state.activeTabId = newTabId;
     persistStateSnapshot();
     renderTabs();
@@ -510,6 +638,15 @@ function hideTab(tabId) {
     loadActiveTabData();
 }
 
+function toggleTabDone(tabId) {
+    saveActiveTabData();
+    const tab = state.tabs.find((item) => item.id === tabId);
+    if (!tab) return;
+    tab.data.done = !tab.data.done;
+    persistStateSnapshot();
+    renderTabs();
+}
+
 function showTab(tabId) {
     saveActiveTabData();
     const tab = state.tabs.find(item => item.id === tabId);
@@ -545,7 +682,9 @@ function switchTab(tabId) {
 function saveActiveTabData() {
     const activeTab = state.tabs.find(t => t.id === state.activeTabId);
     if (!activeTab) return;
-    activeTab.data = { quantities: {}, params: {}, coeffs: {}, notes: '' };
+    activeTab.data = createTabData(activeTab.data);
+    syncCatalogFromDom(activeTab);
+    activeTab.data.quantities = {};
     document.querySelectorAll('.quantity-input').forEach(input => {
         const value = parseFloat(input.value);
         if (value > 0) activeTab.data.quantities[input.dataset.id] = value;
@@ -568,7 +707,8 @@ function saveActiveTabData() {
 
 function loadActiveTabData() {
     const activeTab = state.tabs.find(t => t.id === state.activeTabId);
-    const data = activeTab ? activeTab.data : {};
+    const data = activeTab ? createTabData(activeTab.data) : createTabData();
+    if (activeTab) activeTab.data = data;
     document.querySelectorAll('.quantity-input').forEach(input => input.value = '');
     if (data.quantities) {
         for (const id in data.quantities) {
@@ -593,11 +733,29 @@ function loadActiveTabData() {
 
 function renderCalculator() {
     const container = document.getElementById('calculator-container');
-    container.innerHTML = '';
+    const catalog = getActiveCatalog();
+    container.innerHTML = `
+        <div class="catalog-toolbar">
+            <div>
+                <button type="button" class="btn btn-sm btn-outline-dark" id="catalog-add-item">+ Добавить товар</button>
+            </div>
+            <div class="toolbar-field">
+                <label class="form-label mb-1">Скрытые товары</label>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" id="hidden-items-select">
+                        <option value="">Выберите скрытый товар</option>
+                        ${catalog.filter((item) => item.hidden && !item.deleted).map((item) => `<option value="${item.id}">${escapeHtml(item.name)}</option>`).join('')}
+                    </select>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="catalog-show-item">Показать</button>
+                </div>
+            </div>
+            <div class="toolbar-note">Измененные цены и новые товары теперь сохраняются внутри каждой вкладки отдельно.</div>
+        </div>
+    `;
     let currentCategory = '', currentSubcategory = '';
-    const header = `<div class="item-row item-row-header" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span></div>`;
+    const header = `<div class="item-row item-row-header" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px 70px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span><span class="text-end">Действия</span></div>`;
 
-    db.forEach(item => {
+    catalog.filter((item) => !item.hidden && !item.deleted).forEach(item => {
         if (item.category !== currentCategory) { currentCategory = item.category; container.innerHTML += `<h4 class="mt-4">${currentCategory}</h4>`; }
         if (item.subcategory !== currentSubcategory) {
             currentSubcategory = item.subcategory;
@@ -609,22 +767,122 @@ function renderCalculator() {
         }
         
         container.innerHTML += `
-            <div class="item-row" id="row-${item.id}" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px;">
+            <div class="item-row" id="row-${item.id}" data-item-id="${item.id}" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px 70px;">
                 <span class="small text-muted">${item.id}</span>
                 <span class="small">${item.name}</span>
                 <input type="number" step="0.01" class="form-control form-control-sm cost-input" value="${item.cost}">
                 <span class="small text-center">${item.unit}</span>
                 <input type="number" step="0.01" class="form-control form-control-sm quantity-input ${item.auto ? 'read-only' : ''}" data-id="${item.id}">
                 <input type="text" class="form-control form-control-sm retail-price" readonly>
+                <div class="item-actions">
+                    <button type="button" class="item-action item-action-hide" data-item-hide="${item.id}" title="Скрыть товар"${CRITICAL_AUTO_IDS.has(item.id) ? ' disabled' : ''}>${iconMarkup('hide')}</button>
+                    <button type="button" class="item-action item-action-delete" data-item-delete="${item.id}" title="Удалить товар"${CRITICAL_AUTO_IDS.has(item.id) ? ' disabled' : ''}>${iconMarkup('trash')}</button>
+                </div>
             </div>`;
     });
 }
 
 function attachGlobalListeners() {
     const inputs = document.querySelectorAll('.cost-input, .quantity-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage');
-    inputs.forEach(el => el.addEventListener('input', calculate));
+    inputs.forEach(el => {
+        el.addEventListener('input', calculate);
+        el.addEventListener('change', calculate);
+        el.addEventListener('blur', saveState);
+    });
     const textareas = document.querySelectorAll('#notes');
     textareas.forEach(el => el.addEventListener('input', saveState));
+    const addItemBtn = document.getElementById('catalog-add-item');
+    if (addItemBtn) {
+        addItemBtn.addEventListener('click', addCatalogItem);
+    }
+    const showItemBtn = document.getElementById('catalog-show-item');
+    if (showItemBtn) {
+        showItemBtn.addEventListener('click', showSelectedHiddenItem);
+    }
+    document.querySelectorAll('[data-item-hide]').forEach((button) => {
+        button.addEventListener('click', () => hideCatalogItem(button.dataset.itemHide));
+    });
+    document.querySelectorAll('[data-item-delete]').forEach((button) => {
+        button.addEventListener('click', () => deleteCatalogItem(button.dataset.itemDelete));
+    });
+}
+
+window.addEventListener('beforeunload', saveState);
+
+function showSelectedHiddenItem() {
+    const select = document.getElementById('hidden-items-select');
+    if (!select?.value) return;
+    const activeTab = getActiveTab();
+    if (!activeTab) return;
+    const item = activeTab.data.catalog.find((entry) => entry.id === select.value);
+    if (!item) return;
+    item.hidden = false;
+    persistStateSnapshot();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
+}
+
+function hideCatalogItem(itemId) {
+    const activeTab = getActiveTab();
+    if (!activeTab) return;
+    const item = activeTab.data.catalog.find((entry) => entry.id === itemId);
+    if (!item) return;
+    item.hidden = true;
+    activeTab.data.quantities[itemId] = 0;
+    persistStateSnapshot();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
+}
+
+function deleteCatalogItem(itemId) {
+    const activeTab = getActiveTab();
+    if (!activeTab) return;
+    const item = activeTab.data.catalog.find((entry) => entry.id === itemId);
+    if (!item) return;
+    if (!confirm(`Удалить товар "${item.name}" из этой вкладки?`)) return;
+    item.deleted = true;
+    item.hidden = true;
+    delete activeTab.data.quantities[itemId];
+    persistStateSnapshot();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
+}
+
+function addCatalogItem() {
+    const activeTab = getActiveTab();
+    if (!activeTab) return;
+    const name = prompt('Название нового товара');
+    if (!name) return;
+    const category = prompt('Категория товара', 'Материалы');
+    if (!category) return;
+    const subcategory = prompt('Подкатегория', 'Прочее');
+    if (!subcategory) return;
+    const unit = prompt('Единица измерения', 'шт');
+    if (!unit) return;
+    const cost = Number(prompt('Закупочная цена', '0') || 0);
+    const pricingPrompt = ITEM_PRICING_OPTIONS.map((item) => `${item.key} — ${item.label}`).join('\n');
+    const pricingKind = (prompt(`Логика расчета:\n${pricingPrompt}`, inferPricingKind({ category, subcategory })) || '').trim().toLowerCase();
+    const safePricingKind = ITEM_PRICING_OPTIONS.some((item) => item.key === pricingKind) ? pricingKind : 'goods';
+    const newItem = {
+        id: `CUSTOM_${Date.now()}`,
+        name: name.trim(),
+        category: category.trim(),
+        subcategory: subcategory.trim(),
+        unit: unit.trim(),
+        cost: Number(cost) || 0,
+        hidden: false,
+        deleted: false,
+        custom: true,
+        pricingKind: safePricingKind
+    };
+    activeTab.data.catalog.push(newItem);
+    persistStateSnapshot();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
 }
 
 function calculate() {
@@ -637,21 +895,31 @@ function calculate() {
     };
     
     // Auto-set params
+    const catalog = getActiveCatalog().filter((item) => !item.hidden && !item.deleted);
     const solderingCount = parseFloat(document.getElementById('param-soldering').value) || 0;
-    document.querySelector('.quantity-input[data-id="SUB01"]').value = ((parseFloat(document.getElementById('param-width').value) || 0) / 100 * (parseFloat(document.getElementById('param-height').value) || 0) / 100).toFixed(3);
-    document.querySelector('.quantity-input[data-id="WORK02"]').value = parseFloat(document.getElementById('param-cutting').value) || 0;
-    document.querySelector('.quantity-input[data-id="WORK03"]').value = parseFloat(document.getElementById('param-milling').value) || 0;
-    document.querySelector('.quantity-input[data-id="WORK05"]').value = solderingCount;
-    document.querySelector('.quantity-input[data-id="750641"]').value = (solderingCount * 0.15).toFixed(2);
+    const autoMap = {
+        SUB01: ((parseFloat(document.getElementById('param-width').value) || 0) / 100 * (parseFloat(document.getElementById('param-height').value) || 0) / 100).toFixed(3),
+        WORK02: parseFloat(document.getElementById('param-cutting').value) || 0,
+        WORK03: parseFloat(document.getElementById('param-milling').value) || 0,
+        WORK05: solderingCount,
+        '750641': (solderingCount * 0.15).toFixed(2)
+    };
+    Object.entries(autoMap).forEach(([itemId, value]) => {
+        const input = document.querySelector(`.quantity-input[data-id="${itemId}"]`);
+        if (input) input.value = value;
+    });
     
-    let totalNeonLength = db.filter(i => i.power).reduce((sum, neon) => sum + (parseFloat(document.querySelector(`.quantity-input[data-id="${neon.id}"]`).value) || 0), 0);
-    document.querySelector('.quantity-input[data-id="WORK06"]').value = totalNeonLength.toFixed(2);
+    let totalNeonLength = catalog.filter(i => i.power).reduce((sum, neon) => sum + (parseFloat(document.querySelector(`.quantity-input[data-id="${neon.id}"]`)?.value) || 0), 0);
+    const work06Input = document.querySelector('.quantity-input[data-id="WORK06"]');
+    if (work06Input) work06Input.value = totalNeonLength.toFixed(2);
     
     const requiredPower = totalNeonLength * 10 * 1.4;
-    document.getElementById('required-power-display').textContent = requiredPower.toFixed(1);
+    const powerDisplay = document.getElementById('required-power-display');
+    if (powerDisplay) powerDisplay.textContent = requiredPower.toFixed(1);
 
-    db.forEach(item => {
+    catalog.forEach(item => {
         const row = document.getElementById(`row-${item.id}`);
+        if (!row) return;
         const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
         const currentCost = parseFloat(row.querySelector('.cost-input').value) || 0;
         const costPrice = currentCost * quantity;
@@ -659,23 +927,25 @@ function calculate() {
         let retailPrice = 0;
         
         if (quantity > 0) {
-            if (item.category === 'Материалы') {
-                const coeff = (item.subcategory === 'Производство подложки') ? coeffs.assembly : coeffs.goods;
-                retailPrice = costPrice * coeff;
+            if (item.pricingKind === 'goods') {
+                retailPrice = costPrice * coeffs.goods;
                 summary.goods += retailPrice;
-            } else if (item.subcategory === 'Дизайн макета') {
+            } else if (item.pricingKind === 'design') {
                 retailPrice = costPrice * coeffs.design;
                 summary.design += retailPrice;
                 summary.payDesigner += costPrice;
-            } else if (item.subcategory === 'Сборка') {
+            } else if (item.pricingKind === 'assembly') {
                 retailPrice = costPrice * coeffs.assembly;
                 summary.assembly += retailPrice;
                 summary.payMaster += costPrice;
-            } else if (item.subcategory === 'Монтаж') {
+            } else if (item.pricingKind === 'montage') {
                 const coeff = item.coeff === 1 ? 1 : coeffs.montage;
                 retailPrice = costPrice * coeff;
                 summary.mounting += retailPrice;
                 summary.payInstaller += costPrice;
+            } else {
+                retailPrice = costPrice;
+                summary.goods += retailPrice;
             }
         }
         row.querySelector('.retail-price').value = quantity ? Math.round(retailPrice) + ' ₽' : '';

@@ -550,11 +550,12 @@ body {
 .snapshot-hint {
   margin-top: 14px;
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 0.84rem;
 }
 
 .snapshot-table {
   min-width: max-content;
+  font-size: 12px;
 }
 
 .snapshot-row-head {
@@ -586,13 +587,84 @@ body {
 
 .formula-dot {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  width: 4px;
-  height: 4px;
+  top: 6px;
+  right: 6px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  opacity: 0.45;
+  opacity: 0.18;
+}
+
+.snapshot-cell .formula-dot {
+  display: none;
+}
+
+.snapshot-source-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(141, 118, 81, 0.18);
+  background: #fff;
+  color: var(--ink-strong);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.snapshot-source-panel {
+  margin-top: 16px;
+}
+
+.snapshot-source-panel.collapsed .table-shell {
+  display: none;
+}
+
+.metric-deck {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.metric-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.metric-deck-card {
+  border: 1px solid rgba(141, 118, 81, 0.16);
+  border-radius: 16px;
+  background: rgba(255, 252, 246, 0.92);
+  padding: 12px 14px;
+  box-shadow: 0 10px 24px rgba(23, 33, 43, 0.04);
+}
+
+.metric-deck-card strong {
+  display: block;
+  font-size: 0.92rem;
+  color: #17212b;
+  margin-bottom: 8px;
+}
+
+.metric-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.metric-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: rgba(33, 82, 135, 0.08);
+  color: #24456e;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 .table-shell thead th {

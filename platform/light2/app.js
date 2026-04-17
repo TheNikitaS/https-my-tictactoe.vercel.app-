@@ -1,9 +1,9 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260412-light2-safe47";
+const LIGHT2_BUILD = "20260417-light2-safe51";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -13,11 +13,11 @@ const LIGHT2_UI_KEYS = {
 };
 
 const WORKBOOK_IMPORT_SHEETS = [
-  "Баланс",
-  "Платежный календарь",
-  "Активы",
-  "Закупки",
-  "Взаиморасчет с мастерами"
+  "Р‘Р°Р»Р°РЅСЃ",
+  "РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ",
+  "РђРєС‚РёРІС‹",
+  "Р—Р°РєСѓРїРєРё",
+  "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ СЃ РјР°СЃС‚РµСЂР°РјРё"
 ];
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -29,33 +29,33 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 });
 
 const BALANCE_ACCOUNTS = [
-  { value: "cash_card", label: "Наличные / карта" },
-  { value: "ooo_account", label: "Счёт ООО" },
-  { value: "ip_account", label: "Счёт ИП" }
+  { value: "cash_card", label: "РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°" },
+  { value: "ooo_account", label: "РЎС‡С‘С‚ РћРћРћ" },
+  { value: "ip_account", label: "РЎС‡С‘С‚ РРџ" }
 ];
 
 const CALENDAR_ACCOUNTS = [
-  { value: "Наличные / карта", label: "Наличные / карта" },
-  { value: "Счёт ООО", label: "Счёт ООО" },
-  { value: "Счёт ИП", label: "Счёт ИП" },
-  { value: "Не распределено", label: "Не распределено" }
+  { value: "РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°", label: "РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°" },
+  { value: "РЎС‡С‘С‚ РћРћРћ", label: "РЎС‡С‘С‚ РћРћРћ" },
+  { value: "РЎС‡С‘С‚ РРџ", label: "РЎС‡С‘С‚ РРџ" },
+  { value: "РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ", label: "РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ" }
 ];
 
-const CALENDAR_STATUSES = ["Платеж", "Поступление", "Ожидает", "Перенесен", "Отменен"];
+const CALENDAR_STATUSES = ["РџР»Р°С‚РµР¶", "РџРѕСЃС‚СѓРїР»РµРЅРёРµ", "РћР¶РёРґР°РµС‚", "РџРµСЂРµРЅРµСЃРµРЅ", "РћС‚РјРµРЅРµРЅ"];
 
 const MONTH_NAMES = [
-  "Январь",
-  "Февраль",
-  "Март",
-  "Апрель",
-  "Май",
-  "Июнь",
-  "Июль",
-  "Август",
-  "Сентябрь",
-  "Октябрь",
-  "Ноябрь",
-  "Декабрь"
+  "РЇРЅРІР°СЂСЊ",
+  "Р¤РµРІСЂР°Р»СЊ",
+  "РњР°СЂС‚",
+  "РђРїСЂРµР»СЊ",
+  "РњР°Р№",
+  "РСЋРЅСЊ",
+  "РСЋР»СЊ",
+  "РђРІРіСѓСЃС‚",
+  "РЎРµРЅС‚СЏР±СЂСЊ",
+  "РћРєС‚СЏР±СЂСЊ",
+  "РќРѕСЏР±СЂСЊ",
+  "Р”РµРєР°Р±СЂСЊ"
 ];
 const MONTH_NAME_SET = new Set(MONTH_NAMES);
 
@@ -135,234 +135,234 @@ function bindDomEvents(nodes, eventNames, handler, options) {
 
 const SECTION_META = {
   overview: {
-    title: "Обзор",
-    subtitle: "Быстрый вход в рабочие блоки и сверочные листы ДОМ НЕОНА."
+    title: "РћР±Р·РѕСЂ",
+    subtitle: "Р‘С‹СЃС‚СЂС‹Р№ РІС…РѕРґ РІ СЂР°Р±РѕС‡РёРµ Р±Р»РѕРєРё Рё СЃРІРµСЂРѕС‡РЅС‹Рµ Р»РёСЃС‚С‹ Р”РћРњ РќР•РћРќРђ."
   },
   balance: {
-    title: "Баланс",
-    subtitle: "Три контура из исходного листа: наличные / карта, счёт ООО и счёт ИП.",
+    title: "Р‘Р°Р»Р°РЅСЃ",
+    subtitle: "РўСЂРё РєРѕРЅС‚СѓСЂР° РёР· РёСЃС…РѕРґРЅРѕРіРѕ Р»РёСЃС‚Р°: РЅР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°, СЃС‡С‘С‚ РћРћРћ Рё СЃС‡С‘С‚ РРџ.",
     cards: [
       {
-        title: "Наличные / карта",
-        text: "Быстрый перенос с теми же сущностями, что и в Excel.",
-        items: ["Дата", "Приход", "Расход", "Баланс", "Комментарий"]
+        title: "РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°",
+        text: "Р‘С‹СЃС‚СЂС‹Р№ РїРµСЂРµРЅРѕСЃ СЃ С‚РµРјРё Р¶Рµ СЃСѓС‰РЅРѕСЃС‚СЏРјРё, С‡С‚Рѕ Рё РІ Excel.",
+        items: ["Р”Р°С‚Р°", "РџСЂРёС…РѕРґ", "Р Р°СЃС…РѕРґ", "Р‘Р°Р»Р°РЅСЃ", "РљРѕРјРјРµРЅС‚Р°СЂРёР№"]
       },
       {
-        title: "Счёт ООО",
-        text: "Второй контур учета с отдельным потоком операций.",
-        items: ["Дата", "Приход", "Расход", "Баланс"]
+        title: "РЎС‡С‘С‚ РћРћРћ",
+        text: "Р’С‚РѕСЂРѕР№ РєРѕРЅС‚СѓСЂ СѓС‡РµС‚Р° СЃ РѕС‚РґРµР»СЊРЅС‹Рј РїРѕС‚РѕРєРѕРј РѕРїРµСЂР°С†РёР№.",
+        items: ["Р”Р°С‚Р°", "РџСЂРёС…РѕРґ", "Р Р°СЃС…РѕРґ", "Р‘Р°Р»Р°РЅСЃ"]
       },
       {
-        title: "Счёт ИП",
-        text: "Третий денежный контур, который уже был в исходном файле.",
-        items: ["Дата", "Приход", "Расход", "Баланс"]
+        title: "РЎС‡С‘С‚ РРџ",
+        text: "РўСЂРµС‚РёР№ РґРµРЅРµР¶РЅС‹Р№ РєРѕРЅС‚СѓСЂ, РєРѕС‚РѕСЂС‹Р№ СѓР¶Рµ Р±С‹Р» РІ РёСЃС…РѕРґРЅРѕРј С„Р°Р№Р»Рµ.",
+        items: ["Р”Р°С‚Р°", "РџСЂРёС…РѕРґ", "Р Р°СЃС…РѕРґ", "Р‘Р°Р»Р°РЅСЃ"]
       }
     ]
   },
   calendar: {
-    title: "Платежный календарь",
-    subtitle: "Платежи, контрагенты, статьи, счета и статусы распределения.",
+    title: "РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ",
+    subtitle: "РџР»Р°С‚РµР¶Рё, РєРѕРЅС‚СЂР°РіРµРЅС‚С‹, СЃС‚Р°С‚СЊРё, СЃС‡РµС‚Р° Рё СЃС‚Р°С‚СѓСЃС‹ СЂР°СЃРїСЂРµРґРµР»РµРЅРёСЏ.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Структура уже зафиксирована для следующего этапа миграции.",
-        items: ["Дата платежа", "Контрагент", "Сумма", "Тип операции", "Статья", "Счет", "Статус", "Комментарий"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РЎС‚СЂСѓРєС‚СѓСЂР° СѓР¶Рµ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅР° РґР»СЏ СЃР»РµРґСѓСЋС‰РµРіРѕ СЌС‚Р°РїР° РјРёРіСЂР°С†РёРё.",
+        items: ["Р”Р°С‚Р° РїР»Р°С‚РµР¶Р°", "РљРѕРЅС‚СЂР°РіРµРЅС‚", "РЎСѓРјРјР°", "РўРёРї РѕРїРµСЂР°С†РёРё", "РЎС‚Р°С‚СЊСЏ", "РЎС‡РµС‚", "РЎС‚Р°С‚СѓСЃ", "РљРѕРјРјРµРЅС‚Р°СЂРёР№"]
       }
     ]
   },
   assets: {
-    title: "Активы",
-    subtitle: "Активы, стоимость, выплаты и текстовые комментарии.",
+    title: "РђРєС‚РёРІС‹",
+    subtitle: "РђРєС‚РёРІС‹, СЃС‚РѕРёРјРѕСЃС‚СЊ, РІС‹РїР»Р°С‚С‹ Рё С‚РµРєСЃС‚РѕРІС‹Рµ РєРѕРјРјРµРЅС‚Р°СЂРёРё.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Карточки активов и отдельный журнал выплат уже работают внутри платформы.",
-        items: ["Актив", "Стоимость", "Выплачено", "Комментарий"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РљР°СЂС‚РѕС‡РєРё Р°РєС‚РёРІРѕРІ Рё РѕС‚РґРµР»СЊРЅС‹Р№ Р¶СѓСЂРЅР°Р» РІС‹РїР»Р°С‚ СѓР¶Рµ СЂР°Р±РѕС‚Р°СЋС‚ РІРЅСѓС‚СЂРё РїР»Р°С‚С„РѕСЂРјС‹.",
+        items: ["РђРєС‚РёРІ", "РЎС‚РѕРёРјРѕСЃС‚СЊ", "Р’С‹РїР»Р°С‡РµРЅРѕ", "РљРѕРјРјРµРЅС‚Р°СЂРёР№"]
       }
     ]
   },
   settlements: {
-    title: "Взаиморасчеты",
-    subtitle: "Полный блок сверки с мастерами и партнерами внутри ДОМ НЕОНА.",
+    title: "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹",
+    subtitle: "РџРѕР»РЅС‹Р№ Р±Р»РѕРє СЃРІРµСЂРєРё СЃ РјР°СЃС‚РµСЂР°РјРё Рё РїР°СЂС‚РЅРµСЂР°РјРё РІРЅСѓС‚СЂРё Р”РћРњ РќР•РћРќРђ.",
     cards: [
       {
-        title: "Поля исходного листа",
-        text: "Блок вынесен в отдельную таблицу Supabase с доступом по партнеру.",
-        items: ["Период", "Имя мастера / партнера", "ЗП мастера", "Покупки мастера", "Итог взаиморасчета", "Кто кому должен", "Статус"]
+        title: "РџРѕР»СЏ РёСЃС…РѕРґРЅРѕРіРѕ Р»РёСЃС‚Р°",
+        text: "Р‘Р»РѕРє РІС‹РЅРµСЃРµРЅ РІ РѕС‚РґРµР»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ Supabase СЃ РґРѕСЃС‚СѓРїРѕРј РїРѕ РїР°СЂС‚РЅРµСЂСѓ.",
+        items: ["РџРµСЂРёРѕРґ", "РРјСЏ РјР°СЃС‚РµСЂР° / РїР°СЂС‚РЅРµСЂР°", "Р—Рџ РјР°СЃС‚РµСЂР°", "РџРѕРєСѓРїРєРё РјР°СЃС‚РµСЂР°", "РС‚РѕРі РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚Р°", "РљС‚Рѕ РєРѕРјСѓ РґРѕР»Р¶РµРЅ", "РЎС‚Р°С‚СѓСЃ"]
       }
     ]
   },
   purchases: {
-    title: "Закупки",
-    subtitle: "Нормализованный каталог закупок с поставщиками, категориями, артикулами и ценами.",
+    title: "Р—Р°РєСѓРїРєРё",
+    subtitle: "РќРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅС‹Р№ РєР°С‚Р°Р»РѕРі Р·Р°РєСѓРїРѕРє СЃ РїРѕСЃС‚Р°РІС‰РёРєР°РјРё, РєР°С‚РµРіРѕСЂРёСЏРјРё, Р°СЂС‚РёРєСѓР»Р°РјРё Рё С†РµРЅР°РјРё.",
     cards: [
       {
-        title: "Поля каталога",
-        text: "Закупки уже вынесены в удобный каталог, который дальше можно будет связать со складом и оплатами.",
-        items: ["Поставщик", "Город", "Категория", "Артикул", "Позиция", "Единица", "Цена"]
+        title: "РџРѕР»СЏ РєР°С‚Р°Р»РѕРіР°",
+        text: "Р—Р°РєСѓРїРєРё СѓР¶Рµ РІС‹РЅРµСЃРµРЅС‹ РІ СѓРґРѕР±РЅС‹Р№ РєР°С‚Р°Р»РѕРі, РєРѕС‚РѕСЂС‹Р№ РґР°Р»СЊС€Рµ РјРѕР¶РЅРѕ Р±СѓРґРµС‚ СЃРІСЏР·Р°С‚СЊ СЃРѕ СЃРєР»Р°РґРѕРј Рё РѕРїР»Р°С‚Р°РјРё.",
+        items: ["РџРѕСЃС‚Р°РІС‰РёРє", "Р“РѕСЂРѕРґ", "РљР°С‚РµРіРѕСЂРёСЏ", "РђСЂС‚РёРєСѓР»", "РџРѕР·РёС†РёСЏ", "Р•РґРёРЅРёС†Р°", "Р¦РµРЅР°"]
       }
     ]
   },
   leadgen: {
-    title: "Лидогенерация",
-    subtitle: "Сводка по рекламе, площадкам, директу и посадочным страницам.",
+    title: "Р›РёРґРѕРіРµРЅРµСЂР°С†РёСЏ",
+    subtitle: "РЎРІРѕРґРєР° РїРѕ СЂРµРєР»Р°РјРµ, РїР»РѕС‰Р°РґРєР°Рј, РґРёСЂРµРєС‚Сѓ Рё РїРѕСЃР°РґРѕС‡РЅС‹Рј СЃС‚СЂР°РЅРёС†Р°Рј.",
     cards: [
       {
-        title: "Директ / фразы",
-        text: "В исходнике есть отдельный лист со страницами и ключевыми фразами.",
-        items: ["РСЯ", "Поиск", "Страница", "Фраза"]
+        title: "Р”РёСЂРµРєС‚ / С„СЂР°Р·С‹",
+        text: "Р’ РёСЃС…РѕРґРЅРёРєРµ РµСЃС‚СЊ РѕС‚РґРµР»СЊРЅС‹Р№ Р»РёСЃС‚ СЃРѕ СЃС‚СЂР°РЅРёС†Р°РјРё Рё РєР»СЋС‡РµРІС‹РјРё С„СЂР°Р·Р°РјРё.",
+        items: ["Р РЎРЇ", "РџРѕРёСЃРє", "РЎС‚СЂР°РЅРёС†Р°", "Р¤СЂР°Р·Р°"]
       },
       {
-        title: "Расходы и эффективность",
-        text: "Отдельно зафиксированы расходы, показы и цена показа.",
-        items: ["Расходы", "Показы", "Цена показа", "Месяц", "Изменение", "Процент"]
+        title: "Р Р°СЃС…РѕРґС‹ Рё СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚СЊ",
+        text: "РћС‚РґРµР»СЊРЅРѕ Р·Р°С„РёРєСЃРёСЂРѕРІР°РЅС‹ СЂР°СЃС…РѕРґС‹, РїРѕРєР°Р·С‹ Рё С†РµРЅР° РїРѕРєР°Р·Р°.",
+        items: ["Р Р°СЃС…РѕРґС‹", "РџРѕРєР°Р·С‹", "Р¦РµРЅР° РїРѕРєР°Р·Р°", "РњРµСЃСЏС†", "РР·РјРµРЅРµРЅРёРµ", "РџСЂРѕС†РµРЅС‚"]
       }
     ],
-    snapshotSheet: "Лидогенерация"
+    snapshotSheet: "Р›РёРґРѕРіРµРЅРµСЂР°С†РёСЏ"
   },
   metrics: {
-    title: "Метрики",
-    subtitle: "Месячные блоки по выручке, себестоимости и процентной динамике.",
+    title: "РњРµС‚СЂРёРєРё",
+    subtitle: "РњРµСЃСЏС‡РЅС‹Рµ Р±Р»РѕРєРё РїРѕ РІС‹СЂСѓС‡РєРµ, СЃРµР±РµСЃС‚РѕРёРјРѕСЃС‚Рё Рё РїСЂРѕС†РµРЅС‚РЅРѕР№ РґРёРЅР°РјРёРєРµ.",
     cards: [
       {
-        title: "Финансовые статьи",
-        text: "Таблица уже размечена под перенос в нормальную аналитику.",
-        items: ["Статья", "Сумма", "Деньги", "Процент", "Месяц", "Изменения"]
+        title: "Р¤РёРЅР°РЅСЃРѕРІС‹Рµ СЃС‚Р°С‚СЊРё",
+        text: "РўР°Р±Р»РёС†Р° СѓР¶Рµ СЂР°Р·РјРµС‡РµРЅР° РїРѕРґ РїРµСЂРµРЅРѕСЃ РІ РЅРѕСЂРјР°Р»СЊРЅСѓСЋ Р°РЅР°Р»РёС‚РёРєСѓ.",
+        items: ["РЎС‚Р°С‚СЊСЏ", "РЎСѓРјРјР°", "Р”РµРЅСЊРіРё", "РџСЂРѕС†РµРЅС‚", "РњРµСЃСЏС†", "РР·РјРµРЅРµРЅРёСЏ"]
       }
     ],
-    snapshotSheet: "Метрики"
+    snapshotSheet: "РњРµС‚СЂРёРєРё"
   },
   finance: {
-    title: "Финмодель",
-    subtitle: "Годовая рамка и ключевые показатели по месяцам.",
+    title: "Р¤РёРЅРјРѕРґРµР»СЊ",
+    subtitle: "Р“РѕРґРѕРІР°СЏ СЂР°РјРєР° Рё РєР»СЋС‡РµРІС‹Рµ РїРѕРєР°Р·Р°С‚РµР»Рё РїРѕ РјРµСЃСЏС†Р°Рј.",
     cards: [
       {
-        title: "Каркас листа",
-        text: "Подготовлено место под верхнеуровневую финмодель.",
-        items: ["Статья", "Месяц", "Сумма", "По дате", "Год"]
+        title: "РљР°СЂРєР°СЃ Р»РёСЃС‚Р°",
+        text: "РџРѕРґРіРѕС‚РѕРІР»РµРЅРѕ РјРµСЃС‚Рѕ РїРѕРґ РІРµСЂС…РЅРµСѓСЂРѕРІРЅРµРІСѓСЋ С„РёРЅРјРѕРґРµР»СЊ.",
+        items: ["РЎС‚Р°С‚СЊСЏ", "РњРµСЃСЏС†", "РЎСѓРјРјР°", "РџРѕ РґР°С‚Рµ", "Р“РѕРґ"]
       }
     ],
-    snapshotSheet: "ФинМодель"
+    snapshotSheet: "Р¤РёРЅРњРѕРґРµР»СЊ"
   },
   avito: {
-    title: "Авито",
-    subtitle: "Ежедневная воронка Авито: расход, просмотры, лиды и заказы.",
+    title: "РђРІРёС‚Рѕ",
+    subtitle: "Р•Р¶РµРґРЅРµРІРЅР°СЏ РІРѕСЂРѕРЅРєР° РђРІРёС‚Рѕ: СЂР°СЃС…РѕРґ, РїСЂРѕСЃРјРѕС‚СЂС‹, Р»РёРґС‹ Рё Р·Р°РєР°Р·С‹.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Снимок ежедневной эффективности уже доступен внутри платформы.",
-        items: ["Дата", "Расход", "Просмотры / клики", "Контакты / лиды", "Заказ", "Цена заказа"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РЎРЅРёРјРѕРє РµР¶РµРґРЅРµРІРЅРѕР№ СЌС„С„РµРєС‚РёРІРЅРѕСЃС‚Рё СѓР¶Рµ РґРѕСЃС‚СѓРїРµРЅ РІРЅСѓС‚СЂРё РїР»Р°С‚С„РѕСЂРјС‹.",
+        items: ["Р”Р°С‚Р°", "Р Р°СЃС…РѕРґ", "РџСЂРѕСЃРјРѕС‚СЂС‹ / РєР»РёРєРё", "РљРѕРЅС‚Р°РєС‚С‹ / Р»РёРґС‹", "Р—Р°РєР°Р·", "Р¦РµРЅР° Р·Р°РєР°Р·Р°"]
       }
     ],
-    snapshotSheet: "Авито"
+    snapshotSheet: "РђРІРёС‚Рѕ"
   },
   direct: {
-    title: "Директ",
-    subtitle: "Страницы, ключи и частотность по рекламному спросу.",
+    title: "Р”РёСЂРµРєС‚",
+    subtitle: "РЎС‚СЂР°РЅРёС†С‹, РєР»СЋС‡Рё Рё С‡Р°СЃС‚РѕС‚РЅРѕСЃС‚СЊ РїРѕ СЂРµРєР»Р°РјРЅРѕРјСѓ СЃРїСЂРѕСЃСѓ.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Полный справочник фраз и спроса вынесен как сверочный лист.",
-        items: ["Страница", "Фраза", "Число запросов", "Показов в месяц"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РџРѕР»РЅС‹Р№ СЃРїСЂР°РІРѕС‡РЅРёРє С„СЂР°Р· Рё СЃРїСЂРѕСЃР° РІС‹РЅРµСЃРµРЅ РєР°Рє СЃРІРµСЂРѕС‡РЅС‹Р№ Р»РёСЃС‚.",
+        items: ["РЎС‚СЂР°РЅРёС†Р°", "Р¤СЂР°Р·Р°", "Р§РёСЃР»Рѕ Р·Р°РїСЂРѕСЃРѕРІ", "РџРѕРєР°Р·РѕРІ РІ РјРµСЃСЏС†"]
       }
     ],
-    snapshotSheet: "Директ"
+    snapshotSheet: "Р”РёСЂРµРєС‚"
   },
   neon_usage: {
-    title: "Расход неона",
-    subtitle: "Матрица расхода неона по цветам, периодам и каналам.",
+    title: "Р Р°СЃС…РѕРґ РЅРµРѕРЅР°",
+    subtitle: "РњР°С‚СЂРёС†Р° СЂР°СЃС…РѕРґР° РЅРµРѕРЅР° РїРѕ С†РІРµС‚Р°Рј, РїРµСЂРёРѕРґР°Рј Рё РєР°РЅР°Р»Р°Рј.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Снимок расчетов по цветам и расходу сохранен для сверки.",
-        items: ["Цвет", "Период", "Расход", "Итоги"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РЎРЅРёРјРѕРє СЂР°СЃС‡РµС‚РѕРІ РїРѕ С†РІРµС‚Р°Рј Рё СЂР°СЃС…РѕРґСѓ СЃРѕС…СЂР°РЅРµРЅ РґР»СЏ СЃРІРµСЂРєРё.",
+        items: ["Р¦РІРµС‚", "РџРµСЂРёРѕРґ", "Р Р°СЃС…РѕРґ", "РС‚РѕРіРё"]
       }
     ],
-    snapshotSheet: "Расход неона по цветам"
+    snapshotSheet: "Р Р°СЃС…РѕРґ РЅРµРѕРЅР° РїРѕ С†РІРµС‚Р°Рј"
   },
   events: {
-    title: "Мероприятия",
-    subtitle: "Календарь мероприятий и связанных операционных отметок.",
+    title: "РњРµСЂРѕРїСЂРёСЏС‚РёСЏ",
+    subtitle: "РљР°Р»РµРЅРґР°СЂСЊ РјРµСЂРѕРїСЂРёСЏС‚РёР№ Рё СЃРІСЏР·Р°РЅРЅС‹С… РѕРїРµСЂР°С†РёРѕРЅРЅС‹С… РѕС‚РјРµС‚РѕРє.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Лист перенесен для общей видимости и дальнейшей доработки.",
-        items: ["Дата", "Событие", "План", "Итог"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "Р›РёСЃС‚ РїРµСЂРµРЅРµСЃРµРЅ РґР»СЏ РѕР±С‰РµР№ РІРёРґРёРјРѕСЃС‚Рё Рё РґР°Р»СЊРЅРµР№С€РµР№ РґРѕСЂР°Р±РѕС‚РєРё.",
+        items: ["Р”Р°С‚Р°", "РЎРѕР±С‹С‚РёРµ", "РџР»Р°РЅ", "РС‚РѕРі"]
       }
     ],
-    snapshotSheet: "Мероприятия"
+    snapshotSheet: "РњРµСЂРѕРїСЂРёСЏС‚РёСЏ"
   },
   risks: {
-    title: "Риски",
-    subtitle: "Решения, риски и рабочие вопросы по управлению.",
+    title: "Р РёСЃРєРё",
+    subtitle: "Р РµС€РµРЅРёСЏ, СЂРёСЃРєРё Рё СЂР°Р±РѕС‡РёРµ РІРѕРїСЂРѕСЃС‹ РїРѕ СѓРїСЂР°РІР»РµРЅРёСЋ.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Лист перенесен для управленческой фиксации и обзора.",
-        items: ["Категория", "Описание", "Решение", "Комментарий"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "Р›РёСЃС‚ РїРµСЂРµРЅРµСЃРµРЅ РґР»СЏ СѓРїСЂР°РІР»РµРЅС‡РµСЃРєРѕР№ С„РёРєСЃР°С†РёРё Рё РѕР±Р·РѕСЂР°.",
+        items: ["РљР°С‚РµРіРѕСЂРёСЏ", "РћРїРёСЃР°РЅРёРµ", "Р РµС€РµРЅРёРµ", "РљРѕРјРјРµРЅС‚Р°СЂРёР№"]
       }
     ],
-    snapshotSheet: "Решения и риски"
+    snapshotSheet: "Р РµС€РµРЅРёСЏ Рё СЂРёСЃРєРё"
   },
   data: {
-    title: "Данные",
-    subtitle: "Справочные данные и базовые таблицы из исходника.",
+    title: "Р”Р°РЅРЅС‹Рµ",
+    subtitle: "РЎРїСЂР°РІРѕС‡РЅС‹Рµ РґР°РЅРЅС‹Рµ Рё Р±Р°Р·РѕРІС‹Рµ С‚Р°Р±Р»РёС†С‹ РёР· РёСЃС…РѕРґРЅРёРєР°.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Справочная подложка перенесена для контроля формул и коэффициентов.",
-        items: ["Параметр", "Значение", "Комментарий"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РЎРїСЂР°РІРѕС‡РЅР°СЏ РїРѕРґР»РѕР¶РєР° РїРµСЂРµРЅРµСЃРµРЅР° РґР»СЏ РєРѕРЅС‚СЂРѕР»СЏ С„РѕСЂРјСѓР» Рё РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ.",
+        items: ["РџР°СЂР°РјРµС‚СЂ", "Р—РЅР°С‡РµРЅРёРµ", "РљРѕРјРјРµРЅС‚Р°СЂРёР№"]
       }
     ],
-    snapshotSheet: "Данные"
+    snapshotSheet: "Р”Р°РЅРЅС‹Рµ"
   },
   forecast: {
-    title: "Прогноз",
-    subtitle: "Оборот, расход, маржа, чек, продажи и прибыль.",
+    title: "РџСЂРѕРіРЅРѕР·",
+    subtitle: "РћР±РѕСЂРѕС‚, СЂР°СЃС…РѕРґ, РјР°СЂР¶Р°, С‡РµРє, РїСЂРѕРґР°Р¶Рё Рё РїСЂРёР±С‹Р»СЊ.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Прогнозный блок перенесен как часть общего контура ДОМ НЕОНА.",
-        items: ["Оборот", "Расход", "Маржа", "Чек", "Продаж", "Прибыль"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РџСЂРѕРіРЅРѕР·РЅС‹Р№ Р±Р»РѕРє РїРµСЂРµРЅРµСЃРµРЅ РєР°Рє С‡Р°СЃС‚СЊ РѕР±С‰РµРіРѕ РєРѕРЅС‚СѓСЂР° Р”РћРњ РќР•РћРќРђ.",
+        items: ["РћР±РѕСЂРѕС‚", "Р Р°СЃС…РѕРґ", "РњР°СЂР¶Р°", "Р§РµРє", "РџСЂРѕРґР°Р¶", "РџСЂРёР±С‹Р»СЊ"]
       }
     ],
-    snapshotSheet: "Прогноз"
+    snapshotSheet: "РџСЂРѕРіРЅРѕР·"
   },
   franchises: {
-    title: "Франшизы",
-    subtitle: "Площадки франшиз и связанные рабочие заметки.",
+    title: "Р¤СЂР°РЅС€РёР·С‹",
+    subtitle: "РџР»РѕС‰Р°РґРєРё С„СЂР°РЅС€РёР· Рё СЃРІСЏР·Р°РЅРЅС‹Рµ СЂР°Р±РѕС‡РёРµ Р·Р°РјРµС‚РєРё.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Справочник площадок сохранен внутри платформы.",
-        items: ["Площадка", "Описание"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "РЎРїСЂР°РІРѕС‡РЅРёРє РїР»РѕС‰Р°РґРѕРє СЃРѕС…СЂР°РЅРµРЅ РІРЅСѓС‚СЂРё РїР»Р°С‚С„РѕСЂРјС‹.",
+        items: ["РџР»РѕС‰Р°РґРєР°", "РћРїРёСЃР°РЅРёРµ"]
       }
     ],
-    snapshotSheet: "Площадки франшиз"
+    snapshotSheet: "РџР»РѕС‰Р°РґРєРё С„СЂР°РЅС€РёР·"
   },
   questions: {
-    title: "Вопросы",
-    subtitle: "Открытые вопросы, вынесенные из исходной модели.",
+    title: "Р’РѕРїСЂРѕСЃС‹",
+    subtitle: "РћС‚РєСЂС‹С‚С‹Рµ РІРѕРїСЂРѕСЃС‹, РІС‹РЅРµСЃРµРЅРЅС‹Рµ РёР· РёСЃС…РѕРґРЅРѕР№ РјРѕРґРµР»Рё.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Лист перенесен как список вопросов для следующего управленческого цикла.",
-        items: ["Вопрос", "Комментарий"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "Р›РёСЃС‚ РїРµСЂРµРЅРµСЃРµРЅ РєР°Рє СЃРїРёСЃРѕРє РІРѕРїСЂРѕСЃРѕРІ РґР»СЏ СЃР»РµРґСѓСЋС‰РµРіРѕ СѓРїСЂР°РІР»РµРЅС‡РµСЃРєРѕРіРѕ С†РёРєР»Р°.",
+        items: ["Р’РѕРїСЂРѕСЃ", "РљРѕРјРјРµРЅС‚Р°СЂРёР№"]
       }
     ],
-    snapshotSheet: "Вопросы"
+    snapshotSheet: "Р’РѕРїСЂРѕСЃС‹"
   },
   lead_calc: {
-    title: "Калькулятор лида",
-    subtitle: "Компактный расчетный лист лидогенерации.",
+    title: "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂ Р»РёРґР°",
+    subtitle: "РљРѕРјРїР°РєС‚РЅС‹Р№ СЂР°СЃС‡РµС‚РЅС‹Р№ Р»РёСЃС‚ Р»РёРґРѕРіРµРЅРµСЂР°С†РёРё.",
     cards: [
       {
-        title: "Поля листа",
-        text: "Формулы и текущие значения сохранены для сверки.",
-        items: ["Показатель", "Значение"]
+        title: "РџРѕР»СЏ Р»РёСЃС‚Р°",
+        text: "Р¤РѕСЂРјСѓР»С‹ Рё С‚РµРєСѓС‰РёРµ Р·РЅР°С‡РµРЅРёСЏ СЃРѕС…СЂР°РЅРµРЅС‹ РґР»СЏ СЃРІРµСЂРєРё.",
+        items: ["РџРѕРєР°Р·Р°С‚РµР»СЊ", "Р—РЅР°С‡РµРЅРёРµ"]
       }
     ],
-    snapshotSheet: "Калькулятор Лидогереации"
+    snapshotSheet: "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂ Р›РёРґРѕРіРµСЂРµР°С†РёРё"
   }
 };
 
@@ -371,18 +371,18 @@ const LIVE_SECTION_BUILDERS = {
     filterKeys: ["partner", "status", "search"],
     tables: {
       main: {
-        label: "Взаиморасчеты",
+        label: "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹",
         columns: [
-          { key: "period_label", label: "Период" },
-          { key: "partner_label", label: "Партнер" },
-          { key: "salary_amount", label: "ЗП, ₽" },
-          { key: "purchase_amount", label: "Покупки, ₽" },
-          { key: "settlement_total", label: "Итог, ₽" },
-          { key: "direction", label: "Кто кому должен" },
-          { key: "status", label: "Статус" },
-          { key: "note", label: "Комментарий" },
-          { key: "updated_at", label: "Обновлено" },
-          { key: "actions", label: "Действия" }
+          { key: "period_label", label: "РџРµСЂРёРѕРґ" },
+          { key: "partner_label", label: "РџР°СЂС‚РЅРµСЂ" },
+          { key: "salary_amount", label: "Р—Рџ, в‚Ѕ" },
+          { key: "purchase_amount", label: "РџРѕРєСѓРїРєРё, в‚Ѕ" },
+          { key: "settlement_total", label: "РС‚РѕРі, в‚Ѕ" },
+          { key: "direction", label: "РљС‚Рѕ РєРѕРјСѓ РґРѕР»Р¶РµРЅ" },
+          { key: "status", label: "РЎС‚Р°С‚СѓСЃ" },
+          { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№" },
+          { key: "updated_at", label: "РћР±РЅРѕРІР»РµРЅРѕ" },
+          { key: "actions", label: "Р”РµР№СЃС‚РІРёСЏ" }
         ]
       }
     }
@@ -391,16 +391,16 @@ const LIVE_SECTION_BUILDERS = {
     filterKeys: ["account", "month", "search"],
     tables: {
       main: {
-        label: "Баланс",
+        label: "Р‘Р°Р»Р°РЅСЃ",
         columns: [
-          { key: "entry_date", label: "Дата" },
-          { key: "account_type", label: "Счет" },
-          { key: "income_amount", label: "Приход, ₽" },
-          { key: "expense_amount", label: "Расход, ₽" },
-          { key: "running_total", label: "Баланс, ₽" },
-          { key: "note", label: "Комментарий" },
-          { key: "updated_at", label: "Обновлено" },
-          { key: "actions", label: "Действия" }
+          { key: "entry_date", label: "Р”Р°С‚Р°" },
+          { key: "account_type", label: "РЎС‡РµС‚" },
+          { key: "income_amount", label: "РџСЂРёС…РѕРґ, в‚Ѕ" },
+          { key: "expense_amount", label: "Р Р°СЃС…РѕРґ, в‚Ѕ" },
+          { key: "running_total", label: "Р‘Р°Р»Р°РЅСЃ, в‚Ѕ" },
+          { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№" },
+          { key: "updated_at", label: "РћР±РЅРѕРІР»РµРЅРѕ" },
+          { key: "actions", label: "Р”РµР№СЃС‚РІРёСЏ" }
         ]
       }
     }
@@ -409,18 +409,18 @@ const LIVE_SECTION_BUILDERS = {
     filterKeys: ["month", "operation", "account", "status", "search"],
     tables: {
       main: {
-        label: "Платежный календарь",
+        label: "РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ",
         columns: [
-          { key: "payment_date", label: "Дата платежа" },
-          { key: "counterparty", label: "Контрагент" },
-          { key: "signed_amount", label: "Сумма, ₽" },
-          { key: "operation_type", label: "Тип" },
-          { key: "category", label: "Статья" },
-          { key: "account_name", label: "Счет" },
-          { key: "status", label: "Статус" },
-          { key: "note", label: "Комментарий" },
-          { key: "updated_at", label: "Обновлено" },
-          { key: "actions", label: "Действия" }
+          { key: "payment_date", label: "Р”Р°С‚Р° РїР»Р°С‚РµР¶Р°" },
+          { key: "counterparty", label: "РљРѕРЅС‚СЂР°РіРµРЅС‚" },
+          { key: "signed_amount", label: "РЎСѓРјРјР°, в‚Ѕ" },
+          { key: "operation_type", label: "РўРёРї" },
+          { key: "category", label: "РЎС‚Р°С‚СЊСЏ" },
+          { key: "account_name", label: "РЎС‡РµС‚" },
+          { key: "status", label: "РЎС‚Р°С‚СѓСЃ" },
+          { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№" },
+          { key: "updated_at", label: "РћР±РЅРѕРІР»РµРЅРѕ" },
+          { key: "actions", label: "Р”РµР№СЃС‚РІРёСЏ" }
         ]
       }
     }
@@ -429,26 +429,26 @@ const LIVE_SECTION_BUILDERS = {
     filterKeys: ["search", "payment_filter", "payment_search"],
     tables: {
       assets: {
-        label: "Активы",
+        label: "РђРєС‚РёРІС‹",
         columns: [
-          { key: "asset_name", label: "Актив" },
-          { key: "asset_value", label: "Стоимость, ₽" },
-          { key: "paid_total", label: "Выплачено, ₽" },
-          { key: "remaining_amount", label: "Остаток, ₽" },
-          { key: "note", label: "Комментарий" },
-          { key: "updated_at", label: "Обновлено" },
-          { key: "actions", label: "Действия" }
+          { key: "asset_name", label: "РђРєС‚РёРІ" },
+          { key: "asset_value", label: "РЎС‚РѕРёРјРѕСЃС‚СЊ, в‚Ѕ" },
+          { key: "paid_total", label: "Р’С‹РїР»Р°С‡РµРЅРѕ, в‚Ѕ" },
+          { key: "remaining_amount", label: "РћСЃС‚Р°С‚РѕРє, в‚Ѕ" },
+          { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№" },
+          { key: "updated_at", label: "РћР±РЅРѕРІР»РµРЅРѕ" },
+          { key: "actions", label: "Р”РµР№СЃС‚РІРёСЏ" }
         ]
       },
       payments: {
-        label: "Выплаты по активам",
+        label: "Р’С‹РїР»Р°С‚С‹ РїРѕ Р°РєС‚РёРІР°Рј",
         columns: [
-          { key: "payment_date", label: "Дата выплаты" },
-          { key: "asset_label", label: "Актив" },
-          { key: "payment_amount", label: "Сумма, ₽" },
-          { key: "note", label: "Комментарий" },
-          { key: "updated_at", label: "Обновлено" },
-          { key: "actions", label: "Действия" }
+          { key: "payment_date", label: "Р”Р°С‚Р° РІС‹РїР»Р°С‚С‹" },
+          { key: "asset_label", label: "РђРєС‚РёРІ" },
+          { key: "payment_amount", label: "РЎСѓРјРјР°, в‚Ѕ" },
+          { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№" },
+          { key: "updated_at", label: "РћР±РЅРѕРІР»РµРЅРѕ" },
+          { key: "actions", label: "Р”РµР№СЃС‚РІРёСЏ" }
         ]
       }
     }
@@ -457,18 +457,18 @@ const LIVE_SECTION_BUILDERS = {
     filterKeys: ["supplier", "category", "search"],
     tables: {
       main: {
-        label: "Закупки",
+        label: "Р—Р°РєСѓРїРєРё",
         columns: [
-          { key: "supplier_name", label: "Компания" },
-          { key: "supplier_inn", label: "ИНН" },
-          { key: "city", label: "Город" },
-          { key: "category", label: "Категория" },
-          { key: "article", label: "Артикул" },
-          { key: "item_name", label: "Наименование" },
-          { key: "unit_name", label: "Ед. изм." },
-          { key: "price", label: "Цена, ₽" },
-          { key: "note", label: "Комментарий" },
-          { key: "actions", label: "Действия" }
+          { key: "supplier_name", label: "РљРѕРјРїР°РЅРёСЏ" },
+          { key: "supplier_inn", label: "РРќРќ" },
+          { key: "city", label: "Р“РѕСЂРѕРґ" },
+          { key: "category", label: "РљР°С‚РµРіРѕСЂРёСЏ" },
+          { key: "article", label: "РђСЂС‚РёРєСѓР»" },
+          { key: "item_name", label: "РќР°РёРјРµРЅРѕРІР°РЅРёРµ" },
+          { key: "unit_name", label: "Р•Рґ. РёР·Рј." },
+          { key: "price", label: "Р¦РµРЅР°, в‚Ѕ" },
+          { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№" },
+          { key: "actions", label: "Р”РµР№СЃС‚РІРёСЏ" }
         ]
       }
     }
@@ -476,10 +476,10 @@ const LIVE_SECTION_BUILDERS = {
 };
 
 const LIGHT2_FORMULA_FORMATS = [
-  { key: "number", label: "Число" },
-  { key: "money", label: "Деньги" },
-  { key: "percent", label: "Проценты" },
-  { key: "text", label: "Текст" }
+  { key: "number", label: "Р§РёСЃР»Рѕ" },
+  { key: "money", label: "Р”РµРЅСЊРіРё" },
+  { key: "percent", label: "РџСЂРѕС†РµРЅС‚С‹" },
+  { key: "text", label: "РўРµРєСЃС‚" }
 ];
 
 const STATE = {
@@ -613,7 +613,7 @@ function sanitizeBuilderKey(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9а-яё_-]+/gi, "_")
+    .replace(/[^a-z0-9Р°-СЏС‘_-]+/gi, "_")
     .replace(/^_+|_+$/g, "");
 }
 
@@ -706,7 +706,7 @@ function formatMoney(value) {
 
 function formatDateTime(value) {
   const date = value ? new Date(value) : null;
-  if (!date || Number.isNaN(date.getTime())) return "—";
+  if (!date || Number.isNaN(date.getTime())) return "вЂ”";
   return new Intl.DateTimeFormat("ru-RU", {
     dateStyle: "short",
     timeStyle: "short"
@@ -714,9 +714,9 @@ function formatDateTime(value) {
 }
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) return "вЂ”";
   const date = new Date(`${value}T00:00:00`);
-  if (Number.isNaN(date.getTime())) return "—";
+  if (Number.isNaN(date.getTime())) return "вЂ”";
   return new Intl.DateTimeFormat("ru-RU", { dateStyle: "short" }).format(date);
 }
 
@@ -745,7 +745,7 @@ function getOpenSettlementRows(rows = STATE.settlements) {
     ? rows.slice()
     : rows.filter((item) => item.partner_slug === getCurrentPartnerSlug());
 
-  return allowedRows.filter((item) => item.status !== "Взаиморасчет произведен" && item.status !== "Архив");
+  return allowedRows.filter((item) => item.status !== "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ РїСЂРѕРёР·РІРµРґРµРЅ" && item.status !== "РђСЂС…РёРІ");
 }
 
 function getLatestUpdatedAt(rows) {
@@ -758,25 +758,25 @@ function getLatestUpdatedAt(rows) {
 function getOverviewSectionFootnote(key) {
   if (key === "balance") {
     const totals = getCurrentBalanceTotals();
-    return `${STATE.balanceEntries.length} строк • ${formatMoney(totals.total)} ₽`;
+    return `${STATE.balanceEntries.length} СЃС‚СЂРѕРє вЂў ${formatMoney(totals.total)} в‚Ѕ`;
   }
 
   if (key === "calendar") {
-    return `${STATE.calendarEntries.length} строк плана`;
+    return `${STATE.calendarEntries.length} СЃС‚СЂРѕРє РїР»Р°РЅР°`;
   }
 
   if (key === "assets") {
-    return `${STATE.assets.length} активов • ${STATE.assetPayments.length} выплат`;
+    return `${STATE.assets.length} Р°РєС‚РёРІРѕРІ вЂў ${STATE.assetPayments.length} РІС‹РїР»Р°С‚`;
   }
 
   if (key === "settlements") {
     const openRows = getOpenSettlementRows();
-    return `${STATE.settlements.length} строк • открыто ${openRows.length}`;
+    return `${STATE.settlements.length} СЃС‚СЂРѕРє вЂў РѕС‚РєСЂС‹С‚Рѕ ${openRows.length}`;
   }
 
   if (key === "purchases") {
     const suppliers = new Set(STATE.purchaseCatalog.map((item) => String(item.supplier_name || "").trim()).filter(Boolean));
-    return `${STATE.purchaseCatalog.length} позиций • ${suppliers.size} поставщиков`;
+    return `${STATE.purchaseCatalog.length} РїРѕР·РёС†РёР№ вЂў ${suppliers.size} РїРѕСЃС‚Р°РІС‰РёРєРѕРІ`;
   }
 
   const sheetName = SECTION_META[key]?.snapshotSheet;
@@ -784,14 +784,14 @@ function getOverviewSectionFootnote(key) {
   if (sheet && key === "leadgen") {
     const parsed = parseLeadgenSnapshot(sheet);
     const activeBlocks = parsed.blocks.filter((block) => block.dataSeries.length);
-    return `${activeBlocks.length} каналов • ${parsed.latestMonthLabel || "без среза"}`;
+    return `${activeBlocks.length} РєР°РЅР°Р»РѕРІ вЂў ${parsed.latestMonthLabel || "Р±РµР· СЃСЂРµР·Р°"}`;
   }
 
   if (sheet && key === "metrics") {
     const parsed = parseMetricsSnapshot(sheet);
     const latest = parsed.series.at(-1);
     if (latest) {
-      return `${latest.monthLabel} ${latest.yearLabel} • ${formatMoney(latest.revenue)} ₽`;
+      return `${latest.monthLabel} ${latest.yearLabel} вЂў ${formatMoney(latest.revenue)} в‚Ѕ`;
     }
   }
 
@@ -799,18 +799,18 @@ function getOverviewSectionFootnote(key) {
     const parsed = parseFinmodelSnapshot(sheet);
     const latest = parsed.timeline.at(-1);
     if (latest) {
-      return `${latest.monthLabel} ${latest.yearLabel} • ${formatMoney(latest.turnover)} ₽`;
+      return `${latest.monthLabel} ${latest.yearLabel} вЂў ${formatMoney(latest.turnover)} в‚Ѕ`;
     }
   }
   if (sheet) {
-    return `${sheet.nonEmpty || 0} ячеек • ${sheet.formulas || 0} формул`;
+    return `${sheet.nonEmpty || 0} СЏС‡РµРµРє вЂў ${sheet.formulas || 0} С„РѕСЂРјСѓР»`;
   }
 
   if (sheetName && !STATE.workbookReady) {
-    return "Сверяю snapshot...";
+    return "РЎРІРµСЂСЏСЋ snapshot...";
   }
 
-  return "Готово к работе";
+  return "Р“РѕС‚РѕРІРѕ Рє СЂР°Р±РѕС‚Рµ";
 }
 
 function getLiveSectionFilterState(sectionKey) {
@@ -1039,9 +1039,9 @@ function getLight2FormulaHelpers(records) {
 }
 
 function formatLight2FormulaValue(format, value) {
-  if (format === "money") return `${formatMoney(value)} ₽`;
+  if (format === "money") return `${formatMoney(value)} в‚Ѕ`;
   if (format === "percent") return `${formatPlainNumber(toNumber(value), 2)}%`;
-  if (format === "text") return String(value ?? "—");
+  if (format === "text") return String(value ?? "вЂ”");
   return formatPlainNumber(toNumber(value), 0);
 }
 
@@ -1137,7 +1137,7 @@ function getSectionFormulaCards(sectionKey) {
         return `
           <article class="summary-card summary-card--builder">
             <span>${escapeHtml(formula.label)}</span>
-            <strong>Ошибка</strong>
+            <strong>РћС€РёР±РєР°</strong>
           </article>
         `;
       }
@@ -1217,25 +1217,25 @@ function renderLiveSectionBuilder(sectionKey) {
           ).length;
           const viewSortLabel = view.sort?.key
             ? sortOptions.find((column) => column.key === view.sort.key)?.label || view.sort.key
-            : "Без сортировки";
-          const directionLabel = view.sort?.key ? (view.sort?.direction === "desc" ? "↓" : "↑") : "";
+            : "Р‘РµР· СЃРѕСЂС‚РёСЂРѕРІРєРё";
+          const directionLabel = view.sort?.key ? (view.sort?.direction === "desc" ? "в†“" : "в†‘") : "";
           return `
             <div class="builder-view-chip">
               <div>
                 <strong>${escapeHtml(view.label)}</strong>
-                <span>Фильтров: ${viewFilterCount} • Сортировка: ${escapeHtml(viewSortLabel)} ${directionLabel}</span>
+                <span>Р¤РёР»СЊС‚СЂРѕРІ: ${viewFilterCount} вЂў РЎРѕСЂС‚РёСЂРѕРІРєР°: ${escapeHtml(viewSortLabel)} ${directionLabel}</span>
               </div>
               <div class="builder-view-chip__actions">
-                <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-apply="${escapeHtml(sectionKey)}" data-builder-view-id="${escapeHtml(view.id)}">Применить</button>
-                <button type="button" class="btn btn-outline-danger btn-sm" data-builder-view-delete="${escapeHtml(sectionKey)}" data-builder-view-id="${escapeHtml(view.id)}">Удалить</button>
+                <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-apply="${escapeHtml(sectionKey)}" data-builder-view-id="${escapeHtml(view.id)}">РџСЂРёРјРµРЅРёС‚СЊ</button>
+                <button type="button" class="btn btn-outline-danger btn-sm" data-builder-view-delete="${escapeHtml(sectionKey)}" data-builder-view-id="${escapeHtml(view.id)}">РЈРґР°Р»РёС‚СЊ</button>
               </div>
             </div>
           `;
         })
         .join("")
-    : '<div class="builder-note">Сохранённых видов пока нет.</div>';
+    : '<div class="builder-note">РЎРѕС…СЂР°РЅС‘РЅРЅС‹С… РІРёРґРѕРІ РїРѕРєР° РЅРµС‚.</div>';
   const sortOptionsHtml = [
-    '<option value="">Без сортировки</option>',
+    '<option value="">Р‘РµР· СЃРѕСЂС‚РёСЂРѕРІРєРё</option>',
     ...sortOptions.map(
       (column) =>
         `<option value="${escapeHtml(column.key)}" ${sortState.key === column.key ? "selected" : ""}>${escapeHtml(column.label)}</option>`
@@ -1244,17 +1244,17 @@ function renderLiveSectionBuilder(sectionKey) {
 
   strip.innerHTML = `
     <div class="light2-builder-strip__meta">
-      <strong>Конструктор секции</strong>
-      <span>Виды, колонки, фильтры, сортировку и KPI можно настраивать без правки кода.</span>
+      <strong>РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЃРµРєС†РёРё</strong>
+      <span>Р’РёРґС‹, РєРѕР»РѕРЅРєРё, С„РёР»СЊС‚СЂС‹, СЃРѕСЂС‚РёСЂРѕРІРєСѓ Рё KPI РјРѕР¶РЅРѕ РЅР°СЃС‚СЂР°РёРІР°С‚СЊ Р±РµР· РїСЂР°РІРєРё РєРѕРґР°.</span>
     </div>
     <div class="light2-builder-strip__actions">
       ${viewButtons}
-      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-save="${escapeHtml(sectionKey)}">Сохранить текущий вид</button>
-      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-filters-reset="${escapeHtml(sectionKey)}">Сбросить фильтры</button>
-      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-export="${escapeHtml(sectionKey)}">Экспорт схемы</button>
-      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-import="${escapeHtml(sectionKey)}">Импорт схемы</button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-save="${escapeHtml(sectionKey)}">РЎРѕС…СЂР°РЅРёС‚СЊ С‚РµРєСѓС‰РёР№ РІРёРґ</button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-filters-reset="${escapeHtml(sectionKey)}">РЎР±СЂРѕСЃРёС‚СЊ С„РёР»СЊС‚СЂС‹</button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-export="${escapeHtml(sectionKey)}">Р­РєСЃРїРѕСЂС‚ СЃС…РµРјС‹</button>
+      <button type="button" class="btn btn-outline-dark btn-sm" data-builder-import="${escapeHtml(sectionKey)}">РРјРїРѕСЂС‚ СЃС…РµРјС‹</button>
       <button type="button" class="btn ${builder.open ? "btn-dark" : "btn-outline-dark"} btn-sm" data-builder-toggle="${escapeHtml(sectionKey)}">
-        ${builder.open ? "Скрыть конструктор" : "Открыть конструктор"}
+        ${builder.open ? "РЎРєСЂС‹С‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ" : "РћС‚РєСЂС‹С‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ"}
       </button>
     </div>
   `;
@@ -1271,7 +1271,7 @@ function renderLiveSectionBuilder(sectionKey) {
         <div class="builder-card">
           <div class="builder-card__head">
             <strong>${escapeHtml(tableMeta.label)}</strong>
-            <span>Можно переименовать и скрыть колонки.</span>
+            <span>РњРѕР¶РЅРѕ РїРµСЂРµРёРјРµРЅРѕРІР°С‚СЊ Рё СЃРєСЂС‹С‚СЊ РєРѕР»РѕРЅРєРё.</span>
           </div>
           <div class="builder-column-list" data-builder-columns="${escapeHtml(sectionKey)}" data-builder-table="${escapeHtml(tableKey)}">
             ${columns
@@ -1287,7 +1287,7 @@ function renderLiveSectionBuilder(sectionKey) {
               .join("")}
           </div>
           <div class="builder-actions">
-            <button type="button" class="btn btn-dark btn-sm" data-builder-columns-save="${escapeHtml(sectionKey)}" data-builder-table-save="${escapeHtml(tableKey)}">Сохранить колонки</button>
+            <button type="button" class="btn btn-dark btn-sm" data-builder-columns-save="${escapeHtml(sectionKey)}" data-builder-table-save="${escapeHtml(tableKey)}">РЎРѕС…СЂР°РЅРёС‚СЊ РєРѕР»РѕРЅРєРё</button>
           </div>
         </div>
       `;
@@ -1303,31 +1303,31 @@ function renderLiveSectionBuilder(sectionKey) {
                 <strong>${escapeHtml(formula.label)}</strong>
                 <span>${escapeHtml(formula.expression)}</span>
               </div>
-              <button type="button" class="btn btn-outline-danger btn-sm" data-builder-formula-delete="${escapeHtml(sectionKey)}" data-builder-formula-key="${escapeHtml(formula.key)}">Удалить</button>
+              <button type="button" class="btn btn-outline-danger btn-sm" data-builder-formula-delete="${escapeHtml(sectionKey)}" data-builder-formula-key="${escapeHtml(formula.key)}">РЈРґР°Р»РёС‚СЊ</button>
             </div>
           `
         )
         .join("")
-    : '<div class="builder-note">Формул пока нет.</div>';
+    : '<div class="builder-note">Р¤РѕСЂРјСѓР» РїРѕРєР° РЅРµС‚.</div>';
 
   host.innerHTML = `
     <div class="light2-builder-grid">
       <div class="builder-card builder-card--wide">
         <div class="builder-card__head">
-          <strong>Фильтры, сортировка и сохранённые виды</strong>
-          <span>Управляйте тем, как команда видит секцию: фильтры, порядок строк и пресеты для разных сценариев.</span>
+          <strong>Р¤РёР»СЊС‚СЂС‹, СЃРѕСЂС‚РёСЂРѕРІРєР° Рё СЃРѕС…СЂР°РЅС‘РЅРЅС‹Рµ РІРёРґС‹</strong>
+          <span>РЈРїСЂР°РІР»СЏР№С‚Рµ С‚РµРј, РєР°Рє РєРѕРјР°РЅРґР° РІРёРґРёС‚ СЃРµРєС†РёСЋ: С„РёР»СЊС‚СЂС‹, РїРѕСЂСЏРґРѕРє СЃС‚СЂРѕРє Рё РїСЂРµСЃРµС‚С‹ РґР»СЏ СЂР°Р·РЅС‹С… СЃС†РµРЅР°СЂРёРµРІ.</span>
         </div>
         <div class="overview-inline-stats builder-kpi-row">
           <div>
-            <span>Строк в текущем срезе</span>
+            <span>РЎС‚СЂРѕРє РІ С‚РµРєСѓС‰РµРј СЃСЂРµР·Рµ</span>
             <strong>${recordCount}</strong>
           </div>
           <div>
-            <span>Активных фильтров</span>
+            <span>РђРєС‚РёРІРЅС‹С… С„РёР»СЊС‚СЂРѕРІ</span>
             <strong>${filterCount}</strong>
           </div>
           <div>
-            <span>Сохранённых видов</span>
+            <span>РЎРѕС…СЂР°РЅС‘РЅРЅС‹С… РІРёРґРѕРІ</span>
             <strong>${builder.views.length}</strong>
           </div>
         </div>
@@ -1336,44 +1336,44 @@ function renderLiveSectionBuilder(sectionKey) {
             ${sortOptionsHtml}
           </select>
           <select class="form-select" data-builder-sort-direction="${escapeHtml(sectionKey)}">
-            <option value="asc" ${sortState.direction === "asc" ? "selected" : ""}>По возрастанию</option>
-            <option value="desc" ${sortState.direction === "desc" ? "selected" : ""}>По убыванию</option>
+            <option value="asc" ${sortState.direction === "asc" ? "selected" : ""}>РџРѕ РІРѕР·СЂР°СЃС‚Р°РЅРёСЋ</option>
+            <option value="desc" ${sortState.direction === "desc" ? "selected" : ""}>РџРѕ СѓР±С‹РІР°РЅРёСЋ</option>
           </select>
-          <button type="button" class="btn btn-dark btn-sm" data-builder-sort-save="${escapeHtml(sectionKey)}">Сохранить сортировку</button>
+          <button type="button" class="btn btn-dark btn-sm" data-builder-sort-save="${escapeHtml(sectionKey)}">РЎРѕС…СЂР°РЅРёС‚СЊ СЃРѕСЂС‚РёСЂРѕРІРєСѓ</button>
         </div>
         <div class="builder-actions">
-          <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-save="${escapeHtml(sectionKey)}">Сохранить вид с фильтрами</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" data-builder-filters-reset="${escapeHtml(sectionKey)}">Очистить фильтры секции</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-builder-view-save="${escapeHtml(sectionKey)}">РЎРѕС…СЂР°РЅРёС‚СЊ РІРёРґ СЃ С„РёР»СЊС‚СЂР°РјРё</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-builder-filters-reset="${escapeHtml(sectionKey)}">РћС‡РёСЃС‚РёС‚СЊ С„РёР»СЊС‚СЂС‹ СЃРµРєС†РёРё</button>
         </div>
       </div>
       <div class="builder-card">
         <div class="builder-card__head">
-          <strong>Сохранённые виды</strong>
-          <span>Быстрые пресеты для владельца, финансового блока, сверки и любых своих сценариев.</span>
+          <strong>РЎРѕС…СЂР°РЅС‘РЅРЅС‹Рµ РІРёРґС‹</strong>
+          <span>Р‘С‹СЃС‚СЂС‹Рµ РїСЂРµСЃРµС‚С‹ РґР»СЏ РІР»Р°РґРµР»СЊС†Р°, С„РёРЅР°РЅСЃРѕРІРѕРіРѕ Р±Р»РѕРєР°, СЃРІРµСЂРєРё Рё Р»СЋР±С‹С… СЃРІРѕРёС… СЃС†РµРЅР°СЂРёРµРІ.</span>
         </div>
         <div class="builder-list">${savedViews}</div>
       </div>
       ${columnCards}
       <div class="builder-card">
         <div class="builder-card__head">
-          <strong>KPI и формулы</strong>
-          <span>Доступны функции: count(), countWhere(), sum(), avg(), min(), max(), percent().</span>
+          <strong>KPI Рё С„РѕСЂРјСѓР»С‹</strong>
+          <span>Р”РѕСЃС‚СѓРїРЅС‹ С„СѓРЅРєС†РёРё: count(), countWhere(), sum(), avg(), min(), max(), percent().</span>
         </div>
         <div class="builder-form-grid">
-          <input class="form-control" type="text" placeholder="Ключ, например open_total" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="key" />
-          <input class="form-control" type="text" placeholder="Название карточки" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="label" />
+          <input class="form-control" type="text" placeholder="РљР»СЋС‡, РЅР°РїСЂРёРјРµСЂ open_total" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="key" />
+          <input class="form-control" type="text" placeholder="РќР°Р·РІР°РЅРёРµ РєР°СЂС‚РѕС‡РєРё" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="label" />
           <select class="form-select" data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="format">
             ${LIGHT2_FORMULA_FORMATS.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}
           </select>
-          <input class="form-control builder-form-grid__wide" type="text" placeholder='Например: sum("signed_amount")' data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="expression" />
-          <button type="button" class="btn btn-dark btn-sm" data-builder-formula-save="${escapeHtml(sectionKey)}">Добавить формулу</button>
+          <input class="form-control builder-form-grid__wide" type="text" placeholder='РќР°РїСЂРёРјРµСЂ: sum("signed_amount")' data-builder-formula-input="${escapeHtml(sectionKey)}" data-builder-field="expression" />
+          <button type="button" class="btn btn-dark btn-sm" data-builder-formula-save="${escapeHtml(sectionKey)}">Р”РѕР±Р°РІРёС‚СЊ С„РѕСЂРјСѓР»Сѓ</button>
         </div>
         <div class="builder-list mt-3">${formulas}</div>
       </div>
       <div class="builder-card">
         <div class="builder-card__head">
-          <strong>JSON-схема секции</strong>
-          <span>Для максимально гибкой настройки можно править секцию целиком одним JSON или переносить конфиг между базами.</span>
+          <strong>JSON-СЃС…РµРјР° СЃРµРєС†РёРё</strong>
+          <span>Р”Р»СЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РіРёР±РєРѕР№ РЅР°СЃС‚СЂРѕР№РєРё РјРѕР¶РЅРѕ РїСЂР°РІРёС‚СЊ СЃРµРєС†РёСЋ С†РµР»РёРєРѕРј РѕРґРЅРёРј JSON РёР»Рё РїРµСЂРµРЅРѕСЃРёС‚СЊ РєРѕРЅС„РёРі РјРµР¶РґСѓ Р±Р°Р·Р°РјРё.</span>
         </div>
         <textarea class="form-control builder-schema" data-builder-schema="${escapeHtml(sectionKey)}" rows="18">${escapeHtml(JSON.stringify({
           views: builder.views,
@@ -1382,8 +1382,8 @@ function renderLiveSectionBuilder(sectionKey) {
           sort: builder.sort
         }, null, 2))}</textarea>
         <div class="builder-actions">
-          <button type="button" class="btn btn-dark btn-sm" data-builder-schema-save="${escapeHtml(sectionKey)}">Сохранить JSON-схему</button>
-          <button type="button" class="btn btn-outline-danger btn-sm" data-builder-reset="${escapeHtml(sectionKey)}">Сбросить секцию</button>
+          <button type="button" class="btn btn-dark btn-sm" data-builder-schema-save="${escapeHtml(sectionKey)}">РЎРѕС…СЂР°РЅРёС‚СЊ JSON-СЃС…РµРјСѓ</button>
+          <button type="button" class="btn btn-outline-danger btn-sm" data-builder-reset="${escapeHtml(sectionKey)}">РЎР±СЂРѕСЃРёС‚СЊ СЃРµРєС†РёСЋ</button>
         </div>
       </div>
     </div>
@@ -1420,12 +1420,12 @@ function toggleSectionBuilder(sectionKey) {
 }
 
 function saveCurrentSectionView(sectionKey) {
-  const label = window.prompt("Название вида");
+  const label = window.prompt("РќР°Р·РІР°РЅРёРµ РІРёРґР°");
   if (!label) return;
   const builder = getSectionBuilder(sectionKey);
   const viewId = sanitizeBuilderKey(label);
   if (!viewId) {
-    throw new Error("Не удалось создать ключ вида. Используйте название с буквами или цифрами.");
+    throw new Error("РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ РєР»СЋС‡ РІРёРґР°. РСЃРїРѕР»СЊР·СѓР№С‚Рµ РЅР°Р·РІР°РЅРёРµ СЃ Р±СѓРєРІР°РјРё РёР»Рё С†РёС„СЂР°РјРё.");
   }
   const filters = getLiveSectionFilterState(sectionKey);
   builder.views = [
@@ -1440,7 +1440,7 @@ function saveCurrentSectionView(sectionKey) {
   builder.open = true;
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
-  setStatus(`Вид секции сохранён: ${label}.`, "success");
+  setStatus(`Р’РёРґ СЃРµРєС†РёРё СЃРѕС…СЂР°РЅС‘РЅ: ${label}.`, "success");
 }
 
 function applySectionView(sectionKey, viewId) {
@@ -1454,12 +1454,12 @@ function applySectionView(sectionKey, viewId) {
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
   applyLiveSectionFilterState(sectionKey, view.filters || {});
-  setStatus(`Применён вид: ${view.label}.`, "success");
+  setStatus(`РџСЂРёРјРµРЅС‘РЅ РІРёРґ: ${view.label}.`, "success");
 }
 
 function clearSectionFilters(sectionKey) {
   applyLiveSectionFilterState(sectionKey, {});
-  setStatus("Фильтры секции очищены.", "success");
+  setStatus("Р¤РёР»СЊС‚СЂС‹ СЃРµРєС†РёРё РѕС‡РёС‰РµРЅС‹.", "success");
 }
 
 function saveSectionSort(sectionKey) {
@@ -1474,19 +1474,19 @@ function saveSectionSort(sectionKey) {
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
   rerenderLiveSection(sectionKey);
-  setStatus("Сортировка секции сохранена.", "success");
+  setStatus("РЎРѕСЂС‚РёСЂРѕРІРєР° СЃРµРєС†РёРё СЃРѕС…СЂР°РЅРµРЅР°.", "success");
 }
 
 function deleteSectionView(sectionKey, viewId) {
   const builder = getSectionBuilder(sectionKey);
   const view = builder.views.find((item) => item.id === viewId);
   if (!view) return;
-  if (!window.confirm(`Удалить сохранённый вид "${view.label}"?`)) return;
+  if (!window.confirm(`РЈРґР°Р»РёС‚СЊ СЃРѕС…СЂР°РЅС‘РЅРЅС‹Р№ РІРёРґ "${view.label}"?`)) return;
   builder.views = builder.views.filter((item) => item.id !== viewId);
   builder.open = true;
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
-  setStatus(`Вид удалён: ${view.label}.`, "success");
+  setStatus(`Р’РёРґ СѓРґР°Р»С‘РЅ: ${view.label}.`, "success");
 }
 
 async function exportSectionBuilder(sectionKey) {
@@ -1505,15 +1505,15 @@ async function exportSectionBuilder(sectionKey) {
   if (navigator.clipboard?.writeText) {
     try {
       await navigator.clipboard.writeText(payload);
-      setStatus("JSON-схема секции скопирована в буфер обмена.", "success");
+      setStatus("JSON-СЃС…РµРјР° СЃРµРєС†РёРё СЃРєРѕРїРёСЂРѕРІР°РЅР° РІ Р±СѓС„РµСЂ РѕР±РјРµРЅР°.", "success");
       return;
     } catch {
       // Fallback below.
     }
   }
 
-  window.prompt("Скопируйте JSON-схему секции вручную", payload);
-  setStatus("JSON-схема секции подготовлена для копирования.", "success");
+  window.prompt("РЎРєРѕРїРёСЂСѓР№С‚Рµ JSON-СЃС…РµРјСѓ СЃРµРєС†РёРё РІСЂСѓС‡РЅСѓСЋ", payload);
+  setStatus("JSON-СЃС…РµРјР° СЃРµРєС†РёРё РїРѕРґРіРѕС‚РѕРІР»РµРЅР° РґР»СЏ РєРѕРїРёСЂРѕРІР°РЅРёСЏ.", "success");
 }
 
 async function importSectionBuilder(sectionKey) {
@@ -1526,14 +1526,14 @@ async function importSectionBuilder(sectionKey) {
     }
   }
 
-  const raw = window.prompt("Вставьте JSON-схему секции", suggestion);
+  const raw = window.prompt("Р’СЃС‚Р°РІСЊС‚Рµ JSON-СЃС…РµРјСѓ СЃРµРєС†РёРё", suggestion);
   if (!raw) return;
 
   let parsed;
   try {
     parsed = JSON.parse(raw);
   } catch (error) {
-    throw new Error(`JSON не распознан: ${error.message || "ошибка синтаксиса"}`);
+    throw new Error(`JSON РЅРµ СЂР°СЃРїРѕР·РЅР°РЅ: ${error.message || "РѕС€РёР±РєР° СЃРёРЅС‚Р°РєСЃРёСЃР°"}`);
   }
 
   STATE.sectionBuilders[sectionKey] = normalizeSectionBuilder(sectionKey, {
@@ -1543,7 +1543,7 @@ async function importSectionBuilder(sectionKey) {
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
   rerenderLiveSection(sectionKey);
-  setStatus("JSON-схема секции импортирована.", "success");
+  setStatus("JSON-СЃС…РµРјР° СЃРµРєС†РёРё РёРјРїРѕСЂС‚РёСЂРѕРІР°РЅР°.", "success");
 }
 
 function saveSectionColumns(sectionKey, tableKey) {
@@ -1566,7 +1566,7 @@ function saveSectionColumns(sectionKey, tableKey) {
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
   rerenderLiveSection(sectionKey);
-  setStatus("Настройки колонок сохранены.", "success");
+  setStatus("РќР°СЃС‚СЂРѕР№РєРё РєРѕР»РѕРЅРѕРє СЃРѕС…СЂР°РЅРµРЅС‹.", "success");
 }
 
 function clearSectionFormulaInputs(sectionKey) {
@@ -1591,7 +1591,7 @@ function saveSectionFormula(sectionKey) {
 
   const formula = normalizeBuilderFormula(values);
   if (!formula) {
-    throw new Error("Укажите ключ, название и формулу для KPI.");
+    throw new Error("РЈРєР°Р¶РёС‚Рµ РєР»СЋС‡, РЅР°Р·РІР°РЅРёРµ Рё С„РѕСЂРјСѓР»Сѓ РґР»СЏ KPI.");
   }
 
   const builder = getSectionBuilder(sectionKey);
@@ -1604,7 +1604,7 @@ function saveSectionFormula(sectionKey) {
   clearSectionFormulaInputs(sectionKey);
   renderLiveSectionBuilder(sectionKey);
   rerenderLiveSection(sectionKey);
-  setStatus(`KPI сохранён: ${formula.label}.`, "success");
+  setStatus(`KPI СЃРѕС…СЂР°РЅС‘РЅ: ${formula.label}.`, "success");
 }
 
 function deleteSectionFormula(sectionKey, formulaKey) {
@@ -1614,7 +1614,7 @@ function deleteSectionFormula(sectionKey, formulaKey) {
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
   rerenderLiveSection(sectionKey);
-  setStatus("Формула удалена.", "success");
+  setStatus("Р¤РѕСЂРјСѓР»Р° СѓРґР°Р»РµРЅР°.", "success");
 }
 
 function saveSectionSchema(sectionKey) {
@@ -1624,7 +1624,7 @@ function saveSectionSchema(sectionKey) {
   try {
     parsed = JSON.parse(textarea.value);
   } catch (error) {
-    throw new Error(`JSON не распознан: ${error.message || "ошибка синтаксиса"}`);
+    throw new Error(`JSON РЅРµ СЂР°СЃРїРѕР·РЅР°РЅ: ${error.message || "РѕС€РёР±РєР° СЃРёРЅС‚Р°РєСЃРёСЃР°"}`);
   }
 
   STATE.sectionBuilders[sectionKey] = normalizeSectionBuilder(sectionKey, {
@@ -1634,7 +1634,7 @@ function saveSectionSchema(sectionKey) {
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
   rerenderLiveSection(sectionKey);
-  setStatus("JSON-схема секции сохранена.", "success");
+  setStatus("JSON-СЃС…РµРјР° СЃРµРєС†РёРё СЃРѕС…СЂР°РЅРµРЅР°.", "success");
 }
 
 function resetSectionBuilder(sectionKey) {
@@ -1642,7 +1642,7 @@ function resetSectionBuilder(sectionKey) {
   persistSectionBuilders();
   renderLiveSectionBuilder(sectionKey);
   rerenderLiveSection(sectionKey);
-  setStatus("Секция сброшена к базовой конфигурации.", "success");
+  setStatus("РЎРµРєС†РёСЏ СЃР±СЂРѕС€РµРЅР° Рє Р±Р°Р·РѕРІРѕР№ РєРѕРЅС„РёРіСѓСЂР°С†РёРё.", "success");
 }
 
 function renderLiveOverviewSummary() {
@@ -1651,15 +1651,15 @@ function renderLiveOverviewSummary() {
   const totals = getCurrentBalanceTotals();
   const openSettlements = getOpenSettlementRows();
   const upcomingCalendar = STATE.calendarEntries.filter((entry) => {
-    if (!entry.payment_date || entry.status === "Отменен") return false;
+    if (!entry.payment_date || entry.status === "РћС‚РјРµРЅРµРЅ") return false;
     const diff = diffDaysFromToday(entry.payment_date);
     return diff !== null && diff <= 14;
   });
   const upcomingIncoming = upcomingCalendar
-    .filter((entry) => entry.operation_type === "Приход")
+    .filter((entry) => entry.operation_type === "РџСЂРёС…РѕРґ")
     .reduce((sum, entry) => sum + toNumber(entry.amount), 0);
   const upcomingOutgoing = upcomingCalendar
-    .filter((entry) => entry.operation_type === "Расход")
+    .filter((entry) => entry.operation_type === "Р Р°СЃС…РѕРґ")
     .reduce((sum, entry) => sum + toNumber(entry.amount), 0);
   const totalAssetValue = STATE.assets.reduce((sum, item) => sum + toNumber(item.asset_value), 0);
   const totalAssetPaid = STATE.assetPayments.reduce((sum, item) => sum + toNumber(item.payment_amount), 0);
@@ -1667,27 +1667,27 @@ function renderLiveOverviewSummary() {
 
   DOM.liveOverviewSummary.innerHTML = `
     <article class="summary-card">
-      <span>Баланс компании сейчас</span>
-      <strong>${formatMoney(totals.total)} ₽</strong>
+      <span>Р‘Р°Р»Р°РЅСЃ РєРѕРјРїР°РЅРёРё СЃРµР№С‡Р°СЃ</span>
+      <strong>${formatMoney(totals.total)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Поступления на 14 дней</span>
-      <strong>${formatMoney(upcomingIncoming)} ₽</strong>
+      <span>РџРѕСЃС‚СѓРїР»РµРЅРёСЏ РЅР° 14 РґРЅРµР№</span>
+      <strong>${formatMoney(upcomingIncoming)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Платежи на 14 дней</span>
-      <strong>${formatMoney(upcomingOutgoing)} ₽</strong>
+      <span>РџР»Р°С‚РµР¶Рё РЅР° 14 РґРЅРµР№</span>
+      <strong>${formatMoney(upcomingOutgoing)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Открытые взаиморасчеты</span>
+      <span>РћС‚РєСЂС‹С‚С‹Рµ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹</span>
       <strong>${openSettlements.length}</strong>
     </article>
     <article class="summary-card">
-      <span>Остаток по активам</span>
-      <strong>${formatMoney(remainingAssetValue)} ₽</strong>
+      <span>РћСЃС‚Р°С‚РѕРє РїРѕ Р°РєС‚РёРІР°Рј</span>
+      <strong>${formatMoney(remainingAssetValue)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Позиции закупок</span>
+      <span>РџРѕР·РёС†РёРё Р·Р°РєСѓРїРѕРє</span>
       <strong>${STATE.purchaseCatalog.length}</strong>
     </article>
   `;
@@ -1700,7 +1700,7 @@ function renderLiveOverviewPanels() {
   const latestFinanceUpdate = getLatestUpdatedAt([...STATE.balanceEntries, ...STATE.calendarEntries]);
   const urgentCalendarRows = STATE.calendarEntries
     .filter((entry) => {
-      if (!entry.payment_date || entry.status === "Отменен") return false;
+      if (!entry.payment_date || entry.status === "РћС‚РјРµРЅРµРЅ") return false;
       const diff = diffDaysFromToday(entry.payment_date);
       return diff !== null && diff <= 14;
     })
@@ -1729,7 +1729,7 @@ function renderLiveOverviewPanels() {
     (account) => `
       <div class="overview-list-item">
         <span>${escapeHtml(account.label)}</span>
-        <strong>${formatMoney(totals.byAccount[account.value] || 0)} ₽</strong>
+        <strong>${formatMoney(totals.byAccount[account.value] || 0)} в‚Ѕ</strong>
       </div>
     `
   ).join("");
@@ -1738,21 +1738,21 @@ function renderLiveOverviewPanels() {
     ? urgentCalendarRows
         .map((entry) => {
           const diff = diffDaysFromToday(entry.payment_date);
-          const dueLabel = diff < 0 ? `Просрочено на ${Math.abs(diff)} дн.` : diff === 0 ? "Сегодня" : `Через ${diff} дн.`;
+          const dueLabel = diff < 0 ? `РџСЂРѕСЃСЂРѕС‡РµРЅРѕ РЅР° ${Math.abs(diff)} РґРЅ.` : diff === 0 ? "РЎРµРіРѕРґРЅСЏ" : `Р§РµСЂРµР· ${diff} РґРЅ.`;
           return `
             <div class="overview-list-item">
               <div>
-                <strong>${escapeHtml(entry.counterparty || "Без контрагента")}</strong>
-                <span>${escapeHtml(formatDate(entry.payment_date))} • ${escapeHtml(dueLabel)}</span>
+                <strong>${escapeHtml(entry.counterparty || "Р‘РµР· РєРѕРЅС‚СЂР°РіРµРЅС‚Р°")}</strong>
+                <span>${escapeHtml(formatDate(entry.payment_date))} вЂў ${escapeHtml(dueLabel)}</span>
               </div>
-              <strong class="${entry.operation_type === "Приход" ? "amount-positive" : "amount-negative"}">
-                ${entry.operation_type === "Приход" ? "+" : "-"}${formatMoney(entry.amount)} ₽
+              <strong class="${entry.operation_type === "РџСЂРёС…РѕРґ" ? "amount-positive" : "amount-negative"}">
+                ${entry.operation_type === "РџСЂРёС…РѕРґ" ? "+" : "-"}${formatMoney(entry.amount)} в‚Ѕ
               </strong>
             </div>
           `;
         })
         .join("")
-    : `<div class="muted">На ближайшие 14 дней новых платежей не найдено.</div>`;
+    : `<div class="muted">РќР° Р±Р»РёР¶Р°Р№С€РёРµ 14 РґРЅРµР№ РЅРѕРІС‹С… РїР»Р°С‚РµР¶РµР№ РЅРµ РЅР°Р№РґРµРЅРѕ.</div>`;
 
   const settlementItems = openSettlements.length
     ? openSettlements
@@ -1764,13 +1764,13 @@ function renderLiveOverviewPanels() {
                 <span>${escapeHtml(item.period_label)}</span>
               </div>
               <strong class="${item.settlementTotal >= 0 ? "amount-positive" : "amount-negative"}">
-                ${item.settlementTotal >= 0 ? "+" : ""}${formatMoney(item.settlementTotal)} ₽
+                ${item.settlementTotal >= 0 ? "+" : ""}${formatMoney(item.settlementTotal)} в‚Ѕ
               </strong>
             </div>
           `
         )
         .join("")
-    : `<div class="muted">Открытых взаиморасчетов сейчас нет.</div>`;
+    : `<div class="muted">РћС‚РєСЂС‹С‚С‹С… РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚РѕРІ СЃРµР№С‡Р°СЃ РЅРµС‚.</div>`;
 
   const purchaseItems = recentPurchases.length
     ? recentPurchases
@@ -1778,43 +1778,43 @@ function renderLiveOverviewPanels() {
           (item) => `
             <div class="overview-list-item">
               <div>
-                <strong>${escapeHtml(item.item_name || item.article || "Позиция")}</strong>
-                <span>${escapeHtml(item.supplier_name || "Без поставщика")} • ${escapeHtml(item.category || "Без категории")}</span>
+                <strong>${escapeHtml(item.item_name || item.article || "РџРѕР·РёС†РёСЏ")}</strong>
+                <span>${escapeHtml(item.supplier_name || "Р‘РµР· РїРѕСЃС‚Р°РІС‰РёРєР°")} вЂў ${escapeHtml(item.category || "Р‘РµР· РєР°С‚РµРіРѕСЂРёРё")}</span>
               </div>
-              <strong>${formatMoney(item.price)} ₽</strong>
+              <strong>${formatMoney(item.price)} в‚Ѕ</strong>
             </div>
           `
         )
         .join("")
-    : `<div class="muted">Каталог закупок пока пуст.</div>`;
+    : `<div class="muted">РљР°С‚Р°Р»РѕРі Р·Р°РєСѓРїРѕРє РїРѕРєР° РїСѓСЃС‚.</div>`;
 
   DOM.liveOverviewPanels.innerHTML = `
     <article class="subsection-card overview-panel">
-      <div class="panel-kicker">Финансы сейчас</div>
-      <h3>Деньги по контурам</h3>
+      <div class="panel-kicker">Р¤РёРЅР°РЅСЃС‹ СЃРµР№С‡Р°СЃ</div>
+      <h3>Р”РµРЅСЊРіРё РїРѕ РєРѕРЅС‚СѓСЂР°Рј</h3>
       <div class="overview-list">${accountItems}</div>
-      <div class="overview-panel-footnote">Последнее обновление: ${escapeHtml(formatDateTime(latestFinanceUpdate))}</div>
+      <div class="overview-panel-footnote">РџРѕСЃР»РµРґРЅРµРµ РѕР±РЅРѕРІР»РµРЅРёРµ: ${escapeHtml(formatDateTime(latestFinanceUpdate))}</div>
     </article>
     <article class="subsection-card overview-panel">
-      <div class="panel-kicker">Ближайшие даты</div>
-      <h3>Платежный радар</h3>
+      <div class="panel-kicker">Р‘Р»РёР¶Р°Р№С€РёРµ РґР°С‚С‹</div>
+      <h3>РџР»Р°С‚РµР¶РЅС‹Р№ СЂР°РґР°СЂ</h3>
       <div class="overview-list">${paymentItems}</div>
     </article>
     <article class="subsection-card overview-panel">
-      <div class="panel-kicker">Партнеры</div>
-      <h3>Кому нужно уделить внимание</h3>
+      <div class="panel-kicker">РџР°СЂС‚РЅРµСЂС‹</div>
+      <h3>РљРѕРјСѓ РЅСѓР¶РЅРѕ СѓРґРµР»РёС‚СЊ РІРЅРёРјР°РЅРёРµ</h3>
       <div class="overview-list">${settlementItems}</div>
     </article>
     <article class="subsection-card overview-panel">
-      <div class="panel-kicker">Активы и закупки</div>
-      <h3>Материальная база</h3>
+      <div class="panel-kicker">РђРєС‚РёРІС‹ Рё Р·Р°РєСѓРїРєРё</div>
+      <h3>РњР°С‚РµСЂРёР°Р»СЊРЅР°СЏ Р±Р°Р·Р°</h3>
       <div class="overview-inline-stats">
-        <div><span>Активов</span><strong>${STATE.assets.length}</strong></div>
-        <div><span>Стоимость</span><strong>${formatMoney(totalAssetValue)} ₽</strong></div>
-        <div><span>Выплачено</span><strong>${formatMoney(totalAssetPaid)} ₽</strong></div>
-        <div><span>Поставщиков</span><strong>${uniqueSuppliers.size}</strong></div>
-        <div><span>Категорий</span><strong>${uniqueCategories.size}</strong></div>
-        <div><span>Закупок</span><strong>${STATE.purchaseCatalog.length}</strong></div>
+        <div><span>РђРєС‚РёРІРѕРІ</span><strong>${STATE.assets.length}</strong></div>
+        <div><span>РЎС‚РѕРёРјРѕСЃС‚СЊ</span><strong>${formatMoney(totalAssetValue)} в‚Ѕ</strong></div>
+        <div><span>Р’С‹РїР»Р°С‡РµРЅРѕ</span><strong>${formatMoney(totalAssetPaid)} в‚Ѕ</strong></div>
+        <div><span>РџРѕСЃС‚Р°РІС‰РёРєРѕРІ</span><strong>${uniqueSuppliers.size}</strong></div>
+        <div><span>РљР°С‚РµРіРѕСЂРёР№</span><strong>${uniqueCategories.size}</strong></div>
+        <div><span>Р—Р°РєСѓРїРѕРє</span><strong>${STATE.purchaseCatalog.length}</strong></div>
       </div>
       <div class="overview-list mt-3">${purchaseItems}</div>
     </article>
@@ -1825,7 +1825,7 @@ function sanitizeSlug(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9а-яё_-]+/gi, "-")
+    .replace(/[^a-z0-9Р°-СЏС‘_-]+/gi, "-")
     .replace(/^-+|-+$/g, "");
 }
 
@@ -1855,6 +1855,27 @@ function getWorkbookCell(row, col) {
 
 function getWorkbookDisplay(row, col) {
   return getWorkbookCell(row, col)?.display || "";
+}
+
+function repairMojibakeText(value) {
+  if (typeof value !== "string") return value;
+  if (!/[ÐÑРСЃЃ]/.test(value)) return value;
+  try {
+    const repaired = decodeURIComponent(escape(value));
+    return /[А-Яа-яЁё]/.test(repaired) ? repaired : value;
+  } catch {
+    return value;
+  }
+}
+
+function repairMojibakeDeep(value) {
+  if (Array.isArray(value)) {
+    return value.map(repairMojibakeDeep);
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, entryValue]) => [key, repairMojibakeDeep(entryValue)]));
+  }
+  return repairMojibakeText(value);
 }
 
 function getWorkbookRaw(row, col) {
@@ -2003,7 +2024,7 @@ function withTimeout(promise, timeoutMs, timeoutMessage) {
   let timerId = null;
   const timeoutPromise = new Promise((_, reject) => {
     timerId = window.setTimeout(() => {
-      reject(new Error(timeoutMessage || "Превышено время ожидания ответа."));
+      reject(new Error(timeoutMessage || "РџСЂРµРІС‹С€РµРЅРѕ РІСЂРµРјСЏ РѕР¶РёРґР°РЅРёСЏ РѕС‚РІРµС‚Р°."));
     }, timeoutMs);
   });
 
@@ -2021,40 +2042,40 @@ function getCurrentPartnerSlug() {
 function getPartnerLabel(slug) {
   const cleanSlug = sanitizeSlug(slug);
   const partner = STATE.partnerProfiles.find((item) => item.slug === cleanSlug);
-  return partner?.display_name || cleanSlug || "—";
+  return partner?.display_name || cleanSlug || "вЂ”";
 }
 
 function getBalanceAccountLabel(accountType) {
-  return BALANCE_ACCOUNTS.find((item) => item.value === accountType)?.label || "—";
+  return BALANCE_ACCOUNTS.find((item) => item.value === accountType)?.label || "вЂ”";
 }
 
 function signedCalendarAmount(entry) {
   const amount = toNumber(entry?.amount);
-  return entry?.operation_type === "Приход" ? amount : -amount;
+  return entry?.operation_type === "РџСЂРёС…РѕРґ" ? amount : -amount;
 }
 
 function computeSettlement(entry) {
   const salary = toNumber(entry?.salary_amount);
   const purchase = toNumber(entry?.purchase_amount);
   const total = Math.round((salary - purchase) * 100) / 100;
-  let direction = "Баланс закрыт";
+  let direction = "Р‘Р°Р»Р°РЅСЃ Р·Р°РєСЂС‹С‚";
 
-  if (entry?.status === "Взаиморасчет произведен") {
-    direction = "Взаиморасчёт закрыт";
+  if (entry?.status === "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ РїСЂРѕРёР·РІРµРґРµРЅ") {
+    direction = "Р’Р·Р°РёРјРѕСЂР°СЃС‡С‘С‚ Р·Р°РєСЂС‹С‚";
   } else if (total > 0) {
-    direction = "Компания должна партнеру";
+    direction = "РљРѕРјРїР°РЅРёСЏ РґРѕР»Р¶РЅР° РїР°СЂС‚РЅРµСЂСѓ";
   } else if (total < 0) {
-    direction = "Партнер должен компании";
+    direction = "РџР°СЂС‚РЅРµСЂ РґРѕР»Р¶РµРЅ РєРѕРјРїР°РЅРёРё";
   }
 
   return { salary, purchase, total, direction };
 }
 
 function getStatusTone(status) {
-  if (status === "К выплате") return "status-ready";
-  if (status === "Взаиморасчет произведен") return "status-closed";
-  if (status === "Спор") return "status-dispute";
-  if (status === "Архив") return "status-archive";
+  if (status === "Рљ РІС‹РїР»Р°С‚Рµ") return "status-ready";
+  if (status === "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ РїСЂРѕРёР·РІРµРґРµРЅ") return "status-closed";
+  if (status === "РЎРїРѕСЂ") return "status-dispute";
+  if (status === "РђСЂС…РёРІ") return "status-archive";
   return "status-open";
 }
 
@@ -2075,7 +2096,7 @@ async function activateReadonlyFallback(reason) {
       await withTimeout(
         loadWorkbookSnapshot(),
         8000,
-        "Не удалось вовремя загрузить snapshot Контур для резервного режима."
+        "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ snapshot РљРѕРЅС‚СѓСЂ РґР»СЏ СЂРµР·РµСЂРІРЅРѕРіРѕ СЂРµР¶РёРјР°."
       );
     }
   } catch (error) {
@@ -2085,7 +2106,7 @@ async function activateReadonlyFallback(reason) {
   if (!STATE.profile) {
     STATE.profile = {
       id: null,
-      display_name: STATE.user?.email || "Резервный режим",
+      display_name: STATE.user?.email || "Р РµР·РµСЂРІРЅС‹Р№ СЂРµР¶РёРј",
       full_name: "",
       role: "user",
       partner_slug: null
@@ -2096,11 +2117,11 @@ async function activateReadonlyFallback(reason) {
     DOM.userDisplay.textContent =
       STATE.profile?.display_name ||
       STATE.user?.email ||
-      "Резервный режим";
+      "Р РµР·РµСЂРІРЅС‹Р№ СЂРµР¶РёРј";
   }
 
   if (DOM.accessMode) {
-    DOM.accessMode.textContent = "Просмотр snapshot";
+    DOM.accessMode.textContent = "РџСЂРѕСЃРјРѕС‚СЂ snapshot";
   }
 
   renderOverview();
@@ -2109,9 +2130,9 @@ async function activateReadonlyFallback(reason) {
   openSection("overview");
   syncWorkspaceModeUi();
   syncImportButton();
-  setModuleState("Резервный режим");
+  setModuleState("Р РµР·РµСЂРІРЅС‹Р№ СЂРµР¶РёРј");
   setStatus(
-    `Контур открыт в резервном режиме. Живые таблицы временно недоступны, но данные из исходного файла уже доступны для просмотра.${reason?.message ? ` Причина: ${reason.message}` : ""}`,
+    `РљРѕРЅС‚СѓСЂ РѕС‚РєСЂС‹С‚ РІ СЂРµР·РµСЂРІРЅРѕРј СЂРµР¶РёРјРµ. Р–РёРІС‹Рµ С‚Р°Р±Р»РёС†С‹ РІСЂРµРјРµРЅРЅРѕ РЅРµРґРѕСЃС‚СѓРїРЅС‹, РЅРѕ РґР°РЅРЅС‹Рµ РёР· РёСЃС…РѕРґРЅРѕРіРѕ С„Р°Р№Р»Р° СѓР¶Рµ РґРѕСЃС‚СѓРїРЅС‹ РґР»СЏ РїСЂРѕСЃРјРѕС‚СЂР°.${reason?.message ? ` РџСЂРёС‡РёРЅР°: ${reason.message}` : ""}`,
     "warning"
   );
 }
@@ -2128,38 +2149,38 @@ function syncImportButton() {
   const available = isAdmin() && STATE.workbookReady && hasImportableWorkbookData();
   DOM.importWorkbookButton.disabled = STATE.importBusy || !available;
   DOM.importWorkbookButton.textContent = STATE.importBusy
-    ? "Импортирую исходник..."
-    : "Импортировать заполненный исходник";
+    ? "РРјРїРѕСЂС‚РёСЂСѓСЋ РёСЃС…РѕРґРЅРёРє..."
+    : "РРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ Р·Р°РїРѕР»РЅРµРЅРЅС‹Р№ РёСЃС…РѕРґРЅРёРє";
 
   if (!isAdmin()) {
     DOM.importWorkbookButton.classList.add("d-none");
-    setImportStatus("Импорт исходного файла доступен только владельцу и администраторам.");
+    setImportStatus("РРјРїРѕСЂС‚ РёСЃС…РѕРґРЅРѕРіРѕ С„Р°Р№Р»Р° РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј.");
     return;
   }
 
   DOM.importWorkbookButton.classList.remove("d-none");
 
   if (STATE.workbookError) {
-    setImportStatus(`Сверочный файл не загрузился: ${STATE.workbookError}`, "error");
+    setImportStatus(`РЎРІРµСЂРѕС‡РЅС‹Р№ С„Р°Р№Р» РЅРµ Р·Р°РіСЂСѓР·РёР»СЃСЏ: ${STATE.workbookError}`, "error");
     return;
   }
 
   if (!STATE.workbookReady) {
-    setImportStatus("Подготавливаю заполненный исходник для импорта...");
+    setImportStatus("РџРѕРґРіРѕС‚Р°РІР»РёРІР°СЋ Р·Р°РїРѕР»РЅРµРЅРЅС‹Р№ РёСЃС…РѕРґРЅРёРє РґР»СЏ РёРјРїРѕСЂС‚Р°...");
     return;
   }
 
   if (!hasImportableWorkbookData()) {
-    setImportStatus("Эталон ДОМ НЕОНА сейчас пустой. Платформа стартует с чистой базы, импорт пока не нужен.");
+    setImportStatus("Р­С‚Р°Р»РѕРЅ Р”РћРњ РќР•РћРќРђ СЃРµР№С‡Р°СЃ РїСѓСЃС‚РѕР№. РџР»Р°С‚С„РѕСЂРјР° СЃС‚Р°СЂС‚СѓРµС‚ СЃ С‡РёСЃС‚РѕР№ Р±Р°Р·С‹, РёРјРїРѕСЂС‚ РїРѕРєР° РЅРµ РЅСѓР¶РµРЅ.");
     return;
   }
 
   if (!STATE.financeReady || !STATE.operationsReady || !STATE.schemaReady) {
-    setImportStatus("Перед импортом выполните SQL-патчи ДОМ НЕОНА для схемы, финансов, операций и workbook sync.", "error");
+    setImportStatus("РџРµСЂРµРґ РёРјРїРѕСЂС‚РѕРј РІС‹РїРѕР»РЅРёС‚Рµ SQL-РїР°С‚С‡Рё Р”РћРњ РќР•РћРќРђ РґР»СЏ СЃС…РµРјС‹, С„РёРЅР°РЅСЃРѕРІ, РѕРїРµСЂР°С†РёР№ Рё workbook sync.", "error");
     return;
   }
 
-  setImportStatus("Импорт переносит заполненные блоки исходного файла в рабочие таблицы платформы без дублей.");
+  setImportStatus("РРјРїРѕСЂС‚ РїРµСЂРµРЅРѕСЃРёС‚ Р·Р°РїРѕР»РЅРµРЅРЅС‹Рµ Р±Р»РѕРєРё РёСЃС…РѕРґРЅРѕРіРѕ С„Р°Р№Р»Р° РІ СЂР°Р±РѕС‡РёРµ С‚Р°Р±Р»РёС†С‹ РїР»Р°С‚С„РѕСЂРјС‹ Р±РµР· РґСѓР±Р»РµР№.");
 }
 
 function persistWorkspaceUi() {
@@ -2191,7 +2212,7 @@ function applyRecordFormsVisibility() {
       node?.classList.toggle("is-hidden", shouldHide);
     });
     document.querySelectorAll(`[data-form-toggle="${section}"]`).forEach((button) => {
-      button.textContent = shouldHide ? "Показать форму" : "Скрыть форму";
+      button.textContent = shouldHide ? "РџРѕРєР°Р·Р°С‚СЊ С„РѕСЂРјСѓ" : "РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ";
       button.classList.toggle("btn-dark", !shouldHide);
       button.classList.toggle("btn-outline-dark", shouldHide);
     });
@@ -2201,7 +2222,7 @@ function applyRecordFormsVisibility() {
     const hiddenCount = Object.values(STATE.ui.hiddenForms || {}).filter(Boolean).length;
     const totalForms = Object.keys(STATE.ui.hiddenForms || {}).length || 1;
     const allHidden = hiddenCount >= totalForms;
-    DOM.toggleAllFormsButton.textContent = allHidden ? "Показать формы" : "Скрыть формы";
+    DOM.toggleAllFormsButton.textContent = allHidden ? "РџРѕРєР°Р·Р°С‚СЊ С„РѕСЂРјС‹" : "РЎРєСЂС‹С‚СЊ С„РѕСЂРјС‹";
     DOM.toggleAllFormsButton.classList.toggle("btn-dark", allHidden);
     DOM.toggleAllFormsButton.classList.toggle("btn-outline-dark", !allHidden);
   }
@@ -2210,7 +2231,7 @@ function applyRecordFormsVisibility() {
 function syncWorkspaceModeUi() {
   document.body.classList.toggle("compact-tables", STATE.ui.compactTables);
   if (DOM.toggleCompactTablesButton) {
-    DOM.toggleCompactTablesButton.textContent = STATE.ui.compactTables ? "Обычные таблицы" : "Компактные таблицы";
+    DOM.toggleCompactTablesButton.textContent = STATE.ui.compactTables ? "РћР±С‹С‡РЅС‹Рµ С‚Р°Р±Р»РёС†С‹" : "РљРѕРјРїР°РєС‚РЅС‹Рµ С‚Р°Р±Р»РёС†С‹";
     DOM.toggleCompactTablesButton.classList.toggle("btn-dark", STATE.ui.compactTables);
     DOM.toggleCompactTablesButton.classList.toggle("btn-outline-dark", !STATE.ui.compactTables);
   }
@@ -2218,8 +2239,8 @@ function syncWorkspaceModeUi() {
   const hiddenCount = Object.values(STATE.ui.hiddenForms || {}).filter(Boolean).length;
   if (DOM.workspaceModeLabel) {
     DOM.workspaceModeLabel.textContent = STATE.ui.compactTables
-      ? `Компактный режим включен. Скрытых форм: ${hiddenCount}.`
-      : `Стандартный режим таблиц. Скрытых форм: ${hiddenCount}.`;
+      ? `РљРѕРјРїР°РєС‚РЅС‹Р№ СЂРµР¶РёРј РІРєР»СЋС‡РµРЅ. РЎРєСЂС‹С‚С‹С… С„РѕСЂРј: ${hiddenCount}.`
+      : `РЎС‚Р°РЅРґР°СЂС‚РЅС‹Р№ СЂРµР¶РёРј С‚Р°Р±Р»РёС†. РЎРєСЂС‹С‚С‹С… С„РѕСЂРј: ${hiddenCount}.`;
   }
 
   applyRecordFormsVisibility();
@@ -2407,7 +2428,7 @@ async function maybeAutoRestoreContourData() {
   }
 
   STATE.autoRestoreAttempted = true;
-  setImportStatus("Живые таблицы Контур пусты. Возвращаю данные из исходного ЛАЙТ 2...");
+  setImportStatus("Р–РёРІС‹Рµ С‚Р°Р±Р»РёС†С‹ РљРѕРЅС‚СѓСЂ РїСѓСЃС‚С‹. Р’РѕР·РІСЂР°С‰Р°СЋ РґР°РЅРЅС‹Рµ РёР· РёСЃС…РѕРґРЅРѕРіРѕ Р›РђР™Рў 2...");
 
   try {
     await importWorkbookIntoTables();
@@ -2416,7 +2437,7 @@ async function maybeAutoRestoreContourData() {
     return true;
   } catch (error) {
     console.error("light2 auto restore failed", error);
-    setStatus(error.message || "Не удалось автоматически вернуть данные Контур.", "error");
+    setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІРµСЂРЅСѓС‚СЊ РґР°РЅРЅС‹Рµ РљРѕРЅС‚СѓСЂ.", "error");
     return false;
   }
 }
@@ -2492,7 +2513,7 @@ function toYearLabel(value) {
 }
 
 function formatPercentFromDecimal(value) {
-  if (!Number.isFinite(value)) return "—";
+  if (!Number.isFinite(value)) return "вЂ”";
   return `${new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
@@ -2500,7 +2521,7 @@ function formatPercentFromDecimal(value) {
 }
 
 function formatPlainNumber(value, digits = 0) {
-  if (!Number.isFinite(value)) return "—";
+  if (!Number.isFinite(value)) return "вЂ”";
   return new Intl.NumberFormat("ru-RU", {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits
@@ -2529,7 +2550,7 @@ function parseLeadgenSnapshot(sheet) {
 
   const headerRows = sheet.rows.filter((row) => {
     const cells = Object.values(row.cells || {});
-    return getRowDisplay(row, 2) === "Среднее" && cells.some((cell) => isMonthLabel(cell.display));
+    return getRowDisplay(row, 2) === "РЎСЂРµРґРЅРµРµ" && cells.some((cell) => isMonthLabel(cell.display));
   });
 
   const blocks = headerRows.map((headerRow, index) => {
@@ -2550,39 +2571,39 @@ function parseLeadgenSnapshot(sheet) {
         .map((row) => [getRowDisplay(row, 1), row])
     );
 
-    const leadRow = getMetricRowByLabels(rowMap, ["Заявки/Лиды", "Контакты"]);
-    const clickConversionRow = getMetricRowByLabels(rowMap, ["Конверсия клики", "Конверсия в контакт"]);
-    const leadCostRow = getMetricRowByLabels(rowMap, ["Стоимость лида", "Стоимость контакта"]);
+    const leadRow = getMetricRowByLabels(rowMap, ["Р—Р°СЏРІРєРё/Р›РёРґС‹", "РљРѕРЅС‚Р°РєС‚С‹"]);
+    const clickConversionRow = getMetricRowByLabels(rowMap, ["РљРѕРЅРІРµСЂСЃРёСЏ РєР»РёРєРё", "РљРѕРЅРІРµСЂСЃРёСЏ РІ РєРѕРЅС‚Р°РєС‚"]);
+    const leadCostRow = getMetricRowByLabels(rowMap, ["РЎС‚РѕРёРјРѕСЃС‚СЊ Р»РёРґР°", "РЎС‚РѕРёРјРѕСЃС‚СЊ РєРѕРЅС‚Р°РєС‚Р°"]);
 
     const dataSeries = monthColumns
       .filter(({ columnIndex }) =>
         [
-          getMetricCell(rowMap, ["Расходы"], columnIndex),
-          getMetricCell(rowMap, ["Заявки/Лиды", "Контакты"], columnIndex),
-          getMetricCell(rowMap, ["Продажи"], columnIndex),
-          getMetricCell(rowMap, ["Прибыль чистая"], columnIndex)
+          getMetricCell(rowMap, ["Р Р°СЃС…РѕРґС‹"], columnIndex),
+          getMetricCell(rowMap, ["Р—Р°СЏРІРєРё/Р›РёРґС‹", "РљРѕРЅС‚Р°РєС‚С‹"], columnIndex),
+          getMetricCell(rowMap, ["РџСЂРѕРґР°Р¶Рё"], columnIndex),
+          getMetricCell(rowMap, ["РџСЂРёР±С‹Р»СЊ С‡РёСЃС‚Р°СЏ"], columnIndex)
         ].some(hasSnapshotValue)
       )
       .map(({ columnIndex, monthLabel }) => ({
         columnIndex,
         monthLabel,
-        spend: getMetricNumber(rowMap, ["Расходы"], columnIndex),
-        leads: getMetricNumber(rowMap, ["Заявки/Лиды", "Контакты"], columnIndex),
-        sales: getMetricNumber(rowMap, ["Продажи"], columnIndex),
-        profitNet: getMetricNumber(rowMap, ["Прибыль чистая"], columnIndex),
-        costPerLead: getMetricNumber(rowMap, ["Стоимость лида", "Стоимость контакта"], columnIndex),
-        costPerSale: getMetricNumber(rowMap, ["Цена продажи"], columnIndex),
-        clickConversion: getMetricNumber(rowMap, ["Конверсия клики", "Конверсия в контакт"], columnIndex),
-        leadConversion: getMetricNumber(rowMap, ["Конверсия лида"], columnIndex),
-        saleConversion: getMetricNumber(rowMap, ["Конверсия продажи"], columnIndex)
+        spend: getMetricNumber(rowMap, ["Р Р°СЃС…РѕРґС‹"], columnIndex),
+        leads: getMetricNumber(rowMap, ["Р—Р°СЏРІРєРё/Р›РёРґС‹", "РљРѕРЅС‚Р°РєС‚С‹"], columnIndex),
+        sales: getMetricNumber(rowMap, ["РџСЂРѕРґР°Р¶Рё"], columnIndex),
+        profitNet: getMetricNumber(rowMap, ["РџСЂРёР±С‹Р»СЊ С‡РёСЃС‚Р°СЏ"], columnIndex),
+        costPerLead: getMetricNumber(rowMap, ["РЎС‚РѕРёРјРѕСЃС‚СЊ Р»РёРґР°", "РЎС‚РѕРёРјРѕСЃС‚СЊ РєРѕРЅС‚Р°РєС‚Р°"], columnIndex),
+        costPerSale: getMetricNumber(rowMap, ["Р¦РµРЅР° РїСЂРѕРґР°Р¶Рё"], columnIndex),
+        clickConversion: getMetricNumber(rowMap, ["РљРѕРЅРІРµСЂСЃРёСЏ РєР»РёРєРё", "РљРѕРЅРІРµСЂСЃРёСЏ РІ РєРѕРЅС‚Р°РєС‚"], columnIndex),
+        leadConversion: getMetricNumber(rowMap, ["РљРѕРЅРІРµСЂСЃРёСЏ Р»РёРґР°"], columnIndex),
+        saleConversion: getMetricNumber(rowMap, ["РљРѕРЅРІРµСЂСЃРёСЏ РїСЂРѕРґР°Р¶Рё"], columnIndex)
       }));
 
     return {
-      title: getRowDisplay(headerRow, 1) || `Канал ${index + 1}`,
-      leadLabel: leadRow ? getRowDisplay(leadRow, 1) : "Лиды",
-      clickConversionLabel: clickConversionRow ? getRowDisplay(clickConversionRow, 1) : "Конверсия",
-      leadCostLabel: leadCostRow ? getRowDisplay(leadCostRow, 1) : "Стоимость лида",
-      hasLeadConversion: Boolean(getMetricRowByLabels(rowMap, ["Конверсия лида"])),
+      title: getRowDisplay(headerRow, 1) || `РљР°РЅР°Р» ${index + 1}`,
+      leadLabel: leadRow ? getRowDisplay(leadRow, 1) : "Р›РёРґС‹",
+      clickConversionLabel: clickConversionRow ? getRowDisplay(clickConversionRow, 1) : "РљРѕРЅРІРµСЂСЃРёСЏ",
+      leadCostLabel: leadCostRow ? getRowDisplay(leadCostRow, 1) : "РЎС‚РѕРёРјРѕСЃС‚СЊ Р»РёРґР°",
+      hasLeadConversion: Boolean(getMetricRowByLabels(rowMap, ["РљРѕРЅРІРµСЂСЃРёСЏ Р»РёРґР°"])),
       dataSeries
     };
   });
@@ -2621,31 +2642,31 @@ function parseMetricsSnapshot(sheet) {
 
   const series = Array.from({ length: sheet.maxCol || 0 }, (_, idx) => idx + 1)
     .filter((columnIndex) => isMonthLabel(getSheetDisplay(sheet, 2, columnIndex)))
-    .filter((columnIndex) => getSheetDisplay(sheet, 3, columnIndex).startsWith("Сумма"))
+    .filter((columnIndex) => getSheetDisplay(sheet, 3, columnIndex).startsWith("РЎСѓРјРјР°"))
     .map((columnIndex) => ({
       columnIndex,
       monthLabel: getSheetDisplay(sheet, 2, columnIndex),
       yearLabel: getYearForColumn(columnIndex),
-      revenue: getMetricNumber(rowMap, ["Выручка"], columnIndex),
-      cost: getMetricNumber(rowMap, ["Себестоимость"], columnIndex),
-      grossProfit: getMetricNumber(rowMap, ["Валовая прибыль"], columnIndex),
-      operatingExpenses: getMetricNumber(rowMap, ["Операционные расходы"], columnIndex),
-      operatingProfit: getMetricNumber(rowMap, ["Операционная прибыль"], columnIndex),
-      taxes: getMetricNumber(rowMap, ["Налоги и сборы"], columnIndex),
-      netProfit: getMetricNumber(rowMap, ["Чистая прибыль"], columnIndex),
-      productProfitability: getMetricNumber(rowMap, ["Rпр — рентабельность продукции"], columnIndex),
-      businessProfitability: getMetricNumber(rowMap, ["Рентабильность бизнеса"], columnIndex),
-      margin: getMetricNumber(rowMap, ["Маржа"], columnIndex),
-      averageCheck: getMetricNumber(rowMap, ["Средний чек"], columnIndex),
-      sales: getMetricNumber(rowMap, ["Продажи"], columnIndex),
-      warehouse: getMetricNumber(rowMap, ["Склад"], columnIndex),
-      tbuMoney: getMetricNumber(rowMap, ["ТБУ в деньгах"], columnIndex)
+      revenue: getMetricNumber(rowMap, ["Р’С‹СЂСѓС‡РєР°"], columnIndex),
+      cost: getMetricNumber(rowMap, ["РЎРµР±РµСЃС‚РѕРёРјРѕСЃС‚СЊ"], columnIndex),
+      grossProfit: getMetricNumber(rowMap, ["Р’Р°Р»РѕРІР°СЏ РїСЂРёР±С‹Р»СЊ"], columnIndex),
+      operatingExpenses: getMetricNumber(rowMap, ["РћРїРµСЂР°С†РёРѕРЅРЅС‹Рµ СЂР°СЃС…РѕРґС‹"], columnIndex),
+      operatingProfit: getMetricNumber(rowMap, ["РћРїРµСЂР°С†РёРѕРЅРЅР°СЏ РїСЂРёР±С‹Р»СЊ"], columnIndex),
+      taxes: getMetricNumber(rowMap, ["РќР°Р»РѕРіРё Рё СЃР±РѕСЂС‹"], columnIndex),
+      netProfit: getMetricNumber(rowMap, ["Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ"], columnIndex),
+      productProfitability: getMetricNumber(rowMap, ["RРїСЂ вЂ” СЂРµРЅС‚Р°Р±РµР»СЊРЅРѕСЃС‚СЊ РїСЂРѕРґСѓРєС†РёРё"], columnIndex),
+      businessProfitability: getMetricNumber(rowMap, ["Р РµРЅС‚Р°Р±РёР»СЊРЅРѕСЃС‚СЊ Р±РёР·РЅРµСЃР°"], columnIndex),
+      margin: getMetricNumber(rowMap, ["РњР°СЂР¶Р°"], columnIndex),
+      averageCheck: getMetricNumber(rowMap, ["РЎСЂРµРґРЅРёР№ С‡РµРє"], columnIndex),
+      sales: getMetricNumber(rowMap, ["РџСЂРѕРґР°Р¶Рё"], columnIndex),
+      warehouse: getMetricNumber(rowMap, ["РЎРєР»Р°Рґ"], columnIndex),
+      tbuMoney: getMetricNumber(rowMap, ["РўР‘РЈ РІ РґРµРЅСЊРіР°С…"], columnIndex)
     }))
     .filter(
       (item) =>
-        hasSnapshotValue(getMetricCell(rowMap, ["Выручка"], item.columnIndex)) ||
-        hasSnapshotValue(getMetricCell(rowMap, ["Чистая прибыль"], item.columnIndex)) ||
-        hasSnapshotValue(getMetricCell(rowMap, ["Продажи"], item.columnIndex))
+        hasSnapshotValue(getMetricCell(rowMap, ["Р’С‹СЂСѓС‡РєР°"], item.columnIndex)) ||
+        hasSnapshotValue(getMetricCell(rowMap, ["Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ"], item.columnIndex)) ||
+        hasSnapshotValue(getMetricCell(rowMap, ["РџСЂРѕРґР°Р¶Рё"], item.columnIndex))
     );
 
   return { series };
@@ -2677,7 +2698,7 @@ function parseFinmodelSnapshot(sheet) {
         monthLabel,
         turnover: getSnapshotCellNumber(turnoverCell),
         orders: getSnapshotCellNumber(getRowCell(row, 15)),
-        partnerLabel: currentPartner || "Без привязки"
+        partnerLabel: currentPartner || "Р‘РµР· РїСЂРёРІСЏР·РєРё"
       });
     });
 
@@ -2707,43 +2728,43 @@ function renderLeadgenAnalytics(sheet) {
       const recentSeries = block.dataSeries.slice(-4);
       return `
         <article class="subsection-card analytics-panel">
-          <div class="panel-kicker">Канал</div>
+          <div class="panel-kicker">РљР°РЅР°Р»</div>
           <h3>${escapeHtml(block.title)}</h3>
-          <div class="analytics-caption">Последний заполненный срез: ${escapeHtml(latest.monthLabel)}</div>
+          <div class="analytics-caption">РџРѕСЃР»РµРґРЅРёР№ Р·Р°РїРѕР»РЅРµРЅРЅС‹Р№ СЃСЂРµР·: ${escapeHtml(latest.monthLabel)}</div>
           <div class="summary-row analytics-kpi-strip">
             <article class="summary-card">
-              <span>Расходы</span>
-              <strong>${formatMoney(latest.spend)} ₽</strong>
+              <span>Р Р°СЃС…РѕРґС‹</span>
+              <strong>${formatMoney(latest.spend)} в‚Ѕ</strong>
             </article>
             <article class="summary-card">
               <span>${escapeHtml(block.leadLabel)}</span>
               <strong>${formatPlainNumber(latest.leads)}</strong>
             </article>
             <article class="summary-card">
-              <span>Продажи</span>
+              <span>РџСЂРѕРґР°Р¶Рё</span>
               <strong>${formatPlainNumber(latest.sales)}</strong>
             </article>
             <article class="summary-card">
-              <span>Чистая прибыль</span>
-              <strong class="${latest.profitNet >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.profitNet)} ₽</strong>
+              <span>Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ</span>
+              <strong class="${latest.profitNet >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.profitNet)} в‚Ѕ</strong>
             </article>
           </div>
           <div class="analytics-chip-row">
             <span class="analytics-chip">${escapeHtml(block.clickConversionLabel)}: <strong>${formatPercentFromDecimal(latest.clickConversion)}</strong></span>
-            ${block.hasLeadConversion ? `<span class="analytics-chip">Конверсия лида: <strong>${formatPercentFromDecimal(latest.leadConversion)}</strong></span>` : ""}
-            <span class="analytics-chip">Конверсия продажи: <strong>${formatPercentFromDecimal(latest.saleConversion)}</strong></span>
-            <span class="analytics-chip">${escapeHtml(block.leadCostLabel)}: <strong>${formatMoney(latest.costPerLead)} ₽</strong></span>
-            <span class="analytics-chip">Цена продажи: <strong>${formatMoney(latest.costPerSale)} ₽</strong></span>
+            ${block.hasLeadConversion ? `<span class="analytics-chip">РљРѕРЅРІРµСЂСЃРёСЏ Р»РёРґР°: <strong>${formatPercentFromDecimal(latest.leadConversion)}</strong></span>` : ""}
+            <span class="analytics-chip">РљРѕРЅРІРµСЂСЃРёСЏ РїСЂРѕРґР°Р¶Рё: <strong>${formatPercentFromDecimal(latest.saleConversion)}</strong></span>
+            <span class="analytics-chip">${escapeHtml(block.leadCostLabel)}: <strong>${formatMoney(latest.costPerLead)} в‚Ѕ</strong></span>
+            <span class="analytics-chip">Р¦РµРЅР° РїСЂРѕРґР°Р¶Рё: <strong>${formatMoney(latest.costPerSale)} в‚Ѕ</strong></span>
           </div>
           <div class="table-shell mt-3">
             <table class="table table-sm align-middle analytics-mini-table">
               <thead>
                 <tr>
-                  <th>Месяц</th>
-                  <th class="text-end">Расходы</th>
+                  <th>РњРµСЃСЏС†</th>
+                  <th class="text-end">Р Р°СЃС…РѕРґС‹</th>
                   <th class="text-end">${escapeHtml(block.leadLabel)}</th>
-                  <th class="text-end">Продажи</th>
-                  <th class="text-end">Чистая прибыль</th>
+                  <th class="text-end">РџСЂРѕРґР°Р¶Рё</th>
+                  <th class="text-end">Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ</th>
                 </tr>
               </thead>
               <tbody>
@@ -2771,7 +2792,7 @@ function renderLeadgenAnalytics(sheet) {
   return `
     <div class="analytics-shell">
       <div class="scope-note mb-3">
-        Каналы разбираются автоматически из листа. Сверху показаны последние заполненные месяцы по каждому рекламному блоку, снизу остаётся исходная таблица для сверки.
+        РљР°РЅР°Р»С‹ СЂР°Р·Р±РёСЂР°СЋС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РёР· Р»РёСЃС‚Р°. РЎРІРµСЂС…Сѓ РїРѕРєР°Р·Р°РЅС‹ РїРѕСЃР»РµРґРЅРёРµ Р·Р°РїРѕР»РЅРµРЅРЅС‹Рµ РјРµСЃСЏС†С‹ РїРѕ РєР°Р¶РґРѕРјСѓ СЂРµРєР»Р°РјРЅРѕРјСѓ Р±Р»РѕРєСѓ, СЃРЅРёР·Сѓ РѕСЃС‚Р°С‘С‚СЃСЏ РёСЃС…РѕРґРЅР°СЏ С‚Р°Р±Р»РёС†Р° РґР»СЏ СЃРІРµСЂРєРё.
       </div>
       <div class="subsection-grid analytics-grid">${cards}</div>
     </div>
@@ -2790,63 +2811,63 @@ function renderMetricsAnalytics(sheet) {
     <div class="analytics-shell">
       <div class="summary-row analytics-kpi-strip mb-3">
         <article class="summary-card">
-          <span>Актуальный месяц</span>
+          <span>РђРєС‚СѓР°Р»СЊРЅС‹Р№ РјРµСЃСЏС†</span>
           <strong>${escapeHtml(latestLabel)}</strong>
         </article>
         <article class="summary-card">
-          <span>Выручка</span>
-          <strong>${formatMoney(latest.revenue)} ₽</strong>
+          <span>Р’С‹СЂСѓС‡РєР°</span>
+          <strong>${formatMoney(latest.revenue)} в‚Ѕ</strong>
         </article>
         <article class="summary-card">
-          <span>Чистая прибыль</span>
-          <strong class="${latest.netProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.netProfit)} ₽</strong>
+          <span>Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ</span>
+          <strong class="${latest.netProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.netProfit)} в‚Ѕ</strong>
         </article>
         <article class="summary-card">
-          <span>Продажи</span>
+          <span>РџСЂРѕРґР°Р¶Рё</span>
           <strong>${formatPlainNumber(latest.sales)}</strong>
         </article>
         <article class="summary-card">
-          <span>Средний чек</span>
-          <strong>${formatMoney(latest.averageCheck)} ₽</strong>
+          <span>РЎСЂРµРґРЅРёР№ С‡РµРє</span>
+          <strong>${formatMoney(latest.averageCheck)} в‚Ѕ</strong>
         </article>
       </div>
       <div class="subsection-grid analytics-grid">
         <article class="subsection-card analytics-panel">
-          <div class="panel-kicker">Экономика месяца</div>
+          <div class="panel-kicker">Р­РєРѕРЅРѕРјРёРєР° РјРµСЃСЏС†Р°</div>
           <h3>${escapeHtml(latestLabel)}</h3>
           <div class="overview-list">
-            <div class="overview-list-item"><span>Себестоимость</span><strong>${formatMoney(latest.cost)} ₽</strong></div>
-            <div class="overview-list-item"><span>Валовая прибыль</span><strong class="${latest.grossProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.grossProfit)} ₽</strong></div>
-            <div class="overview-list-item"><span>Операционные расходы</span><strong>${formatMoney(latest.operatingExpenses)} ₽</strong></div>
-            <div class="overview-list-item"><span>Операционная прибыль</span><strong class="${latest.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.operatingProfit)} ₽</strong></div>
-            <div class="overview-list-item"><span>Налоги и сборы</span><strong>${formatMoney(latest.taxes)} ₽</strong></div>
-            <div class="overview-list-item"><span>ТБУ в деньгах</span><strong>${formatMoney(latest.tbuMoney)} ₽</strong></div>
+            <div class="overview-list-item"><span>РЎРµР±РµСЃС‚РѕРёРјРѕСЃС‚СЊ</span><strong>${formatMoney(latest.cost)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Р’Р°Р»РѕРІР°СЏ РїСЂРёР±С‹Р»СЊ</span><strong class="${latest.grossProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.grossProfit)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>РћРїРµСЂР°С†РёРѕРЅРЅС‹Рµ СЂР°СЃС…РѕРґС‹</span><strong>${formatMoney(latest.operatingExpenses)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>РћРїРµСЂР°С†РёРѕРЅРЅР°СЏ РїСЂРёР±С‹Р»СЊ</span><strong class="${latest.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.operatingProfit)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>РќР°Р»РѕРіРё Рё СЃР±РѕСЂС‹</span><strong>${formatMoney(latest.taxes)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>РўР‘РЈ РІ РґРµРЅСЊРіР°С…</span><strong>${formatMoney(latest.tbuMoney)} в‚Ѕ</strong></div>
           </div>
         </article>
         <article class="subsection-card analytics-panel">
-          <div class="panel-kicker">Качество бизнеса</div>
-          <h3>Маржа и рентабельность</h3>
+          <div class="panel-kicker">РљР°С‡РµСЃС‚РІРѕ Р±РёР·РЅРµСЃР°</div>
+          <h3>РњР°СЂР¶Р° Рё СЂРµРЅС‚Р°Р±РµР»СЊРЅРѕСЃС‚СЊ</h3>
           <div class="analytics-chip-row">
-            <span class="analytics-chip">Маржа: <strong>${formatPercentFromDecimal(latest.margin)}</strong></span>
-            <span class="analytics-chip">Rпр: <strong>${formatPercentFromDecimal(latest.productProfitability)}</strong></span>
-            <span class="analytics-chip">Рентабельность бизнеса: <strong>${formatPercentFromDecimal(latest.businessProfitability)}</strong></span>
-            <span class="analytics-chip">Склад: <strong>${formatMoney(latest.warehouse)} ₽</strong></span>
+            <span class="analytics-chip">РњР°СЂР¶Р°: <strong>${formatPercentFromDecimal(latest.margin)}</strong></span>
+            <span class="analytics-chip">RРїСЂ: <strong>${formatPercentFromDecimal(latest.productProfitability)}</strong></span>
+            <span class="analytics-chip">Р РµРЅС‚Р°Р±РµР»СЊРЅРѕСЃС‚СЊ Р±РёР·РЅРµСЃР°: <strong>${formatPercentFromDecimal(latest.businessProfitability)}</strong></span>
+            <span class="analytics-chip">РЎРєР»Р°Рґ: <strong>${formatMoney(latest.warehouse)} в‚Ѕ</strong></span>
           </div>
-          <div class="analytics-footnote">Показатели взяты из последнего заполненного месяца листа и сохраняют исходную формульную логику.</div>
+          <div class="analytics-footnote">РџРѕРєР°Р·Р°С‚РµР»Рё РІР·СЏС‚С‹ РёР· РїРѕСЃР»РµРґРЅРµРіРѕ Р·Р°РїРѕР»РЅРµРЅРЅРѕРіРѕ РјРµСЃСЏС†Р° Р»РёСЃС‚Р° Рё СЃРѕС…СЂР°РЅСЏСЋС‚ РёСЃС…РѕРґРЅСѓСЋ С„РѕСЂРјСѓР»СЊРЅСѓСЋ Р»РѕРіРёРєСѓ.</div>
         </article>
         <article class="subsection-card analytics-panel analytics-panel-wide">
-          <div class="panel-kicker">Последние месяцы</div>
-          <h3>Динамика управленческих метрик</h3>
+          <div class="panel-kicker">РџРѕСЃР»РµРґРЅРёРµ РјРµСЃСЏС†С‹</div>
+          <h3>Р”РёРЅР°РјРёРєР° СѓРїСЂР°РІР»РµРЅС‡РµСЃРєРёС… РјРµС‚СЂРёРє</h3>
           <div class="table-shell mt-2">
             <table class="table table-sm align-middle analytics-mini-table">
               <thead>
                 <tr>
-                  <th>Месяц</th>
-                  <th class="text-end">Выручка</th>
-                  <th class="text-end">Опер. прибыль</th>
-                  <th class="text-end">Чистая прибыль</th>
-                  <th class="text-end">Продажи</th>
-                  <th class="text-end">Средний чек</th>
+                  <th>РњРµСЃСЏС†</th>
+                  <th class="text-end">Р’С‹СЂСѓС‡РєР°</th>
+                  <th class="text-end">РћРїРµСЂ. РїСЂРёР±С‹Р»СЊ</th>
+                  <th class="text-end">Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ</th>
+                  <th class="text-end">РџСЂРѕРґР°Р¶Рё</th>
+                  <th class="text-end">РЎСЂРµРґРЅРёР№ С‡РµРє</th>
                 </tr>
               </thead>
               <tbody>
@@ -2888,36 +2909,36 @@ function renderFinmodelAnalytics(sheet) {
     <div class="analytics-shell">
       <div class="summary-row analytics-kpi-strip mb-3">
         <article class="summary-card">
-          <span>Последний месяц</span>
+          <span>РџРѕСЃР»РµРґРЅРёР№ РјРµСЃСЏС†</span>
           <strong>${escapeHtml(`${latest.monthLabel} ${latest.yearLabel}`.trim())}</strong>
         </article>
         <article class="summary-card">
-          <span>Оборот</span>
-          <strong>${formatMoney(latest.turnover)} ₽</strong>
+          <span>РћР±РѕСЂРѕС‚</span>
+          <strong>${formatMoney(latest.turnover)} в‚Ѕ</strong>
         </article>
         <article class="summary-card">
-          <span>Заказов</span>
+          <span>Р—Р°РєР°Р·РѕРІ</span>
           <strong>${formatPlainNumber(latest.orders)}</strong>
         </article>
         <article class="summary-card">
-          <span>Средний чек месяца</span>
-          <strong>${latest.orders ? formatMoney(latest.turnover / latest.orders) : "—"}</strong>
+          <span>РЎСЂРµРґРЅРёР№ С‡РµРє РјРµСЃСЏС†Р°</span>
+          <strong>${latest.orders ? formatMoney(latest.turnover / latest.orders) : "вЂ”"}</strong>
         </article>
       </div>
       <div class="subsection-grid analytics-grid">
         <article class="subsection-card analytics-panel">
-          <div class="panel-kicker">Годовой контур</div>
-          <h3>${escapeHtml(latest.yearLabel)} год на сегодня</h3>
+          <div class="panel-kicker">Р“РѕРґРѕРІРѕР№ РєРѕРЅС‚СѓСЂ</div>
+          <h3>${escapeHtml(latest.yearLabel)} РіРѕРґ РЅР° СЃРµРіРѕРґРЅСЏ</h3>
           <div class="overview-list">
-            <div class="overview-list-item"><span>Оборот</span><strong>${formatMoney(currentYearTurnover)} ₽</strong></div>
-            <div class="overview-list-item"><span>Заказов</span><strong>${formatPlainNumber(currentYearOrders)}</strong></div>
-            <div class="overview-list-item"><span>Средний чек</span><strong>${currentYearOrders ? formatMoney(currentYearTurnover / currentYearOrders) : "—"}</strong></div>
-            <div class="overview-list-item"><span>Лучший месяц</span><strong>${bestMonth ? escapeHtml(`${bestMonth.monthLabel} ${bestMonth.yearLabel}`.trim()) : "—"}</strong></div>
+            <div class="overview-list-item"><span>РћР±РѕСЂРѕС‚</span><strong>${formatMoney(currentYearTurnover)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Р—Р°РєР°Р·РѕРІ</span><strong>${formatPlainNumber(currentYearOrders)}</strong></div>
+            <div class="overview-list-item"><span>РЎСЂРµРґРЅРёР№ С‡РµРє</span><strong>${currentYearOrders ? formatMoney(currentYearTurnover / currentYearOrders) : "вЂ”"}</strong></div>
+            <div class="overview-list-item"><span>Р›СѓС‡С€РёР№ РјРµСЃСЏС†</span><strong>${bestMonth ? escapeHtml(`${bestMonth.monthLabel} ${bestMonth.yearLabel}`.trim()) : "вЂ”"}</strong></div>
           </div>
         </article>
         <article class="subsection-card analytics-panel">
-          <div class="panel-kicker">Партнёры</div>
-          <h3>Вклад по партнёрам</h3>
+          <div class="panel-kicker">РџР°СЂС‚РЅС‘СЂС‹</div>
+          <h3>Р’РєР»Р°Рґ РїРѕ РїР°СЂС‚РЅС‘СЂР°Рј</h3>
           <div class="overview-list">
             ${parsed.partnerTotals
               .slice(0, 6)
@@ -2926,9 +2947,9 @@ function renderFinmodelAnalytics(sheet) {
                   <div class="overview-list-item">
                     <div>
                       <strong>${escapeHtml(item.partnerLabel)}</strong>
-                      <span>${formatPlainNumber(item.months)} мес. • ${formatPlainNumber(item.orders)} заказов</span>
+                      <span>${formatPlainNumber(item.months)} РјРµСЃ. вЂў ${formatPlainNumber(item.orders)} Р·Р°РєР°Р·РѕРІ</span>
                     </div>
-                    <strong>${formatMoney(item.turnover)} ₽</strong>
+                    <strong>${formatMoney(item.turnover)} в‚Ѕ</strong>
                   </div>
                 `
               )
@@ -2936,17 +2957,17 @@ function renderFinmodelAnalytics(sheet) {
           </div>
         </article>
         <article class="subsection-card analytics-panel analytics-panel-wide">
-          <div class="panel-kicker">Временной ряд</div>
-          <h3>Оборот и заказы по месяцам</h3>
+          <div class="panel-kicker">Р’СЂРµРјРµРЅРЅРѕР№ СЂСЏРґ</div>
+          <h3>РћР±РѕСЂРѕС‚ Рё Р·Р°РєР°Р·С‹ РїРѕ РјРµСЃСЏС†Р°Рј</h3>
           <div class="table-shell mt-2">
             <table class="table table-sm align-middle analytics-mini-table">
               <thead>
                 <tr>
-                  <th>Месяц</th>
-                  <th class="text-end">Оборот</th>
-                  <th class="text-end">Заказов</th>
-                  <th class="text-end">Средний чек</th>
-                  <th>Партнёр</th>
+                  <th>РњРµСЃСЏС†</th>
+                  <th class="text-end">РћР±РѕСЂРѕС‚</th>
+                  <th class="text-end">Р—Р°РєР°Р·РѕРІ</th>
+                  <th class="text-end">РЎСЂРµРґРЅРёР№ С‡РµРє</th>
+                  <th>РџР°СЂС‚РЅС‘СЂ</th>
                 </tr>
               </thead>
               <tbody>
@@ -2957,7 +2978,7 @@ function renderFinmodelAnalytics(sheet) {
                         <td>${escapeHtml(`${item.monthLabel} ${item.yearLabel}`.trim())}</td>
                         <td class="text-end">${formatMoney(item.turnover)}</td>
                         <td class="text-end">${formatPlainNumber(item.orders)}</td>
-                        <td class="text-end">${item.orders ? formatMoney(item.turnover / item.orders) : "—"}</td>
+                        <td class="text-end">${item.orders ? formatMoney(item.turnover / item.orders) : "вЂ”"}</td>
                         <td>${escapeHtml(item.partnerLabel)}</td>
                       </tr>
                     `
@@ -2980,15 +3001,15 @@ function renderSnapshotAnalytics(sectionKey, sheet) {
 }
 
 function getCalendarStatusTone(status) {
-  if (status === "Поступление") return "status-closed";
-  if (status === "Платеж") return "status-ready";
-  if (status === "Отменен") return "status-dispute";
-  if (status === "Перенесен") return "status-archive";
+  if (status === "РџРѕСЃС‚СѓРїР»РµРЅРёРµ") return "status-closed";
+  if (status === "РџР»Р°С‚РµР¶") return "status-ready";
+  if (status === "РћС‚РјРµРЅРµРЅ") return "status-dispute";
+  if (status === "РџРµСЂРµРЅРµСЃРµРЅ") return "status-archive";
   return "status-open";
 }
 
 function getOperationTone(type) {
-  return type === "Приход" ? "type-incoming" : "type-outgoing";
+  return type === "РџСЂРёС…РѕРґ" ? "type-incoming" : "type-outgoing";
 }
 
 function renderInteractiveFinanceSections() {
@@ -2997,11 +3018,11 @@ function renderInteractiveFinanceSections() {
     balanceHost.innerHTML = `
       <div class="section-actions section-actions--workspace mb-3">
         <div class="section-actions__group">
-          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="balance">Новая запись</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="balance">Скрыть форму</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshBalanceButton">Обновить</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="balance">РќРѕРІР°СЏ Р·Р°РїРёСЃСЊ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="balance">РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshBalanceButton">РћР±РЅРѕРІРёС‚СЊ</button>
         </div>
-        <span class="workspace-chip">Живой баланс по трем контурам</span>
+        <span class="workspace-chip">Р–РёРІРѕР№ Р±Р°Р»Р°РЅСЃ РїРѕ С‚СЂРµРј РєРѕРЅС‚СѓСЂР°Рј</span>
       </div>
       <div class="scope-note" id="balanceScopeNote"></div>
       <div class="light2-builder-strip" data-builder-strip="balance"></div>
@@ -3009,53 +3030,53 @@ function renderInteractiveFinanceSections() {
       <form class="record-form" id="balanceForm">
         <div class="form-grid">
           <div>
-            <label class="form-label">Дата</label>
+            <label class="form-label">Р”Р°С‚Р°</label>
             <input class="form-control" type="date" name="entry_date" required />
           </div>
           <div>
-            <label class="form-label">Счёт</label>
+            <label class="form-label">РЎС‡С‘С‚</label>
             <select class="form-select" name="account_type" required>
-              <option value="cash_card">Наличные / карта</option>
-              <option value="ooo_account">Счёт ООО</option>
-              <option value="ip_account">Счёт ИП</option>
+              <option value="cash_card">РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°</option>
+              <option value="ooo_account">РЎС‡С‘С‚ РћРћРћ</option>
+              <option value="ip_account">РЎС‡С‘С‚ РРџ</option>
             </select>
           </div>
           <div>
-            <label class="form-label">Приход, ₽</label>
+            <label class="form-label">РџСЂРёС…РѕРґ, в‚Ѕ</label>
             <input class="form-control" type="number" step="0.01" min="0" name="income_amount" value="0" required />
           </div>
           <div>
-            <label class="form-label">Расход, ₽</label>
+            <label class="form-label">Р Р°СЃС…РѕРґ, в‚Ѕ</label>
             <input class="form-control" type="number" step="0.01" min="0" name="expense_amount" value="0" required />
           </div>
           <div class="form-preview" id="balancePreview"></div>
         </div>
         <div class="mt-3">
-          <label class="form-label">Комментарий</label>
-          <textarea class="form-control" name="note" rows="2" placeholder="Например: поступление от клиента, закупка, аренда"></textarea>
+          <label class="form-label">РљРѕРјРјРµРЅС‚Р°СЂРёР№</label>
+          <textarea class="form-control" name="note" rows="2" placeholder="РќР°РїСЂРёРјРµСЂ: РїРѕСЃС‚СѓРїР»РµРЅРёРµ РѕС‚ РєР»РёРµРЅС‚Р°, Р·Р°РєСѓРїРєР°, Р°СЂРµРЅРґР°"></textarea>
         </div>
         <div class="form-actions">
-          <button class="btn btn-dark" type="submit" id="balanceSubmitButton">Сохранить запись</button>
-          <button class="btn btn-outline-secondary" type="button" id="balanceResetButton">Очистить форму</button>
+          <button class="btn btn-dark" type="submit" id="balanceSubmitButton">РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ</button>
+          <button class="btn btn-outline-secondary" type="button" id="balanceResetButton">РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button>
         </div>
       </form>
       <div class="toolbar-grid">
         <div>
-          <label class="form-label">Счёт</label>
+          <label class="form-label">РЎС‡С‘С‚</label>
           <select class="form-select" id="balanceAccountFilter">
-            <option value="">Все счета</option>
-            <option value="cash_card">Наличные / карта</option>
-            <option value="ooo_account">Счёт ООО</option>
-            <option value="ip_account">Счёт ИП</option>
+            <option value="">Р’СЃРµ СЃС‡РµС‚Р°</option>
+            <option value="cash_card">РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°</option>
+            <option value="ooo_account">РЎС‡С‘С‚ РћРћРћ</option>
+            <option value="ip_account">РЎС‡С‘С‚ РРџ</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Месяц</label>
+          <label class="form-label">РњРµСЃСЏС†</label>
           <input class="form-control" type="month" id="balanceMonthFilter" />
         </div>
         <div>
-          <label class="form-label">Поиск</label>
-          <input class="form-control" type="text" id="balanceSearch" placeholder="Комментарий или дата" />
+          <label class="form-label">РџРѕРёСЃРє</label>
+          <input class="form-control" type="text" id="balanceSearch" placeholder="РљРѕРјРјРµРЅС‚Р°СЂРёР№ РёР»Рё РґР°С‚Р°" />
         </div>
       </div>
       <div class="summary-row mt-3" id="balanceSummary"></div>
@@ -3063,14 +3084,14 @@ function renderInteractiveFinanceSections() {
         <table class="table table-sm align-middle">
           <thead>
             <tr>
-              <th>Дата</th>
-              <th>Счёт</th>
-              <th class="text-end">Приход, ₽</th>
-              <th class="text-end">Расход, ₽</th>
-              <th class="text-end">Баланс, ₽</th>
-              <th>Комментарий</th>
-              <th>Обновлено</th>
-              <th id="balanceActionsHead">Действия</th>
+              <th>Р”Р°С‚Р°</th>
+              <th>РЎС‡С‘С‚</th>
+              <th class="text-end">РџСЂРёС…РѕРґ, в‚Ѕ</th>
+              <th class="text-end">Р Р°СЃС…РѕРґ, в‚Ѕ</th>
+              <th class="text-end">Р‘Р°Р»Р°РЅСЃ, в‚Ѕ</th>
+              <th>РљРѕРјРјРµРЅС‚Р°СЂРёР№</th>
+              <th>РћР±РЅРѕРІР»РµРЅРѕ</th>
+              <th id="balanceActionsHead">Р”РµР№СЃС‚РІРёСЏ</th>
             </tr>
           </thead>
           <tbody id="balanceTableBody"></tbody>
@@ -3084,11 +3105,11 @@ function renderInteractiveFinanceSections() {
     calendarHost.innerHTML = `
       <div class="section-actions section-actions--workspace mb-3">
         <div class="section-actions__group">
-          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="calendar">Новая запись</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="calendar">Скрыть форму</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshCalendarButton">Обновить</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="calendar">РќРѕРІР°СЏ Р·Р°РїРёСЃСЊ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="calendar">РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshCalendarButton">РћР±РЅРѕРІРёС‚СЊ</button>
         </div>
-        <span class="workspace-chip">План денег и обязательств</span>
+        <span class="workspace-chip">РџР»Р°РЅ РґРµРЅРµРі Рё РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІ</span>
       </div>
       <div class="scope-note" id="calendarScopeNote"></div>
       <div class="light2-builder-strip" data-builder-strip="calendar"></div>
@@ -3096,95 +3117,95 @@ function renderInteractiveFinanceSections() {
       <form class="record-form" id="calendarForm">
         <div class="form-grid">
           <div>
-            <label class="form-label">Дата платежа</label>
+            <label class="form-label">Р”Р°С‚Р° РїР»Р°С‚РµР¶Р°</label>
             <input class="form-control" type="date" name="payment_date" required />
           </div>
           <div>
-            <label class="form-label">Контрагент</label>
-            <input class="form-control" type="text" name="counterparty" placeholder="Например: аренда, поставщик, клиент" required />
+            <label class="form-label">РљРѕРЅС‚СЂР°РіРµРЅС‚</label>
+            <input class="form-control" type="text" name="counterparty" placeholder="РќР°РїСЂРёРјРµСЂ: Р°СЂРµРЅРґР°, РїРѕСЃС‚Р°РІС‰РёРє, РєР»РёРµРЅС‚" required />
           </div>
           <div>
-            <label class="form-label">Сумма, ₽</label>
+            <label class="form-label">РЎСѓРјРјР°, в‚Ѕ</label>
             <input class="form-control" type="number" step="0.01" min="0" name="amount" value="0" required />
           </div>
           <div>
-            <label class="form-label">Тип операции</label>
+            <label class="form-label">РўРёРї РѕРїРµСЂР°С†РёРё</label>
             <select class="form-select" name="operation_type" required>
-              <option value="Расход">Расход</option>
-              <option value="Приход">Приход</option>
+              <option value="Р Р°СЃС…РѕРґ">Р Р°СЃС…РѕРґ</option>
+              <option value="РџСЂРёС…РѕРґ">РџСЂРёС…РѕРґ</option>
             </select>
           </div>
           <div>
-            <label class="form-label">Статья</label>
-            <input class="form-control" type="text" name="category" placeholder="Например: Зарплата" />
+            <label class="form-label">РЎС‚Р°С‚СЊСЏ</label>
+            <input class="form-control" type="text" name="category" placeholder="РќР°РїСЂРёРјРµСЂ: Р—Р°СЂРїР»Р°С‚Р°" />
           </div>
           <div>
-            <label class="form-label">Счёт</label>
+            <label class="form-label">РЎС‡С‘С‚</label>
             <select class="form-select" name="account_name" required>
-              <option value="Наличные / карта">Наличные / карта</option>
-              <option value="Счёт ООО">Счёт ООО</option>
-              <option value="Счёт ИП">Счёт ИП</option>
-              <option value="Не распределено">Не распределено</option>
+              <option value="РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°">РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°</option>
+              <option value="РЎС‡С‘С‚ РћРћРћ">РЎС‡С‘С‚ РћРћРћ</option>
+              <option value="РЎС‡С‘С‚ РРџ">РЎС‡С‘С‚ РРџ</option>
+              <option value="РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ">РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ</option>
             </select>
           </div>
           <div>
-            <label class="form-label">Статус</label>
+            <label class="form-label">РЎС‚Р°С‚СѓСЃ</label>
             <select class="form-select" name="status" required>
-              <option value="Платеж">Платеж</option>
-              <option value="Поступление">Поступление</option>
-              <option value="Ожидает">Ожидает</option>
-              <option value="Перенесен">Перенесен</option>
-              <option value="Отменен">Отменен</option>
+              <option value="РџР»Р°С‚РµР¶">РџР»Р°С‚РµР¶</option>
+              <option value="РџРѕСЃС‚СѓРїР»РµРЅРёРµ">РџРѕСЃС‚СѓРїР»РµРЅРёРµ</option>
+              <option value="РћР¶РёРґР°РµС‚">РћР¶РёРґР°РµС‚</option>
+              <option value="РџРµСЂРµРЅРµСЃРµРЅ">РџРµСЂРµРЅРµСЃРµРЅ</option>
+              <option value="РћС‚РјРµРЅРµРЅ">РћС‚РјРµРЅРµРЅ</option>
             </select>
           </div>
           <div class="form-preview" id="calendarPreview"></div>
         </div>
         <div class="mt-3">
-          <label class="form-label">Комментарий</label>
-          <textarea class="form-control" name="note" rows="2" placeholder="Уточнение по платежу, дате или обязательству"></textarea>
+          <label class="form-label">РљРѕРјРјРµРЅС‚Р°СЂРёР№</label>
+          <textarea class="form-control" name="note" rows="2" placeholder="РЈС‚РѕС‡РЅРµРЅРёРµ РїРѕ РїР»Р°С‚РµР¶Сѓ, РґР°С‚Рµ РёР»Рё РѕР±СЏР·Р°С‚РµР»СЊСЃС‚РІСѓ"></textarea>
         </div>
         <div class="form-actions">
-          <button class="btn btn-dark" type="submit" id="calendarSubmitButton">Сохранить запись</button>
-          <button class="btn btn-outline-secondary" type="button" id="calendarResetButton">Очистить форму</button>
+          <button class="btn btn-dark" type="submit" id="calendarSubmitButton">РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ</button>
+          <button class="btn btn-outline-secondary" type="button" id="calendarResetButton">РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button>
         </div>
       </form>
       <div class="toolbar-grid">
         <div>
-          <label class="form-label">Месяц</label>
+          <label class="form-label">РњРµСЃСЏС†</label>
           <input class="form-control" type="month" id="calendarMonthFilter" />
         </div>
         <div>
-          <label class="form-label">Тип операции</label>
+          <label class="form-label">РўРёРї РѕРїРµСЂР°С†РёРё</label>
           <select class="form-select" id="calendarOperationFilter">
-            <option value="">Все операции</option>
-            <option value="Расход">Расход</option>
-            <option value="Приход">Приход</option>
+            <option value="">Р’СЃРµ РѕРїРµСЂР°С†РёРё</option>
+            <option value="Р Р°СЃС…РѕРґ">Р Р°СЃС…РѕРґ</option>
+            <option value="РџСЂРёС…РѕРґ">РџСЂРёС…РѕРґ</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Счёт</label>
+          <label class="form-label">РЎС‡С‘С‚</label>
           <select class="form-select" id="calendarAccountFilter">
-            <option value="">Все счета</option>
-            <option value="Наличные / карта">Наличные / карта</option>
-            <option value="Счёт ООО">Счёт ООО</option>
-            <option value="Счёт ИП">Счёт ИП</option>
-            <option value="Не распределено">Не распределено</option>
+            <option value="">Р’СЃРµ СЃС‡РµС‚Р°</option>
+            <option value="РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°">РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°</option>
+            <option value="РЎС‡С‘С‚ РћРћРћ">РЎС‡С‘С‚ РћРћРћ</option>
+            <option value="РЎС‡С‘С‚ РРџ">РЎС‡С‘С‚ РРџ</option>
+            <option value="РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ">РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Статус</label>
+          <label class="form-label">РЎС‚Р°С‚СѓСЃ</label>
           <select class="form-select" id="calendarStatusFilter">
-            <option value="">Все статусы</option>
-            <option value="Платеж">Платеж</option>
-            <option value="Поступление">Поступление</option>
-            <option value="Ожидает">Ожидает</option>
-            <option value="Перенесен">Перенесен</option>
-            <option value="Отменен">Отменен</option>
+            <option value="">Р’СЃРµ СЃС‚Р°С‚СѓСЃС‹</option>
+            <option value="РџР»Р°С‚РµР¶">РџР»Р°С‚РµР¶</option>
+            <option value="РџРѕСЃС‚СѓРїР»РµРЅРёРµ">РџРѕСЃС‚СѓРїР»РµРЅРёРµ</option>
+            <option value="РћР¶РёРґР°РµС‚">РћР¶РёРґР°РµС‚</option>
+            <option value="РџРµСЂРµРЅРµСЃРµРЅ">РџРµСЂРµРЅРµСЃРµРЅ</option>
+            <option value="РћС‚РјРµРЅРµРЅ">РћС‚РјРµРЅРµРЅ</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Поиск</label>
-          <input class="form-control" type="text" id="calendarSearch" placeholder="Контрагент, статья или комментарий" />
+          <label class="form-label">РџРѕРёСЃРє</label>
+          <input class="form-control" type="text" id="calendarSearch" placeholder="РљРѕРЅС‚СЂР°РіРµРЅС‚, СЃС‚Р°С‚СЊСЏ РёР»Рё РєРѕРјРјРµРЅС‚Р°СЂРёР№" />
         </div>
       </div>
       <div class="summary-row mt-3" id="calendarSummary"></div>
@@ -3192,16 +3213,16 @@ function renderInteractiveFinanceSections() {
         <table class="table table-sm align-middle">
           <thead>
             <tr>
-              <th>Дата платежа</th>
-              <th>Контрагент</th>
-              <th class="text-end">Сумма, ₽</th>
-              <th>Тип</th>
-              <th>Статья</th>
-              <th>Счёт</th>
-              <th>Статус</th>
-              <th>Комментарий</th>
-              <th>Обновлено</th>
-              <th id="calendarActionsHead">Действия</th>
+              <th>Р”Р°С‚Р° РїР»Р°С‚РµР¶Р°</th>
+              <th>РљРѕРЅС‚СЂР°РіРµРЅС‚</th>
+              <th class="text-end">РЎСѓРјРјР°, в‚Ѕ</th>
+              <th>РўРёРї</th>
+              <th>РЎС‚Р°С‚СЊСЏ</th>
+              <th>РЎС‡С‘С‚</th>
+              <th>РЎС‚Р°С‚СѓСЃ</th>
+              <th>РљРѕРјРјРµРЅС‚Р°СЂРёР№</th>
+              <th>РћР±РЅРѕРІР»РµРЅРѕ</th>
+              <th id="calendarActionsHead">Р”РµР№СЃС‚РІРёСЏ</th>
             </tr>
           </thead>
           <tbody id="calendarTableBody"></tbody>
@@ -3215,83 +3236,83 @@ function renderInteractiveFinanceSections() {
     assetsHost.innerHTML = `
       <div class="section-actions section-actions--workspace mb-3">
         <div class="section-actions__group">
-          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="assets">Новая запись</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="assets">Скрыть форму</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshAssetsButton">Обновить</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="assets">РќРѕРІР°СЏ Р·Р°РїРёСЃСЊ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="assets">РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshAssetsButton">РћР±РЅРѕРІРёС‚СЊ</button>
         </div>
-        <span class="workspace-chip">Активы и график выплат</span>
+        <span class="workspace-chip">РђРєС‚РёРІС‹ Рё РіСЂР°С„РёРє РІС‹РїР»Р°С‚</span>
       </div>
       <div class="scope-note" id="assetsScopeNote"></div>
       <div class="light2-builder-strip" data-builder-strip="assets"></div>
       <div class="light2-builder-host" data-builder-host="assets"></div>
       <div class="subsection-grid">
         <article class="subsection-card">
-          <h3>Карточка актива</h3>
-          <p>Стоимость актива и базовый комментарий. Выплаты ведутся отдельно в журнале ниже.</p>
+          <h3>РљР°СЂС‚РѕС‡РєР° Р°РєС‚РёРІР°</h3>
+          <p>РЎС‚РѕРёРјРѕСЃС‚СЊ Р°РєС‚РёРІР° Рё Р±Р°Р·РѕРІС‹Р№ РєРѕРјРјРµРЅС‚Р°СЂРёР№. Р’С‹РїР»Р°С‚С‹ РІРµРґСѓС‚СЃСЏ РѕС‚РґРµР»СЊРЅРѕ РІ Р¶СѓСЂРЅР°Р»Рµ РЅРёР¶Рµ.</p>
           <form class="record-form mb-0" id="assetForm">
             <div class="form-grid">
               <div>
-                <label class="form-label">Актив</label>
-                <input class="form-control" type="text" name="asset_name" placeholder="Например: Сайт" required />
+                <label class="form-label">РђРєС‚РёРІ</label>
+                <input class="form-control" type="text" name="asset_name" placeholder="РќР°РїСЂРёРјРµСЂ: РЎР°Р№С‚" required />
               </div>
               <div>
-                <label class="form-label">Стоимость, ₽</label>
+                <label class="form-label">РЎС‚РѕРёРјРѕСЃС‚СЊ, в‚Ѕ</label>
                 <input class="form-control" type="number" step="0.01" min="0" name="asset_value" value="0" required />
               </div>
             </div>
             <div class="mt-3">
-              <label class="form-label">Комментарий</label>
-              <textarea class="form-control" name="note" rows="2" placeholder="Что входит в актив или кому он передан"></textarea>
+              <label class="form-label">РљРѕРјРјРµРЅС‚Р°СЂРёР№</label>
+              <textarea class="form-control" name="note" rows="2" placeholder="Р§С‚Рѕ РІС…РѕРґРёС‚ РІ Р°РєС‚РёРІ РёР»Рё РєРѕРјСѓ РѕРЅ РїРµСЂРµРґР°РЅ"></textarea>
             </div>
             <div class="form-actions">
-              <button class="btn btn-dark" type="submit" id="assetSubmitButton">Сохранить актив</button>
-              <button class="btn btn-outline-secondary" type="button" id="assetResetButton">Очистить форму</button>
+              <button class="btn btn-dark" type="submit" id="assetSubmitButton">РЎРѕС…СЂР°РЅРёС‚СЊ Р°РєС‚РёРІ</button>
+              <button class="btn btn-outline-secondary" type="button" id="assetResetButton">РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button>
             </div>
           </form>
         </article>
         <article class="subsection-card">
-          <h3>График выплат по активам</h3>
-          <p>Можно привязать выплату к активу или оставить без привязки, как в исходном файле ДОМ НЕОНА.</p>
+          <h3>Р“СЂР°С„РёРє РІС‹РїР»Р°С‚ РїРѕ Р°РєС‚РёРІР°Рј</h3>
+          <p>РњРѕР¶РЅРѕ РїСЂРёРІСЏР·Р°С‚СЊ РІС‹РїР»Р°С‚Сѓ Рє Р°РєС‚РёРІСѓ РёР»Рё РѕСЃС‚Р°РІРёС‚СЊ Р±РµР· РїСЂРёРІСЏР·РєРё, РєР°Рє РІ РёСЃС…РѕРґРЅРѕРј С„Р°Р№Р»Рµ Р”РћРњ РќР•РћРќРђ.</p>
           <form class="record-form mb-0" id="assetPaymentForm">
             <div class="form-grid">
               <div>
-                <label class="form-label">Актив</label>
+                <label class="form-label">РђРєС‚РёРІ</label>
                 <select class="form-select" name="asset_id" id="assetPaymentAssetId"></select>
               </div>
               <div>
-                <label class="form-label">Дата выплаты</label>
+                <label class="form-label">Р”Р°С‚Р° РІС‹РїР»Р°С‚С‹</label>
                 <input class="form-control" type="date" name="payment_date" required />
               </div>
               <div>
-                <label class="form-label">Сумма, ₽</label>
+                <label class="form-label">РЎСѓРјРјР°, в‚Ѕ</label>
                 <input class="form-control" type="number" step="0.01" min="0" name="payment_amount" value="0" required />
               </div>
             </div>
             <div class="mt-3">
-              <label class="form-label">Комментарий</label>
-              <textarea class="form-control" name="note" rows="2" placeholder="Например: передал наличными Кириллу"></textarea>
+              <label class="form-label">РљРѕРјРјРµРЅС‚Р°СЂРёР№</label>
+              <textarea class="form-control" name="note" rows="2" placeholder="РќР°РїСЂРёРјРµСЂ: РїРµСЂРµРґР°Р» РЅР°Р»РёС‡РЅС‹РјРё РљРёСЂРёР»Р»Сѓ"></textarea>
             </div>
             <div class="form-actions">
-              <button class="btn btn-dark" type="submit" id="assetPaymentSubmitButton">Сохранить выплату</button>
-              <button class="btn btn-outline-secondary" type="button" id="assetPaymentResetButton">Очистить форму</button>
+              <button class="btn btn-dark" type="submit" id="assetPaymentSubmitButton">РЎРѕС…СЂР°РЅРёС‚СЊ РІС‹РїР»Р°С‚Сѓ</button>
+              <button class="btn btn-outline-secondary" type="button" id="assetPaymentResetButton">РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button>
             </div>
           </form>
         </article>
       </div>
       <div class="toolbar-grid mt-3">
         <div>
-          <label class="form-label">Поиск по активам</label>
-          <input class="form-control" type="text" id="assetsSearch" placeholder="Название или комментарий" />
+          <label class="form-label">РџРѕРёСЃРє РїРѕ Р°РєС‚РёРІР°Рј</label>
+          <input class="form-control" type="text" id="assetsSearch" placeholder="РќР°Р·РІР°РЅРёРµ РёР»Рё РєРѕРјРјРµРЅС‚Р°СЂРёР№" />
         </div>
         <div>
-          <label class="form-label">Фильтр выплат</label>
+          <label class="form-label">Р¤РёР»СЊС‚СЂ РІС‹РїР»Р°С‚</label>
           <select class="form-select" id="assetPaymentFilter">
-            <option value="">Все активы</option>
+            <option value="">Р’СЃРµ Р°РєС‚РёРІС‹</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Поиск по выплатам</label>
-          <input class="form-control" type="text" id="assetPaymentSearch" placeholder="Комментарий или дата" />
+          <label class="form-label">РџРѕРёСЃРє РїРѕ РІС‹РїР»Р°С‚Р°Рј</label>
+          <input class="form-control" type="text" id="assetPaymentSearch" placeholder="РљРѕРјРјРµРЅС‚Р°СЂРёР№ РёР»Рё РґР°С‚Р°" />
         </div>
       </div>
       <div class="summary-row mt-3" id="assetsSummary"></div>
@@ -3299,13 +3320,13 @@ function renderInteractiveFinanceSections() {
         <table class="table table-sm align-middle">
           <thead>
             <tr>
-              <th>Актив</th>
-              <th class="text-end">Стоимость, ₽</th>
-              <th class="text-end">Выплачено, ₽</th>
-              <th class="text-end">Остаток, ₽</th>
-              <th>Комментарий</th>
-              <th>Обновлено</th>
-              <th>Действия</th>
+              <th>РђРєС‚РёРІ</th>
+              <th class="text-end">РЎС‚РѕРёРјРѕСЃС‚СЊ, в‚Ѕ</th>
+              <th class="text-end">Р’С‹РїР»Р°С‡РµРЅРѕ, в‚Ѕ</th>
+              <th class="text-end">РћСЃС‚Р°С‚РѕРє, в‚Ѕ</th>
+              <th>РљРѕРјРјРµРЅС‚Р°СЂРёР№</th>
+              <th>РћР±РЅРѕРІР»РµРЅРѕ</th>
+              <th>Р”РµР№СЃС‚РІРёСЏ</th>
             </tr>
           </thead>
           <tbody id="assetsTableBody"></tbody>
@@ -3315,12 +3336,12 @@ function renderInteractiveFinanceSections() {
         <table class="table table-sm align-middle">
           <thead>
             <tr>
-              <th>Дата выплаты</th>
-              <th>Актив</th>
-              <th class="text-end">Сумма, ₽</th>
-              <th>Комментарий</th>
-              <th>Обновлено</th>
-              <th>Действия</th>
+              <th>Р”Р°С‚Р° РІС‹РїР»Р°С‚С‹</th>
+              <th>РђРєС‚РёРІ</th>
+              <th class="text-end">РЎСѓРјРјР°, в‚Ѕ</th>
+              <th>РљРѕРјРјРµРЅС‚Р°СЂРёР№</th>
+              <th>РћР±РЅРѕРІР»РµРЅРѕ</th>
+              <th>Р”РµР№СЃС‚РІРёСЏ</th>
             </tr>
           </thead>
           <tbody id="assetPaymentsTableBody"></tbody>
@@ -3334,83 +3355,83 @@ function renderInteractiveFinanceSections() {
     purchasesHost.innerHTML = `
       <div class="section-actions section-actions--workspace mb-3">
         <div class="section-actions__group">
-          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="purchases">Новая позиция</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="purchases">Скрыть форму</button>
-          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshPurchasesButton">Обновить</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-section-start="purchases">РќРѕРІР°СЏ РїРѕР·РёС†РёСЏ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" data-form-toggle="purchases">РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ</button>
+          <button type="button" class="btn btn-outline-dark btn-sm" id="refreshPurchasesButton">РћР±РЅРѕРІРёС‚СЊ</button>
         </div>
-        <span class="workspace-chip">Каталог поставщиков и цен</span>
+        <span class="workspace-chip">РљР°С‚Р°Р»РѕРі РїРѕСЃС‚Р°РІС‰РёРєРѕРІ Рё С†РµРЅ</span>
       </div>
       <div class="scope-note" id="purchasesScopeNote"></div>
       <div class="light2-builder-strip" data-builder-strip="purchases"></div>
       <div class="light2-builder-host" data-builder-host="purchases"></div>
       <article class="subsection-card mb-3">
-        <h3>Позиция закупки</h3>
-        <p>Нормализованный каталог поставщиков и материалов из листа Закупки.</p>
+        <h3>РџРѕР·РёС†РёСЏ Р·Р°РєСѓРїРєРё</h3>
+        <p>РќРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅС‹Р№ РєР°С‚Р°Р»РѕРі РїРѕСЃС‚Р°РІС‰РёРєРѕРІ Рё РјР°С‚РµСЂРёР°Р»РѕРІ РёР· Р»РёСЃС‚Р° Р—Р°РєСѓРїРєРё.</p>
         <form class="record-form mb-0" id="purchaseForm">
           <div class="form-grid">
             <div>
-              <label class="form-label">Компания</label>
-              <input class="form-control" type="text" name="supplier_name" placeholder="Поставщик" required />
+              <label class="form-label">РљРѕРјРїР°РЅРёСЏ</label>
+              <input class="form-control" type="text" name="supplier_name" placeholder="РџРѕСЃС‚Р°РІС‰РёРє" required />
             </div>
             <div>
-              <label class="form-label">ИНН</label>
-              <input class="form-control" type="text" name="supplier_inn" placeholder="ИНН поставщика" />
+              <label class="form-label">РРќРќ</label>
+              <input class="form-control" type="text" name="supplier_inn" placeholder="РРќРќ РїРѕСЃС‚Р°РІС‰РёРєР°" />
             </div>
             <div>
-              <label class="form-label">Ссылка</label>
+              <label class="form-label">РЎСЃС‹Р»РєР°</label>
               <input class="form-control" type="url" name="supplier_url" placeholder="https://..." />
             </div>
             <div>
-              <label class="form-label">Город</label>
-              <input class="form-control" type="text" name="city" placeholder="Например: Спб" />
+              <label class="form-label">Р“РѕСЂРѕРґ</label>
+              <input class="form-control" type="text" name="city" placeholder="РќР°РїСЂРёРјРµСЂ: РЎРїР±" />
             </div>
             <div>
-              <label class="form-label">Категория</label>
-              <input class="form-control" type="text" name="category" placeholder="Например: Гибкий неон" />
+              <label class="form-label">РљР°С‚РµРіРѕСЂРёСЏ</label>
+              <input class="form-control" type="text" name="category" placeholder="РќР°РїСЂРёРјРµСЂ: Р“РёР±РєРёР№ РЅРµРѕРЅ" />
             </div>
             <div>
-              <label class="form-label">Артикул</label>
-              <input class="form-control" type="text" name="article" placeholder="Артикул" />
+              <label class="form-label">РђСЂС‚РёРєСѓР»</label>
+              <input class="form-control" type="text" name="article" placeholder="РђСЂС‚РёРєСѓР»" />
             </div>
             <div>
-              <label class="form-label">Наименование</label>
-              <input class="form-control" type="text" name="item_name" placeholder="Название позиции" />
+              <label class="form-label">РќР°РёРјРµРЅРѕРІР°РЅРёРµ</label>
+              <input class="form-control" type="text" name="item_name" placeholder="РќР°Р·РІР°РЅРёРµ РїРѕР·РёС†РёРё" />
             </div>
             <div>
-              <label class="form-label">Ед. изм.</label>
-              <input class="form-control" type="text" name="unit_name" placeholder="м, шт, м2" />
+              <label class="form-label">Р•Рґ. РёР·Рј.</label>
+              <input class="form-control" type="text" name="unit_name" placeholder="Рј, С€С‚, Рј2" />
             </div>
             <div>
-              <label class="form-label">Цена, ₽</label>
+              <label class="form-label">Р¦РµРЅР°, в‚Ѕ</label>
               <input class="form-control" type="number" step="0.01" min="0" name="price" value="0" />
             </div>
           </div>
           <div class="mt-3">
-            <label class="form-label">Комментарий</label>
-            <textarea class="form-control" name="note" rows="2" placeholder="Любая заметка по позиции или поставщику"></textarea>
+            <label class="form-label">РљРѕРјРјРµРЅС‚Р°СЂРёР№</label>
+            <textarea class="form-control" name="note" rows="2" placeholder="Р›СЋР±Р°СЏ Р·Р°РјРµС‚РєР° РїРѕ РїРѕР·РёС†РёРё РёР»Рё РїРѕСЃС‚Р°РІС‰РёРєСѓ"></textarea>
           </div>
           <div class="form-actions">
-            <button class="btn btn-dark" type="submit" id="purchaseSubmitButton">Сохранить позицию</button>
-            <button class="btn btn-outline-secondary" type="button" id="purchaseResetButton">Очистить форму</button>
+            <button class="btn btn-dark" type="submit" id="purchaseSubmitButton">РЎРѕС…СЂР°РЅРёС‚СЊ РїРѕР·РёС†РёСЋ</button>
+            <button class="btn btn-outline-secondary" type="button" id="purchaseResetButton">РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button>
           </div>
         </form>
       </article>
       <div class="toolbar-grid">
         <div>
-          <label class="form-label">Поставщик</label>
+          <label class="form-label">РџРѕСЃС‚Р°РІС‰РёРє</label>
           <select class="form-select" id="purchaseSupplierFilter">
-            <option value="">Все поставщики</option>
+            <option value="">Р’СЃРµ РїРѕСЃС‚Р°РІС‰РёРєРё</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Категория</label>
+          <label class="form-label">РљР°С‚РµРіРѕСЂРёСЏ</label>
           <select class="form-select" id="purchaseCategoryFilter">
-            <option value="">Все категории</option>
+            <option value="">Р’СЃРµ РєР°С‚РµРіРѕСЂРёРё</option>
           </select>
         </div>
         <div>
-          <label class="form-label">Поиск</label>
-          <input class="form-control" type="text" id="purchaseSearch" placeholder="Поставщик, артикул, позиция" />
+          <label class="form-label">РџРѕРёСЃРє</label>
+          <input class="form-control" type="text" id="purchaseSearch" placeholder="РџРѕСЃС‚Р°РІС‰РёРє, Р°СЂС‚РёРєСѓР», РїРѕР·РёС†РёСЏ" />
         </div>
       </div>
       <div class="summary-row mt-3" id="purchaseSummary"></div>
@@ -3418,16 +3439,16 @@ function renderInteractiveFinanceSections() {
         <table class="table table-sm align-middle">
           <thead>
             <tr>
-              <th>Компания</th>
-              <th>Город</th>
-              <th>Категория</th>
-              <th>Артикул</th>
-              <th>Наименование</th>
-              <th>Ед.</th>
-              <th class="text-end">Цена, ₽</th>
-              <th>Ссылка</th>
-              <th>Комментарий</th>
-              <th>Действия</th>
+              <th>РљРѕРјРїР°РЅРёСЏ</th>
+              <th>Р“РѕСЂРѕРґ</th>
+              <th>РљР°С‚РµРіРѕСЂРёСЏ</th>
+              <th>РђСЂС‚РёРєСѓР»</th>
+              <th>РќР°РёРјРµРЅРѕРІР°РЅРёРµ</th>
+              <th>Р•Рґ.</th>
+              <th class="text-end">Р¦РµРЅР°, в‚Ѕ</th>
+              <th>РЎСЃС‹Р»РєР°</th>
+              <th>РљРѕРјРјРµРЅС‚Р°СЂРёР№</th>
+              <th>Р”РµР№СЃС‚РІРёСЏ</th>
             </tr>
           </thead>
           <tbody id="purchaseTableBody"></tbody>
@@ -3443,7 +3464,7 @@ function updateHero() {
     STATE.profile?.full_name ||
     STATE.user?.user_metadata?.display_name ||
     STATE.user?.email ||
-    "Не определен";
+    "РќРµ РѕРїСЂРµРґРµР»РµРЅ";
 
   if (DOM.userDisplay) {
     DOM.userDisplay.textContent = displayName;
@@ -3451,14 +3472,14 @@ function updateHero() {
 
   if (isAdmin()) {
     if (DOM.accessMode) {
-      DOM.accessMode.textContent = "Владелец / админ";
+      DOM.accessMode.textContent = "Р’Р»Р°РґРµР»РµС† / Р°РґРјРёРЅ";
     }
     return;
   }
 
   const partnerSlug = getCurrentPartnerSlug();
   if (DOM.accessMode) {
-    DOM.accessMode.textContent = partnerSlug ? `Партнер: ${getPartnerLabel(partnerSlug)}` : "Ограниченный доступ";
+    DOM.accessMode.textContent = partnerSlug ? `РџР°СЂС‚РЅРµСЂ: ${getPartnerLabel(partnerSlug)}` : "РћРіСЂР°РЅРёС‡РµРЅРЅС‹Р№ РґРѕСЃС‚СѓРї";
   }
 }
 
@@ -3472,7 +3493,7 @@ function renderOverview() {
         <h3>${escapeHtml(meta.title)}</h3>
         <p>${escapeHtml(meta.subtitle)}</p>
         <div class="overview-card-meta">${escapeHtml(getOverviewSectionFootnote(key))}</div>
-        <button class="btn btn-dark btn-sm" type="button" data-open-section="${escapeHtml(key)}">Открыть</button>
+        <button class="btn btn-dark btn-sm" type="button" data-open-section="${escapeHtml(key)}">РћС‚РєСЂС‹С‚СЊ</button>
       </article>
     `)
     .join("");
@@ -3506,6 +3527,51 @@ function renderTemplateSections() {
   });
 }
 
+function getSnapshotPrimaryLabel(row) {
+  if (!row?.cells) return "";
+  for (const col of [2, 1, 3]) {
+    const value = compactText(row.cells[String(col)]?.display || row.cells[String(col)]?.raw || "");
+    if (value) return value;
+  }
+  for (const cell of Object.values(row.cells)) {
+    const value = compactText(cell?.display || cell?.raw || "");
+    if (value) return value;
+  }
+  return "";
+}
+
+function renderSnapshotPrimaryDeck(sectionKey, rows) {
+  if (!["metrics", "forecast"].includes(sectionKey)) return "";
+  const cards = rows
+    .map((row) => {
+      const label = getSnapshotPrimaryLabel(row);
+      if (!label || label === "Изменения") return "";
+      const values = Object.entries(row.cells || {})
+        .filter(([col, cell]) => Number(col) > 2 && compactText(cell?.display || cell?.raw || ""))
+        .map(([, cell]) => `<span class="metric-chip">${escapeHtml(String(cell.display || cell.raw || ""))}</span>`)
+        .slice(0, 8)
+        .join("");
+      if (!values) return "";
+      return `
+        <article class="metric-deck-card">
+          <strong>${escapeHtml(label)}</strong>
+          <div class="metric-chip-row">${values}</div>
+        </article>
+      `;
+    })
+    .filter(Boolean)
+    .slice(0, 18)
+    .join("");
+
+  if (!cards) return "";
+  return `
+    <section class="metric-deck">
+      <div class="scope-note scope-note-soft">Показываю адаптированный срез по ключевым строкам. Исходную таблицу можно раскрыть ниже, если понадобится сверка.</div>
+      <div class="metric-deck-grid">${cards}</div>
+    </section>
+  `;
+}
+
 function renderWorkbookSnapshotSection(sectionKey) {
   const host = getSnapshotHost(sectionKey);
   if (!host) return;
@@ -3534,7 +3600,7 @@ function renderWorkbookSnapshotSection(sectionKey) {
     host.innerHTML = `
       <div class="workspace-empty workspace-empty--sheet">
         <strong>${escapeHtml(meta?.title || sheetName)}</strong>
-        <div class="mt-2">Раздел сейчас пустой. Вы стартуете с чистой базы и сможете заполнить его уже внутри платформы.</div>
+        <div class="mt-2">Раздел сейчас пустой. Его можно заполнять уже внутри платформы.</div>
       </div>
     `;
     return;
@@ -3544,9 +3610,11 @@ function renderWorkbookSnapshotSection(sectionKey) {
   const headerRow = sheet.rows.find((row) => row.index <= 3) || sheet.rows[0];
   const columns = Array.from({ length: sheet.maxCol || 1 }, (_, idx) => idx + 1);
   const analyticsHtml = renderSnapshotAnalytics(sectionKey, sheet);
+  const primaryDeckHtml = renderSnapshotPrimaryDeck(sectionKey, rows);
 
   host.innerHTML = `
     ${analyticsHtml}
+    ${primaryDeckHtml}
     <div class="snapshot-toolbar">
       <div class="summary-row">
         <article class="summary-card">
@@ -3580,43 +3648,48 @@ function renderWorkbookSnapshotSection(sectionKey) {
       </div>
     </div>
     <div class="snapshot-hint">
-      Значения взяты из заполненного файла. Ячейки с формулами отмечены точкой и показывают формулу по наведению.
+      Сводка уже адаптирована под стиль платформы. Исходную таблицу можно развернуть только при необходимости.
     </div>
-    <div class="table-shell mt-3">
-      <table class="table table-sm align-middle snapshot-table">
-        <thead>
-          <tr>
-            <th class="snapshot-row-head">#</th>
-            ${columns.map((col) => `<th>${escapeHtml(getColumnLabel(col))}</th>`).join("")}
-          </tr>
-        </thead>
-        <tbody>
-          ${
-            rows.length
-              ? rows
-                  .map((row) => {
-                    const cells = row.cells || {};
-                    return `
-                      <tr>
-                        <th class="snapshot-row-head">${escapeHtml(String(row.index))}</th>
-                        ${columns
-                          .map((col) => {
-                            const cell = cells[String(col)];
-                            if (!cell) return `<td></td>`;
-                            const formula = cell.formula ? ` title="${escapeHtml(cell.formula)}"` : "";
-                            const tone = cell.kind ? ` cell-${escapeHtml(cell.kind)}` : "";
-                            const marker = cell.formula ? `<span class="formula-dot"></span>` : "";
-                            return `<td class="snapshot-cell${tone}"${formula}>${marker}<span>${escapeHtml(cell.display || cell.raw || "")}</span></td>`;
-                          })
-                          .join("")}
-                      </tr>
-                    `;
-                  })
-                  .join("")
-              : `<tr><td colspan="${columns.length + 1}" class="muted">По текущему поиску строки не найдены.</td></tr>`
-          }
-        </tbody>
-      </table>
+    <div class="snapshot-source-panel collapsed" data-source-panel>
+      <button type="button" class="snapshot-source-toggle" data-toggle-source-panel>
+        <span data-toggle-source-label>Показать исходную таблицу</span>
+      </button>
+      <div class="table-shell mt-3">
+        <table class="table table-sm align-middle snapshot-table">
+          <thead>
+            <tr>
+              <th class="snapshot-row-head">#</th>
+              ${columns.map((col) => `<th>${escapeHtml(getColumnLabel(col))}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              rows.length
+                ? rows
+                    .map((row) => {
+                      const cells = row.cells || {};
+                      return `
+                        <tr>
+                          <th class="snapshot-row-head">${escapeHtml(String(row.index))}</th>
+                          ${columns
+                            .map((col) => {
+                              const cell = cells[String(col)];
+                              if (!cell) return `<td></td>`;
+                              const formula = cell.formula ? ` title="${escapeHtml(cell.formula)}"` : "";
+                              const tone = cell.kind ? ` cell-${escapeHtml(cell.kind)}` : "";
+                              const marker = cell.formula ? `<span class="formula-dot"></span>` : "";
+                              return `<td class="snapshot-cell${tone}"${formula}>${marker}<span>${escapeHtml(cell.display || cell.raw || "")}</span></td>`;
+                            })
+                            .join("")}
+                        </tr>
+                      `;
+                    })
+                    .join("")
+                : `<tr><td colspan="${columns.length + 1}" class="muted">По текущему поиску строки не найдены.</td></tr>`
+            }
+          </tbody>
+        </table>
+      </div>
     </div>
   `;
 
@@ -3645,20 +3718,20 @@ async function loadWorkbookSnapshot() {
     const response = await withTimeout(
       fetch(`./workbook_snapshot.json?v=${LIGHT2_BUILD}`, { cache: "no-store" }),
       6000,
-      "Не удалось вовремя загрузить эталон Контур."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ СЌС‚Р°Р»РѕРЅ РљРѕРЅС‚СѓСЂ."
     );
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    STATE.workbookSnapshot = await withTimeout(
+    STATE.workbookSnapshot = repairMojibakeDeep(await withTimeout(
       response.json(),
       4000,
-      "Не удалось вовремя прочитать snapshot Контур."
-    );
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ РїСЂРѕС‡РёС‚Р°С‚СЊ snapshot РљРѕРЅС‚СѓСЂ."
+    ));
     STATE.workbookReady = true;
     STATE.workbookError = "";
   } catch (error) {
-    STATE.workbookError = error.message || "неизвестная ошибка";
+    STATE.workbookError = error.message || "РЅРµРёР·РІРµСЃС‚РЅР°СЏ РѕС€РёР±РєР°";
   }
   renderWorkbookSnapshotSections();
   renderOverview();
@@ -3667,7 +3740,7 @@ async function loadWorkbookSnapshot() {
 }
 
 function buildBalanceImportRows() {
-  const sheet = getWorkbookSheetByName("Баланс");
+  const sheet = getWorkbookSheetByName("Р‘Р°Р»Р°РЅСЃ");
   if (!sheet?.rows?.length) return [];
 
   const groups = [
@@ -3691,7 +3764,7 @@ function buildBalanceImportRows() {
 
         return [
           {
-            source_sheet: "Баланс",
+            source_sheet: "Р‘Р°Р»Р°РЅСЃ",
             source_row: row.index,
             source_slot: group.slot,
             entry_date: entryDate,
@@ -3707,7 +3780,7 @@ function buildBalanceImportRows() {
 }
 
 function buildCalendarImportRows() {
-  const sheet = getWorkbookSheetByName("Платежный календарь");
+  const sheet = getWorkbookSheetByName("РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ");
   if (!sheet?.rows?.length) return [];
 
   const validAccounts = new Set(CALENDAR_ACCOUNTS.map((item) => item.value));
@@ -3731,15 +3804,15 @@ function buildCalendarImportRows() {
 
       return [
         {
-          source_sheet: "Платежный календарь",
+          source_sheet: "РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ",
           source_row: row.index,
           payment_date: paymentDate,
           counterparty,
           amount,
-          operation_type: operationType === "Приход" ? "Приход" : "Расход",
+          operation_type: operationType === "РџСЂРёС…РѕРґ" ? "РџСЂРёС…РѕРґ" : "Р Р°СЃС…РѕРґ",
           category: category || null,
-          account_name: validAccounts.has(accountNameRaw) ? accountNameRaw : "Не распределено",
-          status: validStatuses.has(statusRaw) ? statusRaw : "Ожидает",
+          account_name: validAccounts.has(accountNameRaw) ? accountNameRaw : "РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ",
+          status: validStatuses.has(statusRaw) ? statusRaw : "РћР¶РёРґР°РµС‚",
           note: note || null,
           created_by: STATE.user?.id || null
         }
@@ -3748,7 +3821,7 @@ function buildCalendarImportRows() {
 }
 
 function buildAssetsImportRows() {
-  const sheet = getWorkbookSheetByName("Активы");
+  const sheet = getWorkbookSheetByName("РђРєС‚РёРІС‹");
   if (!sheet?.rows?.length) return [];
 
   return sheet.rows
@@ -3761,9 +3834,9 @@ function buildAssetsImportRows() {
       }
       return [
         {
-          source_sheet: "Активы",
+          source_sheet: "РђРєС‚РёРІС‹",
           source_row: row.index,
-          asset_name: assetName || `Актив ${row.index}`,
+          asset_name: assetName || `РђРєС‚РёРІ ${row.index}`,
           asset_value: assetValue,
           note: null,
           created_by: STATE.user?.id || null
@@ -3773,7 +3846,7 @@ function buildAssetsImportRows() {
 }
 
 function buildAssetPaymentImportRows() {
-  const sheet = getWorkbookSheetByName("Активы");
+  const sheet = getWorkbookSheetByName("РђРєС‚РёРІС‹");
   if (!sheet?.rows?.length) return [];
 
   return sheet.rows
@@ -3792,7 +3865,7 @@ function buildAssetPaymentImportRows() {
 
       const noteParts = [];
       if (trancheOne || trancheTwo) {
-        noteParts.push(`План из исходника: ${formatMoney(trancheOne)} ₽ + ${formatMoney(trancheTwo)} ₽`);
+        noteParts.push(`РџР»Р°РЅ РёР· РёСЃС…РѕРґРЅРёРєР°: ${formatMoney(trancheOne)} в‚Ѕ + ${formatMoney(trancheTwo)} в‚Ѕ`);
       }
       if (noteRaw) {
         noteParts.push(noteRaw);
@@ -3800,7 +3873,7 @@ function buildAssetPaymentImportRows() {
 
       return [
         {
-          source_sheet: "Активы",
+          source_sheet: "РђРєС‚РёРІС‹",
           source_row: row.index,
           asset_id: null,
           payment_date: paymentDate,
@@ -3813,7 +3886,7 @@ function buildAssetPaymentImportRows() {
 }
 
 function buildPurchaseImportRows() {
-  const sheet = getWorkbookSheetByName("Закупки");
+  const sheet = getWorkbookSheetByName("Р—Р°РєСѓРїРєРё");
   if (!sheet?.rows?.length) return [];
 
   let currentSupplierName = "";
@@ -3846,11 +3919,11 @@ function buildPurchaseImportRows() {
 
       return [
         {
-          source_sheet: "Закупки",
+          source_sheet: "Р—Р°РєСѓРїРєРё",
           source_row: row.index,
           supplier_name: currentSupplierName,
           supplier_inn: currentInn || null,
-          supplier_url: currentUrl && currentUrl !== "Нет" ? currentUrl : null,
+          supplier_url: currentUrl && currentUrl !== "РќРµС‚" ? currentUrl : null,
           city: currentCity || null,
           category: category || null,
           article: article || null,
@@ -3865,7 +3938,7 @@ function buildPurchaseImportRows() {
 }
 
 function buildSettlementImportData() {
-  const sheet = getWorkbookSheetByName("Взаиморасчет с мастерами");
+  const sheet = getWorkbookSheetByName("Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ СЃ РјР°СЃС‚РµСЂР°РјРё");
   if (!sheet?.rows?.length) {
     return { partners: [], settlements: [] };
   }
@@ -3880,7 +3953,7 @@ function buildSettlementImportData() {
       const partnerName = String(getWorkbookDisplay(row, 2) || "").trim();
       const salaryAmount = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 3)));
       const purchaseAmount = roundMoney(parseWorkbookNumber(getWorkbookRaw(row, 4)));
-      const status = String(getWorkbookDisplay(row, 7) || "").trim() || "Ожидает сверки";
+      const status = String(getWorkbookDisplay(row, 7) || "").trim() || "РћР¶РёРґР°РµС‚ СЃРІРµСЂРєРё";
 
       if (!periodLabel || !partnerName) {
         return;
@@ -3895,13 +3968,13 @@ function buildSettlementImportData() {
         partners.set(slug, {
           slug,
           display_name: partnerName,
-          notes: "Импортировано из исходного файла ДОМ НЕОНА.",
+          notes: "РРјРїРѕСЂС‚РёСЂРѕРІР°РЅРѕ РёР· РёСЃС…РѕРґРЅРѕРіРѕ С„Р°Р№Р»Р° Р”РћРњ РќР•РћРќРђ.",
           calculator_url: `../part/index.html?partner=${encodeURIComponent(slug)}`
         });
       }
 
       settlements.push({
-        source_sheet: "Взаиморасчет с мастерами",
+        source_sheet: "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ СЃ РјР°СЃС‚РµСЂР°РјРё",
         source_row: row.index,
         partner_slug: slug,
         period_label: periodLabel,
@@ -3940,7 +4013,7 @@ async function ensureImportedPartners(partners) {
 
 async function importWorkbookIntoTables() {
   if (!isAdmin()) {
-    throw new Error("Импорт доступен только владельцу и администраторам.");
+    throw new Error("РРјРїРѕСЂС‚ РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј.");
   }
 
   if (!STATE.workbookReady) {
@@ -3948,17 +4021,17 @@ async function importWorkbookIntoTables() {
   }
 
   if (!hasImportableWorkbookData()) {
-    setImportStatus("Эталон пустой, поэтому импорт не требуется. Рабочие таблицы уже готовы к ручному заполнению.");
+    setImportStatus("Р­С‚Р°Р»РѕРЅ РїСѓСЃС‚РѕР№, РїРѕСЌС‚РѕРјСѓ РёРјРїРѕСЂС‚ РЅРµ С‚СЂРµР±СѓРµС‚СЃСЏ. Р Р°Р±РѕС‡РёРµ С‚Р°Р±Р»РёС†С‹ СѓР¶Рµ РіРѕС‚РѕРІС‹ Рє СЂСѓС‡РЅРѕРјСѓ Р·Р°РїРѕР»РЅРµРЅРёСЋ.");
     return;
   }
 
   if (!STATE.schemaReady || !STATE.financeReady || !STATE.operationsReady) {
-    throw new Error("Сначала выполните SQL-патчи ДОМ НЕОНА: schema, finance, operations и workbook sync.");
+    throw new Error("РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ SQL-РїР°С‚С‡Рё Р”РћРњ РќР•РћРќРђ: schema, finance, operations Рё workbook sync.");
   }
 
   STATE.importBusy = true;
   syncImportButton();
-  setImportStatus("Проверяю заполненный исходник и переношу данные в рабочие таблицы...");
+  setImportStatus("РџСЂРѕРІРµСЂСЏСЋ Р·Р°РїРѕР»РЅРµРЅРЅС‹Р№ РёСЃС…РѕРґРЅРёРє Рё РїРµСЂРµРЅРѕС€Сѓ РґР°РЅРЅС‹Рµ РІ СЂР°Р±РѕС‡РёРµ С‚Р°Р±Р»РёС†С‹...");
 
   try {
     const balanceRows = buildBalanceImportRows();
@@ -3982,20 +4055,20 @@ async function importWorkbookIntoTables() {
     syncModuleStatus();
 
     setImportStatus(
-      `Импорт завершен: баланс ${balanceRows.length}, календарь ${calendarRows.length}, активы ${assetsRows.length}, выплаты ${assetPaymentRows.length}, закупки ${purchaseRows.length}, взаиморасчеты ${settlementData.settlements.length}.`,
+      `РРјРїРѕСЂС‚ Р·Р°РІРµСЂС€РµРЅ: Р±Р°Р»Р°РЅСЃ ${balanceRows.length}, РєР°Р»РµРЅРґР°СЂСЊ ${calendarRows.length}, Р°РєС‚РёРІС‹ ${assetsRows.length}, РІС‹РїР»Р°С‚С‹ ${assetPaymentRows.length}, Р·Р°РєСѓРїРєРё ${purchaseRows.length}, РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹ ${settlementData.settlements.length}.`,
       "success"
     );
-    setStatus("Заполненный исходник ДОМ НЕОНА перенесён в рабочие таблицы платформы.", "success");
+    setStatus("Р—Р°РїРѕР»РЅРµРЅРЅС‹Р№ РёСЃС…РѕРґРЅРёРє Р”РћРњ РќР•РћРќРђ РїРµСЂРµРЅРµСЃС‘РЅ РІ СЂР°Р±РѕС‡РёРµ С‚Р°Р±Р»РёС†С‹ РїР»Р°С‚С„РѕСЂРјС‹.", "success");
   } catch (error) {
-    const rawMessage = error.message || "Не удалось импортировать исходный файл.";
+    const rawMessage = error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ РёСЃС…РѕРґРЅС‹Р№ С„Р°Р№Р».";
     const message =
       rawMessage.includes("source_") ||
       rawMessage.includes("ip_account") ||
       rawMessage.includes("asset_id") ||
       rawMessage.includes("duplicate key value")
-        ? `нужен SQL-патч platform_light2_workbook_sync_patch.sql (${rawMessage})`
+        ? `РЅСѓР¶РµРЅ SQL-РїР°С‚С‡ platform_light2_workbook_sync_patch.sql (${rawMessage})`
         : rawMessage;
-    setImportStatus(`Импорт остановлен: ${message}`, "error");
+    setImportStatus(`РРјРїРѕСЂС‚ РѕСЃС‚Р°РЅРѕРІР»РµРЅ: ${message}`, "error");
     throw new Error(message);
   } finally {
     STATE.importBusy = false;
@@ -4038,7 +4111,7 @@ function renderPartnerSelect(select, options = {}) {
 
   const items = [];
   if (includeAll) {
-    items.push(`<option value="">Все партнеры</option>`);
+    items.push(`<option value="">Р’СЃРµ РїР°СЂС‚РЅРµСЂС‹</option>`);
   }
   rows.forEach((partner) => {
     items.push(`<option value="${escapeHtml(partner.slug)}">${escapeHtml(partner.display_name)}</option>`);
@@ -4064,8 +4137,8 @@ function updateSettlementPreview() {
   const math = computeSettlement(draft);
 
   settlementDom.preview.innerHTML = `
-    <span>Итог взаиморасчета</span>
-    <strong>${formatMoney(math.total)} ₽</strong>
+    <span>РС‚РѕРі РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚Р°</span>
+    <strong>${formatMoney(math.total)} в‚Ѕ</strong>
     <span>${escapeHtml(math.direction)}</span>
   `;
 }
@@ -4077,8 +4150,8 @@ function resetSettlementForm() {
   DOM.settlementSubmitButton = settlementDom.submitButton;
   STATE.editingSettlementId = null;
   DOM.settlementForm.reset();
-  DOM.settlementForm.elements.status.value = "Ожидает сверки";
-  DOM.settlementSubmitButton.textContent = "Сохранить запись";
+  DOM.settlementForm.elements.status.value = "РћР¶РёРґР°РµС‚ СЃРІРµСЂРєРё";
+  DOM.settlementSubmitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ";
 
   if (!isAdmin()) {
     DOM.settlementForm.classList.add("is-hidden");
@@ -4095,22 +4168,22 @@ function renderScopeNote() {
   if (!settlementDom.scopeNote) return;
   DOM.scopeNote = settlementDom.scopeNote;
   if (!STATE.schemaReady) {
-    DOM.scopeNote.textContent = "Для блока взаиморасчетов нужно один раз выполнить SQL-патч platform_light2_patch.sql.";
+    DOM.scopeNote.textContent = "Р”Р»СЏ Р±Р»РѕРєР° РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚РѕРІ РЅСѓР¶РЅРѕ РѕРґРёРЅ СЂР°Р· РІС‹РїРѕР»РЅРёС‚СЊ SQL-РїР°С‚С‡ platform_light2_patch.sql.";
     return;
   }
 
   if (isAdmin()) {
-    DOM.scopeNote.textContent = "Вы видите все взаиморасчеты и можете управлять ими из одного места.";
+    DOM.scopeNote.textContent = "Р’С‹ РІРёРґРёС‚Рµ РІСЃРµ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹ Рё РјРѕР¶РµС‚Рµ СѓРїСЂР°РІР»СЏС‚СЊ РёРјРё РёР· РѕРґРЅРѕРіРѕ РјРµСЃС‚Р°.";
     return;
   }
 
   const partnerSlug = getCurrentPartnerSlug();
   if (!partnerSlug) {
-    DOM.scopeNote.textContent = "Партнер еще не привязан к вашему профилю. После привязки тут появятся только ваши взаиморасчеты.";
+    DOM.scopeNote.textContent = "РџР°СЂС‚РЅРµСЂ РµС‰Рµ РЅРµ РїСЂРёРІСЏР·Р°РЅ Рє РІР°С€РµРјСѓ РїСЂРѕС„РёР»СЋ. РџРѕСЃР»Рµ РїСЂРёРІСЏР·РєРё С‚СѓС‚ РїРѕСЏРІСЏС‚СЃСЏ С‚РѕР»СЊРєРѕ РІР°С€Рё РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹.";
     return;
   }
 
-  DOM.scopeNote.textContent = `Вы видите только свой контур взаиморасчетов: ${getPartnerLabel(partnerSlug)}.`;
+  DOM.scopeNote.textContent = `Р’С‹ РІРёРґРёС‚Рµ С‚РѕР»СЊРєРѕ СЃРІРѕР№ РєРѕРЅС‚СѓСЂ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚РѕРІ: ${getPartnerLabel(partnerSlug)}.`;
 }
 
 function updateBalancePreview() {
@@ -4124,8 +4197,8 @@ function updateBalancePreview() {
   const accountLabel = getBalanceAccountLabel(formData.get("account_type"));
 
   dom.preview.innerHTML = `
-    <span>Эффект записи</span>
-    <strong class="${delta >= 0 ? "amount-positive" : "amount-negative"}">${delta >= 0 ? "+" : ""}${formatMoney(delta)} ₽</strong>
+    <span>Р­С„С„РµРєС‚ Р·Р°РїРёСЃРё</span>
+    <strong class="${delta >= 0 ? "amount-positive" : "amount-negative"}">${delta >= 0 ? "+" : ""}${formatMoney(delta)} в‚Ѕ</strong>
     <span>${escapeHtml(accountLabel)}</span>
   `;
 }
@@ -4135,16 +4208,16 @@ function updateCalendarPreview() {
   if (!dom.form || !dom.preview) return;
 
   const formData = new FormData(dom.form);
-  const type = String(formData.get("operation_type") || "Расход");
+  const type = String(formData.get("operation_type") || "Р Р°СЃС…РѕРґ");
   const amount = toNumber(formData.get("amount"));
-  const signed = type === "Приход" ? amount : -amount;
-  const account = String(formData.get("account_name") || "Не распределено");
-  const status = String(formData.get("status") || "Платеж");
+  const signed = type === "РџСЂРёС…РѕРґ" ? amount : -amount;
+  const account = String(formData.get("account_name") || "РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ");
+  const status = String(formData.get("status") || "РџР»Р°С‚РµР¶");
 
   dom.preview.innerHTML = `
-    <span>Эффект по календарю</span>
-    <strong class="${signed >= 0 ? "amount-positive" : "amount-negative"}">${signed >= 0 ? "+" : ""}${formatMoney(signed)} ₽</strong>
-    <span>${escapeHtml(account)} • ${escapeHtml(status)}</span>
+    <span>Р­С„С„РµРєС‚ РїРѕ РєР°Р»РµРЅРґР°СЂСЋ</span>
+    <strong class="${signed >= 0 ? "amount-positive" : "amount-negative"}">${signed >= 0 ? "+" : ""}${formatMoney(signed)} в‚Ѕ</strong>
+    <span>${escapeHtml(account)} вЂў ${escapeHtml(status)}</span>
   `;
 }
 
@@ -4158,7 +4231,7 @@ function resetBalanceForm() {
   dom.form.elements.account_type.value = "cash_card";
   dom.form.elements.income_amount.value = "0";
   dom.form.elements.expense_amount.value = "0";
-  dom.submitButton.textContent = "Сохранить запись";
+  dom.submitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ";
   dom.form.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("balance"));
   updateBalancePreview();
 }
@@ -4170,11 +4243,11 @@ function resetCalendarForm() {
   STATE.editingCalendarId = null;
   dom.form.reset();
   dom.form.elements.payment_date.value = getTodayIso();
-  dom.form.elements.operation_type.value = "Расход";
-  dom.form.elements.account_name.value = "Наличные / карта";
-  dom.form.elements.status.value = "Платеж";
+  dom.form.elements.operation_type.value = "Р Р°СЃС…РѕРґ";
+  dom.form.elements.account_name.value = "РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°";
+  dom.form.elements.status.value = "РџР»Р°С‚РµР¶";
   dom.form.elements.amount.value = "0";
-  dom.submitButton.textContent = "Сохранить запись";
+  dom.submitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ";
   dom.form.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("calendar"));
   updateCalendarPreview();
 }
@@ -4184,16 +4257,16 @@ function renderBalanceScopeNote() {
   if (!dom.scopeNote) return;
 
   if (!isAdmin()) {
-    dom.scopeNote.textContent = "Баланс компании видит только владелец и администраторы платформы.";
+    dom.scopeNote.textContent = "Р‘Р°Р»Р°РЅСЃ РєРѕРјРїР°РЅРёРё РІРёРґРёС‚ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»РµС† Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂС‹ РїР»Р°С‚С„РѕСЂРјС‹.";
     return;
   }
 
   if (!STATE.financeReady) {
-    dom.scopeNote.textContent = "Для раздела Баланс выполните SQL-патч platform_light2_finance_patch.sql.";
+    dom.scopeNote.textContent = "Р”Р»СЏ СЂР°Р·РґРµР»Р° Р‘Р°Р»Р°РЅСЃ РІС‹РїРѕР»РЅРёС‚Рµ SQL-РїР°С‚С‡ platform_light2_finance_patch.sql.";
     return;
   }
 
-  dom.scopeNote.textContent = "Записи здесь фиксируют фактическое движение денег и формируют текущий баланс по каждому контуру.";
+  dom.scopeNote.textContent = "Р—Р°РїРёСЃРё Р·РґРµСЃСЊ С„РёРєСЃРёСЂСѓСЋС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРµ РґРІРёР¶РµРЅРёРµ РґРµРЅРµРі Рё С„РѕСЂРјРёСЂСѓСЋС‚ С‚РµРєСѓС‰РёР№ Р±Р°Р»Р°РЅСЃ РїРѕ РєР°Р¶РґРѕРјСѓ РєРѕРЅС‚СѓСЂСѓ.";
 }
 
 function renderCalendarScopeNote() {
@@ -4201,16 +4274,16 @@ function renderCalendarScopeNote() {
   if (!dom.scopeNote) return;
 
   if (!isAdmin()) {
-    dom.scopeNote.textContent = "Платежный календарь компании видит только владелец и администраторы платформы.";
+    dom.scopeNote.textContent = "РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ РєРѕРјРїР°РЅРёРё РІРёРґРёС‚ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»РµС† Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂС‹ РїР»Р°С‚С„РѕСЂРјС‹.";
     return;
   }
 
   if (!STATE.financeReady) {
-    dom.scopeNote.textContent = "Для раздела Платежный календарь выполните SQL-патч platform_light2_finance_patch.sql.";
+    dom.scopeNote.textContent = "Р”Р»СЏ СЂР°Р·РґРµР»Р° РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ РІС‹РїРѕР»РЅРёС‚Рµ SQL-РїР°С‚С‡ platform_light2_finance_patch.sql.";
     return;
   }
 
-  dom.scopeNote.textContent = "Календарь показывает план платежей и поступлений отдельно от фактического баланса, чтобы было видно нагрузку по датам.";
+  dom.scopeNote.textContent = "РљР°Р»РµРЅРґР°СЂСЊ РїРѕРєР°Р·С‹РІР°РµС‚ РїР»Р°РЅ РїР»Р°С‚РµР¶РµР№ Рё РїРѕСЃС‚СѓРїР»РµРЅРёР№ РѕС‚РґРµР»СЊРЅРѕ РѕС‚ С„Р°РєС‚РёС‡РµСЃРєРѕРіРѕ Р±Р°Р»Р°РЅСЃР°, С‡С‚РѕР±С‹ Р±С‹Р»Рѕ РІРёРґРЅРѕ РЅР°РіСЂСѓР·РєСѓ РїРѕ РґР°С‚Р°Рј.";
 }
 
 function buildBalanceRunningMap() {
@@ -4306,8 +4379,8 @@ function getVisibleCalendarEntries() {
 }
 
 function getAssetLabel(assetId) {
-  if (!assetId) return "Без привязки";
-  return STATE.assets.find((item) => item.id === assetId)?.asset_name || "Без привязки";
+  if (!assetId) return "Р‘РµР· РїСЂРёРІСЏР·РєРё";
+  return STATE.assets.find((item) => item.id === assetId)?.asset_name || "Р‘РµР· РїСЂРёРІСЏР·РєРё";
 }
 
 function buildAssetPaymentTotals() {
@@ -4323,7 +4396,7 @@ function populateAssetSelectors() {
 
   const previousFormValue = dom.paymentAssetSelect.value;
   const previousFilterValue = dom.paymentFilter.value;
-  const options = ['<option value="">Без привязки к активу</option>']
+  const options = ['<option value="">Р‘РµР· РїСЂРёРІСЏР·РєРё Рє Р°РєС‚РёРІСѓ</option>']
     .concat(
       STATE.assets
         .slice()
@@ -4333,7 +4406,7 @@ function populateAssetSelectors() {
     .join("");
 
   dom.paymentAssetSelect.innerHTML = options;
-  dom.paymentFilter.innerHTML = ['<option value="">Все активы</option>', '<option value="__unassigned__">Без привязки</option>']
+  dom.paymentFilter.innerHTML = ['<option value="">Р’СЃРµ Р°РєС‚РёРІС‹</option>', '<option value="__unassigned__">Р‘РµР· РїСЂРёРІСЏР·РєРё</option>']
     .concat(
       STATE.assets
         .slice()
@@ -4366,10 +4439,10 @@ function populatePurchaseFilters() {
     (a, b) => a.localeCompare(b, "ru")
   );
 
-  dom.supplierFilter.innerHTML = ['<option value="">Все поставщики</option>']
+  dom.supplierFilter.innerHTML = ['<option value="">Р’СЃРµ РїРѕСЃС‚Р°РІС‰РёРєРё</option>']
     .concat(suppliers.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
     .join("");
-  dom.categoryFilter.innerHTML = ['<option value="">Все категории</option>']
+  dom.categoryFilter.innerHTML = ['<option value="">Р’СЃРµ РєР°С‚РµРіРѕСЂРёРё</option>']
     .concat(categories.map((value) => `<option value="${escapeHtml(value)}">${escapeHtml(value)}</option>`))
     .join("");
 
@@ -4384,7 +4457,7 @@ function resetAssetForm() {
   STATE.editingAssetId = null;
   dom.assetForm.reset();
   dom.assetForm.elements.asset_value.value = "0";
-  dom.assetSubmitButton.textContent = "Сохранить актив";
+  dom.assetSubmitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ Р°РєС‚РёРІ";
   dom.assetForm.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
 }
 
@@ -4396,7 +4469,7 @@ function resetAssetPaymentForm() {
   dom.paymentForm.reset();
   dom.paymentForm.elements.payment_date.value = getTodayIso();
   dom.paymentForm.elements.payment_amount.value = "0";
-  dom.paymentSubmitButton.textContent = "Сохранить выплату";
+  dom.paymentSubmitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РІС‹РїР»Р°С‚Сѓ";
   dom.paymentForm.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("assets"));
 }
 
@@ -4407,7 +4480,7 @@ function resetPurchaseForm() {
   STATE.editingPurchaseId = null;
   dom.form.reset();
   dom.form.elements.price.value = "0";
-  dom.submitButton.textContent = "Сохранить позицию";
+  dom.submitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РїРѕР·РёС†РёСЋ";
   dom.form.classList.toggle("is-hidden", !isAdmin() || isSectionFormHidden("purchases"));
 }
 
@@ -4416,16 +4489,16 @@ function renderAssetsScopeNote() {
   if (!dom.scopeNote) return;
 
   if (!isAdmin()) {
-    dom.scopeNote.textContent = "Раздел Активы доступен только владельцу и администраторам платформы.";
+    dom.scopeNote.textContent = "Р Р°Р·РґРµР» РђРєС‚РёРІС‹ РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј РїР»Р°С‚С„РѕСЂРјС‹.";
     return;
   }
 
   if (!STATE.operationsReady) {
-    dom.scopeNote.textContent = "Для раздела Активы выполните SQL-патч platform_light2_assets_purchases_patch.sql.";
+    dom.scopeNote.textContent = "Р”Р»СЏ СЂР°Р·РґРµР»Р° РђРєС‚РёРІС‹ РІС‹РїРѕР»РЅРёС‚Рµ SQL-РїР°С‚С‡ platform_light2_assets_purchases_patch.sql.";
     return;
   }
 
-  dom.scopeNote.textContent = "Активы перенесены в карточки и журнал выплат: это удобнее, чем хранить суммы в длинной Excel-матрице.";
+  dom.scopeNote.textContent = "РђРєС‚РёРІС‹ РїРµСЂРµРЅРµСЃРµРЅС‹ РІ РєР°СЂС‚РѕС‡РєРё Рё Р¶СѓСЂРЅР°Р» РІС‹РїР»Р°С‚: СЌС‚Рѕ СѓРґРѕР±РЅРµРµ, С‡РµРј С…СЂР°РЅРёС‚СЊ СЃСѓРјРјС‹ РІ РґР»РёРЅРЅРѕР№ Excel-РјР°С‚СЂРёС†Рµ.";
 }
 
 function renderPurchasesScopeNote() {
@@ -4433,16 +4506,16 @@ function renderPurchasesScopeNote() {
   if (!dom.scopeNote) return;
 
   if (!isAdmin()) {
-    dom.scopeNote.textContent = "Раздел Закупки доступен только владельцу и администраторам платформы.";
+    dom.scopeNote.textContent = "Р Р°Р·РґРµР» Р—Р°РєСѓРїРєРё РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј РїР»Р°С‚С„РѕСЂРјС‹.";
     return;
   }
 
   if (!STATE.operationsReady) {
-    dom.scopeNote.textContent = "Для раздела Закупки выполните SQL-патч platform_light2_assets_purchases_patch.sql.";
+    dom.scopeNote.textContent = "Р”Р»СЏ СЂР°Р·РґРµР»Р° Р—Р°РєСѓРїРєРё РІС‹РїРѕР»РЅРёС‚Рµ SQL-РїР°С‚С‡ platform_light2_assets_purchases_patch.sql.";
     return;
   }
 
-  dom.scopeNote.textContent = "Закупки перенесены в нормализованный каталог: поставщик, категория, артикул, позиция, единица и цена.";
+  dom.scopeNote.textContent = "Р—Р°РєСѓРїРєРё РїРµСЂРµРЅРµСЃРµРЅС‹ РІ РЅРѕСЂРјР°Р»РёР·РѕРІР°РЅРЅС‹Р№ РєР°С‚Р°Р»РѕРі: РїРѕСЃС‚Р°РІС‰РёРє, РєР°С‚РµРіРѕСЂРёСЏ, Р°СЂС‚РёРєСѓР», РїРѕР·РёС†РёСЏ, РµРґРёРЅРёС†Р° Рё С†РµРЅР°.";
 }
 
 function getVisibleAssets() {
@@ -4533,20 +4606,20 @@ function renderAssetsSummary() {
 
   dom.summary.innerHTML = `
     <article class="summary-card">
-      <span>Активов в выборке</span>
+      <span>РђРєС‚РёРІРѕРІ РІ РІС‹Р±РѕСЂРєРµ</span>
       <strong>${assetRows.length}</strong>
     </article>
     <article class="summary-card">
-      <span>Стоимость активов</span>
-      <strong>${formatMoney(totalValue)} ₽</strong>
+      <span>РЎС‚РѕРёРјРѕСЃС‚СЊ Р°РєС‚РёРІРѕРІ</span>
+      <strong>${formatMoney(totalValue)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Уже выплачено</span>
-      <strong>${formatMoney(totalPaid)} ₽</strong>
+      <span>РЈР¶Рµ РІС‹РїР»Р°С‡РµРЅРѕ</span>
+      <strong>${formatMoney(totalPaid)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Остаток к закрытию</span>
-      <strong class="${remaining <= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(remaining)} ₽</strong>
+      <span>РћСЃС‚Р°С‚РѕРє Рє Р·Р°РєСЂС‹С‚РёСЋ</span>
+      <strong class="${remaining <= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(remaining)} в‚Ѕ</strong>
     </article>
   `;
 }
@@ -4565,20 +4638,20 @@ function renderPurchasesSummary() {
 
   dom.summary.innerHTML = `
     <article class="summary-card">
-      <span>Позиции в выборке</span>
+      <span>РџРѕР·РёС†РёРё РІ РІС‹Р±РѕСЂРєРµ</span>
       <strong>${rows.length}</strong>
     </article>
     <article class="summary-card">
-      <span>Поставщиков</span>
+      <span>РџРѕСЃС‚Р°РІС‰РёРєРѕРІ</span>
       <strong>${supplierCount}</strong>
     </article>
     <article class="summary-card">
-      <span>Категорий</span>
+      <span>РљР°С‚РµРіРѕСЂРёР№</span>
       <strong>${categoryCount}</strong>
     </article>
     <article class="summary-card">
-      <span>Средняя цена по заполненным</span>
-      <strong>${formatMoney(averagePrice)} ₽</strong>
+      <span>РЎСЂРµРґРЅСЏСЏ С†РµРЅР° РїРѕ Р·Р°РїРѕР»РЅРµРЅРЅС‹Рј</span>
+      <strong>${formatMoney(averagePrice)} в‚Ѕ</strong>
     </article>
   `;
 }
@@ -4595,15 +4668,15 @@ function renderAssets() {
 
   if (!isAdmin()) {
     dom.summary.innerHTML = "";
-    dom.assetTableBody.innerHTML = `<tr><td colspan="7" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
-    dom.paymentTableBody.innerHTML = `<tr><td colspan="6" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
+    dom.assetTableBody.innerHTML = `<tr><td colspan="7" class="muted">Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј.</td></tr>`;
+    dom.paymentTableBody.innerHTML = `<tr><td colspan="6" class="muted">Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј.</td></tr>`;
     return;
   }
 
   if (!STATE.operationsReady) {
     dom.summary.innerHTML = "";
-    dom.assetTableBody.innerHTML = `<tr><td colspan="7" class="muted">Сначала выполните platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.</td></tr>`;
-    dom.paymentTableBody.innerHTML = `<tr><td colspan="6" class="muted">Сначала выполните platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.</td></tr>`;
+    dom.assetTableBody.innerHTML = `<tr><td colspan="7" class="muted">РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor.</td></tr>`;
+    dom.paymentTableBody.innerHTML = `<tr><td colspan="6" class="muted">РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor.</td></tr>`;
     return;
   }
 
@@ -4622,23 +4695,23 @@ function renderAssets() {
           const remaining = roundMoney(toNumber(asset.asset_value) - paid);
           return `
             <tr>
-              <td>${escapeHtml(asset.asset_name || "—")}</td>
+              <td>${escapeHtml(asset.asset_name || "вЂ”")}</td>
               <td class="text-end">${escapeHtml(formatMoney(asset.asset_value))}</td>
               <td class="text-end">${escapeHtml(formatMoney(paid))}</td>
               <td class="text-end ${remaining <= 0 ? "amount-positive" : "amount-negative"}">${escapeHtml(formatMoney(remaining))}</td>
-              <td>${escapeHtml(asset.note || "—")}</td>
+              <td>${escapeHtml(asset.note || "вЂ”")}</td>
               <td class="small">${escapeHtml(formatDateTime(asset.updated_at || asset.created_at))}</td>
               <td>
                 <div class="d-flex gap-2">
-                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">Изменить</button>
-                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">Удалить</button>
+                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">РР·РјРµРЅРёС‚СЊ</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">РЈРґР°Р»РёС‚СЊ</button>
                 </div>
               </td>
             </tr>
           `;
         })
         .join("")
-    : `<tr><td colspan="7" class="muted">Пока нет активов для текущего фильтра.</td></tr>`;
+    : `<tr><td colspan="7" class="muted">РџРѕРєР° РЅРµС‚ Р°РєС‚РёРІРѕРІ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°.</td></tr>`;
 
   dom.paymentTableBody.innerHTML = paymentRows.length
     ? paymentRows
@@ -4648,19 +4721,19 @@ function renderAssets() {
               <td>${escapeHtml(formatDate(payment.payment_date))}</td>
               <td>${escapeHtml(getAssetLabel(payment.asset_id))}</td>
               <td class="text-end">${escapeHtml(formatMoney(payment.payment_amount))}</td>
-              <td>${escapeHtml(payment.note || "—")}</td>
+              <td>${escapeHtml(payment.note || "вЂ”")}</td>
               <td class="small">${escapeHtml(formatDateTime(payment.updated_at || payment.created_at))}</td>
               <td>
                 <div class="d-flex gap-2">
-                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">Изменить</button>
-                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">Удалить</button>
+                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">РР·РјРµРЅРёС‚СЊ</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">РЈРґР°Р»РёС‚СЊ</button>
                 </div>
               </td>
             </tr>
           `
         )
         .join("")
-    : `<tr><td colspan="6" class="muted">Пока нет выплат для текущего фильтра.</td></tr>`;
+    : `<tr><td colspan="6" class="muted">РџРѕРєР° РЅРµС‚ РІС‹РїР»Р°С‚ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°.</td></tr>`;
 }
 
 function renderPurchases() {
@@ -4674,13 +4747,13 @@ function renderPurchases() {
 
   if (!isAdmin()) {
     dom.summary.innerHTML = "";
-    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј.</td></tr>`;
     return;
   }
 
   if (!STATE.operationsReady) {
     dom.summary.innerHTML = "";
-    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Сначала выполните platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor.</td></tr>`;
     return;
   }
 
@@ -4695,26 +4768,26 @@ function renderPurchases() {
         .map(
           (item) => `
             <tr>
-              <td>${escapeHtml(item.supplier_name || "—")}</td>
-              <td>${escapeHtml(item.city || "—")}</td>
-              <td>${escapeHtml(item.category || "—")}</td>
-              <td>${escapeHtml(item.article || "—")}</td>
-              <td>${escapeHtml(item.item_name || "—")}</td>
-              <td>${escapeHtml(item.unit_name || "—")}</td>
+              <td>${escapeHtml(item.supplier_name || "вЂ”")}</td>
+              <td>${escapeHtml(item.city || "вЂ”")}</td>
+              <td>${escapeHtml(item.category || "вЂ”")}</td>
+              <td>${escapeHtml(item.article || "вЂ”")}</td>
+              <td>${escapeHtml(item.item_name || "вЂ”")}</td>
+              <td>${escapeHtml(item.unit_name || "вЂ”")}</td>
               <td class="text-end">${escapeHtml(formatMoney(item.price))}</td>
-              <td>${item.supplier_url ? `<a href="${escapeHtml(item.supplier_url)}" target="_blank" rel="noreferrer">Открыть</a>` : "—"}</td>
-              <td>${escapeHtml(item.note || "—")}</td>
+              <td>${item.supplier_url ? `<a href="${escapeHtml(item.supplier_url)}" target="_blank" rel="noreferrer">РћС‚РєСЂС‹С‚СЊ</a>` : "вЂ”"}</td>
+              <td>${escapeHtml(item.note || "вЂ”")}</td>
               <td>
                 <div class="d-flex gap-2">
-                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">Изменить</button>
-                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">Удалить</button>
+                  <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>
+                  <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>
                 </div>
               </td>
             </tr>
           `
         )
         .join("")
-    : `<tr><td colspan="10" class="muted">Пока нет позиций закупки для текущего фильтра.</td></tr>`;
+    : `<tr><td colspan="10" class="muted">РџРѕРєР° РЅРµС‚ РїРѕР·РёС†РёР№ Р·Р°РєСѓРїРєРё РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°.</td></tr>`;
 }
 
 function fillAssetForm(item) {
@@ -4726,7 +4799,7 @@ function fillAssetForm(item) {
   dom.assetForm.elements.asset_name.value = item.asset_name || "";
   dom.assetForm.elements.asset_value.value = toNumber(item.asset_value);
   dom.assetForm.elements.note.value = item.note || "";
-  dom.assetSubmitButton.textContent = "Сохранить изменения";
+  dom.assetSubmitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ";
 }
 
 function fillAssetPaymentForm(item) {
@@ -4739,7 +4812,7 @@ function fillAssetPaymentForm(item) {
   dom.paymentForm.elements.payment_date.value = item.payment_date || "";
   dom.paymentForm.elements.payment_amount.value = toNumber(item.payment_amount);
   dom.paymentForm.elements.note.value = item.note || "";
-  dom.paymentSubmitButton.textContent = "Сохранить изменения";
+  dom.paymentSubmitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ";
 }
 
 function fillPurchaseForm(item) {
@@ -4758,7 +4831,7 @@ function fillPurchaseForm(item) {
   dom.form.elements.unit_name.value = item.unit_name || "";
   dom.form.elements.price.value = toNumber(item.price);
   dom.form.elements.note.value = item.note || "";
-  dom.submitButton.textContent = "Сохранить изменения";
+  dom.submitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ";
 }
 
 function getVisibleSettlements() {
@@ -4800,7 +4873,7 @@ function getVisibleSettlements() {
 }
 
 function renderSettlementSummary(rows) {
-  const pending = rows.filter((item) => item.status !== "Взаиморасчет произведен" && item.status !== "Архив");
+  const pending = rows.filter((item) => item.status !== "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ РїСЂРѕРёР·РІРµРґРµРЅ" && item.status !== "РђСЂС…РёРІ");
   const total = rows.reduce((sum, item) => sum + computeSettlement(item).total, 0);
   const payout = pending.reduce((sum, item) => {
     const math = computeSettlement(item);
@@ -4809,20 +4882,20 @@ function renderSettlementSummary(rows) {
 
   DOM.settlementSummary.innerHTML = `
     <article class="summary-card">
-      <span>Строк в выборке</span>
+      <span>РЎС‚СЂРѕРє РІ РІС‹Р±РѕСЂРєРµ</span>
       <strong>${rows.length}</strong>
     </article>
     <article class="summary-card">
-      <span>Открытых строк</span>
+      <span>РћС‚РєСЂС‹С‚С‹С… СЃС‚СЂРѕРє</span>
       <strong>${pending.length}</strong>
     </article>
     <article class="summary-card">
-      <span>Чистый итог</span>
-      <strong>${formatMoney(total)} ₽</strong>
+      <span>Р§РёСЃС‚С‹Р№ РёС‚РѕРі</span>
+      <strong>${formatMoney(total)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>К выплате партнерам</span>
-      <strong>${formatMoney(payout)} ₽</strong>
+      <span>Рљ РІС‹РїР»Р°С‚Рµ РїР°СЂС‚РЅРµСЂР°Рј</span>
+      <strong>${formatMoney(payout)} в‚Ѕ</strong>
     </article>
   `;
 }
@@ -4838,27 +4911,27 @@ function renderBalanceSummary(rows) {
     (account) => `
       <article class="summary-card">
         <span>${escapeHtml(account.label)}</span>
-        <strong>${formatMoney(totals.byAccount[account.value] || 0)} ₽</strong>
+        <strong>${formatMoney(totals.byAccount[account.value] || 0)} в‚Ѕ</strong>
       </article>
     `
   ).join("");
 
   dom.summary.innerHTML = `
     <article class="summary-card">
-      <span>Записей в выборке</span>
+      <span>Р—Р°РїРёСЃРµР№ РІ РІС‹Р±РѕСЂРєРµ</span>
       <strong>${rows.length}</strong>
     </article>
     <article class="summary-card">
-      <span>Приход в выборке</span>
-      <strong>${formatMoney(income)} ₽</strong>
+      <span>РџСЂРёС…РѕРґ РІ РІС‹Р±РѕСЂРєРµ</span>
+      <strong>${formatMoney(income)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Расход в выборке</span>
-      <strong>${formatMoney(expense)} ₽</strong>
+      <span>Р Р°СЃС…РѕРґ РІ РІС‹Р±РѕСЂРєРµ</span>
+      <strong>${formatMoney(expense)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Баланс компании сейчас</span>
-      <strong>${formatMoney(totals.total)} ₽</strong>
+      <span>Р‘Р°Р»Р°РЅСЃ РєРѕРјРїР°РЅРёРё СЃРµР№С‡Р°СЃ</span>
+      <strong>${formatMoney(totals.total)} в‚Ѕ</strong>
     </article>
     ${accountCards}
   `;
@@ -4870,53 +4943,53 @@ function renderCalendarSummary(rows) {
 
   const totals = getCurrentBalanceTotals();
   const incoming = rows
-    .filter((entry) => entry.operation_type === "Приход")
+    .filter((entry) => entry.operation_type === "РџСЂРёС…РѕРґ")
     .reduce((sum, entry) => sum + toNumber(entry.amount), 0);
   const outgoing = rows
-    .filter((entry) => entry.operation_type === "Расход")
+    .filter((entry) => entry.operation_type === "Р Р°СЃС…РѕРґ")
     .reduce((sum, entry) => sum + toNumber(entry.amount), 0);
   const net = roundMoney(incoming - outgoing);
   const accountCards = BALANCE_ACCOUNTS.map(
     (account) => `
       <article class="summary-card">
         <span>${escapeHtml(account.label)}</span>
-        <strong>${formatMoney(totals.byAccount[account.value] || 0)} ₽</strong>
+        <strong>${formatMoney(totals.byAccount[account.value] || 0)} в‚Ѕ</strong>
       </article>
     `
   ).join("");
 
   dom.summary.innerHTML = `
     <article class="summary-card">
-      <span>Записей в выборке</span>
+      <span>Р—Р°РїРёСЃРµР№ РІ РІС‹Р±РѕСЂРєРµ</span>
       <strong>${rows.length}</strong>
     </article>
     <article class="summary-card">
-      <span>Приходы по плану</span>
-      <strong>${formatMoney(incoming)} ₽</strong>
+      <span>РџСЂРёС…РѕРґС‹ РїРѕ РїР»Р°РЅСѓ</span>
+      <strong>${formatMoney(incoming)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Расходы по плану</span>
-      <strong>${formatMoney(outgoing)} ₽</strong>
+      <span>Р Р°СЃС…РѕРґС‹ РїРѕ РїР»Р°РЅСѓ</span>
+      <strong>${formatMoney(outgoing)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Сальдо выборки</span>
-      <strong class="${net >= 0 ? "amount-positive" : "amount-negative"}">${net >= 0 ? "+" : ""}${formatMoney(net)} ₽</strong>
+      <span>РЎР°Р»СЊРґРѕ РІС‹Р±РѕСЂРєРё</span>
+      <strong class="${net >= 0 ? "amount-positive" : "amount-negative"}">${net >= 0 ? "+" : ""}${formatMoney(net)} в‚Ѕ</strong>
     </article>
     <article class="summary-card">
-      <span>Баланс компании сейчас</span>
-      <strong>${formatMoney(totals.total)} ₽</strong>
+      <span>Р‘Р°Р»Р°РЅСЃ РєРѕРјРїР°РЅРёРё СЃРµР№С‡Р°СЃ</span>
+      <strong>${formatMoney(totals.total)} в‚Ѕ</strong>
     </article>
     ${accountCards}
   `;
 }
 
 function renderSettlementSection() {
-  DOM.settlementActionsHead.textContent = isAdmin() ? "Действия" : "";
+  DOM.settlementActionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
   renderScopeNote();
   renderLiveSectionBuilder("settlements");
 
   if (!STATE.schemaReady) {
-    DOM.settlementTableBody.innerHTML = `<tr><td colspan="10" class="muted">Сначала выполните platform_light2_patch.sql в Supabase SQL Editor.</td></tr>`;
+    DOM.settlementTableBody.innerHTML = `<tr><td colspan="10" class="muted">РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_patch.sql РІ Supabase SQL Editor.</td></tr>`;
     DOM.settlementSummary.innerHTML = "";
     return;
   }
@@ -4926,7 +4999,7 @@ function renderSettlementSection() {
   DOM.settlementSummary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("settlements"));
 
   if (!rows.length) {
-    DOM.settlementTableBody.innerHTML = `<tr><td colspan="10" class="muted">Пока нет записей для текущего фильтра.</td></tr>`;
+    DOM.settlementTableBody.innerHTML = `<tr><td colspan="10" class="muted">РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°.</td></tr>`;
     return;
   }
 
@@ -4943,18 +5016,18 @@ function renderSettlementSection() {
           <td class="text-end">${escapeHtml(formatMoney(math.total))}</td>
           <td>${escapeHtml(math.direction)}</td>
           <td><span class="badge-soft ${getStatusTone(item.status)}">${escapeHtml(item.status)}</span></td>
-          <td>${escapeHtml(item.note || "—")}</td>
+          <td>${escapeHtml(item.note || "вЂ”")}</td>
           <td class="small">${escapeHtml(formatDateTime(item.updated_at || item.created_at))}</td>
           <td>
             ${
               canEdit
                 ? `
                   <div class="d-flex gap-2">
-                    <button class="btn btn-outline-dark btn-sm" type="button" data-edit-settlement="${escapeHtml(item.id)}">Изменить</button>
-                    <button class="btn btn-outline-danger btn-sm" type="button" data-delete-settlement="${escapeHtml(item.id)}">Удалить</button>
+                    <button class="btn btn-outline-dark btn-sm" type="button" data-edit-settlement="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>
+                    <button class="btn btn-outline-danger btn-sm" type="button" data-delete-settlement="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>
                   </div>
                 `
-                : `<span class="muted">—</span>`
+                : `<span class="muted">вЂ”</span>`
             }
           </td>
         </tr>
@@ -4967,19 +5040,19 @@ function renderBalanceSection() {
   const dom = getBalanceDom();
   if (!dom.tableBody) return;
 
-  dom.actionsHead.textContent = isAdmin() ? "Действия" : "";
+  dom.actionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
   renderBalanceScopeNote();
   renderLiveSectionBuilder("balance");
 
   if (!isAdmin()) {
     dom.summary.innerHTML = "";
-    dom.tableBody.innerHTML = `<tr><td colspan="8" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="8" class="muted">Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј.</td></tr>`;
     return;
   }
 
   if (!STATE.financeReady) {
     dom.summary.innerHTML = "";
-    dom.tableBody.innerHTML = `<tr><td colspan="8" class="muted">Сначала выполните platform_light2_finance_patch.sql в Supabase SQL Editor.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="8" class="muted">РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql РІ Supabase SQL Editor.</td></tr>`;
     return;
   }
 
@@ -4989,7 +5062,7 @@ function renderBalanceSection() {
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("balance"));
 
   if (!rows.length) {
-    dom.tableBody.innerHTML = `<tr><td colspan="8" class="muted">Пока нет записей для текущего фильтра.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="8" class="muted">РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°.</td></tr>`;
     return;
   }
 
@@ -5002,12 +5075,12 @@ function renderBalanceSection() {
           <td class="text-end">${escapeHtml(formatMoney(entry.income_amount))}</td>
           <td class="text-end">${escapeHtml(formatMoney(entry.expense_amount))}</td>
           <td class="text-end">${escapeHtml(formatMoney(runningMap.get(entry.id) || 0))}</td>
-          <td>${escapeHtml(entry.note || "—")}</td>
+          <td>${escapeHtml(entry.note || "вЂ”")}</td>
           <td class="small">${escapeHtml(formatDateTime(entry.updated_at || entry.created_at))}</td>
           <td>
             <div class="d-flex gap-2">
-              <button class="btn btn-outline-dark btn-sm" type="button" data-edit-balance="${escapeHtml(entry.id)}">Изменить</button>
-              <button class="btn btn-outline-danger btn-sm" type="button" data-delete-balance="${escapeHtml(entry.id)}">Удалить</button>
+              <button class="btn btn-outline-dark btn-sm" type="button" data-edit-balance="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>
+              <button class="btn btn-outline-danger btn-sm" type="button" data-delete-balance="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>
             </div>
           </td>
         </tr>
@@ -5020,19 +5093,19 @@ function renderCalendarSection() {
   const dom = getCalendarDom();
   if (!dom.tableBody) return;
 
-  dom.actionsHead.textContent = isAdmin() ? "Действия" : "";
+  dom.actionsHead.textContent = isAdmin() ? "Р”РµР№СЃС‚РІРёСЏ" : "";
   renderCalendarScopeNote();
   renderLiveSectionBuilder("calendar");
 
   if (!isAdmin()) {
     dom.summary.innerHTML = "";
-    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Раздел доступен только владельцу и администраторам.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј.</td></tr>`;
     return;
   }
 
   if (!STATE.financeReady) {
     dom.summary.innerHTML = "";
-    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Сначала выполните platform_light2_finance_patch.sql в Supabase SQL Editor.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql РІ Supabase SQL Editor.</td></tr>`;
     return;
   }
 
@@ -5041,7 +5114,7 @@ function renderCalendarSection() {
   dom.summary?.insertAdjacentHTML("beforeend", getSectionFormulaCards("calendar"));
 
   if (!rows.length) {
-    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">Пока нет записей для текущего фильтра.</td></tr>`;
+    dom.tableBody.innerHTML = `<tr><td colspan="10" class="muted">РџРѕРєР° РЅРµС‚ Р·Р°РїРёСЃРµР№ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°.</td></tr>`;
     return;
   }
 
@@ -5051,18 +5124,18 @@ function renderCalendarSection() {
       return `
         <tr>
           <td>${escapeHtml(formatDate(entry.payment_date))}</td>
-          <td>${escapeHtml(entry.counterparty || "—")}</td>
+          <td>${escapeHtml(entry.counterparty || "вЂ”")}</td>
           <td class="text-end ${signed >= 0 ? "amount-positive" : "amount-negative"}">${signed >= 0 ? "+" : ""}${escapeHtml(formatMoney(entry.amount))}</td>
-          <td><span class="badge-soft ${getOperationTone(entry.operation_type)}">${escapeHtml(entry.operation_type || "—")}</span></td>
-          <td>${escapeHtml(entry.category || "—")}</td>
-          <td>${escapeHtml(entry.account_name || "—")}</td>
-          <td><span class="badge-soft ${getCalendarStatusTone(entry.status)}">${escapeHtml(entry.status || "—")}</span></td>
-          <td>${escapeHtml(entry.note || "—")}</td>
+          <td><span class="badge-soft ${getOperationTone(entry.operation_type)}">${escapeHtml(entry.operation_type || "вЂ”")}</span></td>
+          <td>${escapeHtml(entry.category || "вЂ”")}</td>
+          <td>${escapeHtml(entry.account_name || "вЂ”")}</td>
+          <td><span class="badge-soft ${getCalendarStatusTone(entry.status)}">${escapeHtml(entry.status || "вЂ”")}</span></td>
+          <td>${escapeHtml(entry.note || "вЂ”")}</td>
           <td class="small">${escapeHtml(formatDateTime(entry.updated_at || entry.created_at))}</td>
           <td>
             <div class="d-flex gap-2">
-              <button class="btn btn-outline-dark btn-sm" type="button" data-edit-calendar="${escapeHtml(entry.id)}">Изменить</button>
-              <button class="btn btn-outline-danger btn-sm" type="button" data-delete-calendar="${escapeHtml(entry.id)}">Удалить</button>
+              <button class="btn btn-outline-dark btn-sm" type="button" data-edit-calendar="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>
+              <button class="btn btn-outline-danger btn-sm" type="button" data-delete-calendar="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>
             </div>
           </td>
         </tr>
@@ -5078,9 +5151,9 @@ function fillSettlementForm(item) {
   DOM.settlementForm.elements.partner_slug.value = item.partner_slug || "";
   DOM.settlementForm.elements.salary_amount.value = toNumber(item.salary_amount);
   DOM.settlementForm.elements.purchase_amount.value = toNumber(item.purchase_amount);
-  DOM.settlementForm.elements.status.value = item.status || "Ожидает сверки";
+  DOM.settlementForm.elements.status.value = item.status || "РћР¶РёРґР°РµС‚ СЃРІРµСЂРєРё";
   DOM.settlementForm.elements.note.value = item.note || "";
-  DOM.settlementSubmitButton.textContent = "Сохранить изменения";
+  DOM.settlementSubmitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ";
   updateSettlementPreview();
 }
 
@@ -5095,7 +5168,7 @@ function fillBalanceForm(item) {
   dom.form.elements.income_amount.value = toNumber(item.income_amount);
   dom.form.elements.expense_amount.value = toNumber(item.expense_amount);
   dom.form.elements.note.value = item.note || "";
-  dom.submitButton.textContent = "Сохранить изменения";
+  dom.submitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ";
   updateBalancePreview();
 }
 
@@ -5108,20 +5181,20 @@ function fillCalendarForm(item) {
   dom.form.elements.payment_date.value = item.payment_date || "";
   dom.form.elements.counterparty.value = item.counterparty || "";
   dom.form.elements.amount.value = toNumber(item.amount);
-  dom.form.elements.operation_type.value = item.operation_type || "Расход";
+  dom.form.elements.operation_type.value = item.operation_type || "Р Р°СЃС…РѕРґ";
   dom.form.elements.category.value = item.category || "";
-  dom.form.elements.account_name.value = item.account_name || "Наличные / карта";
-  dom.form.elements.status.value = item.status || "Платеж";
+  dom.form.elements.account_name.value = item.account_name || "РќР°Р»РёС‡РЅС‹Рµ / РєР°СЂС‚Р°";
+  dom.form.elements.status.value = item.status || "РџР»Р°С‚РµР¶";
   dom.form.elements.note.value = item.note || "";
-  dom.submitButton.textContent = "Сохранить изменения";
+  dom.submitButton.textContent = "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ";
   updateCalendarPreview();
 }
 
 function syncModuleStatus() {
   if (!STATE.schemaReady && !STATE.financeReady && !STATE.operationsReady) {
-    setModuleState("Нужны SQL-патчи");
+    setModuleState("РќСѓР¶РЅС‹ SQL-РїР°С‚С‡Рё");
     setStatus(
-      "ДОМ НЕОНА загружен частично. Выполните platform_light2_patch.sql, platform_light2_finance_patch.sql и platform_light2_assets_purchases_patch.sql в Supabase SQL Editor.",
+      "Р”РћРњ РќР•РћРќРђ Р·Р°РіСЂСѓР¶РµРЅ С‡Р°СЃС‚РёС‡РЅРѕ. Р’С‹РїРѕР»РЅРёС‚Рµ platform_light2_patch.sql, platform_light2_finance_patch.sql Рё platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor.",
       "warning"
     );
     syncImportButton();
@@ -5129,9 +5202,9 @@ function syncModuleStatus() {
   }
 
   if (!STATE.schemaReady) {
-    setModuleState("Частично готово");
+    setModuleState("Р§Р°СЃС‚РёС‡РЅРѕ РіРѕС‚РѕРІРѕ");
     setStatus(
-      `Остальные блоки работают, но для взаиморасчетов нужен platform_light2_patch.sql${STATE.operationsReady ? "" : " и для Активов/Закупок нужен platform_light2_assets_purchases_patch.sql"}.`,
+      `РћСЃС‚Р°Р»СЊРЅС‹Рµ Р±Р»РѕРєРё СЂР°Р±РѕС‚Р°СЋС‚, РЅРѕ РґР»СЏ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚РѕРІ РЅСѓР¶РµРЅ platform_light2_patch.sql${STATE.operationsReady ? "" : " Рё РґР»СЏ РђРєС‚РёРІРѕРІ/Р—Р°РєСѓРїРѕРє РЅСѓР¶РµРЅ platform_light2_assets_purchases_patch.sql"}.`,
       "warning"
     );
     syncImportButton();
@@ -5139,9 +5212,9 @@ function syncModuleStatus() {
   }
 
   if (!STATE.financeReady && !STATE.operationsReady) {
-    setModuleState("Частично готово");
+    setModuleState("Р§Р°СЃС‚РёС‡РЅРѕ РіРѕС‚РѕРІРѕ");
     setStatus(
-      "Взаиморасчеты уже работают. Для финансовых блоков выполните platform_light2_finance_patch.sql, а для Активов и Закупок — platform_light2_assets_purchases_patch.sql.",
+      "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹ СѓР¶Рµ СЂР°Р±РѕС‚Р°СЋС‚. Р”Р»СЏ С„РёРЅР°РЅСЃРѕРІС‹С… Р±Р»РѕРєРѕРІ РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql, Р° РґР»СЏ РђРєС‚РёРІРѕРІ Рё Р—Р°РєСѓРїРѕРє вЂ” platform_light2_assets_purchases_patch.sql.",
       "warning"
     );
     syncImportButton();
@@ -5149,9 +5222,9 @@ function syncModuleStatus() {
   }
 
   if (!STATE.financeReady) {
-    setModuleState("Частично готово");
+    setModuleState("Р§Р°СЃС‚РёС‡РЅРѕ РіРѕС‚РѕРІРѕ");
     setStatus(
-      "Взаиморасчеты уже работают. Для разделов Баланс и Платежный календарь выполните platform_light2_finance_patch.sql.",
+      "Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹ СѓР¶Рµ СЂР°Р±РѕС‚Р°СЋС‚. Р”Р»СЏ СЂР°Р·РґРµР»РѕРІ Р‘Р°Р»Р°РЅСЃ Рё РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_finance_patch.sql.",
       "warning"
     );
     syncImportButton();
@@ -5159,17 +5232,17 @@ function syncModuleStatus() {
   }
 
   if (!STATE.operationsReady) {
-    setModuleState("Частично готово");
+    setModuleState("Р§Р°СЃС‚РёС‡РЅРѕ РіРѕС‚РѕРІРѕ");
     setStatus(
-      "Финансовые блоки уже работают. Для разделов Активы и Закупки выполните platform_light2_assets_purchases_patch.sql.",
+      "Р¤РёРЅР°РЅСЃРѕРІС‹Рµ Р±Р»РѕРєРё СѓР¶Рµ СЂР°Р±РѕС‚Р°СЋС‚. Р”Р»СЏ СЂР°Р·РґРµР»РѕРІ РђРєС‚РёРІС‹ Рё Р—Р°РєСѓРїРєРё РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql.",
       "warning"
     );
     syncImportButton();
     return;
   }
 
-  setModuleState("Готово");
-  setStatus("ДОМ НЕОНА загружен. Взаиморасчеты, Баланс, Платежный календарь, Активы и Закупки работают внутри платформы.", "success");
+  setModuleState("Р“РѕС‚РѕРІРѕ");
+  setStatus("Р”РћРњ РќР•РћРќРђ Р·Р°РіСЂСѓР¶РµРЅ. Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹, Р‘Р°Р»Р°РЅСЃ, РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ, РђРєС‚РёРІС‹ Рё Р—Р°РєСѓРїРєРё СЂР°Р±РѕС‚Р°СЋС‚ РІРЅСѓС‚СЂРё РїР»Р°С‚С„РѕСЂРјС‹.", "success");
   syncImportButton();
 }
 
@@ -5185,7 +5258,7 @@ async function loadBootstrapData() {
   const { data: sessionData, error: sessionError } = await withTimeout(
     supabase.auth.getSession(),
     6000,
-    "Не удалось вовремя проверить сессию пользователя."
+    "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ РїСЂРѕРІРµСЂРёС‚СЊ СЃРµСЃСЃРёСЋ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ."
   );
   if (sessionError) throw sessionError;
 
@@ -5193,10 +5266,10 @@ async function loadBootstrapData() {
     STATE.session = null;
     STATE.user = null;
     STATE.profile = null;
-    setModuleState("Нужен вход");
-    setStatus("Откройте модуль через платформу после входа в аккаунт.", "warning");
-    DOM.userDisplay.textContent = "Нет сессии";
-    DOM.accessMode.textContent = "—";
+    setModuleState("РќСѓР¶РµРЅ РІС…РѕРґ");
+    setStatus("РћС‚РєСЂРѕР№С‚Рµ РјРѕРґСѓР»СЊ С‡РµСЂРµР· РїР»Р°С‚С„РѕСЂРјСѓ РїРѕСЃР»Рµ РІС…РѕРґР° РІ Р°РєРєР°СѓРЅС‚.", "warning");
+    DOM.userDisplay.textContent = "РќРµС‚ СЃРµСЃСЃРёРё";
+    DOM.accessMode.textContent = "вЂ”";
     syncImportButton();
     return false;
   }
@@ -5206,7 +5279,7 @@ async function loadBootstrapData() {
 
   const fallbackProfile = {
     id: STATE.user.id,
-    display_name: STATE.user.user_metadata?.display_name || STATE.user.email || "Пользователь",
+    display_name: STATE.user.user_metadata?.display_name || STATE.user.email || "РџРѕР»СЊР·РѕРІР°С‚РµР»СЊ",
     full_name: STATE.user.user_metadata?.display_name || "",
     role: "user",
     partner_slug: null
@@ -5217,7 +5290,7 @@ async function loadBootstrapData() {
     profileResult = await withTimeout(
       supabase.from("app_profiles").select("*").eq("id", STATE.user.id).maybeSingle(),
       6000,
-      "Не удалось вовремя загрузить профиль пользователя."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ РїСЂРѕС„РёР»СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ."
     );
   } catch (error) {
     console.warn("light2 profile load fallback", error);
@@ -5246,7 +5319,7 @@ async function loadBootstrapData() {
       const partnersResult = await withTimeout(
         supabase.from("partner_profiles").select("*").order("display_name", { ascending: true }),
         6000,
-        "Не удалось вовремя загрузить справочник партнеров."
+        "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ СЃРїСЂР°РІРѕС‡РЅРёРє РїР°СЂС‚РЅРµСЂРѕРІ."
       );
       if (partnersResult?.error) throw partnersResult.error;
       STATE.partnerProfiles = partnersResult?.data || [];
@@ -5264,9 +5337,9 @@ async function loadBootstrapData() {
 
 async function loadContourBlocks() {
   const loaders = [
-    ["Взаиморасчеты", loadSettlements],
-    ["Финансы", loadFinanceData],
-    ["Активы и закупки", loadOperationsData]
+    ["Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹", loadSettlements],
+    ["Р¤РёРЅР°РЅСЃС‹", loadFinanceData],
+    ["РђРєС‚РёРІС‹ Рё Р·Р°РєСѓРїРєРё", loadOperationsData]
   ];
 
   const results = await Promise.allSettled(
@@ -5275,11 +5348,11 @@ async function loadContourBlocks() {
         await withTimeout(
           loader(),
           9000,
-          `Блок "${label}" не успел загрузиться вовремя.`
+          `Р‘Р»РѕРє "${label}" РЅРµ СѓСЃРїРµР» Р·Р°РіСЂСѓР·РёС‚СЊСЃСЏ РІРѕРІСЂРµРјСЏ.`
         );
       } catch (error) {
         console.error(`light2 loader failed: ${label}`, error);
-        setStatus(error.message || `Не удалось загрузить блок "${label}".`, "error");
+        setStatus(error.message || `РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РіСЂСѓР·РёС‚СЊ Р±Р»РѕРє "${label}".`, "error");
       }
     })
   );
@@ -5291,15 +5364,15 @@ async function loadSettlements() {
   const { data, error } = await withTimeout(
     supabase.from("light2_partner_settlements").select("*").order("updated_at", { ascending: false }),
     7000,
-    "Не удалось вовремя загрузить взаиморасчеты ДОМ НЕОНА."
+    "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹ Р”РћРњ РќР•РћРќРђ."
   );
 
   if (error) {
     if (isSchemaMissing(error)) {
       STATE.schemaReady = false;
-      STATE.schemaError = error.message || "Таблица light2_partner_settlements не найдена.";
-      setModuleState("Нужен SQL-патч");
-      setStatus("Чтобы включить рабочий блок взаиморасчетов, выполните platform_light2_patch.sql в Supabase SQL Editor.", "warning");
+      STATE.schemaError = error.message || "РўР°Р±Р»РёС†Р° light2_partner_settlements РЅРµ РЅР°Р№РґРµРЅР°.";
+      setModuleState("РќСѓР¶РµРЅ SQL-РїР°С‚С‡");
+      setStatus("Р§С‚РѕР±С‹ РІРєР»СЋС‡РёС‚СЊ СЂР°Р±РѕС‡РёР№ Р±Р»РѕРє РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚РѕРІ, РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_patch.sql РІ Supabase SQL Editor.", "warning");
       renderSettlementSection();
       renderOverview();
       return;
@@ -5310,8 +5383,8 @@ async function loadSettlements() {
   STATE.schemaReady = true;
   STATE.schemaError = "";
   STATE.settlements = data || [];
-  setModuleState("Готово");
-  setStatus("ДОМ НЕОНА загружен. Взаиморасчеты уже работают внутри платформы.", "success");
+  setModuleState("Р“РѕС‚РѕРІРѕ");
+  setStatus("Р”РћРњ РќР•РћРќРђ Р·Р°РіСЂСѓР¶РµРЅ. Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹ СѓР¶Рµ СЂР°Р±РѕС‚Р°СЋС‚ РІРЅСѓС‚СЂРё РїР»Р°С‚С„РѕСЂРјС‹.", "success");
   renderSettlementSection();
   renderOverview();
 }
@@ -5325,7 +5398,7 @@ async function loadFinanceData() {
         .order("entry_date", { ascending: false })
         .order("updated_at", { ascending: false }),
       7000,
-      "Не удалось вовремя загрузить баланс ДОМ НЕОНА."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ Р±Р°Р»Р°РЅСЃ Р”РћРњ РќР•РћРќРђ."
     ),
     withTimeout(
       supabase
@@ -5334,7 +5407,7 @@ async function loadFinanceData() {
         .order("payment_date", { ascending: true })
         .order("updated_at", { ascending: false }),
       7000,
-      "Не удалось вовремя загрузить платежный календарь ДОМ НЕОНА."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ РїР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ Р”РћРњ РќР•РћРќРђ."
     )
   ]);
 
@@ -5342,7 +5415,7 @@ async function loadFinanceData() {
     const error = balanceResult.error || calendarResult.error;
     if (isFinanceSchemaMissing(error)) {
       STATE.financeReady = false;
-      STATE.financeError = error.message || "Таблицы финансовых блоков не найдены.";
+      STATE.financeError = error.message || "РўР°Р±Р»РёС†С‹ С„РёРЅР°РЅСЃРѕРІС‹С… Р±Р»РѕРєРѕРІ РЅРµ РЅР°Р№РґРµРЅС‹.";
       STATE.balanceEntries = [];
       STATE.calendarEntries = [];
       renderBalanceSection();
@@ -5367,7 +5440,7 @@ async function loadOperationsData() {
     withTimeout(
       supabase.from("light2_assets").select("*").order("asset_name", { ascending: true }),
       7000,
-      "Не удалось вовремя загрузить активы ДОМ НЕОНА."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ Р°РєС‚РёРІС‹ Р”РћРњ РќР•РћРќРђ."
     ),
     withTimeout(
       supabase
@@ -5376,7 +5449,7 @@ async function loadOperationsData() {
         .order("payment_date", { ascending: false })
         .order("updated_at", { ascending: false }),
       7000,
-      "Не удалось вовремя загрузить выплаты по активам ДОМ НЕОНА."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ РІС‹РїР»Р°С‚С‹ РїРѕ Р°РєС‚РёРІР°Рј Р”РћРњ РќР•РћРќРђ."
     ),
     withTimeout(
       supabase
@@ -5385,7 +5458,7 @@ async function loadOperationsData() {
         .order("supplier_name", { ascending: true })
         .order("item_name", { ascending: true }),
       7000,
-      "Не удалось вовремя загрузить закупки ДОМ НЕОНА."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ Р·Р°РєСѓРїРєРё Р”РћРњ РќР•РћРќРђ."
     )
   ]);
 
@@ -5393,7 +5466,7 @@ async function loadOperationsData() {
     const error = assetsResult.error || paymentsResult.error || purchasesResult.error;
     if (isOperationsSchemaMissing(error)) {
       STATE.operationsReady = false;
-      STATE.operationsError = error.message || "Таблицы блоков Активы/Закупки не найдены.";
+      STATE.operationsError = error.message || "РўР°Р±Р»РёС†С‹ Р±Р»РѕРєРѕРІ РђРєС‚РёРІС‹/Р—Р°РєСѓРїРєРё РЅРµ РЅР°Р№РґРµРЅС‹.";
       STATE.assets = [];
       STATE.assetPayments = [];
       STATE.purchaseCatalog = [];
@@ -5422,13 +5495,13 @@ async function saveSettlement() {
     period_label: String(formData.get("period_label") || "").trim(),
     salary_amount: toNumber(formData.get("salary_amount")),
     purchase_amount: toNumber(formData.get("purchase_amount")),
-    status: String(formData.get("status") || "Ожидает сверки"),
+    status: String(formData.get("status") || "РћР¶РёРґР°РµС‚ СЃРІРµСЂРєРё"),
     note: String(formData.get("note") || "").trim() || null,
     created_by: STATE.user?.id || null
   };
 
   if (!payload.partner_slug || !payload.period_label) {
-    throw new Error("Укажите период и партнера.");
+    throw new Error("РЈРєР°Р¶РёС‚Рµ РїРµСЂРёРѕРґ Рё РїР°СЂС‚РЅРµСЂР°.");
   }
 
   if (STATE.editingSettlementId) {
@@ -5437,11 +5510,11 @@ async function saveSettlement() {
       .update(payload)
       .eq("id", STATE.editingSettlementId);
     if (error) throw error;
-    setStatus("Запись взаиморасчета обновлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚Р° РѕР±РЅРѕРІР»РµРЅР°.", "success");
   } else {
     const { error } = await supabase.from("light2_partner_settlements").insert(payload);
     if (error) throw error;
-    setStatus("Запись взаиморасчета добавлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚Р° РґРѕР±Р°РІР»РµРЅР°.", "success");
   }
 
   resetSettlementForm();
@@ -5452,7 +5525,7 @@ async function saveSettlement() {
 async function deleteSettlement(id) {
   const { error } = await supabase.from("light2_partner_settlements").delete().eq("id", id);
   if (error) throw error;
-  setStatus("Запись взаиморасчета удалена.", "success");
+  setStatus("Р—Р°РїРёСЃСЊ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚Р° СѓРґР°Р»РµРЅР°.", "success");
   await loadSettlements();
   syncModuleStatus();
 }
@@ -5469,20 +5542,20 @@ async function saveBalanceEntry() {
     created_by: STATE.user?.id || null
   };
 
-  if (!payload.entry_date) throw new Error("Укажите дату записи.");
-  if (!BALANCE_ACCOUNTS.some((item) => item.value === payload.account_type)) throw new Error("Выберите корректный счёт.");
+  if (!payload.entry_date) throw new Error("РЈРєР°Р¶РёС‚Рµ РґР°С‚Сѓ Р·Р°РїРёСЃРё.");
+  if (!BALANCE_ACCOUNTS.some((item) => item.value === payload.account_type)) throw new Error("Р’С‹Р±РµСЂРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ СЃС‡С‘С‚.");
   if (payload.income_amount <= 0 && payload.expense_amount <= 0) {
-    throw new Error("Укажите приход или расход больше нуля.");
+    throw new Error("РЈРєР°Р¶РёС‚Рµ РїСЂРёС…РѕРґ РёР»Рё СЂР°СЃС…РѕРґ Р±РѕР»СЊС€Рµ РЅСѓР»СЏ.");
   }
 
   if (STATE.editingBalanceId) {
     const { error } = await supabase.from("light2_balance_entries").update(payload).eq("id", STATE.editingBalanceId);
     if (error) throw error;
-    setStatus("Запись баланса обновлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ Р±Р°Р»Р°РЅСЃР° РѕР±РЅРѕРІР»РµРЅР°.", "success");
   } else {
     const { error } = await supabase.from("light2_balance_entries").insert(payload);
     if (error) throw error;
-    setStatus("Запись баланса добавлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ Р±Р°Р»Р°РЅСЃР° РґРѕР±Р°РІР»РµРЅР°.", "success");
   }
 
   resetBalanceForm();
@@ -5497,19 +5570,19 @@ async function saveCalendarEntry() {
     payment_date: String(formData.get("payment_date") || "").trim(),
     counterparty: String(formData.get("counterparty") || "").trim(),
     amount: roundMoney(formData.get("amount")),
-    operation_type: String(formData.get("operation_type") || "Расход"),
+    operation_type: String(formData.get("operation_type") || "Р Р°СЃС…РѕРґ"),
     category: String(formData.get("category") || "").trim() || null,
-    account_name: String(formData.get("account_name") || "Не распределено"),
-    status: String(formData.get("status") || "Платеж"),
+    account_name: String(formData.get("account_name") || "РќРµ СЂР°СЃРїСЂРµРґРµР»РµРЅРѕ"),
+    status: String(formData.get("status") || "РџР»Р°С‚РµР¶"),
     note: String(formData.get("note") || "").trim() || null,
     created_by: STATE.user?.id || null
   };
 
-  if (!payload.payment_date || !payload.counterparty) throw new Error("Укажите дату платежа и контрагента.");
-  if (payload.amount <= 0) throw new Error("Сумма должна быть больше нуля.");
-  if (!["Приход", "Расход"].includes(payload.operation_type)) throw new Error("Выберите корректный тип операции.");
-  if (!CALENDAR_ACCOUNTS.some((item) => item.value === payload.account_name)) throw new Error("Выберите корректный счёт.");
-  if (!CALENDAR_STATUSES.includes(payload.status)) throw new Error("Выберите корректный статус.");
+  if (!payload.payment_date || !payload.counterparty) throw new Error("РЈРєР°Р¶РёС‚Рµ РґР°С‚Сѓ РїР»Р°С‚РµР¶Р° Рё РєРѕРЅС‚СЂР°РіРµРЅС‚Р°.");
+  if (payload.amount <= 0) throw new Error("РЎСѓРјРјР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ РЅСѓР»СЏ.");
+  if (!["РџСЂРёС…РѕРґ", "Р Р°СЃС…РѕРґ"].includes(payload.operation_type)) throw new Error("Р’С‹Р±РµСЂРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ С‚РёРї РѕРїРµСЂР°С†РёРё.");
+  if (!CALENDAR_ACCOUNTS.some((item) => item.value === payload.account_name)) throw new Error("Р’С‹Р±РµСЂРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ СЃС‡С‘С‚.");
+  if (!CALENDAR_STATUSES.includes(payload.status)) throw new Error("Р’С‹Р±РµСЂРёС‚Рµ РєРѕСЂСЂРµРєС‚РЅС‹Р№ СЃС‚Р°С‚СѓСЃ.");
 
   if (STATE.editingCalendarId) {
     const { error } = await supabase
@@ -5517,11 +5590,11 @@ async function saveCalendarEntry() {
       .update(payload)
       .eq("id", STATE.editingCalendarId);
     if (error) throw error;
-    setStatus("Запись платежного календаря обновлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ РїР»Р°С‚РµР¶РЅРѕРіРѕ РєР°Р»РµРЅРґР°СЂСЏ РѕР±РЅРѕРІР»РµРЅР°.", "success");
   } else {
     const { error } = await supabase.from("light2_payment_calendar_entries").insert(payload);
     if (error) throw error;
-    setStatus("Запись платежного календаря добавлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ РїР»Р°С‚РµР¶РЅРѕРіРѕ РєР°Р»РµРЅРґР°СЂСЏ РґРѕР±Р°РІР»РµРЅР°.", "success");
   }
 
   resetCalendarForm();
@@ -5539,17 +5612,17 @@ async function saveAsset() {
     created_by: STATE.user?.id || null
   };
 
-  if (!payload.asset_name) throw new Error("Укажите название актива.");
-  if (payload.asset_value < 0) throw new Error("Стоимость актива не может быть отрицательной.");
+  if (!payload.asset_name) throw new Error("РЈРєР°Р¶РёС‚Рµ РЅР°Р·РІР°РЅРёРµ Р°РєС‚РёРІР°.");
+  if (payload.asset_value < 0) throw new Error("РЎС‚РѕРёРјРѕСЃС‚СЊ Р°РєС‚РёРІР° РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕР№.");
 
   if (STATE.editingAssetId) {
     const { error } = await supabase.from("light2_assets").update(payload).eq("id", STATE.editingAssetId);
     if (error) throw error;
-    setStatus("Актив обновлен.", "success");
+    setStatus("РђРєС‚РёРІ РѕР±РЅРѕРІР»РµРЅ.", "success");
   } else {
     const { error } = await supabase.from("light2_assets").insert(payload);
     if (error) throw error;
-    setStatus("Актив добавлен.", "success");
+    setStatus("РђРєС‚РёРІ РґРѕР±Р°РІР»РµРЅ.", "success");
   }
 
   resetAssetForm();
@@ -5568,17 +5641,17 @@ async function saveAssetPayment() {
     created_by: STATE.user?.id || null
   };
 
-  if (!payload.payment_date) throw new Error("Укажите дату выплаты.");
-  if (payload.payment_amount <= 0) throw new Error("Сумма выплаты должна быть больше нуля.");
+  if (!payload.payment_date) throw new Error("РЈРєР°Р¶РёС‚Рµ РґР°С‚Сѓ РІС‹РїР»Р°С‚С‹.");
+  if (payload.payment_amount <= 0) throw new Error("РЎСѓРјРјР° РІС‹РїР»Р°С‚С‹ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ РЅСѓР»СЏ.");
 
   if (STATE.editingAssetPaymentId) {
     const { error } = await supabase.from("light2_asset_payments").update(payload).eq("id", STATE.editingAssetPaymentId);
     if (error) throw error;
-    setStatus("Запись графика выплат обновлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ РіСЂР°С„РёРєР° РІС‹РїР»Р°С‚ РѕР±РЅРѕРІР»РµРЅР°.", "success");
   } else {
     const { error } = await supabase.from("light2_asset_payments").insert(payload);
     if (error) throw error;
-    setStatus("Запись графика выплат добавлена.", "success");
+    setStatus("Р—Р°РїРёСЃСЊ РіСЂР°С„РёРєР° РІС‹РїР»Р°С‚ РґРѕР±Р°РІР»РµРЅР°.", "success");
   }
 
   resetAssetPaymentForm();
@@ -5603,16 +5676,16 @@ async function savePurchase() {
     created_by: STATE.user?.id || null
   };
 
-  if (!payload.supplier_name) throw new Error("Укажите поставщика.");
+  if (!payload.supplier_name) throw new Error("РЈРєР°Р¶РёС‚Рµ РїРѕСЃС‚Р°РІС‰РёРєР°.");
 
   if (STATE.editingPurchaseId) {
     const { error } = await supabase.from("light2_purchase_catalog").update(payload).eq("id", STATE.editingPurchaseId);
     if (error) throw error;
-    setStatus("Позиция закупки обновлена.", "success");
+    setStatus("РџРѕР·РёС†РёСЏ Р·Р°РєСѓРїРєРё РѕР±РЅРѕРІР»РµРЅР°.", "success");
   } else {
     const { error } = await supabase.from("light2_purchase_catalog").insert(payload);
     if (error) throw error;
-    setStatus("Позиция закупки добавлена.", "success");
+    setStatus("РџРѕР·РёС†РёСЏ Р·Р°РєСѓРїРєРё РґРѕР±Р°РІР»РµРЅР°.", "success");
   }
 
   resetPurchaseForm();
@@ -5623,7 +5696,7 @@ async function savePurchase() {
 async function deleteBalanceEntry(id) {
   const { error } = await supabase.from("light2_balance_entries").delete().eq("id", id);
   if (error) throw error;
-  setStatus("Запись баланса удалена.", "success");
+  setStatus("Р—Р°РїРёСЃСЊ Р±Р°Р»Р°РЅСЃР° СѓРґР°Р»РµРЅР°.", "success");
   await loadFinanceData();
   syncModuleStatus();
 }
@@ -5631,7 +5704,7 @@ async function deleteBalanceEntry(id) {
 async function deleteCalendarEntry(id) {
   const { error } = await supabase.from("light2_payment_calendar_entries").delete().eq("id", id);
   if (error) throw error;
-  setStatus("Запись платежного календаря удалена.", "success");
+  setStatus("Р—Р°РїРёСЃСЊ РїР»Р°С‚РµР¶РЅРѕРіРѕ РєР°Р»РµРЅРґР°СЂСЏ СѓРґР°Р»РµРЅР°.", "success");
   await loadFinanceData();
   syncModuleStatus();
 }
@@ -5639,7 +5712,7 @@ async function deleteCalendarEntry(id) {
 async function deleteAsset(id) {
   const { error } = await supabase.from("light2_assets").delete().eq("id", id);
   if (error) throw error;
-  setStatus("Актив удален.", "success");
+  setStatus("РђРєС‚РёРІ СѓРґР°Р»РµРЅ.", "success");
   await loadOperationsData();
   syncModuleStatus();
 }
@@ -5647,7 +5720,7 @@ async function deleteAsset(id) {
 async function deleteAssetPayment(id) {
   const { error } = await supabase.from("light2_asset_payments").delete().eq("id", id);
   if (error) throw error;
-  setStatus("Выплата по активу удалена.", "success");
+  setStatus("Р’С‹РїР»Р°С‚Р° РїРѕ Р°РєС‚РёРІСѓ СѓРґР°Р»РµРЅР°.", "success");
   await loadOperationsData();
   syncModuleStatus();
 }
@@ -5655,7 +5728,7 @@ async function deleteAssetPayment(id) {
 async function deletePurchase(id) {
   const { error } = await supabase.from("light2_purchase_catalog").delete().eq("id", id);
   if (error) throw error;
-  setStatus("Позиция закупки удалена.", "success");
+  setStatus("РџРѕР·РёС†РёСЏ Р·Р°РєСѓРїРєРё СѓРґР°Р»РµРЅР°.", "success");
   await loadOperationsData();
   syncModuleStatus();
 }
@@ -5724,10 +5797,23 @@ function bindEvents() {
     try {
       await importWorkbookIntoTables();
     } catch (error) {
-      setStatus(error.message || "Не удалось импортировать исходный файл.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ РёСЃС…РѕРґРЅС‹Р№ С„Р°Р№Р».", "error");
     }
   });
 
+  bindDomEvent(document.body, "click", (event) => {
+    const toggle = event.target.closest("[data-toggle-source-panel]");
+    if (!toggle) return;
+    const panel = toggle.closest("[data-source-panel]");
+    if (!panel) return;
+    panel.classList.toggle("collapsed");
+    const label = toggle.querySelector("[data-toggle-source-label]");
+    if (label) {
+      label.textContent = panel.classList.contains("collapsed")
+        ? "Показать исходную таблицу"
+        : "Скрыть исходную таблицу";
+    }
+  });
   bindDomEvent(document.body, "input", (event) => {
     const input = event.target.closest("[data-snapshot-search]");
     if (!input) return;
@@ -5744,7 +5830,7 @@ function bindEvents() {
     try {
       await saveSettlement();
     } catch (error) {
-      setStatus(error.message || "Не удалось сохранить запись взаиморасчета.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚Р°.", "error");
     }
   });
 
@@ -5753,7 +5839,7 @@ function bindEvents() {
     try {
       await saveBalanceEntry();
     } catch (error) {
-      setStatus(error.message || "Не удалось сохранить запись баланса.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ Р±Р°Р»Р°РЅСЃР°.", "error");
     }
   });
 
@@ -5762,7 +5848,7 @@ function bindEvents() {
     try {
       await saveCalendarEntry();
     } catch (error) {
-      setStatus(error.message || "Не удалось сохранить запись платежного календаря.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ Р·Р°РїРёСЃСЊ РїР»Р°С‚РµР¶РЅРѕРіРѕ РєР°Р»РµРЅРґР°СЂСЏ.", "error");
     }
   });
 
@@ -5771,7 +5857,7 @@ function bindEvents() {
     try {
       await saveAsset();
     } catch (error) {
-      setStatus(error.message || "Не удалось сохранить актив.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ Р°РєС‚РёРІ.", "error");
     }
   });
 
@@ -5780,7 +5866,7 @@ function bindEvents() {
     try {
       await saveAssetPayment();
     } catch (error) {
-      setStatus(error.message || "Не удалось сохранить выплату по активу.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РІС‹РїР»Р°С‚Сѓ РїРѕ Р°РєС‚РёРІСѓ.", "error");
     }
   });
 
@@ -5789,7 +5875,7 @@ function bindEvents() {
     try {
       await savePurchase();
     } catch (error) {
-      setStatus(error.message || "Не удалось сохранить позицию закупки.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РїРѕР·РёС†РёСЋ Р·Р°РєСѓРїРєРё.", "error");
     }
   });
 
@@ -5838,7 +5924,7 @@ function bindEvents() {
       await loadSettlements();
       syncModuleStatus();
     } catch (error) {
-      setStatus(error.message || "Не удалось обновить взаиморасчеты.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚С‹.", "error");
     }
   });
 
@@ -5847,7 +5933,7 @@ function bindEvents() {
       await loadFinanceData();
       syncModuleStatus();
     } catch (error) {
-      setStatus(error.message || "Не удалось обновить баланс.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ Р±Р°Р»Р°РЅСЃ.", "error");
     }
   });
 
@@ -5856,7 +5942,7 @@ function bindEvents() {
       await loadFinanceData();
       syncModuleStatus();
     } catch (error) {
-      setStatus(error.message || "Не удалось обновить платежный календарь.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ РїР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ.", "error");
     }
   });
 
@@ -5865,7 +5951,7 @@ function bindEvents() {
       await loadOperationsData();
       syncModuleStatus();
     } catch (error) {
-      setStatus(error.message || "Не удалось обновить раздел Активы.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СЂР°Р·РґРµР» РђРєС‚РёРІС‹.", "error");
     }
   });
 
@@ -5874,7 +5960,7 @@ function bindEvents() {
       await loadOperationsData();
       syncModuleStatus();
     } catch (error) {
-      setStatus(error.message || "Не удалось обновить раздел Закупки.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ СЂР°Р·РґРµР» Р—Р°РєСѓРїРєРё.", "error");
     }
   });
 
@@ -5892,11 +5978,11 @@ function bindEvents() {
     const deleteButton = event.target.closest("[data-delete-settlement]");
     if (!deleteButton) return;
 
-    if (!window.confirm("Удалить запись взаиморасчета?")) return;
+    if (!window.confirm("РЈРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ РІР·Р°РёРјРѕСЂР°СЃС‡РµС‚Р°?")) return;
     try {
       await deleteSettlement(deleteButton.dataset.deleteSettlement);
     } catch (error) {
-      setStatus(error.message || "Не удалось удалить запись.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ.", "error");
     }
   });
 
@@ -5913,12 +5999,12 @@ function bindEvents() {
 
     const deleteButton = event.target.closest("[data-delete-balance]");
     if (!deleteButton) return;
-    if (!window.confirm("Удалить запись баланса?")) return;
+    if (!window.confirm("РЈРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ Р±Р°Р»Р°РЅСЃР°?")) return;
 
     try {
       await deleteBalanceEntry(deleteButton.dataset.deleteBalance);
     } catch (error) {
-      setStatus(error.message || "Не удалось удалить запись баланса.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ Р±Р°Р»Р°РЅСЃР°.", "error");
     }
   });
 
@@ -5935,12 +6021,12 @@ function bindEvents() {
 
     const deleteButton = event.target.closest("[data-delete-calendar]");
     if (!deleteButton) return;
-    if (!window.confirm("Удалить запись платежного календаря?")) return;
+    if (!window.confirm("РЈРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ РїР»Р°С‚РµР¶РЅРѕРіРѕ РєР°Р»РµРЅРґР°СЂСЏ?")) return;
 
     try {
       await deleteCalendarEntry(deleteButton.dataset.deleteCalendar);
     } catch (error) {
-      setStatus(error.message || "Не удалось удалить запись платежного календаря.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ Р·Р°РїРёСЃСЊ РїР»Р°С‚РµР¶РЅРѕРіРѕ РєР°Р»РµРЅРґР°СЂСЏ.", "error");
     }
   });
 
@@ -5957,12 +6043,12 @@ function bindEvents() {
 
     const deleteButton = event.target.closest("[data-delete-asset]");
     if (!deleteButton) return;
-    if (!window.confirm("Удалить актив?")) return;
+    if (!window.confirm("РЈРґР°Р»РёС‚СЊ Р°РєС‚РёРІ?")) return;
 
     try {
       await deleteAsset(deleteButton.dataset.deleteAsset);
     } catch (error) {
-      setStatus(error.message || "Не удалось удалить актив.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ Р°РєС‚РёРІ.", "error");
     }
   });
 
@@ -5979,12 +6065,12 @@ function bindEvents() {
 
     const deleteButton = event.target.closest("[data-delete-asset-payment]");
     if (!deleteButton) return;
-    if (!window.confirm("Удалить выплату по активу?")) return;
+    if (!window.confirm("РЈРґР°Р»РёС‚СЊ РІС‹РїР»Р°С‚Сѓ РїРѕ Р°РєС‚РёРІСѓ?")) return;
 
     try {
       await deleteAssetPayment(deleteButton.dataset.deleteAssetPayment);
     } catch (error) {
-      setStatus(error.message || "Не удалось удалить выплату по активу.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РІС‹РїР»Р°С‚Сѓ РїРѕ Р°РєС‚РёРІСѓ.", "error");
     }
   });
 
@@ -6001,12 +6087,12 @@ function bindEvents() {
 
     const deleteButton = event.target.closest("[data-delete-purchase]");
     if (!deleteButton) return;
-    if (!window.confirm("Удалить позицию закупки?")) return;
+    if (!window.confirm("РЈРґР°Р»РёС‚СЊ РїРѕР·РёС†РёСЋ Р·Р°РєСѓРїРєРё?")) return;
 
     try {
       await deletePurchase(deleteButton.dataset.deletePurchase);
     } catch (error) {
-      setStatus(error.message || "Не удалось удалить позицию закупки.", "error");
+      setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СѓРґР°Р»РёС‚СЊ РїРѕР·РёС†РёСЋ Р·Р°РєСѓРїРєРё.", "error");
     }
   });
 }
@@ -6030,14 +6116,14 @@ function renderAssetsConfigured() {
       "assets",
       [],
       () => "",
-      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+      "Р В Р В°Р В·Р Т‘Р ВµР В» Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р ВµР Р… РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р†Р В»Р В°Р Т‘Р ВµР В»РЎРЉРЎвЂ РЎС“ Р С‘ Р В°Р Т‘Р СР С‘Р Р…Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚Р В°Р С."
     );
     dom.paymentTableBody.innerHTML = renderConfiguredSectionRows(
       "assets",
       "payments",
       [],
       () => "",
-      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+      "Р В Р В°Р В·Р Т‘Р ВµР В» Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р ВµР Р… РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р†Р В»Р В°Р Т‘Р ВµР В»РЎРЉРЎвЂ РЎС“ Р С‘ Р В°Р Т‘Р СР С‘Р Р…Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚Р В°Р С."
     );
     return;
   }
@@ -6051,14 +6137,14 @@ function renderAssetsConfigured() {
       "assets",
       [],
       () => "",
-      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor."
+      "Р РЋР Р…Р В°РЎвЂЎР В°Р В»Р В° Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР Вµ platform_light2_assets_purchases_patch.sql Р Р† Supabase SQL Editor."
     );
     dom.paymentTableBody.innerHTML = renderConfiguredSectionRows(
       "assets",
       "payments",
       [],
       () => "",
-      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor."
+      "Р РЋР Р…Р В°РЎвЂЎР В°Р В»Р В° Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР Вµ platform_light2_assets_purchases_patch.sql Р Р† Supabase SQL Editor."
     );
     return;
   }
@@ -6076,25 +6162,25 @@ function renderAssetsConfigured() {
     (asset, columnKey) => {
       const paid = toNumber(totals[asset.id] || 0);
       const remaining = roundMoney(toNumber(asset.asset_value) - paid);
-      if (columnKey === "asset_name") return escapeHtml(asset.asset_name || "вЂ”");
+      if (columnKey === "asset_name") return escapeHtml(asset.asset_name || "РІР‚вЂќ");
       if (columnKey === "asset_value") return escapeHtml(formatMoney(asset.asset_value));
       if (columnKey === "paid_total") return escapeHtml(formatMoney(paid));
       if (columnKey === "remaining_amount") {
         return `<span class="${remaining <= 0 ? "amount-positive" : "amount-negative"}">${escapeHtml(formatMoney(remaining))}</span>`;
       }
-      if (columnKey === "note") return escapeHtml(asset.note || "вЂ”");
+      if (columnKey === "note") return escapeHtml(asset.note || "РІР‚вЂќ");
       if (columnKey === "updated_at") return escapeHtml(formatDateTime(asset.updated_at || asset.created_at));
       if (columnKey === "actions") {
         return `
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">РЈРґР°Р»РёС‚СЊ</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">Р ВР В·Р СР ВµР Р…Р С‘РЎвЂљРЎРЉ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ</button>
           </div>
         `;
       }
-      return `<span class="muted">вЂ”</span>`;
+      return `<span class="muted">РІР‚вЂќ</span>`;
     },
-    "РџРѕРєР° РЅРµС‚ Р°РєС‚РёРІРѕРІ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+    "Р СџР С•Р С”Р В° Р Р…Р ВµРЎвЂљ Р В°Р С”РЎвЂљР С‘Р Р†Р С•Р Р† Р Т‘Р В»РЎРЏ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р ВµР С–Р С• РЎвЂћР С‘Р В»РЎРЉРЎвЂљРЎР‚Р В°."
   );
   syncSectionTableHead("assets", "payments", dom.paymentTableBody);
   dom.paymentTableBody.innerHTML = renderConfiguredSectionRows(
@@ -6105,19 +6191,19 @@ function renderAssetsConfigured() {
       if (columnKey === "payment_date") return escapeHtml(formatDate(payment.payment_date));
       if (columnKey === "asset_label") return escapeHtml(getAssetLabel(payment.asset_id));
       if (columnKey === "payment_amount") return escapeHtml(formatMoney(payment.payment_amount));
-      if (columnKey === "note") return escapeHtml(payment.note || "вЂ”");
+      if (columnKey === "note") return escapeHtml(payment.note || "РІР‚вЂќ");
       if (columnKey === "updated_at") return escapeHtml(formatDateTime(payment.updated_at || payment.created_at));
       if (columnKey === "actions") {
         return `
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">РЈРґР°Р»РёС‚СЊ</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">Р ВР В·Р СР ВµР Р…Р С‘РЎвЂљРЎРЉ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ</button>
           </div>
         `;
       }
-      return `<span class="muted">вЂ”</span>`;
+      return `<span class="muted">РІР‚вЂќ</span>`;
     },
-    "РџРѕРєР° РЅРµС‚ РІС‹РїР»Р°С‚ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+    "Р СџР С•Р С”Р В° Р Р…Р ВµРЎвЂљ Р Р†РЎвЂ№Р С—Р В»Р В°РЎвЂљ Р Т‘Р В»РЎРЏ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р ВµР С–Р С• РЎвЂћР С‘Р В»РЎРЉРЎвЂљРЎР‚Р В°."
   );
 }
 
@@ -6138,7 +6224,7 @@ function renderPurchasesConfigured() {
       "main",
       [],
       () => "",
-      "Р Р°Р·РґРµР» РґРѕСЃС‚СѓРїРµРЅ С‚РѕР»СЊРєРѕ РІР»Р°РґРµР»СЊС†Сѓ Рё Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂР°Рј."
+      "Р В Р В°Р В·Р Т‘Р ВµР В» Р Т‘Р С•РЎРѓРЎвЂљРЎС“Р С—Р ВµР Р… РЎвЂљР С•Р В»РЎРЉР С”Р С• Р Р†Р В»Р В°Р Т‘Р ВµР В»РЎРЉРЎвЂ РЎС“ Р С‘ Р В°Р Т‘Р СР С‘Р Р…Р С‘РЎРѓРЎвЂљРЎР‚Р В°РЎвЂљР С•РЎР‚Р В°Р С."
     );
     return;
   }
@@ -6151,7 +6237,7 @@ function renderPurchasesConfigured() {
       "main",
       [],
       () => "",
-      "РЎРЅР°С‡Р°Р»Р° РІС‹РїРѕР»РЅРёС‚Рµ platform_light2_assets_purchases_patch.sql РІ Supabase SQL Editor."
+      "Р РЋР Р…Р В°РЎвЂЎР В°Р В»Р В° Р Р†РЎвЂ№Р С—Р С•Р В»Р Р…Р С‘РЎвЂљР Вµ platform_light2_assets_purchases_patch.sql Р Р† Supabase SQL Editor."
     );
     return;
   }
@@ -6165,26 +6251,26 @@ function renderPurchasesConfigured() {
     "main",
     rows,
     (item, columnKey) => {
-      if (columnKey === "supplier_name") return escapeHtml(item.supplier_name || "вЂ”");
-      if (columnKey === "supplier_inn") return escapeHtml(item.supplier_inn || "вЂ”");
-      if (columnKey === "city") return escapeHtml(item.city || "вЂ”");
-      if (columnKey === "category") return escapeHtml(item.category || "вЂ”");
-      if (columnKey === "article") return escapeHtml(item.article || "вЂ”");
-      if (columnKey === "item_name") return escapeHtml(item.item_name || "вЂ”");
-      if (columnKey === "unit_name") return escapeHtml(item.unit_name || "вЂ”");
+      if (columnKey === "supplier_name") return escapeHtml(item.supplier_name || "РІР‚вЂќ");
+      if (columnKey === "supplier_inn") return escapeHtml(item.supplier_inn || "РІР‚вЂќ");
+      if (columnKey === "city") return escapeHtml(item.city || "РІР‚вЂќ");
+      if (columnKey === "category") return escapeHtml(item.category || "РІР‚вЂќ");
+      if (columnKey === "article") return escapeHtml(item.article || "РІР‚вЂќ");
+      if (columnKey === "item_name") return escapeHtml(item.item_name || "РІР‚вЂќ");
+      if (columnKey === "unit_name") return escapeHtml(item.unit_name || "РІР‚вЂќ");
       if (columnKey === "price") return escapeHtml(formatMoney(item.price));
-      if (columnKey === "note") return escapeHtml(item.note || "вЂ”");
+      if (columnKey === "note") return escapeHtml(item.note || "РІР‚вЂќ");
       if (columnKey === "actions") {
         return `
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">Р ВР В·Р СР ВµР Р…Р С‘РЎвЂљРЎРЉ</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">Р Р€Р Т‘Р В°Р В»Р С‘РЎвЂљРЎРЉ</button>
           </div>
         `;
       }
-      return `<span class="muted">вЂ”</span>`;
+      return `<span class="muted">РІР‚вЂќ</span>`;
     },
-    "РџРѕРєР° РЅРµС‚ РїРѕР·РёС†РёР№ Р·Р°РєСѓРїРєРё РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+    "Р СџР С•Р С”Р В° Р Р…Р ВµРЎвЂљ Р С—Р С•Р В·Р С‘РЎвЂ Р С‘Р в„– Р В·Р В°Р С”РЎС“Р С—Р С”Р С‘ Р Т‘Р В»РЎРЏ РЎвЂљР ВµР С”РЎС“РЎвЂ°Р ВµР С–Р С• РЎвЂћР С‘Р В»РЎРЉРЎвЂљРЎР‚Р В°."
   );
 }
 
@@ -6203,7 +6289,7 @@ function bindBuilderEvents() {
       try {
         saveCurrentSectionView(saveViewButton.dataset.builderViewSave);
       } catch (error) {
-        setStatus(error.message || "Не удалось сохранить вид.", "error");
+        setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РІРёРґ.", "error");
       }
       return;
     }
@@ -6237,7 +6323,7 @@ function bindBuilderEvents() {
       try {
         await exportSectionBuilder(exportButton.dataset.builderExport);
       } catch (error) {
-        setStatus(error.message || "Не удалось экспортировать схему секции.", "error");
+        setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЌРєСЃРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ СЃС…РµРјСѓ СЃРµРєС†РёРё.", "error");
       }
       return;
     }
@@ -6247,7 +6333,7 @@ function bindBuilderEvents() {
       try {
         await importSectionBuilder(importButton.dataset.builderImport);
       } catch (error) {
-        setStatus(error.message || "Не удалось импортировать схему секции.", "error");
+        setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РёРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ СЃС…РµРјСѓ СЃРµРєС†РёРё.", "error");
       }
       return;
     }
@@ -6260,7 +6346,7 @@ function bindBuilderEvents() {
           saveColumnsButton.dataset.builderTableSave
         );
       } catch (error) {
-        setStatus(error.message || "Не удалось сохранить колонки.", "error");
+        setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ РєРѕР»РѕРЅРєРё.", "error");
       }
       return;
     }
@@ -6270,7 +6356,7 @@ function bindBuilderEvents() {
       try {
         saveSectionFormula(saveFormulaButton.dataset.builderFormulaSave);
       } catch (error) {
-        setStatus(error.message || "Не удалось сохранить формулу.", "error");
+        setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ С„РѕСЂРјСѓР»Сѓ.", "error");
       }
       return;
     }
@@ -6289,7 +6375,7 @@ function bindBuilderEvents() {
       try {
         saveSectionSchema(saveSchemaButton.dataset.builderSchemaSave);
       } catch (error) {
-        setStatus(error.message || "Не удалось сохранить JSON-схему.", "error");
+        setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕС…СЂР°РЅРёС‚СЊ JSON-СЃС…РµРјСѓ.", "error");
       }
       return;
     }
@@ -6302,14 +6388,14 @@ function bindBuilderEvents() {
 }
 
 async function start() {
-  setModuleState("Старт...");
-  setStatus("Запускаю Контур и подключаю рабочие блоки...", "");
+  setModuleState("РЎС‚Р°СЂС‚...");
+  setStatus("Р—Р°РїСѓСЃРєР°СЋ РљРѕРЅС‚СѓСЂ Рё РїРѕРґРєР»СЋС‡Р°СЋ СЂР°Р±РѕС‡РёРµ Р±Р»РѕРєРё...", "");
   const runStartupStep = (label, fn) => {
     try {
       fn();
     } catch (error) {
       console.error(`light2 startup step failed: ${label}`, error);
-      setStatus(error.message || `Ошибка на шаге "${label}".`, "error");
+      setStatus(error.message || `РћС€РёР±РєР° РЅР° С€Р°РіРµ "${label}".`, "error");
     }
   };
 
@@ -6324,7 +6410,7 @@ async function start() {
     bindBuilderEvents();
   } catch (error) {
     console.error("light2 bind error", error);
-    setStatus(error.message || "Не удалось инициализировать интерактивные кнопки ДОМ НЕОНА.", "error");
+    setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ РёРЅРёС†РёР°Р»РёР·РёСЂРѕРІР°С‚СЊ РёРЅС‚РµСЂР°РєС‚РёРІРЅС‹Рµ РєРЅРѕРїРєРё Р”РћРњ РќР•РћРќРђ.", "error");
   }
   runStartupStep("workspace-mode", () => syncWorkspaceModeUi());
   runStartupStep("open-section", () => openSection(STATE.activeSection || "overview"));
@@ -6333,22 +6419,22 @@ async function start() {
     const ready = await withTimeout(
       loadBootstrapData(),
       9000,
-      "Не удалось вовремя подготовить профиль и сессию Контур."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ РїРѕРґРіРѕС‚РѕРІРёС‚СЊ РїСЂРѕС„РёР»СЊ Рё СЃРµСЃСЃРёСЋ РљРѕРЅС‚СѓСЂ."
     );
     if (!ready) {
-      await activateReadonlyFallback(new Error("Сессия платформы недоступна для живого режима."));
+      await activateReadonlyFallback(new Error("РЎРµСЃСЃРёСЏ РїР»Р°С‚С„РѕСЂРјС‹ РЅРµРґРѕСЃС‚СѓРїРЅР° РґР»СЏ Р¶РёРІРѕРіРѕ СЂРµР¶РёРјР°."));
       return;
     }
     await withTimeout(
       loadWorkbookSnapshot(),
       8000,
-      "Не удалось вовремя загрузить snapshot Контур."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ Р·Р°РіСЂСѓР·РёС‚СЊ snapshot РљРѕРЅС‚СѓСЂ."
     );
     await loadContourBlocks();
     const restored = await withTimeout(
       maybeAutoRestoreContourData(),
       12000,
-      "Не удалось вовремя восстановить живые данные Контур."
+      "РќРµ СѓРґР°Р»РѕСЃСЊ РІРѕРІСЂРµРјСЏ РІРѕСЃСЃС‚Р°РЅРѕРІРёС‚СЊ Р¶РёРІС‹Рµ РґР°РЅРЅС‹Рµ РљРѕРЅС‚СѓСЂ."
     );
     if (restored) {
       await loadContourBlocks();
@@ -6356,27 +6442,28 @@ async function start() {
     syncModuleStatus();
     syncImportButton();
   } catch (error) {
-    setModuleState("Ошибка");
-    setStatus(error.message || "Не удалось запустить модуль ДОМ НЕОНА.", "error");
+    setModuleState("РћС€РёР±РєР°");
+    setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ РјРѕРґСѓР»СЊ Р”РћРњ РќР•РћРќРђ.", "error");
     syncImportButton();
   }
 }
 
 window.setTimeout(async () => {
   const stillBooting =
-    /Проверяю|Загрузка|Старт/i.test(String(DOM.userDisplay?.textContent || "")) ||
-    /Проверяю|Загрузка|Старт/i.test(String(DOM.accessMode?.textContent || "")) ||
-    /Загрузка|Старт/i.test(String(DOM.moduleState?.textContent || "")) ||
-    /Загружаю структуру модуля/i.test(String(DOM.statusBox?.textContent || ""));
+    /РџСЂРѕРІРµСЂСЏСЋ|Р—Р°РіСЂСѓР·РєР°|РЎС‚Р°СЂС‚/i.test(String(DOM.userDisplay?.textContent || "")) ||
+    /РџСЂРѕРІРµСЂСЏСЋ|Р—Р°РіСЂСѓР·РєР°|РЎС‚Р°СЂС‚/i.test(String(DOM.accessMode?.textContent || "")) ||
+    /Р—Р°РіСЂСѓР·РєР°|РЎС‚Р°СЂС‚/i.test(String(DOM.moduleState?.textContent || "")) ||
+    /Р—Р°РіСЂСѓР¶Р°СЋ СЃС‚СЂСѓРєС‚СѓСЂСѓ РјРѕРґСѓР»СЏ/i.test(String(DOM.statusBox?.textContent || ""));
 
   if (!stillBooting) return;
 
   console.warn("light2 bootstrap guard activated");
   try {
-    await activateReadonlyFallback(new Error("Контур не завершил старт вовремя."));
+    await activateReadonlyFallback(new Error("РљРѕРЅС‚СѓСЂ РЅРµ Р·Р°РІРµСЂС€РёР» СЃС‚Р°СЂС‚ РІРѕРІСЂРµРјСЏ."));
   } catch (error) {
     console.error("light2 bootstrap guard failed", error);
   }
 }, 12000);
 
 start();
+

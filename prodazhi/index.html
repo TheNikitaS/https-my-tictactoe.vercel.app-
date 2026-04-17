@@ -40,8 +40,7 @@
     /* заполнено */
     .filled { background: #d1e7dd !important; }      /* green */
     .to-pay { background: #cfe2ff !important; }      /* blue */
-    .paid, .payment-ok { background: #d1e7dd !important; }        /* green */
-    .payment-due { background: #f8d7da !important; } /* red */
+    .paid { background: #d1e7dd !important; }        /* green */
     .row-cancel { background: #f8d7da !important; }  /* red-ish */
     .status-pill { font-weight: 700; border-radius: 10px; padding: 3px 6px; text-align:center; }
     .status-select { padding-top: 3px; padding-bottom: 3px; }
@@ -665,45 +664,6 @@
       return Math.round(n).toLocaleString("ru-RU");
     }
 
-    function formatDateTimeLocalInput(v) {
-      if (isEmpty(v)) return "";
-      const raw = String(v).trim();
-      if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(raw)) {
-        const year = Number(raw.slice(0, 4));
-        return year >= 2000 && year <= 2100 ? raw.slice(0, 16) : "";
-      }
-      const parsed = parseDateTime(v);
-      if (!parsed || parsed.type !== "datetime") return "";
-      const d = parsed.value;
-      const year = d.getFullYear();
-      if (year < 2000 || year > 2100) return "";
-      return `${formatDateKeyLocal(d)}T${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
-    }
-
-    function formatDateInput(v) {
-      const key = normalizeDateKey(v);
-      if (!key) return "";
-      const year = Number(key.slice(0, 4));
-      return year >= 2000 && year <= 2100 ? key : "";
-    }
-
-    function getOrderPaymentSummary(order) {
-      const rawTotal = order?.cells?.[4];
-      const rawPaid = order?.cells?.[5];
-      const hasValues = !isEmpty(rawTotal) || !isEmpty(rawPaid);
-      const total = Math.max(0, toNumber(rawTotal));
-      const paid = Math.max(0, toNumber(rawPaid));
-      const remaining = Math.max(0, Math.round((total - paid) * 100) / 100);
-      return {
-        hasValues,
-        total,
-        paid,
-        remaining,
-        settled: hasValues && total > 0 && remaining <= 0,
-        partial: hasValues && total > 0 && remaining > 0
-      };
-    }
-
     function formatDateKeyLocal(date) {
       return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,"0")}-${String(date.getDate()).padStart(2,"0")}`;
     }
@@ -941,6 +901,48 @@
       if (/^\d{1,2}:\d{2}:\d{2}$/.test(s)) return s;
       return "";
     }
+    function normalizeDateValue(v) {
+      if (!v) return "";
+      const s = String(v).trim().slice(0, 10);
+      const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (!m) return "";
+      const year = Number(m[1]);
+      const month = Number(m[2]);
+      const day = Number(m[3]);
+      if (!Number.isFinite(year) || year < 2000 || year > 2100) return "";
+      if (!Number.isFinite(month) || month < 1 || month > 12) return "";
+      if (!Number.isFinite(day) || day < 1 || day > 31) return "";
+      return `${String(year).padStart(4, "0")}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+    }
+    function normalizeDateTimeLocalValue(v) {
+      if (!v) return "";
+      const s = String(v).trim();
+      const m = s.match(/^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})(:\d{2})?$/);
+      if (!m) return "";
+      const datePart = normalizeDateValue(m[1]);
+      const timePart = normalizeTime(m[2]);
+      if (!datePart || !timePart) return "";
+      return `${datePart}T${timePart}`;
+    }
+    function commitTemporalInput(order, index, input, kind) {
+      if (!order || !order.cells || !input) return;
+      let normalized = "";
+      if (kind === "date") normalized = normalizeDateValue(input.value);
+      else if (kind === "datetime") normalized = normalizeDateTimeLocalValue(input.value);
+      else {
+        const time = normalizeTime(input.value);
+        normalized = time ? (time.length === 5 ? `${time}:00` : time) : "";
+      }
+      if (kind === "date" && input.value !== normalized) input.value = normalized;
+      if (kind === "datetime" && input.value !== normalized) input.value = normalized;
+      if (kind === "time") {
+        const expected = normalized ? normalized.slice(0, 5) : "";
+        if (input.value !== expected) input.value = expected;
+      }
+      order.cells[index] = normalized || null;
+      computeFormulas(order);
+      markDirtyAndAutosave();
+    }
 
     function computeFormulas(order) {
       const c = order.cells;
@@ -973,7 +975,7 @@
       }
 
       // Speed2: AE - AD (time-only). Base date: "Дата создания" if exists else today.
-      const baseDate = c[3] || formatDateKeyLocal(new Date());
+      const baseDate = c[3] || new Date().toISOString().slice(0,10);
       const sent = parseDateTime(c[idxSentToDesigner]);
       const replied = parseDateTime(c[idxDesignerReplied]);
       let tSent=null, tRep=null;
@@ -1126,12 +1128,6 @@
         th.textContent = col;
         th.className = `nowrap${i === 0 ? " sticky-col-1" : i === 1 ? " sticky-col-2" : ""}`;
         ordersHeadRow.appendChild(th);
-        if (col === "Оплачено") {
-          const thRemaining = document.createElement("th");
-          thRemaining.textContent = "Остаток";
-          thRemaining.className = "nowrap";
-          ordersHeadRow.appendChild(thRemaining);
-        }
       }
 
       const thAct = document.createElement("th");
@@ -1141,7 +1137,7 @@
     }
 
     function colClass(name) {
-      const moneyCols = new Set(["Стоимость заказа","Оплачено","Остаток","ЗП Дизайнен","ЗП сборщика","Монтаж стоимость","ЗП Монтажника"]);
+      const moneyCols = new Set(["Стоимость заказа","Оплачено","ЗП Дизайнен","ЗП сборщика","Монтаж стоимость","ЗП Монтажника"]);
       const wideCols = new Set(["Адрес доставки","Название","Имя клиента"]);
       const narrowCols = new Set(["Номер заказ","Город","Телефон","Дата создания","Время обращения","Время ответа","Выставили счёт","Счёт оплачен","Начало производства","Окончание производства","Дата сдачи заказа"]);
       if (wideCols.has(name)) return "cell-wide";
@@ -1372,40 +1368,31 @@
 
           if (dateCols.has(colName)) {
             inp.type = "date";
-            inp.value = formatDateInput(val);
+            inp.value = val ? normalizeDateValue(String(val).slice(0,10)) : "";
             inp.classList.toggle("filled", inp.value !== "");
-
-            inp.addEventListener("change", () => {
-              order.cells[i] = inp.value || null;
-              computeFormulas(order);
-              markDirtyAndAutosave();
-              renderOrders();
-            });
+            const commitDate = () => commitTemporalInput(order, i, inp, "date");
+            inp.addEventListener("input", commitDate);
+            inp.addEventListener("change", commitDate);
+            inp.addEventListener("blur", commitDate);
 
           } else if (dtCols.has(colName)) {
             inp.type = "datetime-local";
-            inp.value = formatDateTimeLocalInput(val);
+            inp.value = val ? normalizeDateTimeLocalValue(String(val).slice(0,16)) : "";
             inp.classList.toggle("filled", inp.value !== "");
-
-            inp.addEventListener("change", () => {
-              order.cells[i] = inp.value || null;
-              computeFormulas(order);
-              markDirtyAndAutosave();
-              renderOrders();
-            });
+            const commitDateTime = () => commitTemporalInput(order, i, inp, "datetime");
+            inp.addEventListener("input", commitDateTime);
+            inp.addEventListener("change", commitDateTime);
+            inp.addEventListener("blur", commitDateTime);
 
           } else if (timeCols.has(colName)) {
             inp.type = "time";
             inp.step = 1;
             inp.value = val ? normalizeTime(val) : "";
             inp.classList.toggle("filled", inp.value !== "");
-
-            inp.addEventListener("change", () => {
-              order.cells[i] = inp.value ? (inp.value.length===5 ? inp.value+":00" : inp.value) : null;
-              computeFormulas(order);
-              markDirtyAndAutosave();
-              renderOrders();
-            });
+            const commitTime = () => commitTemporalInput(order, i, inp, "time");
+            inp.addEventListener("input", commitTime);
+            inp.addEventListener("change", commitTime);
+            inp.addEventListener("blur", commitTime);
 
           } else {
             inp.type = "text";
@@ -1449,33 +1436,8 @@
             }
           }
 
-          if (colName === "Оплачено") {
-            const paymentState = getOrderPaymentSummary(order);
-            inp.classList.remove("payment-ok", "payment-due");
-            if (paymentState.settled) inp.classList.add("payment-ok");
-            if (paymentState.partial) inp.classList.add("payment-due");
-          }
-
           td.appendChild(inp);
           tr.appendChild(td);
-
-          if (colName === "Оплачено") {
-            const paymentState = getOrderPaymentSummary(order);
-            const tdRemaining = document.createElement("td");
-            tdRemaining.className = "p-1";
-
-            const remainingInput = document.createElement("input");
-            remainingInput.type = "text";
-            remainingInput.readOnly = true;
-            remainingInput.tabIndex = -1;
-            remainingInput.className = "form-control form-control-sm cell-narrow right";
-            remainingInput.value = paymentState.hasValues ? formatMoney(paymentState.remaining) : "";
-            if (paymentState.settled) remainingInput.classList.add("payment-ok");
-            if (paymentState.partial) remainingInput.classList.add("payment-due");
-
-            tdRemaining.appendChild(remainingInput);
-            tr.appendChild(tdRemaining);
-          }
         }
 
         // actions
@@ -2026,7 +1988,7 @@
     document.getElementById("btnAddOrder").addEventListener("click", () => {
       const empty = new Array(40).fill(null);
       // defaults
-      empty[3] = formatDateKeyLocal(new Date()); // date only
+      empty[3] = new Date().toISOString().slice(0,10); // date only
       empty[2] = (STATE.refs["Статус"]||[])[0] || "";
       STATE.orders.unshift({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(empty), assemblyTeam: [] });
       markDirtyAndAutosave();
