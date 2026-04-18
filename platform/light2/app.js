@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260417-light2-safe51";
+const LIGHT2_BUILD = "20260418-light2-safe55";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -1876,6 +1876,63 @@ function repairMojibakeDeep(value) {
     return Object.fromEntries(Object.entries(value).map(([key, entryValue]) => [key, repairMojibakeDeep(entryValue)]));
   }
   return repairMojibakeText(value);
+}
+
+function repairMojibakeDom(root = document.body) {
+  if (!root) return;
+
+  const repairNode = (node) => {
+    if (!node) return;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const nextValue = repairMojibakeText(node.nodeValue);
+      if (nextValue !== node.nodeValue) {
+        node.nodeValue = nextValue;
+      }
+      return;
+    }
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    ["placeholder", "title", "aria-label", "value"].forEach((attr) => {
+      if (!node.hasAttribute?.(attr)) return;
+      const currentValue = node.getAttribute(attr);
+      const nextValue = repairMojibakeText(currentValue);
+      if (nextValue !== currentValue) {
+        node.setAttribute(attr, nextValue);
+      }
+    });
+
+    node.childNodes.forEach(repairNode);
+  };
+
+  repairNode(root);
+}
+
+function scheduleMojibakeRepair(root = document.body) {
+  window.requestAnimationFrame(() => repairMojibakeDom(root));
+}
+
+function installMojibakeRepairObserver() {
+  if (window.__light2MojibakeObserverInstalled) return;
+  window.__light2MojibakeObserverInstalled = true;
+  const observer = new MutationObserver((records) => {
+    records.forEach((record) => {
+      if (record.type === "characterData") {
+        repairMojibakeDom(record.target?.parentNode || document.body);
+        return;
+      }
+      record.addedNodes.forEach((node) => repairMojibakeDom(node));
+      if (record.type === "attributes") {
+        repairMojibakeDom(record.target);
+      }
+    });
+  });
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["placeholder", "title", "aria-label", "value"]
+  });
 }
 
 function getWorkbookRaw(row, col) {
@@ -6390,9 +6447,12 @@ function bindBuilderEvents() {
 async function start() {
   setModuleState("РЎС‚Р°СЂС‚...");
   setStatus("Р—Р°РїСѓСЃРєР°СЋ РљРѕРЅС‚СѓСЂ Рё РїРѕРґРєР»СЋС‡Р°СЋ СЂР°Р±РѕС‡РёРµ Р±Р»РѕРєРё...", "");
+  installMojibakeRepairObserver();
+  scheduleMojibakeRepair(document.body);
   const runStartupStep = (label, fn) => {
     try {
       fn();
+      scheduleMojibakeRepair(document.body);
     } catch (error) {
       console.error(`light2 startup step failed: ${label}`, error);
       setStatus(error.message || `РћС€РёР±РєР° РЅР° С€Р°РіРµ "${label}".`, "error");
@@ -6441,10 +6501,12 @@ async function start() {
     }
     syncModuleStatus();
     syncImportButton();
+    scheduleMojibakeRepair(document.body);
   } catch (error) {
     setModuleState("РћС€РёР±РєР°");
     setStatus(error.message || "РќРµ СѓРґР°Р»РѕСЃСЊ Р·Р°РїСѓСЃС‚РёС‚СЊ РјРѕРґСѓР»СЊ Р”РћРњ РќР•РћРќРђ.", "error");
     syncImportButton();
+    scheduleMojibakeRepair(document.body);
   }
 }
 
