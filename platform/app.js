@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260413-platform-suite49";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-suite49";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260418-platform-suite53";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260418-platform-suite53";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260418-platform-suite52";
+const PLATFORM_BUILD = "20260418-platform-suite53";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -1824,9 +1824,9 @@ async function renderDashboard() {
       tone: "info"
     },
     {
-        label: "Метрики компании",
-      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
-      meta: `${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате • ${formatDashboardNumber(snapshot.light2.openSettlementsCount || 0)} открытых взаиморасчетов`,
+      label: "Метрики компании",
+      value: formatDashboardMoney(snapshot.light2.latestRevenue || snapshot.light2.balanceTotal || 0),
+      meta: `${formatDashboardMoney(snapshot.light2.latestNetProfit || 0)} чистая прибыль • ${formatDashboardNumber(snapshot.light2.latestSales || 0)} продаж${snapshot.light2.metricsMonthLabel ? ` • ${snapshot.light2.metricsMonthLabel}` : ""}`,
       tone: "accent"
     },
     {
@@ -1919,28 +1919,28 @@ async function renderDashboard() {
 
   const contourCards = [
     {
-      label: "Баланс",
-      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
+      label: "Выручка",
+      value: formatDashboardMoney(snapshot.light2.latestRevenue || snapshot.light2.balanceTotal || 0),
       tone: "neutral"
+    },
+    {
+      label: "Чистая прибыль",
+      value: formatDashboardMoney(snapshot.light2.latestNetProfit || 0),
+      tone: "warning"
+    },
+    {
+      label: "Продажи",
+      value: formatDashboardNumber(snapshot.light2.latestSales || 0),
+      tone: "info"
+    },
+    {
+      label: "Средний чек",
+      value: formatDashboardMoney(snapshot.light2.latestAverageCheck || 0),
+      tone: "success"
     },
     {
       label: "К выплате",
       value: formatDashboardMoney(snapshot.light2.settlementsPayout || 0),
-      tone: "warning"
-    },
-    {
-      label: "Платежи",
-      value: formatDashboardNumber(snapshot.light2.calendarEntriesCount || 0),
-      tone: "info"
-    },
-    {
-      label: "Активы",
-      value: formatDashboardMoney(snapshot.light2.assetsRemaining || 0),
-      tone: "success"
-    },
-    {
-      label: "Закупки",
-      value: formatDashboardNumber(snapshot.light2.purchasesCount || 0),
       tone: "accent"
     },
     {

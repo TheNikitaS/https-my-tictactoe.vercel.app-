@@ -451,12 +451,125 @@ function getSnapshotSheetByName(snapshot, name) {
   return snapshot?.sheets?.find((sheet) => compactText(sheet?.name) === compactText(name)) || null;
 }
 
+const SNAPSHOT_MONTH_NAMES = [
+  "янв",
+  "фев",
+  "мар",
+  "апр",
+  "май",
+  "мая",
+  "июн",
+  "июл",
+  "авг",
+  "сен",
+  "сент",
+  "окт",
+  "ноя",
+  "дек"
+];
+
+function getSnapshotRowDisplay(row, columnIndex) {
+  return repairMojibakeText(compactText(row?.cells?.[String(columnIndex)]?.display || row?.cells?.[String(columnIndex)]?.value || ""));
+}
+
+function getSnapshotSheetDisplay(sheet, rowIndex, columnIndex) {
+  const row = (sheet?.rows || []).find((entry) => Number(entry?.index) === Number(rowIndex));
+  return getSnapshotRowDisplay(row, columnIndex);
+}
+
+function isSnapshotMonthLabel(value) {
+  const normalized = repairMojibakeText(compactText(value)).toLowerCase().replace(/\./g, "");
+  if (!normalized) return false;
+  return SNAPSHOT_MONTH_NAMES.some((month) => normalized.includes(month));
+}
+
+function getSnapshotMetricCell(rowMap, labels, columnIndex) {
+  for (const label of labels) {
+    const row = rowMap.get(label);
+    if (!row) continue;
+    const cell = row?.cells?.[String(columnIndex)] || null;
+    const display = repairMojibakeText(compactText(cell?.display || cell?.value || ""));
+    if (display) {
+      return {
+        display,
+        value: cell?.value
+      };
+    }
+  }
+  return null;
+}
+
+function getSnapshotMetricNumber(rowMap, labels, columnIndex) {
+  const cell = getSnapshotMetricCell(rowMap, labels, columnIndex);
+  return cell ? parseDashboardLooseNumber(cell.display ?? cell.value) : null;
+}
+
+function parseLight2MetricsSeries(sheet) {
+  if (!sheet?.rows?.length) return [];
+
+  const headerRow = (sheet.rows || []).find((row) => Number(row?.index) === 2);
+  const sumRow = (sheet.rows || []).find((row) => Number(row?.index) === 3);
+  const yearRow = (sheet.rows || []).find((row) => Number(row?.index) === 1);
+  const headerColumns = Object.keys(headerRow?.cells || {})
+    .map(Number)
+    .sort((a, b) => a - b)
+    .filter((columnIndex) => isSnapshotMonthLabel(getSnapshotRowDisplay(headerRow, columnIndex)));
+
+  if (!headerColumns.length) return [];
+
+  const yearGroups = Object.keys(yearRow?.cells || {})
+    .map(Number)
+    .sort((a, b) => a - b)
+    .filter((columnIndex) => /\d/.test(getSnapshotRowDisplay(yearRow, columnIndex)))
+    .map((columnIndex, index, columns) => ({
+      start: columnIndex,
+      end: (columns[index + 1] || ((sheet.maxCol || columns[columns.length - 1] || columnIndex) + 1)) - 1,
+      yearLabel: getSnapshotRowDisplay(yearRow, columnIndex)
+    }));
+
+  const rowMap = new Map(
+    (sheet.rows || [])
+      .filter((row) => Number(row?.index) >= 4)
+      .map((row) => {
+        const rowLabel = repairMojibakeText(getSnapshotRowDisplay(row, 1));
+        return rowLabel ? [rowLabel, row] : null;
+      })
+      .filter(Boolean)
+  );
+
+  return headerColumns
+    .filter((columnIndex) => repairMojibakeText(getSnapshotRowDisplay(sumRow, columnIndex)).startsWith("Сумма"))
+    .map((columnIndex) => {
+      const group = yearGroups.find((entry) => columnIndex >= entry.start && columnIndex <= entry.end);
+      return {
+        columnIndex,
+        monthLabel: getSnapshotRowDisplay(headerRow, columnIndex),
+        yearLabel: compactText(group?.yearLabel),
+        revenue: getSnapshotMetricNumber(rowMap, ["Выручка"], columnIndex) || 0,
+        cost: getSnapshotMetricNumber(rowMap, ["Себестоимость"], columnIndex) || 0,
+        grossProfit: getSnapshotMetricNumber(rowMap, ["Валовая прибыль"], columnIndex) || 0,
+        operatingExpenses: getSnapshotMetricNumber(rowMap, ["Операционные расходы"], columnIndex) || 0,
+        operatingProfit: getSnapshotMetricNumber(rowMap, ["Операционная прибыль"], columnIndex) || 0,
+        taxes: getSnapshotMetricNumber(rowMap, ["Налоги и сборы"], columnIndex) || 0,
+        netProfit: getSnapshotMetricNumber(rowMap, ["Чистая прибыль"], columnIndex) || 0,
+        margin: getSnapshotMetricNumber(rowMap, ["Маржа"], columnIndex) || 0,
+        averageCheck: getSnapshotMetricNumber(rowMap, ["Средний чек", "Чек"], columnIndex) || 0,
+        sales: getSnapshotMetricNumber(rowMap, ["Продаж", "Продажи"], columnIndex) || 0,
+        warehouse: getSnapshotMetricNumber(rowMap, ["Склад"], columnIndex) || 0,
+        tbuMoney: getSnapshotMetricNumber(rowMap, ["ТБУ в деньгах"], columnIndex) || 0
+      };
+    })
+    .filter((item) => item.revenue || item.netProfit || item.sales || item.averageCheck);
+}
+
 function buildLight2DashboardFallback(snapshot) {
   if (!snapshot?.sheets?.length) return null;
-  const metricsSheet = getSnapshotSheetByName(snapshot, "Метрики") || getSnapshotSheetByName(snapshot, "Финмодель");
+  const metricsSheet = getSnapshotSheetByName(snapshot, "Метрики");
   const purchasesSheet = getSnapshotSheetByName(snapshot, "Закупки");
   const settlementsSheet = getSnapshotSheetByName(snapshot, "Взаиморасчет с мастерами");
   const assetsSheet = getSnapshotSheetByName(snapshot, "Активы");
+  const metricsSeries = parseLight2MetricsSeries(metricsSheet);
+  const latestMetrics = metricsSeries.at(-1) || null;
   let balanceTotal = 0;
   let settlementsPayout = 0;
   let openSettlementsCount = 0;
@@ -464,46 +577,44 @@ function buildLight2DashboardFallback(snapshot) {
   let assetsRemaining = 0;
   const suppliers = new Set();
 
-  metricsSheet?.rows?.forEach((row) => {
-    const label = compactText(row?.cells?.["2"]?.display || row?.cells?.["1"]?.display || "");
-    if (!label) return;
-    const candidate = parseDashboardLooseNumber(row?.cells?.["6"]?.display || row?.cells?.["3"]?.display || row?.cells?.["12"]?.display);
-    if (candidate === null) return;
-    if (label.includes("прибыль") || label.includes("оборот") || label.includes("маржа")) {
-      balanceTotal = Math.max(balanceTotal, candidate);
-    }
-  });
+  if (latestMetrics) {
+    balanceTotal = latestMetrics.netProfit || latestMetrics.operatingProfit || latestMetrics.revenue || 0;
+  }
 
   settlementsSheet?.rows?.forEach((row) => {
-    const employee = compactText(row?.cells?.["2"]?.display || row?.cells?.["1"]?.display || "");
+    const employee = repairMojibakeText(compactText(row?.cells?.["2"]?.display || row?.cells?.["1"]?.display || ""));
     if (!employee) return;
+    const status = repairMojibakeText(compactText(row?.cells?.["6"]?.display || row?.cells?.["5"]?.display || ""));
+    if (["Взаиморасчет произведен", "Архив"].includes(status)) return;
     openSettlementsCount += 1;
     const amount = parseDashboardLooseNumber(row?.cells?.["3"]?.display || row?.cells?.["4"]?.display || row?.cells?.["5"]?.display);
     if (amount !== null && amount > 0) settlementsPayout += amount;
   });
 
   purchasesSheet?.rows?.forEach((row) => {
-    const supplier = compactText(row?.cells?.["1"]?.display || "");
-    const itemName = compactText(row?.cells?.["7"]?.display || row?.cells?.["6"]?.display || "");
+    const supplier = repairMojibakeText(compactText(row?.cells?.["1"]?.display || ""));
+    const itemName = repairMojibakeText(compactText(row?.cells?.["7"]?.display || row?.cells?.["6"]?.display || ""));
     if (!supplier && !itemName) return;
     purchasesCount += 1;
     if (supplier) suppliers.add(supplier);
   });
 
   assetsSheet?.rows?.forEach((row) => {
-    const title = compactText(row?.cells?.["1"]?.display || "");
+    const title = repairMojibakeText(compactText(row?.cells?.["1"]?.display || ""));
     if (!title) return;
     const amount = parseDashboardLooseNumber(row?.cells?.["4"]?.display || row?.cells?.["3"]?.display || row?.cells?.["2"]?.display);
     if (amount !== null && amount > 0) assetsRemaining += amount;
   });
 
   return {
-    balanceTotal,
+    balanceTotal: roundMoney(balanceTotal),
     openSettlementsCount,
-    settlementsPayout,
-    assetsRemaining,
+    settlementsPayout: roundMoney(settlementsPayout),
+    assetsRemaining: roundMoney(assetsRemaining || latestMetrics?.warehouse || 0),
     purchasesCount,
-    suppliersCount: suppliers.size
+    suppliersCount: suppliers.size,
+    metricsSeries,
+    latestMetrics
   };
 }
 
@@ -5610,8 +5721,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       && !light2Assets.length
       && !light2AssetPayments.length
       && !light2Purchases.length;
-    const light2FallbackSnapshot = light2LiveEmpty ? await loadLight2WorkbookSnapshotFallback() : null;
-    const light2Fallback = light2LiveEmpty ? buildLight2DashboardFallback(light2FallbackSnapshot) : null;
+    const light2FallbackSnapshot = await loadLight2WorkbookSnapshotFallback();
+    const light2Fallback = buildLight2DashboardFallback(light2FallbackSnapshot);
 
     const today = todayString();
     const currentMonthKey = today.slice(0, 7);
@@ -5647,8 +5758,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       return Boolean(match?.low);
     });
 
-    const contourClosedStatuses = new Set(["Р’Р·Р°РёРјРѕСЂР°СЃС‡РµС‚ РїСЂРѕРёР·РІРµРґРµРЅ", "РђСЂС…РёРІ"].map((value) => compactText(value)));
-    const contourOpenSettlements = (light2Settlements || []).filter((entry) => !contourClosedStatuses.has(compactText(entry.status)));
+    const contourClosedStatuses = new Set(["Взаиморасчет произведен", "Архив"].map((value) => compactText(value)));
+    const contourOpenSettlements = (light2Settlements || []).filter((entry) => !contourClosedStatuses.has(repairMojibakeText(compactText(entry.status))));
     const contourSettlementsPayout = roundMoney(
       contourOpenSettlements.reduce((sum, entry) => {
         const total = roundMoney(toNumber(entry.salary_amount) - toNumber(entry.purchase_amount));
@@ -5660,13 +5771,13 @@ function buildModeTabs(moduleKey, escapeFn) {
     );
     const contourCalendarIncoming = roundMoney(
       sumBy(
-        (light2CalendarEntries || []).filter((entry) => compactText(entry.operation_type) === compactText("РџСЂРёС…РѕРґ")),
+        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("Приход")),
         (entry) => entry.amount
       )
     );
     const contourCalendarOutgoing = roundMoney(
       sumBy(
-        (light2CalendarEntries || []).filter((entry) => compactText(entry.operation_type) === compactText("Р Р°СЃС…РѕРґ")),
+        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("Расход")),
         (entry) => entry.amount
       )
     );
@@ -5805,37 +5916,28 @@ function buildModeTabs(moduleKey, escapeFn) {
         criticalDemandCount: criticalDemand.length,
         topDemand: calculatorSnapshot.demand.slice(0, 5)
       },
-      light2: light2Fallback
-        ? {
-            settlementsCount: light2Fallback.openSettlementsCount || 0,
-            openSettlementsCount: light2Fallback.openSettlementsCount || 0,
-            settlementsPayout: light2Fallback.settlementsPayout || 0,
-            balanceEntriesCount: 0,
-            balanceTotal: light2Fallback.balanceTotal || 0,
-            calendarEntriesCount: 0,
-            calendarIncoming: 0,
-            calendarOutgoing: 0,
-            assetsCount: 0,
-            assetsValue: light2Fallback.assetsRemaining || 0,
-            assetsRemaining: light2Fallback.assetsRemaining || 0,
-            purchasesCount: light2Fallback.purchasesCount || 0,
-            suppliersCount: light2Fallback.suppliersCount || 0
-          }
-        : {
-            settlementsCount: (light2Settlements || []).length,
-            openSettlementsCount: contourOpenSettlements.length,
-            settlementsPayout: contourSettlementsPayout,
-            balanceEntriesCount: (light2BalanceEntries || []).length,
-            balanceTotal: contourBalanceTotal,
-            calendarEntriesCount: (light2CalendarEntries || []).length,
-            calendarIncoming: contourCalendarIncoming,
-            calendarOutgoing: contourCalendarOutgoing,
-            assetsCount: (light2Assets || []).length,
-            assetsValue: contourAssetsValue,
-            assetsRemaining: contourAssetsRemaining,
-            purchasesCount: (light2Purchases || []).length,
-            suppliersCount: contourSuppliers.size
-          },
+      light2: {
+        settlementsCount: (light2Settlements || []).length || light2Fallback?.openSettlementsCount || 0,
+        openSettlementsCount: contourOpenSettlements.length || light2Fallback?.openSettlementsCount || 0,
+        settlementsPayout: contourSettlementsPayout || light2Fallback?.settlementsPayout || 0,
+        balanceEntriesCount: (light2BalanceEntries || []).length,
+        balanceTotal: contourBalanceTotal || light2Fallback?.balanceTotal || 0,
+        calendarEntriesCount: (light2CalendarEntries || []).length,
+        calendarIncoming: contourCalendarIncoming || 0,
+        calendarOutgoing: contourCalendarOutgoing || 0,
+        assetsCount: (light2Assets || []).length,
+        assetsValue: contourAssetsValue || light2Fallback?.assetsRemaining || 0,
+        assetsRemaining: contourAssetsRemaining || light2Fallback?.assetsRemaining || 0,
+        purchasesCount: (light2Purchases || []).length || light2Fallback?.purchasesCount || 0,
+        suppliersCount: contourSuppliers.size || light2Fallback?.suppliersCount || 0,
+        metricsMonthLabel: light2Fallback?.latestMetrics?.monthLabel || "",
+        latestRevenue: light2Fallback?.latestMetrics?.revenue || 0,
+        latestNetProfit: light2Fallback?.latestMetrics?.netProfit || 0,
+        latestSales: light2Fallback?.latestMetrics?.sales || 0,
+        latestAverageCheck: light2Fallback?.latestMetrics?.averageCheck || 0,
+        latestMargin: light2Fallback?.latestMetrics?.margin || 0,
+        metricsSeries: Array.isArray(light2Fallback?.metricsSeries) ? light2Fallback.metricsSeries : []
+      },
       tasks: {
         totalCount: tasks.length,
         openCount: openTasks.length,
