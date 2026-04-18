@@ -402,6 +402,8 @@ body {
 .analytics-mini-table th,
 .analytics-mini-table td {
   white-space: nowrap;
+  font-size: 0.82rem;
+  line-height: 1.25;
 }
 
 .overview-card button {
@@ -540,6 +542,7 @@ body {
 .table-shell table {
   margin: 0;
   min-width: 980px;
+  font-size: 0.84rem;
 }
 
 .snapshot-toolbar {
@@ -578,6 +581,7 @@ body {
   word-break: break-word;
   line-height: 1.24;
   padding-right: 12px;
+  font-size: 0.82rem;
 }
 
 .snapshot-cell.cell-number,
@@ -600,6 +604,10 @@ body {
   display: none;
 }
 
+.snapshot-table .formula-dot {
+  display: none !important;
+}
+
 .snapshot-source-toggle {
   display: inline-flex;
   align-items: center;
@@ -619,7 +627,20 @@ body {
 }
 
 .snapshot-source-panel.collapsed .table-shell {
-  display: none;
+  display: none !important;
+}
+
+.snapshot-source-panel.collapsed .snapshot-table {
+  display: none !important;
+}
+
+.snapshot-source-panel.collapsed {
+  margin-top: 8px;
+}
+
+.snapshot-source-panel.collapsed .snapshot-source-toggle {
+  background: rgba(255, 251, 245, 0.92);
+  border-color: rgba(141, 118, 81, 0.16);
 }
 
 .metric-deck {

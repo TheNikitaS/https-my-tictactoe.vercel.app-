@@ -484,6 +484,7 @@
       nextState.orders = Array.isArray(nextState.orders) ? nextState.orders : [];
       nextState.payouts = nextState.payouts || {};
       nextState.leadJournal = normalizeLeadJournal(nextState.leadJournal);
+      nextState.lastEditedAt = Number(nextState.lastEditedAt) || 0;
       nextState.orders = nextState.orders.map(o => ({
         id: o.id || crypto.randomUUID(),
         hidden: !!o.hidden,
@@ -500,7 +501,8 @@
           refs: structuredCloneSafe(DEFAULT_REFS),
           orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r), assemblyTeam: [] })),
           payouts: {}, // ключи выплат
-          leadJournal: {}
+          leadJournal: {},
+          lastEditedAt: 0
         };
       }
       try {
@@ -509,6 +511,7 @@
         state.orders = state.orders || [];
         state.payouts = state.payouts || {};
         state.leadJournal = normalizeLeadJournal(state.leadJournal);
+        state.lastEditedAt = Number(state.lastEditedAt) || 0;
         // normalize orders
         state.orders = state.orders.map(o => ({
           id: o.id || crypto.randomUUID(),
@@ -523,7 +526,8 @@
           refs: structuredCloneSafe(DEFAULT_REFS),
           orders: SEED_ROWS.map(r => ({ id: crypto.randomUUID(), hidden:false, cells: normalizeRow(r), assemblyTeam: [] })),
           payouts: {},
-          leadJournal: {}
+          leadJournal: {},
+          lastEditedAt: 0
         };
       }
     }
@@ -531,6 +535,11 @@
     function saveState(state) {
       localStorage.setItem(LS_BACKUP_KEY, localStorage.getItem(LS_KEY) || "");
       localStorage.setItem(LS_KEY, JSON.stringify(state));
+    }
+
+    function touchState(state = STATE) {
+      state.lastEditedAt = Date.now();
+      return state;
     }
 
     // =========================
@@ -557,6 +566,7 @@
       if (saveTimer) clearTimeout(saveTimer);
       saveTimer = setTimeout(() => {
         try {
+          touchState(STATE);
           saveState(STATE);
           if (syncManager) {
             syncManager.scheduleSave();
@@ -577,6 +587,7 @@
     function forceSaveNow(showAlert=false) {
       try {
         if (saveTimer) clearTimeout(saveTimer);
+        touchState(STATE);
         saveState(STATE);
         if (syncManager) {
           syncManager.forceSave().catch((error) => {
@@ -604,7 +615,10 @@
 
     // Before unload
     window.addEventListener("beforeunload", () => {
-      try { saveState(STATE); } catch {}
+      try {
+        touchState(STATE);
+        saveState(STATE);
+      } catch {}
       setupCloudSync();
     });
 
@@ -1060,7 +1074,14 @@
     let STATE = loadState();
 
     function applyRemoteState(nextState) {
-      STATE = normalizeImportedState(nextState);
+      const incomingState = normalizeImportedState(nextState);
+      if ((incomingState.lastEditedAt || 0) < (STATE?.lastEditedAt || 0)) {
+        if (syncManager) {
+          syncManager.scheduleSave();
+        }
+        return;
+      }
+      STATE = incomingState;
       saveState(STATE);
       buildHead();
       refreshEmployeeSelects();

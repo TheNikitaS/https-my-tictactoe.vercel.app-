@@ -2636,37 +2636,37 @@ function parseMetricsSnapshot(sheet) {
 
   const rowMap = new Map(
     sheet.rows
-      .filter((row) => row.index >= 4 && getRowDisplay(row, 1))
-      .map((row) => [getRowDisplay(row, 1), row])
+      .filter((row) => row.index >= 4 && repairMojibakeText(getRowDisplay(row, 1)))
+      .map((row) => [repairMojibakeText(getRowDisplay(row, 1)), row])
   );
 
   const series = Array.from({ length: sheet.maxCol || 0 }, (_, idx) => idx + 1)
     .filter((columnIndex) => isMonthLabel(getSheetDisplay(sheet, 2, columnIndex)))
-    .filter((columnIndex) => getSheetDisplay(sheet, 3, columnIndex).startsWith("РЎСѓРјРјР°"))
+    .filter((columnIndex) => repairMojibakeText(getSheetDisplay(sheet, 3, columnIndex)).startsWith("Сумма"))
     .map((columnIndex) => ({
       columnIndex,
       monthLabel: getSheetDisplay(sheet, 2, columnIndex),
       yearLabel: getYearForColumn(columnIndex),
-      revenue: getMetricNumber(rowMap, ["Р’С‹СЂСѓС‡РєР°"], columnIndex),
-      cost: getMetricNumber(rowMap, ["РЎРµР±РµСЃС‚РѕРёРјРѕСЃС‚СЊ"], columnIndex),
-      grossProfit: getMetricNumber(rowMap, ["Р’Р°Р»РѕРІР°СЏ РїСЂРёР±С‹Р»СЊ"], columnIndex),
-      operatingExpenses: getMetricNumber(rowMap, ["РћРїРµСЂР°С†РёРѕРЅРЅС‹Рµ СЂР°СЃС…РѕРґС‹"], columnIndex),
-      operatingProfit: getMetricNumber(rowMap, ["РћРїРµСЂР°С†РёРѕРЅРЅР°СЏ РїСЂРёР±С‹Р»СЊ"], columnIndex),
-      taxes: getMetricNumber(rowMap, ["РќР°Р»РѕРіРё Рё СЃР±РѕСЂС‹"], columnIndex),
-      netProfit: getMetricNumber(rowMap, ["Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ"], columnIndex),
-      productProfitability: getMetricNumber(rowMap, ["RРїСЂ вЂ” СЂРµРЅС‚Р°Р±РµР»СЊРЅРѕСЃС‚СЊ РїСЂРѕРґСѓРєС†РёРё"], columnIndex),
-      businessProfitability: getMetricNumber(rowMap, ["Р РµРЅС‚Р°Р±РёР»СЊРЅРѕСЃС‚СЊ Р±РёР·РЅРµСЃР°"], columnIndex),
-      margin: getMetricNumber(rowMap, ["РњР°СЂР¶Р°"], columnIndex),
-      averageCheck: getMetricNumber(rowMap, ["РЎСЂРµРґРЅРёР№ С‡РµРє"], columnIndex),
-      sales: getMetricNumber(rowMap, ["РџСЂРѕРґР°Р¶Рё"], columnIndex),
-      warehouse: getMetricNumber(rowMap, ["РЎРєР»Р°Рґ"], columnIndex),
-      tbuMoney: getMetricNumber(rowMap, ["РўР‘РЈ РІ РґРµРЅСЊРіР°С…"], columnIndex)
+      revenue: getMetricNumber(rowMap, ["Выручка"], columnIndex),
+      cost: getMetricNumber(rowMap, ["Себестоимость"], columnIndex),
+      grossProfit: getMetricNumber(rowMap, ["Валовая прибыль"], columnIndex),
+      operatingExpenses: getMetricNumber(rowMap, ["Операционные расходы"], columnIndex),
+      operatingProfit: getMetricNumber(rowMap, ["Операционная прибыль"], columnIndex),
+      taxes: getMetricNumber(rowMap, ["Налоги и сборы"], columnIndex),
+      netProfit: getMetricNumber(rowMap, ["Чистая прибыль"], columnIndex),
+      productProfitability: getMetricNumber(rowMap, ["Rпр — рентабельность продукции"], columnIndex),
+      businessProfitability: getMetricNumber(rowMap, ["Рентабельность бизнеса"], columnIndex),
+      margin: getMetricNumber(rowMap, ["Маржа"], columnIndex),
+      averageCheck: getMetricNumber(rowMap, ["Средний чек", "Чек"], columnIndex),
+      sales: getMetricNumber(rowMap, ["Продаж", "Продажи"], columnIndex),
+      warehouse: getMetricNumber(rowMap, ["Склад"], columnIndex),
+      tbuMoney: getMetricNumber(rowMap, ["ТБУ в деньгах"], columnIndex)
     }))
     .filter(
       (item) =>
-        hasSnapshotValue(getMetricCell(rowMap, ["Р’С‹СЂСѓС‡РєР°"], item.columnIndex)) ||
-        hasSnapshotValue(getMetricCell(rowMap, ["Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ"], item.columnIndex)) ||
-        hasSnapshotValue(getMetricCell(rowMap, ["РџСЂРѕРґР°Р¶Рё"], item.columnIndex))
+        hasSnapshotValue(getMetricCell(rowMap, ["Выручка"], item.columnIndex)) ||
+        hasSnapshotValue(getMetricCell(rowMap, ["Чистая прибыль"], item.columnIndex)) ||
+        hasSnapshotValue(getMetricCell(rowMap, ["Продаж", "Продажи"], item.columnIndex))
     );
 
   return { series };
@@ -2811,63 +2811,63 @@ function renderMetricsAnalytics(sheet) {
     <div class="analytics-shell">
       <div class="summary-row analytics-kpi-strip mb-3">
         <article class="summary-card">
-          <span>РђРєС‚СѓР°Р»СЊРЅС‹Р№ РјРµСЃСЏС†</span>
+          <span>Актуальный месяц</span>
           <strong>${escapeHtml(latestLabel)}</strong>
         </article>
         <article class="summary-card">
-          <span>Р’С‹СЂСѓС‡РєР°</span>
+          <span>Выручка</span>
           <strong>${formatMoney(latest.revenue)} в‚Ѕ</strong>
         </article>
         <article class="summary-card">
-          <span>Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ</span>
+          <span>Чистая прибыль</span>
           <strong class="${latest.netProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.netProfit)} в‚Ѕ</strong>
         </article>
         <article class="summary-card">
-          <span>РџСЂРѕРґР°Р¶Рё</span>
+          <span>Продажи</span>
           <strong>${formatPlainNumber(latest.sales)}</strong>
         </article>
         <article class="summary-card">
-          <span>РЎСЂРµРґРЅРёР№ С‡РµРє</span>
+          <span>Средний чек</span>
           <strong>${formatMoney(latest.averageCheck)} в‚Ѕ</strong>
         </article>
       </div>
       <div class="subsection-grid analytics-grid">
         <article class="subsection-card analytics-panel">
-          <div class="panel-kicker">Р­РєРѕРЅРѕРјРёРєР° РјРµСЃСЏС†Р°</div>
+          <div class="panel-kicker">Экономика месяца</div>
           <h3>${escapeHtml(latestLabel)}</h3>
           <div class="overview-list">
-            <div class="overview-list-item"><span>РЎРµР±РµСЃС‚РѕРёРјРѕСЃС‚СЊ</span><strong>${formatMoney(latest.cost)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>Р’Р°Р»РѕРІР°СЏ РїСЂРёР±С‹Р»СЊ</span><strong class="${latest.grossProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.grossProfit)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>РћРїРµСЂР°С†РёРѕРЅРЅС‹Рµ СЂР°СЃС…РѕРґС‹</span><strong>${formatMoney(latest.operatingExpenses)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>РћРїРµСЂР°С†РёРѕРЅРЅР°СЏ РїСЂРёР±С‹Р»СЊ</span><strong class="${latest.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.operatingProfit)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>РќР°Р»РѕРіРё Рё СЃР±РѕСЂС‹</span><strong>${formatMoney(latest.taxes)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>РўР‘РЈ РІ РґРµРЅСЊРіР°С…</span><strong>${formatMoney(latest.tbuMoney)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Себестоимость</span><strong>${formatMoney(latest.cost)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Валовая прибыль</span><strong class="${latest.grossProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.grossProfit)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Операционные расходы</span><strong>${formatMoney(latest.operatingExpenses)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Операционная прибыль</span><strong class="${latest.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.operatingProfit)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Налоги и сборы</span><strong>${formatMoney(latest.taxes)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>ТБУ в деньгах</span><strong>${formatMoney(latest.tbuMoney)} в‚Ѕ</strong></div>
           </div>
         </article>
         <article class="subsection-card analytics-panel">
-          <div class="panel-kicker">РљР°С‡РµСЃС‚РІРѕ Р±РёР·РЅРµСЃР°</div>
-          <h3>РњР°СЂР¶Р° Рё СЂРµРЅС‚Р°Р±РµР»СЊРЅРѕСЃС‚СЊ</h3>
+          <div class="panel-kicker">Качество бизнеса</div>
+          <h3>Маржа и рентабельность</h3>
           <div class="analytics-chip-row">
-            <span class="analytics-chip">РњР°СЂР¶Р°: <strong>${formatPercentFromDecimal(latest.margin)}</strong></span>
-            <span class="analytics-chip">RРїСЂ: <strong>${formatPercentFromDecimal(latest.productProfitability)}</strong></span>
-            <span class="analytics-chip">Р РµРЅС‚Р°Р±РµР»СЊРЅРѕСЃС‚СЊ Р±РёР·РЅРµСЃР°: <strong>${formatPercentFromDecimal(latest.businessProfitability)}</strong></span>
-            <span class="analytics-chip">РЎРєР»Р°Рґ: <strong>${formatMoney(latest.warehouse)} в‚Ѕ</strong></span>
+            <span class="analytics-chip">Маржа: <strong>${formatPercentFromDecimal(latest.margin)}</strong></span>
+            <span class="analytics-chip">Рентабельность продукции: <strong>${formatPercentFromDecimal(latest.productProfitability)}</strong></span>
+            <span class="analytics-chip">Рентабельность бизнеса: <strong>${formatPercentFromDecimal(latest.businessProfitability)}</strong></span>
+            <span class="analytics-chip">Склад: <strong>${formatMoney(latest.warehouse)} в‚Ѕ</strong></span>
           </div>
-          <div class="analytics-footnote">РџРѕРєР°Р·Р°С‚РµР»Рё РІР·СЏС‚С‹ РёР· РїРѕСЃР»РµРґРЅРµРіРѕ Р·Р°РїРѕР»РЅРµРЅРЅРѕРіРѕ РјРµСЃСЏС†Р° Р»РёСЃС‚Р° Рё СЃРѕС…СЂР°РЅСЏСЋС‚ РёСЃС…РѕРґРЅСѓСЋ С„РѕСЂРјСѓР»СЊРЅСѓСЋ Р»РѕРіРёРєСѓ.</div>
+          <div class="analytics-footnote">Показатели собраны в структуру платформы и больше не отображаются как сырая excel-таблица.</div>
         </article>
         <article class="subsection-card analytics-panel analytics-panel-wide">
-          <div class="panel-kicker">РџРѕСЃР»РµРґРЅРёРµ РјРµСЃСЏС†С‹</div>
-          <h3>Р”РёРЅР°РјРёРєР° СѓРїСЂР°РІР»РµРЅС‡РµСЃРєРёС… РјРµС‚СЂРёРє</h3>
+          <div class="panel-kicker">Последние месяцы</div>
+          <h3>Динамика управленческих метрик</h3>
           <div class="table-shell mt-2">
             <table class="table table-sm align-middle analytics-mini-table">
               <thead>
                 <tr>
-                  <th>РњРµСЃСЏС†</th>
-                  <th class="text-end">Р’С‹СЂСѓС‡РєР°</th>
-                  <th class="text-end">РћРїРµСЂ. РїСЂРёР±С‹Р»СЊ</th>
-                  <th class="text-end">Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ</th>
-                  <th class="text-end">РџСЂРѕРґР°Р¶Рё</th>
-                  <th class="text-end">РЎСЂРµРґРЅРёР№ С‡РµРє</th>
+                  <th>Месяц</th>
+                  <th class="text-end">Выручка</th>
+                  <th class="text-end">Опер. прибыль</th>
+                  <th class="text-end">Чистая прибыль</th>
+                  <th class="text-end">Продажи</th>
+                  <th class="text-end">Средний чек</th>
                 </tr>
               </thead>
               <tbody>
@@ -3541,7 +3541,7 @@ function getSnapshotPrimaryLabel(row) {
 }
 
 function renderSnapshotPrimaryDeck(sectionKey, rows) {
-  if (!["metrics", "forecast"].includes(sectionKey)) return "";
+  if (!["forecast"].includes(sectionKey)) return "";
   const cards = rows
     .map((row) => {
       const label = getSnapshotPrimaryLabel(row);

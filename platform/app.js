@@ -5,7 +5,7 @@ import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-sui
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260417-platform-suite51";
+const PLATFORM_BUILD = "20260418-platform-suite52";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -179,8 +179,8 @@ const MODULES = {
     }
   },
   light2: {
-    title: "ДОМ НЕОНА",
-    subtitle: "Финансовый и операционный контур компании внутри платформы.",
+    title: "Метрики",
+    subtitle: "Ключевые метрики, финансы и операционные показатели компании.",
     type: "embed",
     src: () => `./light2/index.html?v=${PLATFORM_BUILD}`
   },
@@ -1505,7 +1505,7 @@ function getModuleStageLabel(moduleKey) {
     production: "Живой рабочий модуль",
     my_calculator: "Рабочий модуль",
     partner_calculator: "Рабочий модуль",
-      light2: "Финансовый контур",
+      light2: "Метрики компании",
     board: "Совместная доска",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",

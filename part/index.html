@@ -370,6 +370,74 @@ function setSyncStatus(text, isError = false) {
     el.style.color = isError ? '#c0392b' : '#6c757d';
 }
 
+function createDefaultState() {
+    const defaultTab = { id: 'tab1', name: 'Вывеска 1', data: createTabData(), hidden: false };
+    return { activeTabId: 'tab1', tabs: [defaultTab], nextTabNum: 2, lastEditedAt: 0 };
+}
+
+function normalizeState(rawState) {
+    const fallback = createDefaultState();
+    const base = rawState && typeof rawState === 'object' ? rawState : fallback;
+    const tabs = Array.isArray(base.tabs) && base.tabs.length
+        ? base.tabs.map((tab, index) => ({
+            id: tab?.id || `tab${index + 1}`,
+            name: (String(tab?.name || '').trim() || `Вывеска ${index + 1}`),
+            data: createTabData(tab?.data),
+            hidden: !!tab?.hidden
+        }))
+        : fallback.tabs;
+
+    if (!tabs.some(tab => !tab.hidden)) {
+        tabs[0].hidden = false;
+    }
+
+    const visibleTabs = tabs.filter(tab => !tab.hidden);
+    const activeTabId = visibleTabs.some(tab => tab.id === base.activeTabId)
+        ? base.activeTabId
+        : visibleTabs[0].id;
+
+    return {
+        activeTabId,
+        tabs,
+        nextTabNum: Math.max(Number(base.nextTabNum) || 2, tabs.length + 1),
+        lastEditedAt: Number(base.lastEditedAt) || 0
+    };
+}
+
+function touchState(nextState = state) {
+    nextState.lastEditedAt = Date.now();
+    return nextState;
+}
+
+function persistStateSnapshot(nextState = state) {
+    state = normalizeState(touchState(nextState));
+    persistLocalState(state);
+    if (syncManager && !suppressCloudSync) {
+        syncManager.scheduleSave();
+    }
+}
+
+function applyRemoteState(nextState) {
+    const incomingState = normalizeState(nextState);
+    if ((incomingState.lastEditedAt || 0) < (state?.lastEditedAt || 0)) {
+        if (syncManager && !suppressCloudSync) {
+            syncManager.scheduleSave();
+        }
+        return;
+    }
+    suppressCloudSync = true;
+    try {
+        state = incomingState;
+        persistLocalState(state);
+        renderTabs();
+        renderCalculator();
+        loadActiveTabData();
+        attachGlobalListeners();
+    } finally {
+        suppressCloudSync = false;
+    }
+}
+
 function applyRemoteState(nextState) {
     suppressCloudSync = true;
     try {
