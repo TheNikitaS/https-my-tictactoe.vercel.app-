@@ -52,6 +52,21 @@
         #required-power-display { font-weight: bold; color: #c0392b; }
         .sync-status { padding: 0.35rem 0.75rem; color: #6c757d; font-size: 0.85rem; background: #eef2f6; border-radius: 0 0 8px 8px; }
         .toolbar-note { color: #6c757d; font-size: 0.82rem; }
+        .action-modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+        .action-modal-backdrop.show { display: flex; }
+        .action-modal-card { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow: auto; background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22); border: 1px solid rgba(148, 163, 184, 0.3); }
+        .action-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 10px; border-bottom: 1px solid #e5e7eb; }
+        .action-modal-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1f2937; }
+        .action-modal-close { border: 0; background: transparent; color: #6b7280; font-size: 1.5rem; line-height: 1; cursor: pointer; }
+        .action-modal-close:hover { color: #111827; }
+        .action-modal-body { padding: 16px 20px; }
+        .action-modal-message { margin-bottom: 14px; color: #374151; line-height: 1.45; }
+        .action-modal-fields { display: grid; gap: 12px; }
+        .action-modal-field label { display: block; margin-bottom: 6px; color: #374151; font-size: 0.9rem; font-weight: 600; }
+        .action-modal-field .form-control,
+        .action-modal-field .form-select { border-radius: 12px; }
+        .action-modal-actions { display: flex; justify-content: flex-end; gap: 10px; padding: 0 20px 18px; }
+        .action-modal-actions .btn { min-width: 110px; border-radius: 12px; }
     </style>
 </head>
 <body>
@@ -202,6 +217,66 @@ const BASE_CATALOG = db.map((item) => ({
     pricingKind: inferPricingKind(item)
 }));
 
+function repairMojibakeText(value) {
+    if (typeof value !== 'string') return value;
+    if (!/[ÐÑРСЃ]/.test(value)) return value;
+    try {
+        const repaired = decodeURIComponent(escape(value));
+        return /[А-Яа-яЁё]/.test(repaired) ? repaired : value;
+    } catch {
+        return value;
+    }
+}
+
+function repairMojibakeDom(root = document.body) {
+    if (!root) return;
+    const repairNode = (node) => {
+        if (!node) return;
+        if (node.nodeType === Node.TEXT_NODE) {
+            const nextValue = repairMojibakeText(node.nodeValue);
+            if (nextValue !== node.nodeValue) node.nodeValue = nextValue;
+            return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        ['placeholder', 'title', 'aria-label', 'value'].forEach((attr) => {
+            if (!node.hasAttribute?.(attr)) return;
+            const currentValue = node.getAttribute(attr);
+            const nextValue = repairMojibakeText(currentValue);
+            if (nextValue !== currentValue) node.setAttribute(attr, nextValue);
+        });
+        node.childNodes.forEach(repairNode);
+    };
+    repairNode(root);
+}
+
+function scheduleMojibakeRepair(root = document.body) {
+    window.requestAnimationFrame(() => repairMojibakeDom(root));
+}
+
+function installMojibakeRepairObserver() {
+    if (window.__calculatorMojibakeObserverInstalled) return;
+    window.__calculatorMojibakeObserverInstalled = true;
+    const observer = new MutationObserver((records) => {
+        records.forEach((record) => {
+            if (record.type === 'characterData') {
+                repairMojibakeDom(record.target?.parentNode || document.body);
+                return;
+            }
+            record.addedNodes.forEach((node) => repairMojibakeDom(node));
+            if (record.type === 'attributes') {
+                repairMojibakeDom(record.target);
+            }
+        });
+    });
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['placeholder', 'title', 'aria-label', 'value']
+    });
+}
+
 function inferPricingKind(item) {
     if (item.category === 'Материалы' && item.subcategory === 'Производство подложки') return 'assembly';
     if (item.category === 'Материалы') return 'goods';
@@ -280,6 +355,200 @@ function iconMarkup(type) {
         return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>';
     }
     return '';
+}
+
+function repairMojibakeText(value) {
+    if (typeof value !== 'string') return value;
+    if (!/[ÐÑРСЃЃв]/.test(value)) return value;
+    try {
+        let repaired = decodeURIComponent(escape(value));
+        if (/[ÐÑРСЃЃв]/.test(repaired) && repaired !== value) {
+            try {
+                const repairedTwice = decodeURIComponent(escape(repaired));
+                if (/[А-Яа-яЁё₽]/.test(repairedTwice)) repaired = repairedTwice;
+            } catch {}
+        }
+        return /[А-Яа-яЁё₽]/.test(repaired) ? repaired : value;
+    } catch {
+        return value;
+    }
+}
+
+function repairMojibakeDom(root = document.body) {
+    if (!root) return;
+    const repairNode = (node) => {
+        if (!node) return;
+        if (node.nodeType === Node.TEXT_NODE) {
+            const nextValue = repairMojibakeText(node.nodeValue);
+            if (nextValue !== node.nodeValue) node.nodeValue = nextValue;
+            return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE) return;
+        ['title', 'placeholder', 'aria-label', 'value'].forEach((attr) => {
+            if (!node.hasAttribute?.(attr)) return;
+            const currentValue = node.getAttribute(attr);
+            const nextValue = repairMojibakeText(currentValue);
+            if (nextValue !== currentValue) node.setAttribute(attr, nextValue);
+        });
+        if (node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) {
+            const nextValue = repairMojibakeText(node.value);
+            if (nextValue !== node.value) node.value = nextValue;
+        }
+        node.childNodes?.forEach(repairNode);
+    };
+    repairNode(root);
+}
+
+function scheduleMojibakeRepair(root = document.body) {
+    window.requestAnimationFrame(() => repairMojibakeDom(root));
+}
+
+function installMojibakeRepairObserver() {
+    if (window.__calculatorMojibakeObserverInstalled) return;
+    window.__calculatorMojibakeObserverInstalled = true;
+    const observer = new MutationObserver((records) => {
+        records.forEach((record) => {
+            if (record.type === 'characterData') {
+                repairMojibakeDom(record.target?.parentNode || document.body);
+                return;
+            }
+            record.addedNodes?.forEach((node) => repairMojibakeDom(node));
+        });
+    });
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+}
+
+function ensureActionModal() {
+    let backdrop = document.getElementById('action-modal-backdrop');
+    if (backdrop) return backdrop;
+
+    backdrop = document.createElement('div');
+    backdrop.id = 'action-modal-backdrop';
+    backdrop.className = 'action-modal-backdrop';
+    backdrop.innerHTML = `
+        <div class="action-modal-card" role="dialog" aria-modal="true" aria-labelledby="action-modal-title">
+            <div class="action-modal-header">
+                <h3 class="action-modal-title" id="action-modal-title">Действие</h3>
+                <button type="button" class="action-modal-close" data-dialog-close aria-label="Закрыть">×</button>
+            </div>
+            <div class="action-modal-body">
+                <div class="action-modal-message" id="action-modal-message"></div>
+                <form class="action-modal-fields" id="action-modal-form"></form>
+            </div>
+            <div class="action-modal-actions">
+                <button type="button" class="btn btn-outline-secondary" data-dialog-cancel>Отмена</button>
+                <button type="button" class="btn btn-dark" data-dialog-confirm>Сохранить</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(backdrop);
+    repairMojibakeDom(backdrop);
+    return backdrop;
+}
+
+function openActionDialog({ title, message = '', fields = [], confirmText = 'Сохранить', cancelText = 'Отмена', danger = false, hideCancel = false }) {
+    const backdrop = ensureActionModal();
+    const titleEl = backdrop.querySelector('#action-modal-title');
+    const messageEl = backdrop.querySelector('#action-modal-message');
+    const formEl = backdrop.querySelector('#action-modal-form');
+    const confirmBtn = backdrop.querySelector('[data-dialog-confirm]');
+    const cancelBtn = backdrop.querySelector('[data-dialog-cancel]');
+    const closeBtn = backdrop.querySelector('[data-dialog-close]');
+
+    titleEl.textContent = title;
+    messageEl.textContent = message;
+    messageEl.style.display = message ? 'block' : 'none';
+    confirmBtn.textContent = confirmText;
+    confirmBtn.className = `btn ${danger ? 'btn-danger' : 'btn-dark'}`;
+    cancelBtn.textContent = cancelText;
+    cancelBtn.style.display = hideCancel ? 'none' : '';
+    formEl.innerHTML = '';
+
+    fields.forEach((field) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'action-modal-field';
+        const label = document.createElement('label');
+        label.textContent = field.label;
+        label.htmlFor = `dialog-field-${field.name}`;
+        wrap.appendChild(label);
+
+        let input;
+        if (field.type === 'select') {
+            input = document.createElement('select');
+            input.className = 'form-select';
+            (field.options || []).forEach((option) => {
+                const optionEl = document.createElement('option');
+                optionEl.value = option.value;
+                optionEl.textContent = option.label;
+                optionEl.selected = String(option.value) === String(field.value ?? '');
+                input.appendChild(optionEl);
+            });
+        } else {
+            input = document.createElement('input');
+            input.type = field.type || 'text';
+            input.className = 'form-control';
+            input.value = field.value ?? '';
+            if (field.placeholder) input.placeholder = field.placeholder;
+            if (field.step != null) input.step = field.step;
+            if (field.min != null) input.min = field.min;
+        }
+        input.id = `dialog-field-${field.name}`;
+        input.dataset.fieldName = field.name;
+        if (field.required !== false) input.required = true;
+        wrap.appendChild(input);
+        formEl.appendChild(wrap);
+    });
+
+    repairMojibakeDom(backdrop);
+    backdrop.classList.add('show');
+
+    return new Promise((resolve) => {
+        const close = (result) => {
+            backdrop.classList.remove('show');
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+            closeBtn.onclick = null;
+            backdrop.onclick = null;
+            backdrop.onkeydown = null;
+            resolve(result);
+        };
+
+        confirmBtn.onclick = () => {
+            const values = {};
+            for (const field of fields) {
+                const input = formEl.querySelector(`[data-field-name="${field.name}"]`);
+                if (!input) continue;
+                if (!input.reportValidity()) return;
+                values[field.name] = input.value;
+            }
+            close(values);
+        };
+        cancelBtn.onclick = () => close(null);
+        closeBtn.onclick = () => close(null);
+        backdrop.onclick = (event) => {
+            if (event.target === backdrop) close(null);
+        };
+        backdrop.onkeydown = (event) => {
+            if (event.key === 'Escape') close(null);
+            if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA') {
+                event.preventDefault();
+                confirmBtn.click();
+            }
+        };
+
+        setTimeout(() => {
+            formEl.querySelector('input, select, textarea')?.focus();
+        }, 0);
+    });
+}
+
+function showAlertDialog(title, message) {
+    return openActionDialog({ title, message, confirmText: 'Понятно', hideCancel: true });
+}
+
+function showConfirmDialog(title, message, danger = false) {
+    return openActionDialog({ title, message, confirmText: danger ? 'Удалить' : 'Подтвердить', cancelText: 'Отмена', danger })
+        .then((result) => Boolean(result));
 }
 
 function escapeHtml(value) {
@@ -424,6 +693,8 @@ async function setupCloudSync() {
 
 // --- Initialization and State Management ---
 async function init() {
+    installMojibakeRepairObserver();
+    scheduleMojibakeRepair(document.body);
     const savedState = localStorage.getItem(sessionKey);
     state = normalizeState(savedState ? JSON.parse(savedState) : createDefaultState());
     renderTabs();
@@ -431,6 +702,7 @@ async function init() {
     loadActiveTabData();
     attachGlobalListeners();
     await setupCloudSync();
+    scheduleMojibakeRepair(document.body);
 }
 
 function saveState() {
@@ -561,6 +833,7 @@ function renderTabs() {
 
     hiddenWrap.appendChild(select);
     hiddenWrap.appendChild(showBtn);
+    scheduleMojibakeRepair(hiddenWrap);
     return;
 
     hiddenTabs.forEach(tab => {
@@ -646,7 +919,7 @@ function copyTab(tabId) {
 function hideTab(tabId) {
     const visibleTabs = state.tabs.filter(tab => !tab.hidden);
     if (visibleTabs.length <= 1) {
-        alert('Нельзя скрыть последнюю видимую вкладку.');
+        void showAlertDialog('Нельзя скрыть вкладку', 'Последняя видимая вкладка должна остаться открытой.');
         return;
     }
 
@@ -682,16 +955,21 @@ function showTab(tabId) {
     loadActiveTabData();
 }
 
-function deleteTab(tabId) {
-    if (state.tabs.length <= 1) { alert("Нельзя удалить последнюю вкладку."); return; }
-    if (confirm(`Удалить вкладку "${state.tabs.find(t => t.id === tabId).name}"?`)) {
-        saveActiveTabData();
-        state.tabs = state.tabs.filter(t => t.id !== tabId);
-        state.activeTabId = state.tabs.find(t => !t.hidden)?.id || state.tabs[0].id;
-        persistStateSnapshot();
-        renderTabs();
-        loadActiveTabData();
+async function deleteTab(tabId) {
+    if (state.tabs.length <= 1) {
+        await showAlertDialog('Нельзя удалить вкладку', 'Последняя вкладка должна остаться в калькуляторе.');
+        return;
     }
+    const tab = state.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    const confirmed = await showConfirmDialog('Удалить вкладку', `Удалить вкладку "${tab.name}"?`, true);
+    if (!confirmed) return;
+    saveActiveTabData();
+    state.tabs = state.tabs.filter(t => t.id !== tabId);
+    state.activeTabId = state.tabs.find(t => !t.hidden)?.id || state.tabs[0].id;
+    persistStateSnapshot();
+    renderTabs();
+    loadActiveTabData();
 }
 
 function switchTab(tabId) {
@@ -804,6 +1082,7 @@ function renderCalculator() {
                 </div>
             </div>`;
     });
+    scheduleMojibakeRepair(container);
 }
 
 function attachGlobalListeners() {
@@ -841,6 +1120,58 @@ function showSelectedHiddenItem() {
     const item = activeTab.data.catalog.find((entry) => entry.id === select.value);
     if (!item) return;
     item.hidden = false;
+    persistStateSnapshot();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
+}
+
+async function deleteCatalogItem(itemId) {
+    const activeTab = getActiveTab();
+    if (!activeTab) return;
+    const item = activeTab.data.catalog.find((entry) => entry.id === itemId);
+    if (!item) return;
+    const confirmed = await showConfirmDialog('Удалить товар', `Удалить товар "${item.name}" из этой вкладки?`, true);
+    if (!confirmed) return;
+    item.deleted = true;
+    item.hidden = true;
+    delete activeTab.data.quantities[itemId];
+    persistStateSnapshot();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
+}
+
+async function addCatalogItem() {
+    const activeTab = getActiveTab();
+    if (!activeTab) return;
+    const values = await openActionDialog({
+        title: 'Новый товар',
+        message: 'Добавьте товар и выберите, по какой логике он участвует в расчёте.',
+        confirmText: 'Добавить',
+        fields: [
+            { name: 'name', label: 'Название товара', value: '', placeholder: 'Например: Крепёж', required: true },
+            { name: 'category', label: 'Категория', value: 'Материалы', required: true },
+            { name: 'subcategory', label: 'Подкатегория', value: 'Прочее', required: true },
+            { name: 'unit', label: 'Единица измерения', value: 'шт', required: true },
+            { name: 'cost', label: 'Закупочная цена', type: 'number', value: 0, min: 0, step: '0.01', required: true },
+            { name: 'pricingKind', label: 'Логика расчёта', type: 'select', value: inferPricingKind({ category: 'Материалы', subcategory: 'Прочее' }), options: ITEM_PRICING_OPTIONS.map((item) => ({ value: item.key, label: item.label })) }
+        ]
+    });
+    if (!values) return;
+    const safePricingKind = ITEM_PRICING_OPTIONS.some((item) => item.key === values.pricingKind) ? values.pricingKind : 'goods';
+    activeTab.data.catalog.push({
+        id: `CUSTOM_${Date.now()}`,
+        name: values.name.trim(),
+        category: values.category.trim(),
+        subcategory: values.subcategory.trim(),
+        unit: values.unit.trim(),
+        cost: Number(values.cost) || 0,
+        hidden: false,
+        deleted: false,
+        custom: true,
+        pricingKind: safePricingKind
+    });
     persistStateSnapshot();
     renderCalculator();
     loadActiveTabData();

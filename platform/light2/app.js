@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260418-light2-safe55";
+const LIGHT2_BUILD = "20260418-light2-safe56";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -1388,6 +1388,7 @@ function renderLiveSectionBuilder(sectionKey) {
       </div>
     </div>
   `;
+  scheduleMojibakeRepair(host);
 }
 
 function rerenderLiveSection(sectionKey) {
@@ -1859,10 +1860,16 @@ function getWorkbookDisplay(row, col) {
 
 function repairMojibakeText(value) {
   if (typeof value !== "string") return value;
-  if (!/[ÐÑРСЃЃ]/.test(value)) return value;
+  if (!/[ÐÑРСЃЃв]/.test(value)) return value;
   try {
-    const repaired = decodeURIComponent(escape(value));
-    return /[А-Яа-яЁё]/.test(repaired) ? repaired : value;
+    let repaired = decodeURIComponent(escape(value));
+    if (/[ÐÑРСЃЃв]/.test(repaired) && repaired !== value) {
+      try {
+        const repairedTwice = decodeURIComponent(escape(repaired));
+        if (/[А-Яа-яЁё₽]/.test(repairedTwice)) repaired = repairedTwice;
+      } catch {}
+    }
+    return /[А-Яа-яЁё₽]/.test(repaired) ? repaired : value;
   } catch {
     return value;
   }
