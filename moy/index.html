@@ -1191,7 +1191,7 @@ function hideCatalogItem(itemId) {
     attachGlobalListeners();
 }
 
-function deleteCatalogItem(itemId) {
+function legacyDeleteCatalogItem(itemId) {
     const activeTab = getActiveTab();
     if (!activeTab) return;
     const item = activeTab.data.catalog.find((entry) => entry.id === itemId);
@@ -1206,7 +1206,7 @@ function deleteCatalogItem(itemId) {
     attachGlobalListeners();
 }
 
-function addCatalogItem() {
+function legacyAddCatalogItem() {
     const activeTab = getActiveTab();
     if (!activeTab) return;
     const name = prompt('Название нового товара');

@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260418-platform-suite56";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260418-platform-suite56";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260418-platform-suite57";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260418-platform-suite57";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260418-platform-suite56";
+const PLATFORM_BUILD = "20260418-platform-suite57";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -126,10 +126,19 @@ let mojibakeRepairObserver = null;
 
 function repairMojibakeText(value) {
   if (typeof value !== "string" || !value) return value;
-  if (!/[ÐÑРС]/.test(value)) return value;
+  if (!/[ÐÑРСЃЃв]/.test(value)) return value;
   try {
-    const repaired = decodeURIComponent(escape(value));
-    return /[А-Яа-яЁё]/.test(repaired) ? repaired : value;
+    let repaired = decodeURIComponent(escape(value));
+    if (/[ÐÑРСЃЃв]/.test(repaired) && repaired !== value) {
+      try {
+        const repairedTwice = decodeURIComponent(escape(repaired));
+        if (/[А-Яа-яЁё₽]/.test(repairedTwice)) repaired = repairedTwice;
+      } catch {
+        // Ignore second-pass failures.
+      }
+    }
+    repaired = repaired.replace(/в‚Ѕ/g, "₽").replace(/вЂ”/g, "—").replace(/вЂў/g, "•");
+    return /[А-Яа-яЁё₽]/.test(repaired) ? repaired : value;
   } catch {
     return value;
   }

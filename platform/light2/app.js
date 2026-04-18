@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260418-light2-safe56";
+const LIGHT2_BUILD = "20260418-light2-safe57";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -2856,7 +2856,7 @@ function renderLeadgenAnalytics(sheet) {
   return `
     <div class="analytics-shell">
       <div class="scope-note mb-3">
-        РљР°РЅР°Р»С‹ СЂР°Р·Р±РёСЂР°СЋС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РёР· Р»РёСЃС‚Р°. РЎРІРµСЂС…Сѓ РїРѕРєР°Р·Р°РЅС‹ РїРѕСЃР»РµРґРЅРёРµ Р·Р°РїРѕР»РЅРµРЅРЅС‹Рµ РјРµСЃСЏС†С‹ РїРѕ РєР°Р¶РґРѕРјСѓ СЂРµРєР»Р°РјРЅРѕРјСѓ Р±Р»РѕРєСѓ, СЃРЅРёР·Сѓ РѕСЃС‚Р°С‘С‚СЃСЏ РёСЃС…РѕРґРЅР°СЏ С‚Р°Р±Р»РёС†Р° РґР»СЏ СЃРІРµСЂРєРё.
+        Каналы разбираются автоматически из листа. Сверху показаны последние заполненные месяцы по каждому рекламному блоку, снизу остаётся исходная таблица для сверки.
       </div>
       <div class="subsection-grid analytics-grid">${cards}</div>
     </div>
@@ -2880,11 +2880,11 @@ function renderMetricsAnalytics(sheet) {
         </article>
         <article class="summary-card">
           <span>Выручка</span>
-          <strong>${formatMoney(latest.revenue)} в‚Ѕ</strong>
+          <strong>${formatMoney(latest.revenue)} ₽</strong>
         </article>
         <article class="summary-card">
           <span>Чистая прибыль</span>
-          <strong class="${latest.netProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.netProfit)} в‚Ѕ</strong>
+          <strong class="${latest.netProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.netProfit)} ₽</strong>
         </article>
         <article class="summary-card">
           <span>Продажи</span>
@@ -2900,12 +2900,12 @@ function renderMetricsAnalytics(sheet) {
           <div class="panel-kicker">Экономика месяца</div>
           <h3>${escapeHtml(latestLabel)}</h3>
           <div class="overview-list">
-            <div class="overview-list-item"><span>Себестоимость</span><strong>${formatMoney(latest.cost)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>Валовая прибыль</span><strong class="${latest.grossProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.grossProfit)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>Операционные расходы</span><strong>${formatMoney(latest.operatingExpenses)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>Операционная прибыль</span><strong class="${latest.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.operatingProfit)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>Налоги и сборы</span><strong>${formatMoney(latest.taxes)} в‚Ѕ</strong></div>
-            <div class="overview-list-item"><span>ТБУ в деньгах</span><strong>${formatMoney(latest.tbuMoney)} в‚Ѕ</strong></div>
+            <div class="overview-list-item"><span>Себестоимость</span><strong>${formatMoney(latest.cost)} ₽</strong></div>
+            <div class="overview-list-item"><span>Валовая прибыль</span><strong class="${latest.grossProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.grossProfit)} ₽</strong></div>
+            <div class="overview-list-item"><span>Операционные расходы</span><strong>${formatMoney(latest.operatingExpenses)} ₽</strong></div>
+            <div class="overview-list-item"><span>Операционная прибыль</span><strong class="${latest.operatingProfit >= 0 ? "amount-positive" : "amount-negative"}">${formatMoney(latest.operatingProfit)} ₽</strong></div>
+            <div class="overview-list-item"><span>Налоги и сборы</span><strong>${formatMoney(latest.taxes)} ₽</strong></div>
+            <div class="overview-list-item"><span>ТБУ в деньгах</span><strong>${formatMoney(latest.tbuMoney)} ₽</strong></div>
           </div>
         </article>
         <article class="subsection-card analytics-panel">
@@ -2915,7 +2915,7 @@ function renderMetricsAnalytics(sheet) {
             <span class="analytics-chip">Маржа: <strong>${formatPercentFromDecimal(latest.margin)}</strong></span>
             <span class="analytics-chip">Рентабельность продукции: <strong>${formatPercentFromDecimal(latest.productProfitability)}</strong></span>
             <span class="analytics-chip">Рентабельность бизнеса: <strong>${formatPercentFromDecimal(latest.businessProfitability)}</strong></span>
-            <span class="analytics-chip">Склад: <strong>${formatMoney(latest.warehouse)} в‚Ѕ</strong></span>
+            <span class="analytics-chip">Склад: <strong>${formatMoney(latest.warehouse)} ₽</strong></span>
           </div>
           <div class="analytics-footnote">Показатели собраны в структуру платформы и больше не отображаются как сырая excel-таблица.</div>
         </article>

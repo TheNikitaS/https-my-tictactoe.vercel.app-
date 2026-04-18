@@ -410,10 +410,19 @@ function sumBy(list, mapper) {
 
 function repairMojibakeText(value) {
   if (typeof value !== "string") return value;
-  if (!/[ÐÑРСЃЃ]/.test(value)) return value;
+  if (!/[ÐÑРСЃЃв]/.test(value)) return value;
   try {
-    const repaired = decodeURIComponent(escape(value));
-    return /[А-Яа-яЁё]/.test(repaired) ? repaired : value;
+    let repaired = decodeURIComponent(escape(value));
+    if (/[ÐÑРСЃЃв]/.test(repaired) && repaired !== value) {
+      try {
+        const repairedTwice = decodeURIComponent(escape(repaired));
+        if (/[А-Яа-яЁё₽]/.test(repairedTwice)) repaired = repairedTwice;
+      } catch {
+        // Ignore second-pass failures.
+      }
+    }
+    repaired = repaired.replace(/в‚Ѕ/g, "₽").replace(/вЂ”/g, "—").replace(/вЂў/g, "•");
+    return /[А-Яа-яЁё₽]/.test(repaired) ? repaired : value;
   } catch {
     return value;
   }
