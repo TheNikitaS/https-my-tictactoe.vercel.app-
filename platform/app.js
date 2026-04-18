@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260418-platform-suite53";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260418-platform-suite53";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260418-platform-suite54";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260418-platform-suite54";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260418-platform-suite53";
+const PLATFORM_BUILD = "20260418-platform-suite54";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -121,6 +121,90 @@ const STATE = {
   }
 };
 
+let mojibakeRepairQueued = false;
+let mojibakeRepairObserver = null;
+
+function repairMojibakeText(value) {
+  if (typeof value !== "string" || !value) return value;
+  if (!/[ÐÑРС]/.test(value)) return value;
+  try {
+    const repaired = decodeURIComponent(escape(value));
+    return /[А-Яа-яЁё]/.test(repaired) ? repaired : value;
+  } catch {
+    return value;
+  }
+}
+
+function repairMojibakeDom(root = document.body) {
+  if (!root) return;
+  const container = root.nodeType === Node.ELEMENT_NODE ? root : document.body;
+  if (!container) return;
+
+  const textWalker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const parentTag = node.parentElement?.tagName;
+      if (!node.nodeValue?.trim()) return NodeFilter.FILTER_REJECT;
+      if (parentTag && ["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA"].includes(parentTag)) {
+        return NodeFilter.FILTER_REJECT;
+      }
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+
+  const textNodes = [];
+  while (textWalker.nextNode()) {
+    textNodes.push(textWalker.currentNode);
+  }
+  textNodes.forEach((node) => {
+    const repaired = repairMojibakeText(node.nodeValue);
+    if (repaired && repaired !== node.nodeValue) {
+      node.nodeValue = repaired;
+    }
+  });
+
+  const attrTargets = container.querySelectorAll?.("[placeholder],[title],[aria-label],[value]") || [];
+  attrTargets.forEach((element) => {
+    ["placeholder", "title", "aria-label"].forEach((attr) => {
+      if (!element.hasAttribute(attr)) return;
+      const current = element.getAttribute(attr);
+      const repaired = repairMojibakeText(current);
+      if (repaired && repaired !== current) {
+        element.setAttribute(attr, repaired);
+      }
+    });
+    if (["INPUT", "BUTTON", "OPTION"].includes(element.tagName) && element.hasAttribute("value")) {
+      const currentValue = element.getAttribute("value");
+      const repairedValue = repairMojibakeText(currentValue);
+      if (repairedValue && repairedValue !== currentValue) {
+        element.setAttribute("value", repairedValue);
+      }
+    }
+  });
+}
+
+function scheduleMojibakeRepair(root = document.body) {
+  if (mojibakeRepairQueued) return;
+  mojibakeRepairQueued = true;
+  window.requestAnimationFrame(() => {
+    mojibakeRepairQueued = false;
+    repairMojibakeDom(root);
+  });
+}
+
+function installMojibakeRepairObserver() {
+  if (mojibakeRepairObserver || !document.body) return;
+  mojibakeRepairObserver = new MutationObserver(() => {
+    scheduleMojibakeRepair(document.body);
+  });
+  mojibakeRepairObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+    attributeFilter: ["placeholder", "title", "aria-label", "value"]
+  });
+}
+
 const MODULES = {
   dashboard: {
     title: "Показатели",
@@ -167,7 +251,7 @@ const MODULES = {
     title: "Мой калькулятор",
     subtitle: "Личный расчет вывесок и связанные вкладки.",
     type: "embed",
-    src: () => "../moy/index.html"
+    src: () => `../moy/index.html?v=${PLATFORM_BUILD}`
   },
   partner_calculator: {
     title: "Партнерский калькулятор",
@@ -175,7 +259,9 @@ const MODULES = {
     type: "embed",
     src: () => {
       const slug = getCurrentPartnerSlug();
-      return slug ? `../part/index.html?partner=${encodeURIComponent(slug)}` : "../part/index.html";
+      return slug
+        ? `../part/index.html?v=${PLATFORM_BUILD}&partner=${encodeURIComponent(slug)}`
+        : `../part/index.html?v=${PLATFORM_BUILD}`;
     }
   },
   light2: {
@@ -3854,6 +3940,8 @@ function bindAppEvents() {
 }
 
 async function init() {
+  installMojibakeRepairObserver();
+  scheduleMojibakeRepair(document.body);
   bindAuthEvents();
   bindAppEvents();
 

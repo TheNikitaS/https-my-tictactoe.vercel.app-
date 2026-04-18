@@ -306,6 +306,15 @@ function iconMarkup(type) {
     return '';
 }
 
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 function syncCatalogFromDom(activeTab) {
     if (!activeTab?.data?.catalog) return;
     const catalogById = new Map(activeTab.data.catalog.map((item) => [item.id, item]));
@@ -316,51 +325,12 @@ function syncCatalogFromDom(activeTab) {
     });
 }
 
-function createDefaultState() {
-    return { activeTabId: 'tab1', tabs: [{ id: 'tab1', name: 'Вывеска 1', data: createTabData(), hidden: false }], nextTabNum: 2 };
-}
-
-function normalizeState(rawState) {
-    const fallback = createDefaultState();
-    const base = rawState && typeof rawState === 'object' ? rawState : fallback;
-    const tabs = Array.isArray(base.tabs) && base.tabs.length
-        ? base.tabs.map((tab, index) => ({
-            id: tab?.id || `tab${index + 1}`,
-            name: (String(tab?.name || '').trim() || `Вывеска ${index + 1}`),
-            data: createTabData(tab?.data),
-            hidden: !!tab?.hidden
-        }))
-        : fallback.tabs;
-
-    if (!tabs.some(tab => !tab.hidden)) {
-        tabs[0].hidden = false;
-    }
-
-    const visibleTabs = tabs.filter(tab => !tab.hidden);
-    const activeTabId = visibleTabs.some(tab => tab.id === base.activeTabId)
-        ? base.activeTabId
-        : visibleTabs[0].id;
-
-    return {
-        activeTabId,
-        tabs,
-        nextTabNum: Math.max(Number(base.nextTabNum) || 2, tabs.length + 1)
-    };
-}
-
 function cloneState(value) {
     return JSON.parse(JSON.stringify(value));
 }
 
 function persistLocalState(nextState = state) {
     localStorage.setItem(sessionKey, JSON.stringify(nextState));
-}
-
-function persistStateSnapshot(nextState = state) {
-    persistLocalState(nextState);
-    if (syncManager && !suppressCloudSync) {
-        syncManager.scheduleSave();
-    }
 }
 
 function setSyncStatus(text, isError = false) {
@@ -428,20 +398,6 @@ function applyRemoteState(nextState) {
     suppressCloudSync = true;
     try {
         state = incomingState;
-        persistLocalState(state);
-        renderTabs();
-        renderCalculator();
-        loadActiveTabData();
-        attachGlobalListeners();
-    } finally {
-        suppressCloudSync = false;
-    }
-}
-
-function applyRemoteState(nextState) {
-    suppressCloudSync = true;
-    try {
-        state = normalizeState(nextState);
         persistLocalState(state);
         renderTabs();
         renderCalculator();
