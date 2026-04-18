@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260418-light2-safe57";
+const LIGHT2_BUILD = "20260418-light2-safe58";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -1858,21 +1858,76 @@ function getWorkbookDisplay(row, col) {
   return getWorkbookCell(row, col)?.display || "";
 }
 
-function repairMojibakeText(value) {
-  if (typeof value !== "string") return value;
-  if (!/[ÐÑРСЃЃв]/.test(value)) return value;
-  try {
-    let repaired = decodeURIComponent(escape(value));
-    if (/[ÐÑРСЃЃв]/.test(repaired) && repaired !== value) {
-      try {
-        const repairedTwice = decodeURIComponent(escape(repaired));
-        if (/[А-Яа-яЁё₽]/.test(repairedTwice)) repaired = repairedTwice;
-      } catch {}
+const CP1251_EXTRA_ENCODE = new Map([
+  [0x0402, 0x80], [0x0403, 0x81], [0x201A, 0x82], [0x0453, 0x83], [0x201E, 0x84], [0x2026, 0x85],
+  [0x2020, 0x86], [0x2021, 0x87], [0x20AC, 0x88], [0x2030, 0x89], [0x0409, 0x8A], [0x2039, 0x8B],
+  [0x040A, 0x8C], [0x040C, 0x8D], [0x040B, 0x8E], [0x040F, 0x8F], [0x0452, 0x90], [0x2018, 0x91],
+  [0x2019, 0x92], [0x201C, 0x93], [0x201D, 0x94], [0x2022, 0x95], [0x2013, 0x96], [0x2014, 0x97],
+  [0x2122, 0x99], [0x0459, 0x9A], [0x203A, 0x9B], [0x045A, 0x9C], [0x045C, 0x9D], [0x045B, 0x9E],
+  [0x045F, 0x9F], [0x00A0, 0xA0], [0x040E, 0xA1], [0x045E, 0xA2], [0x0408, 0xA3], [0x00A4, 0xA4],
+  [0x0490, 0xA5], [0x00A6, 0xA6], [0x00A7, 0xA7], [0x0401, 0xA8], [0x00A9, 0xA9], [0x0404, 0xAA],
+  [0x00AB, 0xAB], [0x00AC, 0xAC], [0x00AD, 0xAD], [0x00AE, 0xAE], [0x0407, 0xAF], [0x00B0, 0xB0],
+  [0x00B1, 0xB1], [0x0406, 0xB2], [0x0456, 0xB3], [0x0491, 0xB4], [0x00B5, 0xB5], [0x00B6, 0xB6],
+  [0x00B7, 0xB7], [0x0451, 0xB8], [0x2116, 0xB9], [0x0454, 0xBA], [0x00BB, 0xBB], [0x0458, 0xBC],
+  [0x0405, 0xBD], [0x0457, 0xBE], [0x00BF, 0xBF]
+]);
+
+function encodeCp1251Bytes(value) {
+  const bytes = [];
+  for (const char of value) {
+    const code = char.charCodeAt(0);
+    if (code <= 0x7f) {
+      bytes.push(code);
+      continue;
     }
-    return /[А-Яа-яЁё₽]/.test(repaired) ? repaired : value;
+    if (code >= 0x0410 && code <= 0x044f) {
+      bytes.push(code - 0x350);
+      continue;
+    }
+    const mapped = CP1251_EXTRA_ENCODE.get(code);
+    if (typeof mapped === "number") {
+      bytes.push(mapped);
+      continue;
+    }
+    return null;
+  }
+  return new Uint8Array(bytes);
+}
+
+function decodeCp1251Utf8(value) {
+  const bytes = encodeCp1251Bytes(value);
+  if (!bytes) return value;
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return value;
   }
+}
+
+function repairMojibakeText(value) {
+  if (typeof value !== "string" || !value) return value;
+  let repaired = value;
+
+  if (/[ÐÑРСЃЃв]/.test(value) || /([РС][А-Яа-яЁё№ўјћњ]+){2,}/u.test(value)) {
+    const decoded = decodeCp1251Utf8(value);
+    if (decoded !== value && /[А-Яа-яЁё₽]/.test(decoded)) {
+      repaired = decoded;
+    }
+  }
+
+  repaired = repaired
+    .replace(/в‚Ѕ/g, "₽")
+    .replace(/вЂ”/g, "—")
+    .replace(/вЂў/g, "•");
+
+  if ((/[ÐÑРСЃЃв]/.test(repaired) || /([РС][А-Яа-яЁё№ўјћњ]+){2,}/u.test(repaired)) && repaired !== value) {
+    const secondPass = decodeCp1251Utf8(repaired);
+    if (secondPass !== repaired && /[А-Яа-яЁё₽]/.test(secondPass)) {
+      repaired = secondPass;
+    }
+  }
+
+  return repaired;
 }
 
 function repairMojibakeDeep(value) {
@@ -1884,6 +1939,29 @@ function repairMojibakeDeep(value) {
   }
   return repairMojibakeText(value);
 }
+
+function overwriteArray(target, source) {
+  target.splice(0, target.length, ...source);
+}
+
+function overwriteObject(target, source) {
+  Object.keys(target).forEach((key) => delete target[key]);
+  Object.assign(target, source);
+}
+
+function normalizeLight2StaticConfig() {
+  overwriteArray(WORKBOOK_IMPORT_SHEETS, repairMojibakeDeep(WORKBOOK_IMPORT_SHEETS));
+  overwriteArray(BALANCE_ACCOUNTS, repairMojibakeDeep(BALANCE_ACCOUNTS));
+  overwriteArray(CALENDAR_ACCOUNTS, repairMojibakeDeep(CALENDAR_ACCOUNTS));
+  overwriteArray(CALENDAR_STATUSES, repairMojibakeDeep(CALENDAR_STATUSES));
+  overwriteArray(MONTH_NAMES, repairMojibakeDeep(MONTH_NAMES));
+  MONTH_NAME_SET.clear();
+  MONTH_NAMES.forEach((name) => MONTH_NAME_SET.add(name));
+  overwriteObject(SECTION_META, repairMojibakeDeep(SECTION_META));
+  overwriteObject(LIVE_SECTION_BUILDERS, repairMojibakeDeep(LIVE_SECTION_BUILDERS));
+}
+
+normalizeLight2StaticConfig();
 
 function repairMojibakeDom(root = document.body) {
   if (!root) return;
