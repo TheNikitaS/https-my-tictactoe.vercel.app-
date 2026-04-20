@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260420-light2-safe63";
+const LIGHT2_BUILD = "20260420-light2-safe64";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",

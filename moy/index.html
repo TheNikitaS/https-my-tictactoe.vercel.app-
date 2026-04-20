@@ -598,14 +598,44 @@ function applyCatalogMetaAcrossTabs(itemId, patch) {
 }
 
 function insertCatalogItemByGroup(catalog, nextItem) {
-    const lastIndex = catalog.reduce((result, item, index) => {
+    const lastVisibleGroupIndex = catalog.reduce((result, item, index) => {
+        if (
+            item.category === nextItem.category &&
+            item.subcategory === nextItem.subcategory &&
+            !item.deleted
+        ) {
+            return index;
+        }
+        return result;
+    }, -1);
+    if (lastVisibleGroupIndex !== -1) {
+        catalog.splice(lastVisibleGroupIndex + 1, 0, nextItem);
+        return;
+    }
+
+    const lastGroupIndex = catalog.reduce((result, item, index) => {
         if (item.category === nextItem.category && item.subcategory === nextItem.subcategory) {
             return index;
         }
         return result;
     }, -1);
-    if (lastIndex === -1) catalog.push(nextItem);
-    else catalog.splice(lastIndex + 1, 0, nextItem);
+    if (lastGroupIndex !== -1) {
+        catalog.splice(lastGroupIndex + 1, 0, nextItem);
+        return;
+    }
+
+    const lastCategoryIndex = catalog.reduce((result, item, index) => {
+        if (item.category === nextItem.category && !item.deleted) {
+            return index;
+        }
+        return result;
+    }, -1);
+    if (lastCategoryIndex !== -1) {
+        catalog.splice(lastCategoryIndex + 1, 0, nextItem);
+        return;
+    }
+
+    catalog.push(nextItem);
 }
 
 function createInlineCatalogItem(category, subcategory) {
@@ -893,6 +923,7 @@ async function init() {
 }
 
 function saveState() {
+    commitEditingTabRename();
     saveActiveTabData();
     persistStateSnapshot();
 }
@@ -905,6 +936,7 @@ function renderTabs() {
     state.tabs.filter(tab => !tab.hidden).forEach(tab => {
         const tabEl = document.createElement('div');
         tabEl.className = `tab ${tab.id === state.activeTabId ? 'active' : ''} ${tab?.data?.done ? 'tab-done' : ''}`.trim();
+        tabEl.dataset.tabId = tab.id;
 
         const tabName = document.createElement('span');
         tabName.className = 'tab-title';
@@ -1058,8 +1090,19 @@ function finishTabRename(tab, tabName, shouldSave) {
     tab.name = nextName;
     delete tabName.dataset.originalName;
     if (shouldSave) {
-        saveState();
+        persistStateSnapshot();
+        renderTabs();
     }
+}
+
+function commitEditingTabRename() {
+    const editingTitle = document.querySelector('.tab-title.editing');
+    if (!editingTitle) return false;
+    const tabId = editingTitle.closest('.tab')?.dataset.tabId;
+    const tab = state.tabs.find((item) => item.id === tabId);
+    if (!tab) return false;
+    finishTabRename(tab, editingTitle, true);
+    return true;
 }
 
 function addTab() {
@@ -1242,7 +1285,11 @@ function renderCalculator() {
     const header = `<div class="item-row item-row-header" style="grid-template-columns: 110px 1fr 90px 40px 80px 110px 70px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span><span class="text-end">Действия</span></div>`;
 
     catalog.filter((item) => !item.hidden && !item.deleted).forEach(item => {
-        if (item.category !== currentCategory) { currentCategory = item.category; container.innerHTML += `<h4 class="mt-4">${currentCategory}</h4>`; }
+        if (item.category !== currentCategory) {
+            currentCategory = item.category;
+            currentSubcategory = '';
+            container.innerHTML += `<h4 class="mt-4">${currentCategory}</h4>`;
+        }
         if (item.subcategory !== currentSubcategory) {
             currentSubcategory = item.subcategory;
             let subLabel = `${currentSubcategory}`;
@@ -1308,7 +1355,10 @@ function attachGlobalListeners() {
     });
 }
 
-window.addEventListener('beforeunload', saveState);
+window.addEventListener('beforeunload', () => {
+    commitEditingTabRename();
+    saveState();
+});
 
 function showSelectedHiddenItem() {
     const select = document.getElementById('hidden-items-select');
@@ -1345,6 +1395,7 @@ async function addCatalogItem() {
 }
 
 function addCatalogItemInline(category, subcategory) {
+    saveActiveTabData();
     const newItem = createInlineCatalogItem(category, subcategory);
     state.tabs.forEach((tab) => {
         if (!tab?.data) tab.data = createTabData();

@@ -562,14 +562,44 @@ function applyCatalogMetaAcrossTabs(itemId, patch) {
 }
 
 function insertCatalogItemByGroup(catalog, nextItem) {
-    const lastIndex = catalog.reduce((result, item, index) => {
+    const lastVisibleGroupIndex = catalog.reduce((result, item, index) => {
+        if (
+            item.category === nextItem.category &&
+            item.subcategory === nextItem.subcategory &&
+            !item.deleted
+        ) {
+            return index;
+        }
+        return result;
+    }, -1);
+    if (lastVisibleGroupIndex !== -1) {
+        catalog.splice(lastVisibleGroupIndex + 1, 0, nextItem);
+        return;
+    }
+
+    const lastGroupIndex = catalog.reduce((result, item, index) => {
         if (item.category === nextItem.category && item.subcategory === nextItem.subcategory) {
             return index;
         }
         return result;
     }, -1);
-    if (lastIndex === -1) catalog.push(nextItem);
-    else catalog.splice(lastIndex + 1, 0, nextItem);
+    if (lastGroupIndex !== -1) {
+        catalog.splice(lastGroupIndex + 1, 0, nextItem);
+        return;
+    }
+
+    const lastCategoryIndex = catalog.reduce((result, item, index) => {
+        if (item.category === nextItem.category && !item.deleted) {
+            return index;
+        }
+        return result;
+    }, -1);
+    if (lastCategoryIndex !== -1) {
+        catalog.splice(lastCategoryIndex + 1, 0, nextItem);
+        return;
+    }
+
+    catalog.push(nextItem);
 }
 
 function createInlineCatalogItem(category, subcategory) {
@@ -675,17 +705,8 @@ function syncCatalogFromDom(activeTab) {
         const itemId = row.dataset.itemId;
         const item = catalogById.get(itemId);
         if (!item) return;
-        const articleInput = row.querySelector('.article-input');
-        const nameInput = row.querySelector('.name-input');
-        const nextArticle = String(articleInput?.value || '').trim() || item.id;
-        const nextName = String(nameInput?.value || '').trim() || item.name || item.id;
-        if (item.article !== nextArticle || item.name !== nextName) {
-            applyCatalogMetaAcrossTabs(itemId, { article: nextArticle, name: nextName });
-            metaChanged = true;
-        }
         item.cost = Number(row.querySelector('.cost-input')?.value) || 0;
     });
-    if (metaChanged) scheduleCatalogShareSync();
 }
 
 function cloneState(value) {
@@ -864,6 +885,7 @@ function renderPartnerScope() {
 }
 
 function saveState() {
+    commitEditingTabRename();
     saveActiveTabData();
     persistStateSnapshot();
 }
@@ -876,6 +898,7 @@ function renderTabs() {
     state.tabs.filter(tab => !tab.hidden).forEach(tab => {
         const tabEl = document.createElement('div');
         tabEl.className = `tab ${tab.id === state.activeTabId ? 'active' : ''} ${getTabStatusClass(tab)} ${tab?.data?.done ? 'tab-done' : ''}`.trim();
+        tabEl.dataset.tabId = tab.id;
         const tabName = document.createElement('span');
         tabName.className = 'tab-title';
         tabName.textContent = tab.name;
@@ -1022,8 +1045,19 @@ function finishTabRename(tab, tabName, shouldSave) {
     tab.name = nextName;
     delete tabName.dataset.originalName;
     if (shouldSave) {
-        saveState();
+        persistStateSnapshot();
+        renderTabs();
     }
+}
+
+function commitEditingTabRename() {
+    const editingTitle = document.querySelector('.tab-title.editing');
+    if (!editingTitle) return false;
+    const tabId = editingTitle.closest('.tab')?.dataset.tabId;
+    const tab = state.tabs.find((item) => item.id === tabId);
+    if (!tab) return false;
+    finishTabRename(tab, editingTitle, true);
+    return true;
 }
 
 function addTab() {
@@ -1204,7 +1238,11 @@ function renderCalculator() {
     const header = `<div class="item-row item-row-header" style="grid-template-columns: 110px 1fr 90px 40px 80px 110px 70px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span><span class="text-end">Действия</span></div>`;
 
     catalog.filter((item) => !item.hidden && !item.deleted).forEach(item => {
-        if (item.category !== currentCategory) { currentCategory = item.category; container.innerHTML += `<h4 class="mt-4">${currentCategory}</h4>`; }
+        if (item.category !== currentCategory) {
+            currentCategory = item.category;
+            currentSubcategory = '';
+            container.innerHTML += `<h4 class="mt-4">${currentCategory}</h4>`;
+        }
         if (item.subcategory !== currentSubcategory) {
             currentSubcategory = item.subcategory;
             let subLabel = `${currentSubcategory}`;
@@ -1222,8 +1260,8 @@ function renderCalculator() {
         
         container.innerHTML += `
             <div class="item-row" id="row-${item.id}" data-item-id="${item.id}" style="grid-template-columns: 110px 1fr 90px 40px 80px 110px 70px;">
-                <input type="text" class="form-control form-control-sm article-input" value="${escapeAttr(item.article || item.id)}">
-                <input type="text" class="form-control form-control-sm name-input" value="${escapeAttr(item.name)}">
+                <input type="text" class="form-control form-control-sm article-input" value="${escapeAttr(item.article || item.id)}" readonly tabindex="-1">
+                <input type="text" class="form-control form-control-sm name-input" value="${escapeAttr(item.name)}" readonly tabindex="-1">
                 <input type="number" step="0.01" class="form-control form-control-sm cost-input" value="${item.cost}">
                 <span class="small text-center">${item.unit}</span>
                 <input type="number" step="0.01" class="form-control form-control-sm quantity-input ${item.auto ? 'read-only' : ''}" data-id="${item.id}">
@@ -1238,16 +1276,10 @@ function renderCalculator() {
 }
 
 function attachGlobalListeners() {
-    const inputs = document.querySelectorAll('.cost-input, .quantity-input, .article-input, .name-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage');
+    const inputs = document.querySelectorAll('.cost-input, .quantity-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage');
     inputs.forEach(el => {
-        const shouldRecalculate = !el.classList.contains('article-input') && !el.classList.contains('name-input');
-        if (shouldRecalculate) {
-            el.addEventListener('input', calculate);
-            el.addEventListener('change', calculate);
-        } else {
-            el.addEventListener('input', saveState);
-            el.addEventListener('change', saveState);
-        }
+        el.addEventListener('input', calculate);
+        el.addEventListener('change', calculate);
         el.addEventListener('blur', saveState);
     });
     const textareas = document.querySelectorAll('#notes');
@@ -1272,7 +1304,10 @@ function attachGlobalListeners() {
     });
 }
 
-window.addEventListener('beforeunload', saveState);
+window.addEventListener('beforeunload', () => {
+    commitEditingTabRename();
+    saveState();
+});
 
 function showSelectedHiddenItem() {
     const select = document.getElementById('hidden-items-select');
@@ -1309,6 +1344,7 @@ async function addCatalogItem() {
 }
 
 function addCatalogItemInline(category, subcategory) {
+    saveActiveTabData();
     const newItem = createInlineCatalogItem(category, subcategory);
     state.tabs.forEach((tab) => {
         if (!tab?.data) tab.data = createTabData();
@@ -1321,7 +1357,7 @@ function addCatalogItemInline(category, subcategory) {
     loadActiveTabData();
     attachGlobalListeners();
     requestAnimationFrame(() => {
-        document.querySelector(`.item-row[data-item-id="${newItem.id}"] .name-input`)?.focus();
+        document.querySelector(`.item-row[data-item-id="${newItem.id}"] .cost-input`)?.focus();
     });
 }
 
