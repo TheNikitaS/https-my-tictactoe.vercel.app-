@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260418-light2-safe58";
+const LIGHT2_BUILD = "20260420-light2-safe59";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -529,7 +529,8 @@ const STATE = {
 };
 
 function escapeHtml(value) {
-  return String(value ?? "")
+  const normalized = repairMojibakeText(String(value ?? ""));
+  return normalized
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -1666,7 +1667,7 @@ function renderLiveOverviewSummary() {
   const totalAssetPaid = STATE.assetPayments.reduce((sum, item) => sum + toNumber(item.payment_amount), 0);
   const remainingAssetValue = roundMoney(totalAssetValue - totalAssetPaid);
 
-  DOM.liveOverviewSummary.innerHTML = `
+  setSafeHtml(DOM.liveOverviewSummary, `
     <article class="summary-card">
       <span>Р‘Р°Р»Р°РЅСЃ РєРѕРјРїР°РЅРёРё СЃРµР№С‡Р°СЃ</span>
       <strong>${formatMoney(totals.total)} в‚Ѕ</strong>
@@ -1691,7 +1692,7 @@ function renderLiveOverviewSummary() {
       <span>РџРѕР·РёС†РёРё Р·Р°РєСѓРїРѕРє</span>
       <strong>${STATE.purchaseCatalog.length}</strong>
     </article>
-  `;
+  `);
 }
 
 function renderLiveOverviewPanels() {
@@ -1789,7 +1790,7 @@ function renderLiveOverviewPanels() {
         .join("")
     : `<div class="muted">РљР°С‚Р°Р»РѕРі Р·Р°РєСѓРїРѕРє РїРѕРєР° РїСѓСЃС‚.</div>`;
 
-  DOM.liveOverviewPanels.innerHTML = `
+  setSafeHtml(DOM.liveOverviewPanels, `
     <article class="subsection-card overview-panel">
       <div class="panel-kicker">Р¤РёРЅР°РЅСЃС‹ СЃРµР№С‡Р°СЃ</div>
       <h3>Р”РµРЅСЊРіРё РїРѕ РєРѕРЅС‚СѓСЂР°Рј</h3>
@@ -1819,7 +1820,7 @@ function renderLiveOverviewPanels() {
       </div>
       <div class="overview-list mt-3">${purchaseItems}</div>
     </article>
-  `;
+  `);
 }
 
 function sanitizeSlug(value) {
@@ -1904,30 +1905,59 @@ function decodeCp1251Utf8(value) {
   }
 }
 
+function looksMojibake(value) {
+  return /[ÐÑРСЃЃв]|Р[А-Яа-яA-Za-z0-9]|С[А-Яа-яA-Za-z0-9]|вЂ|в‚|Р |В[А-Яа-яA-Za-z0-9]/.test(String(value || ""));
+}
+
+function normalizeBrokenPunctuation(value) {
+  return String(value || "")
+    .replace(/в‚Ѕ/g, "₽")
+    .replace(/в„–/g, "№")
+    .replace(/вЂ”/g, "—")
+    .replace(/вЂ“/g, "–")
+    .replace(/вЂ¦/g, "…")
+    .replace(/вЂў/g, "•")
+    .replace(/вЂћ/g, "„")
+    .replace(/вЂњ/g, "“")
+    .replace(/вЂќ/g, "”")
+    .replace(/РІР‚вЂќ/g, "—")
+    .replace(/РІР‚вЂ“/g, "–")
+    .replace(/РІР‚Сљ/g, "“")
+    .replace(/РІР‚Сњ/g, "”")
+    .replace(/РІР‚В¦/g, "…")
+    .replace(/РІР‚Сћ/g, "•")
+    .replace(/РІР‚в„–/g, "№");
+}
+
+function getReadableTextScore(value) {
+  const text = String(value || "");
+  const readable = (text.match(/[А-Яа-яЁёA-Za-z0-9№₽—–…•]/g) || []).length;
+  const broken = (text.match(/[ÐÑРСЃЃв]|Р[А-Яа-яA-Za-z0-9]|С[А-Яа-яA-Za-z0-9]|вЂ|в‚|Р |В[А-Яа-яA-Za-z0-9]/g) || []).length;
+  return readable - broken * 3;
+}
+
 function repairMojibakeText(value) {
   if (typeof value !== "string" || !value) return value;
-  let repaired = value;
 
-  if (/[ÐÑРСЃЃв]/.test(value) || /([РС][А-Яа-яЁё№ўјћњ]+){2,}/u.test(value)) {
-    const decoded = decodeCp1251Utf8(value);
-    if (decoded !== value && /[А-Яа-яЁё₽]/.test(decoded)) {
-      repaired = decoded;
+  let best = normalizeBrokenPunctuation(value);
+  let bestScore = getReadableTextScore(best);
+  let current = best;
+
+  for (let pass = 0; pass < 4; pass += 1) {
+    if (!looksMojibake(current)) break;
+    const decoded = normalizeBrokenPunctuation(decodeCp1251Utf8(current));
+    const decodedScore = getReadableTextScore(decoded);
+
+    if (decodedScore > bestScore) {
+      best = decoded;
+      bestScore = decodedScore;
     }
+
+    if (decoded === current) break;
+    current = decoded;
   }
 
-  repaired = repaired
-    .replace(/в‚Ѕ/g, "₽")
-    .replace(/вЂ”/g, "—")
-    .replace(/вЂў/g, "•");
-
-  if ((/[ÐÑРСЃЃв]/.test(repaired) || /([РС][А-Яа-яЁё№ўјћњ]+){2,}/u.test(repaired)) && repaired !== value) {
-    const secondPass = decodeCp1251Utf8(repaired);
-    if (secondPass !== repaired && /[А-Яа-яЁё₽]/.test(secondPass)) {
-      repaired = secondPass;
-    }
-  }
-
-  return repaired;
+  return best;
 }
 
 function repairMojibakeDeep(value) {
@@ -1994,6 +2024,16 @@ function repairMojibakeDom(root = document.body) {
 
 function scheduleMojibakeRepair(root = document.body) {
   window.requestAnimationFrame(() => repairMojibakeDom(root));
+}
+
+function setSafeText(node, value) {
+  if (!node) return;
+  node.textContent = repairMojibakeText(String(value ?? ""));
+}
+
+function setSafeHtml(node, value) {
+  if (!node) return;
+  node.innerHTML = repairMojibakeText(String(value ?? ""));
 }
 
 function installMojibakeRepairObserver() {
@@ -2223,13 +2263,13 @@ function getStatusTone(status) {
 
 function setStatus(message, tone = "") {
   if (!DOM.statusBox) return;
-  DOM.statusBox.textContent = message;
+  setSafeText(DOM.statusBox, message);
   DOM.statusBox.className = `status-card${tone ? ` ${tone}` : ""}`;
 }
 
 function setModuleState(label) {
   if (!DOM.moduleState) return;
-  DOM.moduleState.textContent = label;
+  setSafeText(DOM.moduleState, label);
 }
 
 async function activateReadonlyFallback(reason) {
@@ -2256,14 +2296,14 @@ async function activateReadonlyFallback(reason) {
   }
 
   if (DOM.userDisplay) {
-    DOM.userDisplay.textContent =
+    setSafeText(DOM.userDisplay,
       STATE.profile?.display_name ||
       STATE.user?.email ||
-      "Р РµР·РµСЂРІРЅС‹Р№ СЂРµР¶РёРј";
+      "Р РµР·РµСЂРІРЅС‹Р№ СЂРµР¶РёРј");
   }
 
   if (DOM.accessMode) {
-    DOM.accessMode.textContent = "РџСЂРѕСЃРјРѕС‚СЂ snapshot";
+    setSafeText(DOM.accessMode, "РџСЂРѕСЃРјРѕС‚СЂ snapshot");
   }
 
   renderOverview();
@@ -2281,7 +2321,7 @@ async function activateReadonlyFallback(reason) {
 
 function setImportStatus(message, tone = "") {
   if (!DOM.importWorkbookStatus) return;
-  DOM.importWorkbookStatus.textContent = message;
+  setSafeText(DOM.importWorkbookStatus, message);
   DOM.importWorkbookStatus.className = `scope-note mb-3${tone ? ` scope-note-${tone}` : ""}`;
 }
 
@@ -2290,9 +2330,9 @@ function syncImportButton() {
 
   const available = isAdmin() && STATE.workbookReady && hasImportableWorkbookData();
   DOM.importWorkbookButton.disabled = STATE.importBusy || !available;
-  DOM.importWorkbookButton.textContent = STATE.importBusy
+  setSafeText(DOM.importWorkbookButton, STATE.importBusy
     ? "РРјРїРѕСЂС‚РёСЂСѓСЋ РёСЃС…РѕРґРЅРёРє..."
-    : "РРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ Р·Р°РїРѕР»РЅРµРЅРЅС‹Р№ РёСЃС…РѕРґРЅРёРє";
+    : "РРјРїРѕСЂС‚РёСЂРѕРІР°С‚СЊ Р·Р°РїРѕР»РЅРµРЅРЅС‹Р№ РёСЃС…РѕРґРЅРёРє");
 
   if (!isAdmin()) {
     DOM.importWorkbookButton.classList.add("d-none");
@@ -2354,7 +2394,7 @@ function applyRecordFormsVisibility() {
       node?.classList.toggle("is-hidden", shouldHide);
     });
     document.querySelectorAll(`[data-form-toggle="${section}"]`).forEach((button) => {
-      button.textContent = shouldHide ? "РџРѕРєР°Р·Р°С‚СЊ С„РѕСЂРјСѓ" : "РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ";
+      setSafeText(button, shouldHide ? "РџРѕРєР°Р·Р°С‚СЊ С„РѕСЂРјСѓ" : "РЎРєСЂС‹С‚СЊ С„РѕСЂРјСѓ");
       button.classList.toggle("btn-dark", !shouldHide);
       button.classList.toggle("btn-outline-dark", shouldHide);
     });
@@ -2364,7 +2404,7 @@ function applyRecordFormsVisibility() {
     const hiddenCount = Object.values(STATE.ui.hiddenForms || {}).filter(Boolean).length;
     const totalForms = Object.keys(STATE.ui.hiddenForms || {}).length || 1;
     const allHidden = hiddenCount >= totalForms;
-    DOM.toggleAllFormsButton.textContent = allHidden ? "РџРѕРєР°Р·Р°С‚СЊ С„РѕСЂРјС‹" : "РЎРєСЂС‹С‚СЊ С„РѕСЂРјС‹";
+    setSafeText(DOM.toggleAllFormsButton, allHidden ? "РџРѕРєР°Р·Р°С‚СЊ С„РѕСЂРјС‹" : "РЎРєСЂС‹С‚СЊ С„РѕСЂРјС‹");
     DOM.toggleAllFormsButton.classList.toggle("btn-dark", allHidden);
     DOM.toggleAllFormsButton.classList.toggle("btn-outline-dark", !allHidden);
   }
@@ -2373,16 +2413,16 @@ function applyRecordFormsVisibility() {
 function syncWorkspaceModeUi() {
   document.body.classList.toggle("compact-tables", STATE.ui.compactTables);
   if (DOM.toggleCompactTablesButton) {
-    DOM.toggleCompactTablesButton.textContent = STATE.ui.compactTables ? "РћР±С‹С‡РЅС‹Рµ С‚Р°Р±Р»РёС†С‹" : "РљРѕРјРїР°РєС‚РЅС‹Рµ С‚Р°Р±Р»РёС†С‹";
+    setSafeText(DOM.toggleCompactTablesButton, STATE.ui.compactTables ? "РћР±С‹С‡РЅС‹Рµ С‚Р°Р±Р»РёС†С‹" : "РљРѕРјРїР°РєС‚РЅС‹Рµ С‚Р°Р±Р»РёС†С‹");
     DOM.toggleCompactTablesButton.classList.toggle("btn-dark", STATE.ui.compactTables);
     DOM.toggleCompactTablesButton.classList.toggle("btn-outline-dark", !STATE.ui.compactTables);
   }
 
   const hiddenCount = Object.values(STATE.ui.hiddenForms || {}).filter(Boolean).length;
   if (DOM.workspaceModeLabel) {
-    DOM.workspaceModeLabel.textContent = STATE.ui.compactTables
+    setSafeText(DOM.workspaceModeLabel, STATE.ui.compactTables
       ? `РљРѕРјРїР°РєС‚РЅС‹Р№ СЂРµР¶РёРј РІРєР»СЋС‡РµРЅ. РЎРєСЂС‹С‚С‹С… С„РѕСЂРј: ${hiddenCount}.`
-      : `РЎС‚Р°РЅРґР°СЂС‚РЅС‹Р№ СЂРµР¶РёРј С‚Р°Р±Р»РёС†. РЎРєСЂС‹С‚С‹С… С„РѕСЂРј: ${hiddenCount}.`;
+      : `РЎС‚Р°РЅРґР°СЂС‚РЅС‹Р№ СЂРµР¶РёРј С‚Р°Р±Р»РёС†. РЎРєСЂС‹С‚С‹С… С„РѕСЂРј: ${hiddenCount}.`);
   }
 
   applyRecordFormsVisibility();
@@ -3609,19 +3649,19 @@ function updateHero() {
     "РќРµ РѕРїСЂРµРґРµР»РµРЅ";
 
   if (DOM.userDisplay) {
-    DOM.userDisplay.textContent = displayName;
+    setSafeText(DOM.userDisplay, displayName);
   }
 
   if (isAdmin()) {
     if (DOM.accessMode) {
-      DOM.accessMode.textContent = "Р’Р»Р°РґРµР»РµС† / Р°РґРјРёРЅ";
+      setSafeText(DOM.accessMode, "Р’Р»Р°РґРµР»РµС† / Р°РґРјРёРЅ");
     }
     return;
   }
 
   const partnerSlug = getCurrentPartnerSlug();
   if (DOM.accessMode) {
-    DOM.accessMode.textContent = partnerSlug ? `РџР°СЂС‚РЅРµСЂ: ${getPartnerLabel(partnerSlug)}` : "РћРіСЂР°РЅРёС‡РµРЅРЅС‹Р№ РґРѕСЃС‚СѓРї";
+    setSafeText(DOM.accessMode, partnerSlug ? `РџР°СЂС‚РЅРµСЂ: ${getPartnerLabel(partnerSlug)}` : "РћРіСЂР°РЅРёС‡РµРЅРЅС‹Р№ РґРѕСЃС‚СѓРї");
   }
 }
 
@@ -3640,7 +3680,7 @@ function renderOverview() {
     `)
     .join("");
 
-  DOM.overviewGrid.innerHTML = cards;
+  setSafeHtml(DOM.overviewGrid, cards);
 }
 
 function renderTemplateSections() {
@@ -3649,7 +3689,7 @@ function renderTemplateSections() {
     const meta = SECTION_META[key];
     if (!meta) return;
 
-    host.innerHTML = `
+    setSafeHtml(host, `
       <div class="template-grid">
         ${meta.cards
           .map(
@@ -3665,7 +3705,7 @@ function renderTemplateSections() {
           )
           .join("")}
       </div>
-    `;
+    `);
   });
 }
 
@@ -3723,28 +3763,28 @@ function renderWorkbookSnapshotSection(sectionKey) {
   if (!sheetName) return;
 
   if (STATE.workbookError) {
-    host.innerHTML = `<div class="scope-note scope-note-error">Не удалось загрузить сверочный лист: ${escapeHtml(STATE.workbookError)}</div>`;
+    setSafeHtml(host, `<div class="scope-note scope-note-error">Не удалось загрузить сверочный лист: ${escapeHtml(STATE.workbookError)}</div>`);
     return;
   }
 
   if (!STATE.workbookReady) {
-    host.innerHTML = `<div class="scope-note">Загружаю сверочный лист ${escapeHtml(sheetName)} из исходного файла...</div>`;
+    setSafeHtml(host, `<div class="scope-note">Загружаю сверочный лист ${escapeHtml(sheetName)} из исходного файла...</div>`);
     return;
   }
 
   const sheet = getSnapshotSheet(sectionKey);
   if (!sheet) {
-    host.innerHTML = `<div class="scope-note">Лист ${escapeHtml(sheetName)} не найден в snapshot-файле.</div>`;
+    setSafeHtml(host, `<div class="scope-note">Лист ${escapeHtml(sheetName)} не найден в snapshot-файле.</div>`);
     return;
   }
 
   if (!sheetHasVisibleData(sheet)) {
-    host.innerHTML = `
+    setSafeHtml(host, `
       <div class="workspace-empty workspace-empty--sheet">
         <strong>${escapeHtml(meta?.title || sheetName)}</strong>
         <div class="mt-2">Раздел сейчас пустой. Его можно заполнять уже внутри платформы.</div>
       </div>
-    `;
+    `);
     return;
   }
 
@@ -3754,7 +3794,7 @@ function renderWorkbookSnapshotSection(sectionKey) {
   const analyticsHtml = renderSnapshotAnalytics(sectionKey, sheet);
   const primaryDeckHtml = renderSnapshotPrimaryDeck(sectionKey, rows);
 
-  host.innerHTML = `
+  setSafeHtml(host, `
     ${analyticsHtml}
     ${primaryDeckHtml}
     <div class="snapshot-toolbar">
@@ -3833,7 +3873,7 @@ function renderWorkbookSnapshotSection(sectionKey) {
         </table>
       </div>
     </div>
-  `;
+  `);
 
   if (headerRow) {
     host.querySelectorAll("thead th").forEach((cell, index) => {
