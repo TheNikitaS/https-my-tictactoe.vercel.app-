@@ -1,6 +1,6 @@
-import { evaluateSafeFormula } from "./shared/safe-formula.js";
+﻿import { evaluateSafeFormula } from "./shared/safe-formula.js";
 
-const LIVE_MODULE_CONFIG = {
+const LIVE_MODULE_CONFIG = repairMojibakeDeep({
   directories: {
     appId: "platform_directories_v1",
     intro:
@@ -28,7 +28,7 @@ const LIVE_MODULE_CONFIG = {
       "Рабочая доска команды: задачи, итерации, сроки, блокеры и кастомные колонки для вашей операционной модели.",
     links: ["crm", "messenger", "ai"]
   }
-};
+});
 
 const LIVE_MODULE_CANONICAL_MAP = {
   products: "warehouse",
@@ -52,7 +52,7 @@ function resolveLiveModuleMode(moduleKey) {
   return LIVE_MODULE_FORCED_MODE[moduleKey] || "";
 }
 
-const CRM_STAGES = [
+const CRM_STAGES = repairMojibakeDeep([
   { key: "lead", label: "Новый лид", tone: "neutral" },
   { key: "qualified", label: "Квалификация", tone: "info" },
   { key: "quote", label: "КП / счет", tone: "accent" },
@@ -61,68 +61,68 @@ const CRM_STAGES = [
   { key: "lost", label: "Потеряно", tone: "danger" }
 ];
 
-const WAREHOUSE_MOVEMENT_TYPES = [
+const WAREHOUSE_MOVEMENT_TYPES = repairMojibakeDeep([
   { key: "in", label: "Приход" },
   { key: "out", label: "Списание" },
   { key: "reserve", label: "Резерв" },
   { key: "release", label: "Снятие резерва" }
-];
+]);
 
-const WAREHOUSE_PURCHASE_STATUSES = [
+const WAREHOUSE_PURCHASE_STATUSES = repairMojibakeDeep([
   { key: "draft", label: "Черновик", tone: "neutral" },
   { key: "ordered", label: "Заказано", tone: "accent" },
   { key: "in_transit", label: "В пути", tone: "warning" },
   { key: "received", label: "Принято", tone: "success" },
   { key: "cancelled", label: "Отменено", tone: "danger" }
-];
+]);
 
-const FINANCE_ENTRY_KINDS = [
+const FINANCE_ENTRY_KINDS = repairMojibakeDeep([
   { key: "income", label: "Приход", tone: "success" },
   { key: "expense", label: "Расход", tone: "danger" },
   { key: "transfer", label: "Перемещение", tone: "accent" }
-];
+]);
 
-const PRODUCTION_JOB_STATUSES = [
+const PRODUCTION_JOB_STATUSES = repairMojibakeDeep([
   { key: "queue", label: "Очередь", tone: "neutral" },
   { key: "prep", label: "Подготовка", tone: "info" },
   { key: "in_work", label: "В работе", tone: "accent" },
   { key: "qa", label: "Контроль", tone: "warning" },
   { key: "done", label: "Готово", tone: "success" },
   { key: "paused", label: "Пауза", tone: "danger" }
-];
+]);
 
-const TASK_STATUSES = [
+const TASK_STATUSES = repairMojibakeDeep([
   { key: "backlog", label: "Очередь", tone: "neutral" },
   { key: "todo", label: "К запуску", tone: "accent" },
   { key: "in_progress", label: "В работе", tone: "info" },
   { key: "review", label: "Проверка", tone: "warning" },
   { key: "done", label: "Готово", tone: "success" }
-];
+]);
 
-const TASK_PRIORITIES = [
+const TASK_PRIORITIES = repairMojibakeDeep([
   { key: "low", label: "Низкий" },
   { key: "medium", label: "Средний" },
   { key: "high", label: "Высокий" },
   { key: "urgent", label: "Срочный" }
-];
+]);
 
-const CUSTOM_FIELD_TYPES = [
+const CUSTOM_FIELD_TYPES = repairMojibakeDeep([
   { key: "text", label: "Текст" },
   { key: "textarea", label: "Большой текст" },
   { key: "number", label: "Число" },
   { key: "date", label: "Дата" },
   { key: "select", label: "Список" },
   { key: "checkbox", label: "Да / нет" }
-];
+]);
 
-const FORMULA_FORMATS = [
+const FORMULA_FORMATS = repairMojibakeDeep([
   { key: "number", label: "Число" },
   { key: "money", label: "Деньги" },
   { key: "percent", label: "Проценты" },
   { key: "text", label: "Текст" }
-];
+]);
 
-const BUILDER_META = {
+const BUILDER_META = repairMojibakeDeep({
   crm: {
     entityLabel: "сделка",
     defaultViewLabel: "Все сделки",
@@ -184,15 +184,15 @@ const BUILDER_META = {
         showInTable: true,
         showInCard: true
       },
-      { key: "sprintId", label: "терация", type: "text", showInForm: true, showInTable: true, showInCard: false },
+      { key: "sprintId", label: "Итерация", type: "text", showInForm: true, showInTable: true, showInCard: false },
       { key: "dueDate", label: "Срок", type: "date", showInForm: true, showInTable: true, showInCard: false },
       { key: "blocked", label: "Есть блокер", type: "checkbox", showInForm: true, showInTable: true, showInCard: true },
       { key: "note", label: "Комментарий", type: "textarea", showInForm: true, showInTable: false, showInCard: false }
     ]
   }
-};
+});
 
-const MODULE_MODE_CONFIG = {
+const MODULE_MODE_CONFIG = repairMojibakeDeep({
   directories: [
     { key: "overview", label: "Обзор" },
     { key: "lists", label: "Справочники" }
@@ -235,10 +235,10 @@ const MODULE_MODE_CONFIG = {
     { key: "table", label: "Лента" },
     { key: "form", label: "Формы" }
   ]
-};
+});
 
 if (Array.isArray(MODULE_MODE_CONFIG.warehouse) && !MODULE_MODE_CONFIG.warehouse.some((item) => item.key === "history")) {
-  MODULE_MODE_CONFIG.warehouse.splice(2, 0, { key: "history", label: "стория" });
+  MODULE_MODE_CONFIG.warehouse.splice(2, 0, { key: "history", label: "История" });
 }
 
 const LIVE_UI_STORAGE_PREFIX = "dom-neona:live-ui";
@@ -249,12 +249,12 @@ const EXTERNAL_SHARED_APPS = {
   partnerCalculatorsPattern: "part-calculator%"
 };
 
-const DEFAULT_DIRECTORY_LISTS = [
+const DEFAULT_DIRECTORY_LISTS = repairMojibakeDeep([
   {
     id: "crm_channels",
     key: "crm_channels",
     title: "Каналы CRM",
-    description: "сточники лидов и заказов.",
+    description: "Источники лидов и заказов.",
     options: ["Авито", "Сайт", "Наш клиент", "VK", "Сообщество", "Рекомендации"]
   },
   {
@@ -313,7 +313,7 @@ const DEFAULT_DIRECTORY_LISTS = [
     description: "Статусы и этапы производственных задач.",
     options: ["Очередь", "Подготовка", "В работе", "Контроль", "Готово", "Пауза"]
   }
-];
+]);
 
 const moneyFormatter = new Intl.NumberFormat("ru-RU", {
   style: "currency",
@@ -408,24 +408,44 @@ function sumBy(list, mapper) {
   return (list || []).reduce((total, item) => total + toNumber(mapper(item)), 0);
 }
 
+function scoreRepairCandidate(text) {
+  const source = String(text || "");
+  const russianLetters = (source.match(/[А-Яа-яЁё]/g) || []).length;
+  const mojibakeMarkers = (
+    source.match(/[ЂЃ‚ѓ„…†‡€‰Љ‹ЊЌЋЏђ‘’“”•–—™љ›њќћџ°±²іёє»јЅѕїҐ]/g) || []
+  ).length;
+  const obviousPairs = (source.match(/(?:Р.|С.|Ð.|Ñ.|вЂ|в‚|в„)/g) || []).length;
+  return russianLetters * 3 - mojibakeMarkers * 6 - obviousPairs * 2;
+}
+
 function repairMojibakeText(value) {
   if (typeof value !== "string") return value;
-  if (!/[с]/.test(value)) return value;
-  try {
-    let repaired = decodeURIComponent(escape(value));
-    if (/[с]/.test(repaired) && repaired !== value) {
-      try {
-        const repairedTwice = decodeURIComponent(escape(repaired));
-        if (/[--]/.test(repairedTwice)) repaired = repairedTwice;
-      } catch {
-        // Ignore second-pass failures.
-      }
+  if (!value) return value;
+
+  const candidates = [value];
+  let current = value;
+  for (let pass = 0; pass < 2; pass += 1) {
+    try {
+      const repaired = decodeURIComponent(escape(current));
+      if (!repaired || repaired === current) break;
+      candidates.push(repaired);
+      current = repaired;
+    } catch {
+      break;
     }
-    repaired = repaired.replace(/₽/g, "").replace(/—/g, "").replace(/•/g, "");
-    return /[--]/.test(repaired) ? repaired : value;
-  } catch {
-    return value;
   }
+
+  const best = candidates
+    .map((text) => ({
+      text: String(text)
+        .replace(/в‚Ѕ/g, "₽")
+        .replace(/вЂ”/g, "—")
+        .replace(/вЂў/g, "•"),
+      score: scoreRepairCandidate(text)
+    }))
+    .sort((left, right) => right.score - left.score)[0];
+
+  return best?.score > scoreRepairCandidate(value) ? best.text : value;
 }
 
 function repairMojibakeDeep(value) {
@@ -436,6 +456,64 @@ function repairMojibakeDeep(value) {
     return Object.fromEntries(Object.entries(value).map(([key, entryValue]) => [key, repairMojibakeDeep(entryValue)]));
   }
   return repairMojibakeText(value);
+}
+
+function repairRuntimeText(value) {
+  return repairMojibakeText(value);
+}
+
+function normalizeRuntimeText(value) {
+  return repairMojibakeText(repairRuntimeText(value));
+}
+
+function repairUiVisibleText(value) {
+  if (typeof value !== "string") return value;
+  return value
+    .replace(/\\bзменить\\b/g, "Изменить")
+    .replace(/\bИтерация\b/g, "Итерация")
+    .replace(/\bИтерации\b/g, "Итерации")
+    .replace(/\bИсточник\b/g, "Источник")
+    .replace(/\bИсточники\b/g, "Источники")
+    .replace(/\bИз CRM\b/g, "Из CRM")
+    .replace(/\bИз Склада\b/g, "Из Склада")
+    .replace(/\bИз Продаж\b/g, "Из Продаж")
+    .replace(/\bИз сигнала\b/g, "Из сигнала");
+}
+
+function normalizeUiText(value) {
+  return repairUiVisibleText(normalizeRuntimeText(value));
+}
+
+function repairWorkspaceDom(root) {
+  if (!root) return;
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!node?.nodeValue?.trim()) continue;
+    const parentTag = node.parentElement?.tagName;
+    if (parentTag && ["SCRIPT", "STYLE", "NOSCRIPT"].includes(parentTag)) continue;
+    nodes.push(node);
+  }
+
+  nodes.forEach((node) => {
+    const repaired = normalizeUiText(node.nodeValue);
+    if (repaired && repaired !== node.nodeValue) {
+      node.nodeValue = repaired;
+    }
+  });
+
+  root.querySelectorAll("[title],[placeholder],[aria-label]").forEach((element) => {
+    ["title", "placeholder", "aria-label"].forEach((attribute) => {
+      const value = element.getAttribute(attribute);
+      if (!value) return;
+      const repaired = normalizeUiText(value);
+      if (repaired && repaired !== value) {
+        element.setAttribute(attribute, repaired);
+      }
+    });
+  });
 }
 
 async function loadLight2WorkbookSnapshotFallback() {
@@ -457,28 +535,29 @@ function parseDashboardLooseNumber(value) {
 }
 
 function getSnapshotSheetByName(snapshot, name) {
-  return snapshot?.sheets?.find((sheet) => compactText(sheet?.name) === compactText(name)) || null;
+  const normalizedName = normalizeRuntimeText(compactText(name));
+  return (
+    snapshot?.sheets?.find((sheet) => normalizeRuntimeText(compactText(sheet?.name)) === normalizedName) || null
+  );
 }
 
 const SNAPSHOT_MONTH_NAMES = [
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  "",
-  ""
-];
+  "январ",
+  "феврал",
+  "март",
+  "апрел",
+  "май",
+  "июн",
+  "июл",
+  "август",
+  "сентябр",
+  "октябр",
+  "ноябр",
+  "декабр"
+]);
 
 function getSnapshotRowDisplay(row, columnIndex) {
-  return repairMojibakeText(compactText(row?.cells?.[String(columnIndex)]?.display || row?.cells?.[String(columnIndex)]?.value || ""));
+  return normalizeRuntimeText(compactText(row?.cells?.[String(columnIndex)]?.display || row?.cells?.[String(columnIndex)]?.value || ""));
 }
 
 function getSnapshotSheetDisplay(sheet, rowIndex, columnIndex) {
@@ -487,7 +566,7 @@ function getSnapshotSheetDisplay(sheet, rowIndex, columnIndex) {
 }
 
 function isSnapshotMonthLabel(value) {
-  const normalized = repairMojibakeText(compactText(value)).toLowerCase().replace(/\./g, "");
+  const normalized = normalizeRuntimeText(compactText(value)).toLowerCase().replace(/\./g, "");
   if (!normalized) return false;
   return SNAPSHOT_MONTH_NAMES.some((month) => normalized.includes(month));
 }
@@ -497,7 +576,7 @@ function getSnapshotMetricCell(rowMap, labels, columnIndex) {
     const row = rowMap.get(label);
     if (!row) continue;
     const cell = row?.cells?.[String(columnIndex)] || null;
-    const display = repairMojibakeText(compactText(cell?.display || cell?.value || ""));
+    const display = normalizeRuntimeText(compactText(cell?.display || cell?.value || ""));
     if (display) {
       return {
         display,
@@ -547,25 +626,27 @@ function parseLight2MetricsSeries(sheet) {
   );
 
   return headerColumns
-    .filter((columnIndex) => repairMojibakeText(getSnapshotRowDisplay(sumRow, columnIndex)).startsWith(""))
+    .filter((columnIndex) => repairRuntimeText(getSnapshotRowDisplay(sumRow, columnIndex)).startsWith("Сумма"))
     .map((columnIndex) => {
       const group = yearGroups.find((entry) => columnIndex >= entry.start && columnIndex <= entry.end);
       return {
         columnIndex,
         monthLabel: getSnapshotRowDisplay(headerRow, columnIndex),
         yearLabel: compactText(group?.yearLabel),
-        revenue: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
-        cost: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
-        grossProfit: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
-        operatingExpenses: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
-        operatingProfit: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
-        taxes: getSnapshotMetricNumber(rowMap, ["  "], columnIndex) || 0,
-        netProfit: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
-        margin: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
-        averageCheck: getSnapshotMetricNumber(rowMap, [" ", ""], columnIndex) || 0,
-        sales: getSnapshotMetricNumber(rowMap, ["", ""], columnIndex) || 0,
-        warehouse: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
-        tbuMoney: getSnapshotMetricNumber(rowMap, ["  "], columnIndex) || 0
+        revenue: getSnapshotMetricNumber(rowMap, ["Выручка"], columnIndex) || 0,
+        cost: getSnapshotMetricNumber(rowMap, ["Себестоимость"], columnIndex) || 0,
+        grossProfit: getSnapshotMetricNumber(rowMap, ["Валовая прибыль"], columnIndex) || 0,
+        operatingExpenses: getSnapshotMetricNumber(rowMap, ["Операционные расходы"], columnIndex) || 0,
+        operatingProfit: getSnapshotMetricNumber(rowMap, ["Операционная прибыль"], columnIndex) || 0,
+        taxes: getSnapshotMetricNumber(rowMap, ["Налоги и сборы"], columnIndex) || 0,
+        netProfit: getSnapshotMetricNumber(rowMap, ["Чистая прибыль"], columnIndex) || 0,
+        productProfitability: getSnapshotMetricNumber(rowMap, ["Rпр — рентабельность продукции"], columnIndex) || 0,
+        businessProfitability: getSnapshotMetricNumber(rowMap, ["Рентабильность бизнеса"], columnIndex) || 0,
+        margin: getSnapshotMetricNumber(rowMap, ["Маржа"], columnIndex) || 0,
+        averageCheck: getSnapshotMetricNumber(rowMap, ["Чек", "Средний чек"], columnIndex) || 0,
+        sales: getSnapshotMetricNumber(rowMap, ["Продажи"], columnIndex) || 0,
+        warehouse: getSnapshotMetricNumber(rowMap, ["Склад"], columnIndex) || 0,
+        tbuMoney: getSnapshotMetricNumber(rowMap, ["ТБУ в деньгах"], columnIndex) || 0
       };
     })
     .filter((item) => item.revenue || item.netProfit || item.sales || item.averageCheck);
@@ -573,10 +654,10 @@ function parseLight2MetricsSeries(sheet) {
 
 function buildLight2DashboardFallback(snapshot) {
   if (!snapshot?.sheets?.length) return null;
-  const metricsSheet = getSnapshotSheetByName(snapshot, "");
-  const purchasesSheet = getSnapshotSheetByName(snapshot, "");
-  const settlementsSheet = getSnapshotSheetByName(snapshot, "  ");
-  const assetsSheet = getSnapshotSheetByName(snapshot, "");
+  const metricsSheet = getSnapshotSheetByName(snapshot, "Метрики") || getSnapshotSheetByName(snapshot, "ФинМодель");
+  const purchasesSheet = getSnapshotSheetByName(snapshot, "Закупки");
+  const settlementsSheet = getSnapshotSheetByName(snapshot, "Взаиморасчет с мастерами");
+  const assetsSheet = getSnapshotSheetByName(snapshot, "Активы");
   const metricsSeries = parseLight2MetricsSeries(metricsSheet);
   const latestMetrics = metricsSeries.at(-1) || null;
   let balanceTotal = 0;
@@ -594,9 +675,11 @@ function buildLight2DashboardFallback(snapshot) {
     const employee = repairMojibakeText(compactText(row?.cells?.["2"]?.display || row?.cells?.["1"]?.display || ""));
     if (!employee) return;
     const status = repairMojibakeText(compactText(row?.cells?.["6"]?.display || row?.cells?.["5"]?.display || ""));
-    if ([" ", ""].includes(status)) return;
+    if (["Взаиморасчет произведен", "Архив"].includes(status)) return;
     openSettlementsCount += 1;
-    const amount = parseDashboardLooseNumber(row?.cells?.["3"]?.display || row?.cells?.["4"]?.display || row?.cells?.["5"]?.display);
+    const amount = parseDashboardLooseNumber(
+      row?.cells?.["5"]?.display || row?.cells?.["4"]?.display || row?.cells?.["3"]?.display
+    );
     if (amount !== null && amount > 0) settlementsPayout += amount;
   });
 
@@ -624,6 +707,124 @@ function buildLight2DashboardFallback(snapshot) {
     suppliersCount: suppliers.size,
     metricsSeries,
     latestMetrics
+  };
+}
+
+function parseLight2MetricsSeriesRuntime(sheet) {
+  if (!sheet?.rows?.length) return [];
+
+  const headerRow = (sheet.rows || []).find((row) => Number(row?.index) === 2);
+  const sumRow = (sheet.rows || []).find((row) => Number(row?.index) === 3);
+  const yearRow = (sheet.rows || []).find((row) => Number(row?.index) === 1);
+  const headerColumns = Object.keys(headerRow?.cells || {})
+    .map(Number)
+    .sort((a, b) => a - b)
+    .filter((columnIndex) => isSnapshotMonthLabel(getSnapshotRowDisplay(headerRow, columnIndex)));
+
+  if (!headerColumns.length) return [];
+
+  const yearGroups = Object.keys(yearRow?.cells || {})
+    .map(Number)
+    .sort((a, b) => a - b)
+    .filter((columnIndex) => /\d/.test(getSnapshotRowDisplay(yearRow, columnIndex)))
+    .map((columnIndex, index, columns) => ({
+      start: columnIndex,
+      end: (columns[index + 1] || ((sheet.maxCol || columns[columns.length - 1] || columnIndex) + 1)) - 1,
+      yearLabel: getSnapshotRowDisplay(yearRow, columnIndex)
+    }));
+
+  const rowMap = new Map(
+    (sheet.rows || [])
+      .filter((row) => Number(row?.index) >= 4)
+      .map((row) => {
+        const rowLabel = normalizeRuntimeText(getSnapshotRowDisplay(row, 1));
+        return rowLabel ? [rowLabel, row] : null;
+      })
+      .filter(Boolean)
+  );
+
+  return headerColumns
+    .filter((columnIndex) => normalizeRuntimeText(getSnapshotRowDisplay(sumRow, columnIndex)).startsWith("Сумма"))
+    .map((columnIndex) => {
+      const group = yearGroups.find((entry) => columnIndex >= entry.start && columnIndex <= entry.end);
+      return {
+        columnIndex,
+        monthLabel: getSnapshotRowDisplay(headerRow, columnIndex),
+        yearLabel: compactText(group?.yearLabel),
+        revenue: getSnapshotMetricNumber(rowMap, ["Выручка"], columnIndex) || 0,
+        cost: getSnapshotMetricNumber(rowMap, ["Себестоимость"], columnIndex) || 0,
+        grossProfit: getSnapshotMetricNumber(rowMap, ["Валовая прибыль"], columnIndex) || 0,
+        operatingExpenses: getSnapshotMetricNumber(rowMap, ["Операционные расходы"], columnIndex) || 0,
+        operatingProfit: getSnapshotMetricNumber(rowMap, ["Операционная прибыль"], columnIndex) || 0,
+        taxes: getSnapshotMetricNumber(rowMap, ["Налоги и сборы"], columnIndex) || 0,
+        netProfit: getSnapshotMetricNumber(rowMap, ["Чистая прибыль"], columnIndex) || 0,
+        productProfitability: getSnapshotMetricNumber(rowMap, ["Rпр — рентабельность продукции"], columnIndex) || 0,
+        businessProfitability: getSnapshotMetricNumber(rowMap, ["Рентабильность бизнеса"], columnIndex) || 0,
+        margin: getSnapshotMetricNumber(rowMap, ["Маржа"], columnIndex) || 0,
+        averageCheck: getSnapshotMetricNumber(rowMap, ["Чек", "Средний чек"], columnIndex) || 0,
+        sales: getSnapshotMetricNumber(rowMap, ["Продажи"], columnIndex) || 0,
+        warehouse: getSnapshotMetricNumber(rowMap, ["Склад"], columnIndex) || 0,
+        tbuMoney: getSnapshotMetricNumber(rowMap, ["ТБУ в деньгах"], columnIndex) || 0
+      };
+    })
+    .filter((item) => item.revenue || item.netProfit || item.sales || item.averageCheck);
+}
+
+function buildLight2DashboardFallbackRuntime(snapshot) {
+  if (!snapshot?.sheets?.length) return null;
+  const metricsSheet = getSnapshotSheetByName(snapshot, "Метрики") || getSnapshotSheetByName(snapshot, "ФинМодель");
+  const purchasesSheet = getSnapshotSheetByName(snapshot, "Закупки");
+  const settlementsSheet = getSnapshotSheetByName(snapshot, "Взаиморасчет с мастерами");
+  const assetsSheet = getSnapshotSheetByName(snapshot, "Активы");
+  const metricsSeries = parseLight2MetricsSeriesRuntime(metricsSheet);
+  const latestMetrics = metricsSeries.at(-1) || null;
+  let balanceTotal = 0;
+  let settlementsPayout = 0;
+  let openSettlementsCount = 0;
+  let purchasesCount = 0;
+  let assetsRemaining = 0;
+  const suppliers = new Set();
+
+  if (latestMetrics) {
+    balanceTotal = latestMetrics.netProfit || latestMetrics.operatingProfit || latestMetrics.revenue || 0;
+  }
+
+  settlementsSheet?.rows?.forEach((row) => {
+    const employee = normalizeRuntimeText(compactText(row?.cells?.["2"]?.display || row?.cells?.["1"]?.display || ""));
+    if (!employee) return;
+    const status = normalizeRuntimeText(compactText(row?.cells?.["6"]?.display || row?.cells?.["5"]?.display || ""));
+    if (["Взаиморасчет произведен", "Архив"].includes(status)) return;
+    openSettlementsCount += 1;
+    const amount = parseDashboardLooseNumber(
+      row?.cells?.["5"]?.display || row?.cells?.["4"]?.display || row?.cells?.["3"]?.display
+    );
+    if (amount !== null && amount > 0) settlementsPayout += amount;
+  });
+
+  purchasesSheet?.rows?.forEach((row) => {
+    const supplier = normalizeRuntimeText(compactText(row?.cells?.["1"]?.display || ""));
+    const itemName = normalizeRuntimeText(compactText(row?.cells?.["7"]?.display || row?.cells?.["6"]?.display || ""));
+    if (!supplier && !itemName) return;
+    purchasesCount += 1;
+    if (supplier) suppliers.add(supplier);
+  });
+
+  assetsSheet?.rows?.forEach((row) => {
+    const title = normalizeRuntimeText(compactText(row?.cells?.["1"]?.display || ""));
+    if (!title) return;
+    const amount = parseDashboardLooseNumber(row?.cells?.["4"]?.display || row?.cells?.["3"]?.display || row?.cells?.["2"]?.display);
+    if (amount !== null && amount > 0) assetsRemaining += amount;
+  });
+
+  return {
+    balanceTotal: roundMoney(balanceTotal),
+    settlementsPayout: roundMoney(settlementsPayout),
+    openSettlementsCount,
+    purchasesCount,
+    suppliersCount: suppliers.size,
+    assetsRemaining: roundMoney(assetsRemaining),
+    latestMetrics,
+    metricsSeries
   };
 }
 
@@ -1266,6 +1467,8 @@ export function createLiveWorkspaceController({
   rerenderDashboard,
   schemaReadyProvider
 }) {
+  const baseEscapeHtml = escapeHtml;
+  escapeHtml = (value) => baseEscapeHtml(normalizeUiText(value));
   const docs = { directories: null, crm: null, warehouse: null, tasks: null };
   const externalDocs = {
     sales: null,
@@ -1748,10 +1951,10 @@ function buildModeTabs(moduleKey, escapeFn) {
     const sourceApp = compactText(task?.integration?.sourceApp || "");
     const family = compactText(task?.integration?.family || "");
     if (sourceApp === "platform_risk_engine") {
-      if (family === "CRM") return { label: "з CRM", moduleKey: "crm" };
-      if (family === "Склад") return { label: "з Склада", moduleKey: "warehouse" };
-      if (family === "Продажи") return { label: "з Продаж", moduleKey: "sales" };
-      return { label: "з сигнала", moduleKey: "tasks" };
+      if (family === "CRM") return { label: "Из CRM", moduleKey: "crm" };
+      if (family === "Склад") return { label: "Из Склада", moduleKey: "warehouse" };
+      if (family === "Продажи") return { label: "Из Продаж", moduleKey: "sales" };
+      return { label: "Из сигнала", moduleKey: "tasks" };
     }
     if (sourceApp === "platform_crm_manual" || compactText(task?.sourceKey).startsWith("crm-deal:")) {
       return { label: "Связано со сделкой", moduleKey: "crm" };
@@ -1918,13 +2121,13 @@ function buildModeTabs(moduleKey, escapeFn) {
         tone: overdue ? "danger" : dueDate ? "info" : "neutral"
       },
       {
-        label: "терация",
+        label: "Итерация",
         value: sprintTitle,
         caption: sprintTitle === "Без итерации" ? "не привязана к спринту" : "рабочий цикл задачи",
         tone: sprintTitle === "Без итерации" ? "neutral" : "accent"
       },
       {
-        label: "сточник",
+        label: "Источник",
         value: getTaskSourceLabel(context),
         caption: context?.title ? compactText(context.title) : "ручной контур",
         tone: context?.tone || "neutral"
@@ -2528,7 +2731,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-edit>Настроить список</button>' : "",
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-option-new>Добавить значение</button>' : "",
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="directories">Экспорт JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="directories">мпорт JSON</button>' : ""
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="directories">Импорт JSON</button>' : ""
       ].filter(Boolean),
       escapeHtml
     );
@@ -2636,7 +2839,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     const reservation = buildDealReservationMap(warehouseDoc).get(getCrmDealSourceKey(deal.id));
     const integrationMeta =
       compactText(deal?.integration?.sourceApp) === EXTERNAL_SHARED_APPS.sales
-        ? `<div class="workspace-card__meta">сточник: Продажи • заказ ${escapeHtml(compactText(deal?.integration?.orderNumber || "—"))}</div>`
+        ? `<div class="workspace-card__meta">Источник: Продажи • заказ ${escapeHtml(compactText(deal?.integration?.orderNumber || "—"))}</div>`
         : "";
     return `
       <article class="workspace-card workspace-card--${escapeHtml(stage.tone)}">
@@ -2653,7 +2856,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         <div class="workspace-card__footer">
           ${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-crm-stage-select="${escapeHtml(deal.id)}">${CRM_STAGES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === deal.stage ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(stage.tone)}">${escapeHtml(stage.label)}</span>`}
           <div class="workspace-card__actions">
-            ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">зменить</button>` : ""}
+            ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Изменить</button>` : ""}
             ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button>` : ""}
             ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-task-from-deal="${escapeHtml(deal.id)}">Задача</button>` : ""}
             ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-crm-delete="${escapeHtml(deal.id)}">Удалить</button>` : ""}
@@ -2704,7 +2907,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       { label: "Сумма в воронке", value: formatMoney(sumBy(openDeals, (deal) => deal.amount || 0)), caption: "по текущим стадиям" },
       { label: "В производстве", value: formatNumber((doc.deals || []).filter((deal) => deal.stage === "production").length), caption: "готовы к исполнению" },
       { label: "Просрочено", value: formatNumber(overdueCount), caption: "требуют внимания" },
-      { label: "з Продаж", value: formatNumber(salesImportable.length), caption: "можно забрать в CRM" },
+      { label: "Из Продаж", value: formatNumber(salesImportable.length), caption: "можно забрать в CRM" },
       ...getFormulaMetrics("crm", doc, filtered)
     ];
     const customHeader = renderCustomTableHeader("crm", doc, escapeHtml);
@@ -2722,7 +2925,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Воронка</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Таблица</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="crm">Экспорт JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="crm">мпорт JSON</button>' : "",
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="crm">Импорт JSON</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="crm:deal">Сбросить черновик</button>' : ""
       ].filter(Boolean),
       escapeHtml
@@ -2776,10 +2979,10 @@ function buildModeTabs(moduleKey, escapeFn) {
             ${canEdit ? `${renderDraftBadge("crm", "deal")}<div class="workspace-empty workspace-empty--tight">${editDeal ? "Сделка уже выбрана и открыта в фокусе справа. Для редактирования используйте всплывающую карточку, чтобы не перегружать экран." : "Создавайте сделки через всплывающую карточку. Так обзор остаётся чистым, а сама форма не ломает ритм работы."}</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-crm-new>${editDeal ? "Новая сделка" : "Создать сделку"}</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-edit="${escapeHtml(editDeal.id)}">Редактировать в окне</button><button class="btn btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(editDeal.id)}">Сделать копию</button>` : ""}</div>${editDeal ? `<div class="workspace-stage-strip mt-3"><div class="workspace-stage-card"><span>Клиент</span><strong>${escapeHtml(editDeal.client || "—")}</strong></div><div class="workspace-stage-card"><span>Ответственный</span><strong>${escapeHtml(editDeal.owner || "—")}</strong></div><div class="workspace-stage-card"><span>Срок</span><strong>${escapeHtml(formatDate(editDeal.deadline))}</strong></div></div>` : ""}` : renderAccessHint("crm")}
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${editDeal ? "Связанный контур сделки" : "Фокус недели"}</h4><div class="compact-help">${editDeal ? "сточник, задачи и резерв материалов собраны рядом с карточкой, чтобы по сделке не приходилось бегать по модулям." : "Быстрый срез по тем сделкам, которым прямо сейчас нужен контроль."}</div></div></div>
+            <div class="panel-heading"><div><h4>${editDeal ? "Связанный контур сделки" : "Фокус недели"}</h4><div class="compact-help">${editDeal ? "Источник, задачи и резерв материалов собраны рядом с карточкой, чтобы по сделке не приходилось бегать по модулям." : "Быстрый срез по тем сделкам, которым прямо сейчас нужен контроль."}</div></div></div>
             ${editDeal ? `<div class="workspace-stage-strip"><div class="workspace-stage-card"><span>Стадия</span><strong>${escapeHtml(getCrmStageMeta(editDeal.stage).label)}</strong></div><div class="workspace-stage-card"><span>Связанных задач</span><strong>${escapeHtml(formatNumber(editDealTasks.length))}</strong></div><div class="workspace-stage-card"><span>В резерве</span><strong>${escapeHtml(formatNumber(editDealReservation.qty || 0))}</strong></div><div class="workspace-stage-card"><span>Сумма сделки</span><strong>${escapeHtml(formatMoney(editDeal.amount || 0))}</strong></div></div>
             <div class="workspace-stack mt-3">
-              ${editDealSourceOrder ? `<div><div class="panel-heading panel-heading--compact"><div><h4>сточник из Продаж</h4><div class="compact-help">Связанный заказ, из которого пришла или с которым синхронизирована эта сделка.</div></div></div><div class="workspace-list-item"><div><strong>${escapeHtml(editDealSourceOrder.orderNumber || editDealSourceOrder.title || "Заказ")}</strong><div class="workspace-list-item__meta">${escapeHtml(editDealSourceOrder.client || "Клиент не указан")} • ${escapeHtml(editDealSourceOrder.manager || "Без менеджера")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(editDealSourceOrder.amount || 0))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть Продажи</button></div></div></div></div>` : ""}
+              ${editDealSourceOrder ? `<div><div class="panel-heading panel-heading--compact"><div><h4>Источник из Продаж</h4><div class="compact-help">Связанный заказ, из которого пришла или с которым синхронизирована эта сделка.</div></div></div><div class="workspace-list-item"><div><strong>${escapeHtml(editDealSourceOrder.orderNumber || editDealSourceOrder.title || "Заказ")}</strong><div class="workspace-list-item__meta">${escapeHtml(editDealSourceOrder.client || "Клиент не указан")} • ${escapeHtml(editDealSourceOrder.manager || "Без менеджера")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(editDealSourceOrder.amount || 0))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть Продажи</button></div></div></div></div>` : ""}
               <div><div class="panel-heading panel-heading--compact"><div><h4>Связанные задачи</h4><div class="compact-help">Задачи, заведенные из этой сделки или работающие по ней.</div></div></div><div class="workspace-stack">${editDealTasks.length ? editDealTasks.slice(0, 5).map((task) => `<div class="workspace-list-item"><div><strong>${escapeHtml(task.title || "Задача")}</strong><div class="workspace-list-item__meta">${escapeHtml(task.owner || "Без ответственного")} • ${escapeHtml(getTaskStatusMeta(task.status).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getTaskStatusMeta(task.status).tone)}">${escapeHtml(getPriorityLabel(task.priority))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(task.id)}">Открыть задачу</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">Связанных задач пока нет.</div>'}</div></div>
               <div><div class="panel-heading panel-heading--compact"><div><h4>Материалы в резерве</h4><div class="compact-help">Все резервы под эту сделку подтягиваются из складского модуля.</div></div></div><div class="workspace-stack">${editDealReservation.rows.length ? sortByDateDesc(editDealReservation.rows, "date").slice(0, 5).map((movement) => { const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); const movementLabel = movement.kind === "release" ? "снятие резерва" : "резерв"; return `<div class="workspace-list-item"><div><strong>${escapeHtml(item?.name || "Позиция")}</strong><div class="workspace-list-item__meta">${escapeHtml(movementLabel)} • ${escapeHtml(formatDate(movement.date))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div>${movement.itemId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="warehouse:${escapeHtml(movement.itemId)}">Открыть позицию</button></div>` : ""}</div></div>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Резервов по этой сделке пока нет.</div>'}</div></div>
             </div>` : `<div class="workspace-stage-strip">${stageSummary}</div>
@@ -2807,7 +3010,7 @@ function buildModeTabs(moduleKey, escapeFn) {
             </div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Лента сделки</h4><div class="compact-help">стория собирается из CRM, Продаж, Задач и складских резервов.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editDealTimeline.length))}</div></div>
+            <div class="panel-heading"><div><h4>Лента сделки</h4><div class="compact-help">История собирается из CRM, Продаж, Задач и складских резервов.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editDealTimeline.length))}</div></div>
             <div class="workspace-stack">${editDealTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Событий по сделке пока нет.</div>'}</div>
           </section>
         </div>` : ""}
@@ -3107,7 +3310,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>' : "",
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Закупки</button>' : "",
           '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
           canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:product">Сбросить черновик товара</button>' : ""
         ];
       }
@@ -3117,7 +3320,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">Товары</button>' : "",
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="finance">Деньги</button>' : "",
           '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
           canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:purchase">Сбросить черновик закупки</button>' : ""
         ];
       }
@@ -3127,7 +3330,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Закупки</button>' : "",
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="production">Производство</button>' : "",
           '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
           canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:finance">Сбросить черновик денег</button>' : ""
         ];
       }
@@ -3137,7 +3340,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">Товары</button>' : "",
           canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>' : "",
           '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
           canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">Сбросить черновик производства</button>' : ""
         ];
       }
@@ -3155,7 +3358,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="movements">Движения</button>' : "",
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">Импорт JSON</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:item">Сбросить черновик позиции</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:movement">Сбросить черновик движения</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:product">Сбросить черновик товара</button>' : "",
@@ -3165,7 +3368,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       ];
     })();
     if (moduleKey === "warehouse" && !warehouseActionButtons.some((action) => String(action).includes('data-live-mode="history"'))) {
-      warehouseActionButtons.splice(10, 0, '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="history">стория</button>');
+      warehouseActionButtons.splice(10, 0, '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="history">История</button>');
     }
     const warehouseActionBar = renderActionBar(
       moduleKey,
@@ -3209,7 +3412,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "history") ? `<section class="workspace-panel workspace-panel--active" data-mode-section="history">
           <div class="panel-heading">
             <div>
-              <h4>стория склада</h4>
+              <h4>История склада</h4>
               <div class="compact-help">Единая лента склада, закупок, денег и производства. Здесь удобно проверять последние действия без переходов по разделам.</div>
             </div>
             <div class="workspace-note">Событий: ${escapeHtml(formatNumber(filteredHistory.length))}</div>
@@ -3277,14 +3480,14 @@ function buildModeTabs(moduleKey, escapeFn) {
             </div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Лента позиции</h4><div class="compact-help">стория собирается из карточки материала, движений, задач и связей со сделками.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editItemTimeline.length))}</div></div>
-            <div class="workspace-stack">${editItemTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">стория по позиции пока пустая.</div>'}</div>
+            <div class="panel-heading"><div><h4>Лента позиции</h4><div class="compact-help">История собирается из карточки материала, движений, задач и связей со сделками.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editItemTimeline.length))}</div></div>
+            <div class="workspace-stack">${editItemTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">История по позиции пока пустая.</div>'}</div>
           </section>
         </div>` : ""}
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Текущие остатки</h4><div class="compact-help">Доступное количество = на руках − резерв.</div></div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Позиция</th><th>Категория</th><th>На руках</th><th>Резерв</th><th>Доступно</th><th>Минимум</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.category || "—")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">зменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-item-duplicate="${escapeHtml(item.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Движение</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-task-from-item="${escapeHtml(item.id)}">Задача</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">Позиции не найдены. Добавьте первую запись или смените фильтр.</td></tr>`}</tbody></table></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Позиция</th><th>Категория</th><th>На руках</th><th>Резерв</th><th>Доступно</th><th>Минимум</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.category || "—")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-item-duplicate="${escapeHtml(item.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Движение</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-task-from-item="${escapeHtml(item.id)}">Задача</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">Позиции не найдены. Добавьте первую запись или смените фильтр.</td></tr>`}</tbody></table></div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Последние движения</h4><div class="compact-help">Отсюда удобно контролировать, что и когда ушло в резерв или было списано.</div></div></div>
@@ -3295,7 +3498,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "overview", "products") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Товары</h4><div class="compact-help">Продающий каталог платформы: группы, цены, поставщики и единицы измерения.</div></div><div class="workspace-note">${escapeHtml(formatNumber(filteredProducts.length))} позиций</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Товар</th><th>Группа</th><th>Поставщик</th><th>Цена закупки</th><th>Цена продажи</th><th></th></tr></thead><tbody>${filteredProducts.length ? filteredProducts.map((item) => `<tr><td><strong>${escapeHtml(item.name || "Товар")}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.group || "—")}</td><td>${escapeHtml(item.supplier || "—")}</td><td>${escapeHtml(formatMoney(item.purchasePrice || 0))}</td><td>${escapeHtml(formatMoney(item.salePrice || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-product-edit="${escapeHtml(item.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-product-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : '<tr><td colspan="6" class="text-muted">Товарный каталог пока пуст. Добавьте первую позицию через всплывающее окно.</td></tr>'}</tbody></table></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Товар</th><th>Группа</th><th>Поставщик</th><th>Цена закупки</th><th>Цена продажи</th><th></th></tr></thead><tbody>${filteredProducts.length ? filteredProducts.map((item) => `<tr><td><strong>${escapeHtml(item.name || "Товар")}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.group || "—")}</td><td>${escapeHtml(item.supplier || "—")}</td><td>${escapeHtml(formatMoney(item.purchasePrice || 0))}</td><td>${escapeHtml(formatMoney(item.salePrice || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-product-edit="${escapeHtml(item.id)}">Изменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-product-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : '<tr><td colspan="6" class="text-muted">Товарный каталог пока пуст. Добавьте первую позицию через всплывающее окно.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Фокус по товарам</h4><div class="compact-help">Быстрый обзор по каталогу и ценам без ухода в карточки.</div></div></div>
@@ -3311,7 +3514,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "overview", "purchases") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Закупки</h4><div class="compact-help">Заказы поставщикам, контроль статусов и общих сумм.</div></div><div class="workspace-note">${escapeHtml(formatMoney(snapshot.purchasesTotal || 0))} в обороте</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Номер</th><th>Поставщик</th><th>Статус</th><th>Дата</th><th>Сумма</th><th></th></tr></thead><tbody>${filteredPurchases.length ? filteredPurchases.map((item) => { const meta = getPurchaseStatusMeta(item.status); return `<tr><td><strong>${escapeHtml(item.number || "Закупка")}</strong></td><td>${escapeHtml(item.supplier || "—")}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(item.date))}</td><td>${escapeHtml(formatMoney(item.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-purchase-edit="${escapeHtml(item.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-purchase-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Закупок пока нет.</td></tr>'}</tbody></table></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Номер</th><th>Поставщик</th><th>Статус</th><th>Дата</th><th>Сумма</th><th></th></tr></thead><tbody>${filteredPurchases.length ? filteredPurchases.map((item) => { const meta = getPurchaseStatusMeta(item.status); return `<tr><td><strong>${escapeHtml(item.number || "Закупка")}</strong></td><td>${escapeHtml(item.supplier || "—")}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(item.date))}</td><td>${escapeHtml(formatMoney(item.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-purchase-edit="${escapeHtml(item.id)}">Изменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-purchase-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Закупок пока нет.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Статусы закупок</h4><div class="compact-help">Где сейчас зависают закупки и какие поставщики загружены сильнее.</div></div></div>
@@ -3322,7 +3525,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "overview", "finance") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Деньги</h4><div class="compact-help">Приходы, расходы и перемещения по счетам платформы.</div></div><div class="workspace-note">Баланс ${escapeHtml(formatMoney(snapshot.incomeTotal - snapshot.expenseTotal))}</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Дата</th><th>Тип</th><th>Счет</th><th>Статья</th><th>Контрагент</th><th>Сумма</th><th></th></tr></thead><tbody>${filteredFinance.length ? filteredFinance.map((entry) => { const meta = getFinanceKindMeta(entry.kind); return `<tr><td>${escapeHtml(formatDate(entry.date))}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(entry.account || "—")}</td><td>${escapeHtml(entry.category || "—")}</td><td>${escapeHtml(entry.counterparty || "—")}</td><td>${escapeHtml(formatMoney(entry.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-finance-edit="${escapeHtml(entry.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-finance-delete="${escapeHtml(entry.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="7" class="text-muted">Денежных операций пока нет.</td></tr>'}</tbody></table></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Дата</th><th>Тип</th><th>Счет</th><th>Статья</th><th>Контрагент</th><th>Сумма</th><th></th></tr></thead><tbody>${filteredFinance.length ? filteredFinance.map((entry) => { const meta = getFinanceKindMeta(entry.kind); return `<tr><td>${escapeHtml(formatDate(entry.date))}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(entry.account || "—")}</td><td>${escapeHtml(entry.category || "—")}</td><td>${escapeHtml(entry.counterparty || "—")}</td><td>${escapeHtml(formatMoney(entry.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-finance-edit="${escapeHtml(entry.id)}">Изменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-finance-delete="${escapeHtml(entry.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="7" class="text-muted">Денежных операций пока нет.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Счета и кассы</h4><div class="compact-help">Показывает, где сейчас лежит оборот и какие статьи активнее всего.</div></div></div>
@@ -3338,7 +3541,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "overview", "production") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Производство</h4><div class="compact-help">Производственные задания, сроки, ответственные и связка с материалами.</div></div><div class="workspace-note">${escapeHtml(formatNumber(snapshot.productionActive || 0))} активных</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задание</th><th>Этап</th><th>Срок</th><th>Ответственный</th><th>Кол-во</th><th></th></tr></thead><tbody>${filteredProduction.length ? filteredProduction.map((entry) => { const meta = getProductionStatusMeta(entry.stage); return `<tr><td><strong>${escapeHtml(entry.title || "Производство")}</strong><div class="workspace-table__sub">${escapeHtml(entry.itemLabel || "Без позиции")}</div></td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(entry.deadline))}</td><td>${escapeHtml(entry.assignee || "—")}</td><td>${escapeHtml(formatNumber(entry.qty || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-production-edit="${escapeHtml(entry.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-production-delete="${escapeHtml(entry.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Производственных заданий пока нет.</td></tr>'}</tbody></table></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задание</th><th>Этап</th><th>Срок</th><th>Ответственный</th><th>Кол-во</th><th></th></tr></thead><tbody>${filteredProduction.length ? filteredProduction.map((entry) => { const meta = getProductionStatusMeta(entry.stage); return `<tr><td><strong>${escapeHtml(entry.title || "Производство")}</strong><div class="workspace-table__sub">${escapeHtml(entry.itemLabel || "Без позиции")}</div></td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(entry.deadline))}</td><td>${escapeHtml(entry.assignee || "—")}</td><td>${escapeHtml(formatNumber(entry.qty || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-production-edit="${escapeHtml(entry.id)}">Изменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-production-delete="${escapeHtml(entry.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Производственных заданий пока нет.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Этапы производства</h4><div class="compact-help">Сразу видно, где работа в очереди, где в процессе и где тормозит контроль.</div></div></div>
@@ -3406,7 +3609,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Канбан</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Лента</button>',
         '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="tasks">Экспорт JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="tasks">мпорт JSON</button>' : "",
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="tasks">Импорт JSON</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:task">Сбросить черновик задачи</button>' : "",
         canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:sprint">Сбросить черновик итерации</button>' : ""
       ].filter(Boolean),
@@ -3448,10 +3651,10 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${modeIs(filters, "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>${editTask ? "Редактирование задачи" : "Новая задача"}</h4><div class="compact-help">Задачи можно вести по отделам, инициативам и проектам. Быстрый перевод между колонками остается прямо на карточках.</div></div></div>
-            ${canEdit ? `<form id="tasksTaskForm" class="workspace-form" data-draft-form="task"><input type="hidden" name="id" value="${escapeHtml(editTask?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(editTask?.title || "")}" required /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editTask?.owner || "")}" /></label><label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${(editTask?.status || "backlog") === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select></label><label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((priority) => `<option value="${escapeHtml(priority.key)}" ${(editTask?.priority || "medium") === priority.key ? "selected" : ""}>${escapeHtml(priority.label)}</option>`).join("")}</select></label><label><span>терация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${editTask?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label><label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(editTask?.dueDate || ""))}" /></label></div><label class="permission-flag"><input class="form-check-input" type="checkbox" name="blocked" ${editTask?.blocked ? "checked" : ""} /><span>Есть блокер / нужна помощь</span></label><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editTask?.note || "")}</textarea></label>${renderCustomFieldSection("tasks", doc, editTask, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editTask ? "Сохранить задачу" : "Добавить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-task-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
+            ${canEdit ? `<form id="tasksTaskForm" class="workspace-form" data-draft-form="task"><input type="hidden" name="id" value="${escapeHtml(editTask?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(editTask?.title || "")}" required /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editTask?.owner || "")}" /></label><label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${(editTask?.status || "backlog") === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select></label><label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((priority) => `<option value="${escapeHtml(priority.key)}" ${(editTask?.priority || "medium") === priority.key ? "selected" : ""}>${escapeHtml(priority.label)}</option>`).join("")}</select></label><label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${editTask?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label><label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(editTask?.dueDate || ""))}" /></label></div><label class="permission-flag"><input class="form-check-input" type="checkbox" name="blocked" ${editTask?.blocked ? "checked" : ""} /><span>Есть блокер / нужна помощь</span></label><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editTask?.note || "")}</textarea></label>${renderCustomFieldSection("tasks", doc, editTask, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editTask ? "Сохранить задачу" : "Добавить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-task-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${editSprint ? "Редактирование итерации" : "Новая итерация"}</h4><div class="compact-help">терация помогает держать в фокусе ближайший рабочий цикл и распределять задачи по этапам.</div></div></div>
+            <div class="panel-heading"><div><h4>${editSprint ? "Редактирование итерации" : "Новая итерация"}</h4><div class="compact-help">Итерация помогает держать в фокусе ближайший рабочий цикл и распределять задачи по этапам.</div></div></div>
             ${canEdit ? `<form id="tasksSprintForm" class="workspace-form" data-draft-form="sprint"><input type="hidden" name="id" value="${escapeHtml(editSprint?.id || "")}" /><div class="workspace-form-grid"><label><span>Название итерации</span><input class="form-control" type="text" name="title" value="${escapeHtml(editSprint?.title || "")}" required /></label><label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(editSprint?.startDate || ""))}" /></label><label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(editSprint?.endDate || ""))}" /></label></div><label><span>Цель итерации</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(editSprint?.goal || "")}</textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editSprint ? "Сохранить итерацию" : "Добавить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-sprint-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
         </div>` : ""}
@@ -3477,17 +3680,17 @@ function buildModeTabs(moduleKey, escapeFn) {
                 </div>
               </div>
               ${editTask.note ? `<div class="workspace-empty workspace-empty--tight">${escapeHtml(editTask.note)}</div>` : '<div class="workspace-empty workspace-empty--tight">Комментарий к задаче пока не заполнен.</div>'}
-              ${editTaskContext ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "сточник")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "Связанный объект")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(editTaskContext.tone || "neutral")}">${escapeHtml(getTaskSourceLabel(editTaskContext))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">Задача пока не привязана к CRM, складу или продажам.</div>'}
+              ${editTaskContext ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "Источник")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "Связанный объект")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(editTaskContext.tone || "neutral")}">${escapeHtml(getTaskSourceLabel(editTaskContext))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">Задача пока не привязана к CRM, складу или продажам.</div>'}
             </div>
           </section>
           <section class="workspace-panel">
             <div class="panel-heading"><div><h4>Лента задачи</h4><div class="compact-help">Здесь собирается живая история самой задачи и событий из её источника: сделки, оплаты, резервов и складских движений.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editTaskTimeline.length))}</div></div>
-            <div class="workspace-stack">${editTaskTimeline.slice(0, 12).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">стория по задаче пока пустая.</div>'}</div>
+            <div class="workspace-stack">${editTaskTimeline.slice(0, 12).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">История по задаче пока пустая.</div>'}</div>
           </section>
         </div>` : ""}
         ${editTask && editTaskContext ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>сточник задачи</h4><div class="compact-help">Карточка связи помогает понять, из какого бизнес-контекста задача пришла и куда она влияет.</div></div></div>
+            <div class="panel-heading"><div><h4>Источник задачи</h4><div class="compact-help">Карточка связи помогает понять, из какого бизнес-контекста задача пришла и куда она влияет.</div></div></div>
             <div class="workspace-stage-strip">
               <div class="workspace-stage-card"><span>Контур</span><strong>${escapeHtml(editTaskContext.type === "crm" || editTaskContext.type === "crm-signal" ? "CRM" : editTaskContext.type === "warehouse" || editTaskContext.type === "warehouse-signal" ? "Склад" : "Продажи")}</strong></div>
               ${typeof editTaskContext.amount !== "undefined" ? `<div class="workspace-stage-card"><span>Сумма</span><strong>${escapeHtml(formatMoney(editTaskContext.amount || 0))}</strong></div>` : ""}
@@ -3496,7 +3699,7 @@ function buildModeTabs(moduleKey, escapeFn) {
               ${editTaskContext.dueDate ? `<div class="workspace-stage-card"><span>Срок / дата</span><strong>${escapeHtml(formatDate(editTaskContext.dueDate))}</strong></div>` : ""}
             </div>
             <div class="workspace-stack mt-3">
-              <div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "сточник")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "Связанный объект платформы")}</div></div><div class="text-end">${editTaskContext.moduleKey === "sales" ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть Продажи</button></div>` : editTaskContext.entityId ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${editTaskContext.moduleKey}:${editTaskContext.entityId}`)}">Открыть источник</button></div>` : ""}</div></div>
+              <div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "Источник")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "Связанный объект платформы")}</div></div><div class="text-end">${editTaskContext.moduleKey === "sales" ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть Продажи</button></div>` : editTaskContext.entityId ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${editTaskContext.moduleKey}:${editTaskContext.entityId}`)}">Открыть источник</button></div>` : ""}</div></div>
               ${editTaskContext.order ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.order.orderNumber || editTaskContext.order.title || "Заказ")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.order.client || "Клиент не указан")} • ${escapeHtml(editTaskContext.order.manager || "Без менеджера")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(editTaskContext.order.amount || 0))}</div></div></div>` : ""}
               ${editTaskContext.note ? `<div class="workspace-empty workspace-empty--tight">${escapeHtml(editTaskContext.note)}</div>` : ""}
             </div>
@@ -3511,16 +3714,16 @@ function buildModeTabs(moduleKey, escapeFn) {
           </section>
         </div>` : ""}
         ${modeIs(filters, "overview", "form") ? `<section class="workspace-panel">
-          <div class="panel-heading"><div><h4>терации</h4><div class="compact-help">Текущий активный цикл: ${escapeHtml(activeSprint?.title || "не выбран")}</div></div></div>
-          <div class="workspace-sprint-strip">${sprintOptions.length ? sprintOptions.map((sprint) => { const sprintTasks = taskList.filter((task) => task.sprintId === sprint.id); return `<article class="workspace-sprint-card ${activeSprint?.id === sprint.id ? "active" : ""}"><div class="workspace-card__head"><strong>${escapeHtml(sprint.title)}</strong><span>${escapeHtml(String(sprintTasks.length))}</span></div><div class="workspace-card__meta">${escapeHtml(formatDate(sprint.startDate))} — ${escapeHtml(formatDate(sprint.endDate))}</div>${sprint.goal ? `<div class="workspace-card__note">${escapeHtml(sprint.goal)}</div>` : ""}<div class="workspace-card__actions mt-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-sprint-edit="${escapeHtml(sprint.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-sprint-delete="${escapeHtml(sprint.id)}">Удалить</button>` : ""}</div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">терации пока не созданы.</div>'}</div>
+          <div class="panel-heading"><div><h4>Итерации</h4><div class="compact-help">Текущий активный цикл: ${escapeHtml(activeSprint?.title || "не выбран")}</div></div></div>
+          <div class="workspace-sprint-strip">${sprintOptions.length ? sprintOptions.map((sprint) => { const sprintTasks = taskList.filter((task) => task.sprintId === sprint.id); return `<article class="workspace-sprint-card ${activeSprint?.id === sprint.id ? "active" : ""}"><div class="workspace-card__head"><strong>${escapeHtml(sprint.title)}</strong><span>${escapeHtml(String(sprintTasks.length))}</span></div><div class="workspace-card__meta">${escapeHtml(formatDate(sprint.startDate))} — ${escapeHtml(formatDate(sprint.endDate))}</div>${sprint.goal ? `<div class="workspace-card__note">${escapeHtml(sprint.goal)}</div>` : ""}<div class="workspace-card__actions mt-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-sprint-edit="${escapeHtml(sprint.id)}">Изменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-sprint-delete="${escapeHtml(sprint.id)}">Удалить</button>` : ""}</div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Итерации пока не созданы.</div>'}</div>
         </section>` : ""}
         ${modeIs(filters, "board") ? `<section class="workspace-panel">
           <div class="panel-heading"><div><h4>Канбан</h4><div class="compact-help">Карточки отражают текущую загрузку команды и дают быстрый доступ к правке статуса.</div></div><div class="workspace-note">Показано: ${escapeHtml(String(filteredTasks.length))}</div></div>
-          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => { const integration = getTaskIntegrationMeta(task); return `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Задача")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Без ответственного")} • срок ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Без итерации")}</div>${integration ? `<div class="workspace-card__meta">${escapeHtml(integration.label)} • <button class="btn btn-link btn-sm p-0 align-baseline" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">${escapeHtml(modules[integration.moduleKey]?.title || integration.moduleKey)}</button></div>` : ""}${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Есть блокер</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">зменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-task-duplicate="${escapeHtml(task.id)}">Копия</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">Удалить</button>` : ""}</div></div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
+          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => { const integration = getTaskIntegrationMeta(task); return `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Задача")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Без ответственного")} • срок ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Без итерации")}</div>${integration ? `<div class="workspace-card__meta">${escapeHtml(integration.label)} • <button class="btn btn-link btn-sm p-0 align-baseline" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">${escapeHtml(modules[integration.moduleKey]?.title || integration.moduleKey)}</button></div>` : ""}${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Есть блокер</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Изменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-task-duplicate="${escapeHtml(task.id)}">Копия</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">Удалить</button>` : ""}</div></div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
         </section>` : ""}
         ${modeIs(filters, "table") ? `<section class="workspace-panel">
           <div class="panel-heading"><div><h4>Лента задач</h4><div class="compact-help">Нижняя таблица полезна для сортировки и быстрого перехода в нужную карточку.</div></div></div>
-          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задача</th><th>Статус</th><th>Ответственный</th><th>терация</th><th>Срок</th><th>Приоритет</th>${customHeader}<th></th></tr></thead><tbody>${filteredTasks.length ? filteredTasks.map((task) => { const status = getTaskStatusMeta(task.status); const integration = getTaskIntegrationMeta(task); return `<tr><td><strong>${escapeHtml(task.title || "Задача")}</strong>${task.blocked ? '<div class="workspace-table__sub text-danger">Есть блокер</div>' : ""}${integration ? `<div class="workspace-table__sub">${escapeHtml(integration.label)}</div>` : ""}</td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(task.owner || "—")}</td><td>${escapeHtml(task.sprint?.title || "—")}</td><td>${escapeHtml(formatDate(task.dueDate))}</td><td>${escapeHtml(getPriorityLabel(task.priority))}</td>${renderCustomTableCells("tasks", doc, task, escapeHtml)}<td class="text-end">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Открыть</button>` : ""}${integration ? `<button class="btn btn-sm btn-outline-secondary ms-2" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">сточник</button>` : ""}</td></tr>`; }).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("tasks", doc, "showInTable").length}" class="text-muted">По текущим фильтрам задач нет.</td></tr>`}</tbody></table></div>
+          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задача</th><th>Статус</th><th>Ответственный</th><th>Итерация</th><th>Срок</th><th>Приоритет</th>${customHeader}<th></th></tr></thead><tbody>${filteredTasks.length ? filteredTasks.map((task) => { const status = getTaskStatusMeta(task.status); const integration = getTaskIntegrationMeta(task); return `<tr><td><strong>${escapeHtml(task.title || "Задача")}</strong>${task.blocked ? '<div class="workspace-table__sub text-danger">Есть блокер</div>' : ""}${integration ? `<div class="workspace-table__sub">${escapeHtml(integration.label)}</div>` : ""}</td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(task.owner || "—")}</td><td>${escapeHtml(task.sprint?.title || "—")}</td><td>${escapeHtml(formatDate(task.dueDate))}</td><td>${escapeHtml(getPriorityLabel(task.priority))}</td>${renderCustomTableCells("tasks", doc, task, escapeHtml)}<td class="text-end">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Открыть</button>` : ""}${integration ? `<button class="btn btn-sm btn-outline-secondary ms-2" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">Источник</button>` : ""}</td></tr>`; }).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("tasks", doc, "showInTable").length}" class="text-muted">По текущим фильтрам задач нет.</td></tr>`}</tbody></table></div>
         </section>` : ""}
         ${renderRelatedLinks("tasks")}
       </div>
@@ -3954,7 +4157,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     ui.tasks.modal = "";
     clearDraft("tasks", "sprint");
     persistUiState("tasks");
-    await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "терация обновлена." : "терация добавлена.");
+    await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "Итерация обновлена." : "Итерация добавлена.");
     await rerenderCurrentModule();
   }
 
@@ -4050,7 +4253,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         stage: deriveSalesDealStage(order),
         amount: toNumber(order.amount),
         deadline: normalizeDateInput(order.deliveryDate || order.invoiceDate || order.createdAt),
-        note: `мпорт из Продаж. Заказ ${compactText(order.orderNumber || "без номера")}${order.city ? ` • ${order.city}` : ""}${order.status ? ` • статус: ${order.status}` : ""}.`,
+        note: `Импорт из Продаж. Заказ ${compactText(order.orderNumber || "без номера")}${order.city ? ` • ${order.city}` : ""}${order.status ? ` • статус: ${order.status}` : ""}.`,
         custom: {},
         integration: {
           sourceApp: EXTERNAL_SHARED_APPS.sales,
@@ -4066,7 +4269,7 @@ function buildModeTabs(moduleKey, escapeFn) {
 
     ui.crm.mode = "table";
     persistUiState("crm");
-    await saveDocument("crm", { ...doc, deals: nextDeals }, `з Продаж импортировано ${importableOrders.length} сделок.`);
+    await saveDocument("crm", { ...doc, deals: nextDeals }, `Из Продаж импортировано ${importableOrders.length} сделок.`);
     await rerenderCurrentModule();
   }
 
@@ -4086,11 +4289,11 @@ function buildModeTabs(moduleKey, escapeFn) {
         id: createId("item"),
         name: `Материал ${entry.sku}`,
         sku: entry.sku,
-        category: "мпорт из калькуляторов",
+        category: "Импорт из калькуляторов",
         unit: "ед.",
         openingStock: 0,
         minStock: Math.max(1, Math.ceil(toNumber(entry.qtyTotal))),
-        note: `Создано из калькуляторов. сточники: ${entry.sources.join(", ")}.`,
+        note: `Создано из калькуляторов. Источники: ${entry.sources.join(", ")}.`,
         custom: {},
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
@@ -4729,7 +4932,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue(existing?.owner || "", draft?.owner))}" /></label>
           <label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.status || "todo", draft?.status || "todo")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
           <label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.priority || "medium", draft?.priority || "medium")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>терация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${(draftValue(existing?.sprintId || "", draft?.sprintId || "")) === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label>
+          <label><span>Итерация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${(draftValue(existing?.sprintId || "", draft?.sprintId || "")) === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label>
           <label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.dueDate || "", draft?.dueDate || "")))}" /></label>
         </div>
         <label class="workspace-check"><input class="form-check-input" type="checkbox" name="blocked" ${(draftValue(existing?.blocked ? "1" : "", draft?.blocked ? "1" : "")) ? "checked" : ""} /> <span>Есть блокер</span></label>
@@ -4757,7 +4960,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         <label><span>Цель</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(draftValue(existing?.goal || "", draft?.goal))}</textarea></label>
         <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить итерацию" : "Сохранить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      existing ? "Редактирование рабочего цикла команды без ухода из канбана и списка." : "терации задают ритм работы и приоритеты команды."
+      existing ? "Редактирование рабочего цикла команды без ухода из канбана и списка." : "Итерации задают ритм работы и приоритеты команды."
     );
   }
 
@@ -4882,7 +5085,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         { text: "Редактирование задачи", modes: "form" },
         { text: "Новая итерация", modes: "form" },
         { text: "Редактирование итерации", modes: "form" },
-        { text: "терации", modes: "overview form" },
+        { text: "Итерации", modes: "overview form" },
         { text: "Канбан", modes: "board" },
         { text: "Лента задач", modes: "table" }
       ]
@@ -5491,7 +5694,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           history: [
             createTaskHistoryEntry({
               title: "Создана копия задачи",
-              meta: `сточник копии: ${compactText(source.title || "Задача")}`,
+              meta: `Источник копии: ${compactText(source.title || "Задача")}`,
               tone: "info",
               moduleKey: "tasks",
               entityId: source.id
@@ -5537,7 +5740,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         if (!window.confirm("Удалить итерацию? Задачи останутся, но отвяжутся от нее.")) return true;
         const sprintId = deleteSprintButton.dataset.sprintDelete;
         const sprints = (doc.sprints || []).filter((sprint) => sprint.id !== sprintId);
-        const sprintTitle = compactText((doc.sprints || []).find((sprint) => sprint.id === sprintId)?.title || "терация");
+        const sprintTitle = compactText((doc.sprints || []).find((sprint) => sprint.id === sprintId)?.title || "Итерация");
         const tasks = (doc.tasks || []).map((task) => (task.sprintId === sprintId
           ? {
               ...task,
@@ -5546,7 +5749,7 @@ function buildModeTabs(moduleKey, escapeFn) {
               history: appendTaskHistory(
                 task,
                 createTaskHistoryEntry({
-                  title: "терация удалена",
+                  title: "Итерация удалена",
                   meta: `Задача отвязана от итерации ${sprintTitle}.`,
                   tone: "warning",
                   moduleKey: "tasks",
@@ -5556,7 +5759,7 @@ function buildModeTabs(moduleKey, escapeFn) {
             }
           : task));
         if (ui.tasks.sprintEditId === sprintId) ui.tasks.sprintEditId = null;
-        await saveDocument("tasks", { ...doc, sprints, tasks }, "терация удалена.");
+        await saveDocument("tasks", { ...doc, sprints, tasks }, "Итерация удалена.");
         await rerenderCurrentModule();
         return true;
       }
@@ -5731,7 +5934,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       && !light2AssetPayments.length
       && !light2Purchases.length;
     const light2FallbackSnapshot = await loadLight2WorkbookSnapshotFallback();
-    const light2Fallback = buildLight2DashboardFallback(light2FallbackSnapshot);
+    const light2Fallback = buildLight2DashboardFallbackRuntime(light2FallbackSnapshot);
 
     const today = todayString();
     const currentMonthKey = today.slice(0, 7);
@@ -5767,7 +5970,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       return Boolean(match?.low);
     });
 
-    const contourClosedStatuses = new Set([" ", ""].map((value) => compactText(value)));
+    const contourClosedStatuses = new Set(["Взаиморасчет произведен", "Архив"].map((value) => compactText(value)));
     const contourOpenSettlements = (light2Settlements || []).filter((entry) => !contourClosedStatuses.has(repairMojibakeText(compactText(entry.status))));
     const contourSettlementsPayout = roundMoney(
       contourOpenSettlements.reduce((sum, entry) => {
@@ -5780,13 +5983,17 @@ function buildModeTabs(moduleKey, escapeFn) {
     );
     const contourCalendarIncoming = roundMoney(
       sumBy(
-        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("")),
+        (light2CalendarEntries || []).filter(
+          (entry) => repairRuntimeText(compactText(entry.operation_type)) === compactText("Приход")
+        ),
         (entry) => entry.amount
       )
     );
     const contourCalendarOutgoing = roundMoney(
       sumBy(
-        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("")),
+        (light2CalendarEntries || []).filter(
+          (entry) => repairRuntimeText(compactText(entry.operation_type)) === compactText("Расход")
+        ),
         (entry) => entry.amount
       )
     );
@@ -5977,6 +6184,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     hydrateDraftForms(moduleKey, root);
     hydrateDirectoryFields(moduleKey, root);
     focusModeSection(moduleKey, root);
+    repairWorkspaceDom(root);
   }
 
   return {
@@ -5999,5 +6207,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     focusEntity
   };
 }
+
+
+
 
 

@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260420-light2-safe60";
+const LIGHT2_BUILD = "20260420-light2-safe63";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -58,6 +58,89 @@ const MONTH_NAMES = [
   "Декабрь"
 ];
 const MONTH_NAME_SET = new Set(MONTH_NAMES);
+
+function scoreRepairCandidate(text) {
+  const source = String(text || "");
+  const russianLetters = (source.match(/[А-Яа-яЁё]/g) || []).length;
+  const mojibakeMarkers = (
+    source.match(/[ЂЃ‚ѓ„…†‡€‰Љ‹ЊЌЋЏђ‘’“”•–—™љ›њќћџ°±²іёє»јЅѕїҐ]/g) || []
+  ).length;
+  const obviousPairs = (source.match(/(?:Р.|С.|Ð.|Ñ.|вЂ|в‚|в„)/g) || []).length;
+  return russianLetters * 3 - mojibakeMarkers * 6 - obviousPairs * 2;
+}
+
+function repairMojibakeText(value) {
+  if (typeof value !== "string") return value;
+  if (!value) return value;
+
+  const candidates = [value];
+  let current = value;
+  for (let pass = 0; pass < 2; pass += 1) {
+    try {
+      const repaired = decodeURIComponent(escape(current));
+      if (!repaired || repaired === current) break;
+      candidates.push(repaired);
+      current = repaired;
+    } catch {
+      break;
+    }
+  }
+
+  const best = candidates
+    .map((text) => ({
+      text: String(text)
+        .replace(/в‚Ѕ/g, "₽")
+        .replace(/вЂ”/g, "—")
+        .replace(/вЂў/g, "•"),
+      score: scoreRepairCandidate(text)
+    }))
+    .sort((left, right) => right.score - left.score)[0];
+
+  return best?.score > scoreRepairCandidate(value) ? best.text : value;
+}
+
+function repairMojibakeDeep(value) {
+  if (Array.isArray(value)) return value.map(repairMojibakeDeep);
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, repairMojibakeDeep(entry)]));
+  }
+  return repairMojibakeText(value);
+}
+
+function repairDomText(root) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  const textNodes = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (!node?.nodeValue?.trim()) continue;
+    const parentTag = node.parentElement?.tagName;
+    if (parentTag && ["SCRIPT", "STYLE", "NOSCRIPT"].includes(parentTag)) continue;
+    textNodes.push(node);
+  }
+
+  textNodes.forEach((node) => {
+    const repaired = repairMojibakeText(node.nodeValue);
+    if (repaired && repaired !== node.nodeValue) {
+      node.nodeValue = repaired;
+    }
+  });
+
+  root.querySelectorAll("[title],[placeholder],[aria-label]").forEach((element) => {
+    ["title", "placeholder", "aria-label"].forEach((attribute) => {
+      const value = element.getAttribute(attribute);
+      if (!value) return;
+      const repaired = repairMojibakeText(value);
+      if (repaired && repaired !== value) {
+        element.setAttribute(attribute, repaired);
+      }
+    });
+  });
+}
+
+function scheduleDomRepair(root = document.body) {
+  queueMicrotask(() => repairDomText(root));
+}
 
 const DOM = {
   userDisplay: document.getElementById("userDisplay"),
@@ -1846,7 +1929,11 @@ function parseRuDateToIso(value) {
 }
 
 function getWorkbookSheetByName(name) {
-  return STATE.workbookSnapshot?.sheets?.find((sheet) => sheet.name === name) || null;
+  const normalizedName = repairMojibakeText(String(name || "").trim());
+  return (
+    STATE.workbookSnapshot?.sheets?.find((sheet) => repairMojibakeText(String(sheet?.name || "").trim()) === normalizedName) ||
+    null
+  );
 }
 
 function getWorkbookCell(row, col) {
@@ -1854,7 +1941,7 @@ function getWorkbookCell(row, col) {
 }
 
 function getWorkbookDisplay(row, col) {
-  return getWorkbookCell(row, col)?.display || "";
+  return repairMojibakeText(getWorkbookCell(row, col)?.display || "");
 }
 
 function getWorkbookRaw(row, col) {
@@ -2341,7 +2428,12 @@ function getSnapshotHost(sectionKey) {
 function getSnapshotSheet(sectionKey) {
   const sheetName = SECTION_META[sectionKey]?.snapshotSheet;
   if (!sheetName || !STATE.workbookSnapshot?.sheets?.length) return null;
-  return STATE.workbookSnapshot.sheets.find((sheet) => sheet.name === sheetName) || null;
+  const normalizedSheetName = repairMojibakeText(String(sheetName || "").trim());
+  return (
+    STATE.workbookSnapshot.sheets.find(
+      (sheet) => repairMojibakeText(String(sheet?.name || "").trim()) === normalizedSheetName
+    ) || null
+  );
 }
 
 function sheetHasVisibleData(sheet) {
@@ -2441,7 +2533,7 @@ function getRowCell(row, columnIndex) {
 }
 
 function getRowDisplay(row, columnIndex) {
-  return String(getRowCell(row, columnIndex)?.display || "").trim();
+  return String(repairMojibakeText(getRowCell(row, columnIndex)?.display || "")).trim();
 }
 
 function getRowRaw(row, columnIndex) {
@@ -3478,6 +3570,7 @@ function renderOverview() {
     .join("");
 
   DOM.overviewGrid.innerHTML = cards;
+  scheduleDomRepair(document.body);
 }
 
 function renderTemplateSections() {
@@ -3551,7 +3644,7 @@ function renderWorkbookSnapshotSection(sectionKey) {
       <div class="summary-row">
         <article class="summary-card">
           <span>Лист</span>
-          <strong>${escapeHtml(sheet.name)}</strong>
+          <strong>${escapeHtml(repairMojibakeText(sheet.name || ""))}</strong>
         </article>
         <article class="summary-card">
           <span>Непустых ячеек</span>
@@ -3603,10 +3696,10 @@ function renderWorkbookSnapshotSection(sectionKey) {
                           .map((col) => {
                             const cell = cells[String(col)];
                             if (!cell) return `<td></td>`;
-                            const formula = cell.formula ? ` title="${escapeHtml(cell.formula)}"` : "";
+                            const formula = cell.formula ? ` title="${escapeHtml(repairMojibakeText(cell.formula))}"` : "";
                             const tone = cell.kind ? ` cell-${escapeHtml(cell.kind)}` : "";
                             const marker = cell.formula ? `<span class="formula-dot"></span>` : "";
-                            return `<td class="snapshot-cell${tone}"${formula}>${marker}<span>${escapeHtml(cell.display || cell.raw || "")}</span></td>`;
+                            return `<td class="snapshot-cell${tone}"${formula}>${marker}<span>${escapeHtml(repairMojibakeText(cell.display || cell.raw || ""))}</span></td>`;
                           })
                           .join("")}
                       </tr>
@@ -3625,10 +3718,12 @@ function renderWorkbookSnapshotSection(sectionKey) {
       if (index === 0) return;
       const headerCell = headerRow.cells?.[String(index)];
       if (headerCell?.display) {
-        cell.title = headerCell.display;
+        cell.title = repairMojibakeText(headerCell.display);
       }
     });
   }
+
+  scheduleDomRepair(host);
 }
 
 function renderWorkbookSnapshotSections() {
@@ -3650,10 +3745,12 @@ async function loadWorkbookSnapshot() {
     if (!response.ok) {
       throw new Error(`HTTP ${response.status}`);
     }
-    STATE.workbookSnapshot = await withTimeout(
+    STATE.workbookSnapshot = repairMojibakeDeep(
+      await withTimeout(
       response.json(),
       4000,
       "Не удалось вовремя прочитать snapshot Контур."
+      )
     );
     STATE.workbookReady = true;
     STATE.workbookError = "";
@@ -3664,6 +3761,7 @@ async function loadWorkbookSnapshot() {
   renderOverview();
   syncModuleStatus();
   syncImportButton();
+  scheduleDomRepair(document.body);
 }
 
 function buildBalanceImportRows() {
@@ -4018,6 +4116,7 @@ function openSection(sectionKey) {
     renderWorkbookSnapshotSection(STATE.activeSection);
     void loadWorkbookSnapshot();
   }
+  scheduleDomRepair(document.body);
 }
 
 function syncSectionTabs() {
@@ -6076,25 +6175,25 @@ function renderAssetsConfigured() {
     (asset, columnKey) => {
       const paid = toNumber(totals[asset.id] || 0);
       const remaining = roundMoney(toNumber(asset.asset_value) - paid);
-      if (columnKey === "asset_name") return escapeHtml(asset.asset_name || "вЂ”");
+      if (columnKey === "asset_name") return escapeHtml(asset.asset_name || "—");
       if (columnKey === "asset_value") return escapeHtml(formatMoney(asset.asset_value));
       if (columnKey === "paid_total") return escapeHtml(formatMoney(paid));
       if (columnKey === "remaining_amount") {
         return `<span class="${remaining <= 0 ? "amount-positive" : "amount-negative"}">${escapeHtml(formatMoney(remaining))}</span>`;
       }
-      if (columnKey === "note") return escapeHtml(asset.note || "вЂ”");
+      if (columnKey === "note") return escapeHtml(asset.note || "—");
       if (columnKey === "updated_at") return escapeHtml(formatDateTime(asset.updated_at || asset.created_at));
       if (columnKey === "actions") {
         return `
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">РЈРґР°Р»РёС‚СЊ</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset="${escapeHtml(asset.id)}">Изменить</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset="${escapeHtml(asset.id)}">Удалить</button>
           </div>
         `;
       }
-      return `<span class="muted">вЂ”</span>`;
+      return `<span class="muted">—</span>`;
     },
-    "РџРѕРєР° РЅРµС‚ Р°РєС‚РёРІРѕРІ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+    "Пока нет активов для текущего фильтра."
   );
   syncSectionTableHead("assets", "payments", dom.paymentTableBody);
   dom.paymentTableBody.innerHTML = renderConfiguredSectionRows(
@@ -6105,19 +6204,19 @@ function renderAssetsConfigured() {
       if (columnKey === "payment_date") return escapeHtml(formatDate(payment.payment_date));
       if (columnKey === "asset_label") return escapeHtml(getAssetLabel(payment.asset_id));
       if (columnKey === "payment_amount") return escapeHtml(formatMoney(payment.payment_amount));
-      if (columnKey === "note") return escapeHtml(payment.note || "вЂ”");
+      if (columnKey === "note") return escapeHtml(payment.note || "—");
       if (columnKey === "updated_at") return escapeHtml(formatDateTime(payment.updated_at || payment.created_at));
       if (columnKey === "actions") {
         return `
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">РЈРґР°Р»РёС‚СЊ</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-asset-payment="${escapeHtml(payment.id)}">Изменить</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-asset-payment="${escapeHtml(payment.id)}">Удалить</button>
           </div>
         `;
       }
-      return `<span class="muted">вЂ”</span>`;
+      return `<span class="muted">—</span>`;
     },
-    "РџРѕРєР° РЅРµС‚ РІС‹РїР»Р°С‚ РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+    "Пока нет выплат для текущего фильтра."
   );
 }
 
@@ -6165,26 +6264,26 @@ function renderPurchasesConfigured() {
     "main",
     rows,
     (item, columnKey) => {
-      if (columnKey === "supplier_name") return escapeHtml(item.supplier_name || "вЂ”");
-      if (columnKey === "supplier_inn") return escapeHtml(item.supplier_inn || "вЂ”");
-      if (columnKey === "city") return escapeHtml(item.city || "вЂ”");
-      if (columnKey === "category") return escapeHtml(item.category || "вЂ”");
-      if (columnKey === "article") return escapeHtml(item.article || "вЂ”");
-      if (columnKey === "item_name") return escapeHtml(item.item_name || "вЂ”");
-      if (columnKey === "unit_name") return escapeHtml(item.unit_name || "вЂ”");
+      if (columnKey === "supplier_name") return escapeHtml(item.supplier_name || "—");
+      if (columnKey === "supplier_inn") return escapeHtml(item.supplier_inn || "—");
+      if (columnKey === "city") return escapeHtml(item.city || "—");
+      if (columnKey === "category") return escapeHtml(item.category || "—");
+      if (columnKey === "article") return escapeHtml(item.article || "—");
+      if (columnKey === "item_name") return escapeHtml(item.item_name || "—");
+      if (columnKey === "unit_name") return escapeHtml(item.unit_name || "—");
       if (columnKey === "price") return escapeHtml(formatMoney(item.price));
-      if (columnKey === "note") return escapeHtml(item.note || "вЂ”");
+      if (columnKey === "note") return escapeHtml(item.note || "—");
       if (columnKey === "actions") {
         return `
           <div class="d-flex gap-2">
-            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>
-            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-purchase="${escapeHtml(item.id)}">Изменить</button>
+            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-purchase="${escapeHtml(item.id)}">Удалить</button>
           </div>
         `;
       }
-      return `<span class="muted">вЂ”</span>`;
+      return `<span class="muted">—</span>`;
     },
-    "РџРѕРєР° РЅРµС‚ РїРѕР·РёС†РёР№ Р·Р°РєСѓРїРєРё РґР»СЏ С‚РµРєСѓС‰РµРіРѕ С„РёР»СЊС‚СЂР°."
+    "Пока нет позиций закупки для текущего фильтра."
   );
 }
 
