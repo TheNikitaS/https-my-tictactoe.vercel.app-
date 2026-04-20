@@ -100,7 +100,7 @@
                     <div class="col"><label>Резка(м)</label><input type="number" id="param-cutting" class="form-control"></div>
                     <div class="col"><label>Выборка(м)</label><input type="number" id="param-milling" class="form-control"></div>
                     <div class="col"><label>Пайка(шт)</label><input type="number" id="param-soldering" class="form-control"></div>
-                    <div class="col"><label>Х(Товары)</label><input type="number" step="0.0001" id="coeff-goods" class="form-control" value="1.8625"></div>
+                    <div class="col"><label>Х(Товары)</label><input type="number" step="0.0001" id="coeff-goods" class="form-control" value="1.862"></div>
                     <div class="col"><label>Х(Дизайн)</label><input type="number" step="0.1" id="coeff-design" class="form-control" value="2"></div>
                     <div class="col"><label>Х(Сборка)</label><input type="number" step="0.001" id="coeff-assembly" class="form-control" value="3.369"></div>
                     <div class="col"><label>Х(Монтаж)</label><input type="number" step="0.001" id="coeff-montage" class="form-control" value="1.539"></div>
@@ -984,7 +984,7 @@ function loadActiveTabData() {
     document.getElementById('param-cutting').value = params.cutting || '';
     document.getElementById('param-milling').value = params.milling || '';
     document.getElementById('param-soldering').value = params.soldering || '';
-    const coeffs = data.coeffs || { goods: 1.8625, design: 2, assembly: 3.369, montage: 1.539 };
+    const coeffs = data.coeffs || { goods: 1.862, design: 2, assembly: 3.369, montage: 1.539 };
     document.getElementById('coeff-goods').value = coeffs.goods;
     document.getElementById('coeff-design').value = coeffs.design;
     document.getElementById('coeff-assembly').value = coeffs.assembly;
