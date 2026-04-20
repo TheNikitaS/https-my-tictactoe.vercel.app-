@@ -1,31 +1,31 @@
-﻿import { evaluateSafeFormula } from "./shared/safe-formula.js";
+import { evaluateSafeFormula } from "./shared/safe-formula.js";
 
 const LIVE_MODULE_CONFIG = {
   directories: {
     appId: "platform_directories_v1",
     intro:
-      "Р•РґРёРЅС‹Рµ СЃРїСЂР°РІРѕС‡РЅРёРєРё РїР»Р°С‚С„РѕСЂРјС‹: РєР°РЅР°Р»С‹, СЃРѕС‚СЂСѓРґРЅРёРєРё, РєР°С‚РµРіРѕСЂРёРё, РµРґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёСЏ Рё Р»СЋР±С‹Рµ РІР°С€Рё РІС‹РїР°РґР°СЋС‰РёРµ СЃРїРёСЃРєРё.",
+      "Единые справочники платформы: каналы, сотрудники, категории, единицы измерения и любые ваши выпадающие списки.",
     links: ["crm", "warehouse", "tasks", "light2"]
   },
   crm: {
     appId: "platform_crm_v2",
     legacyAppId: "platform_crm_v1",
     intro:
-      "Р–РёРІРѕР№ РєРѕРјРјРµСЂС‡РµСЃРєРёР№ РєРѕРЅС‚СѓСЂ: СЃРґРµР»РєРё, РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Рµ, СЃСЂРѕРєРё, СЃСѓРјРјС‹, РєР°РЅР°Р»С‹ Рё СЃРѕР±СЃС‚РІРµРЅРЅС‹Рµ РІРєР»Р°РґРєРё-РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ Р±РµР· РґРІРѕР№РЅРѕРіРѕ РІРІРѕРґР°.",
+      "Живой коммерческий контур: сделки, ответственные, сроки, суммы, каналы и собственные вкладки-представления без двойного ввода.",
     links: ["sales", "light2", "tasks"]
   },
   warehouse: {
     appId: "platform_warehouse_v2",
     legacyAppId: "platform_warehouse_v1",
     intro:
-      "Р•РґРёРЅС‹Р№ СЃРєР»Р°РґСЃРєРѕР№ РєРѕРЅС‚СѓСЂ: РєР°С‚Р°Р»РѕРі РјР°С‚РµСЂРёР°Р»РѕРІ, РґРІРёР¶РµРЅРёСЏ, СЂРµР·РµСЂРІС‹, РґРµС„РёС†РёС‚ Рё РіРёР±РєР°СЏ РЅР°СЃС‚СЂРѕР№РєР° СЃРѕР±СЃС‚РІРµРЅРЅС‹С… РїРѕР»РµР№ РїРѕРґ РІР°С€ С„РѕСЂРјР°С‚ СѓС‡РµС‚Р°.",
+      "Единый складской контур: каталог материалов, движения, резервы, дефицит и гибкая настройка собственных полей под ваш формат учета.",
     links: ["light2", "my_calculator", "crm"]
   },
   tasks: {
     appId: "platform_tasks_v2",
     legacyAppId: "platform_tasks_v1",
     intro:
-      "Р Р°Р±РѕС‡Р°СЏ РґРѕСЃРєР° РєРѕРјР°РЅРґС‹: Р·Р°РґР°С‡Рё, РёС‚РµСЂР°С†РёРё, СЃСЂРѕРєРё, Р±Р»РѕРєРµСЂС‹ Рё РєР°СЃС‚РѕРјРЅС‹Рµ РєРѕР»РѕРЅРєРё РґР»СЏ РІР°С€РµР№ РѕРїРµСЂР°С†РёРѕРЅРЅРѕР№ РјРѕРґРµР»Рё.",
+      "Рабочая доска команды: задачи, итерации, сроки, блокеры и кастомные колонки для вашей операционной модели.",
     links: ["crm", "messenger", "ai"]
   }
 };
@@ -53,122 +53,122 @@ function resolveLiveModuleMode(moduleKey) {
 }
 
 const CRM_STAGES = [
-  { key: "lead", label: "РќРѕРІС‹Р№ Р»РёРґ", tone: "neutral" },
-  { key: "qualified", label: "РљРІР°Р»РёС„РёРєР°С†РёСЏ", tone: "info" },
-  { key: "quote", label: "РљРџ / СЃС‡РµС‚", tone: "accent" },
-  { key: "production", label: "Р’ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµ", tone: "warning" },
-  { key: "done", label: "РЎРґРµР»РєР° Р·Р°РєСЂС‹С‚Р°", tone: "success" },
-  { key: "lost", label: "РџРѕС‚РµСЂСЏРЅРѕ", tone: "danger" }
+  { key: "lead", label: "Новый лид", tone: "neutral" },
+  { key: "qualified", label: "Квалификация", tone: "info" },
+  { key: "quote", label: "КП / счет", tone: "accent" },
+  { key: "production", label: "В производстве", tone: "warning" },
+  { key: "done", label: "Сделка закрыта", tone: "success" },
+  { key: "lost", label: "Потеряно", tone: "danger" }
 ];
 
 const WAREHOUSE_MOVEMENT_TYPES = [
-  { key: "in", label: "РџСЂРёС…РѕРґ" },
-  { key: "out", label: "РЎРїРёСЃР°РЅРёРµ" },
-  { key: "reserve", label: "Р РµР·РµСЂРІ" },
-  { key: "release", label: "РЎРЅСЏС‚РёРµ СЂРµР·РµСЂРІР°" }
+  { key: "in", label: "Приход" },
+  { key: "out", label: "Списание" },
+  { key: "reserve", label: "Резерв" },
+  { key: "release", label: "Снятие резерва" }
 ];
 
 const WAREHOUSE_PURCHASE_STATUSES = [
-  { key: "draft", label: "Р§РµСЂРЅРѕРІРёРє", tone: "neutral" },
-  { key: "ordered", label: "Р—Р°РєР°Р·Р°РЅРѕ", tone: "accent" },
-  { key: "in_transit", label: "Р’ РїСѓС‚Рё", tone: "warning" },
-  { key: "received", label: "РџСЂРёРЅСЏС‚Рѕ", tone: "success" },
-  { key: "cancelled", label: "РћС‚РјРµРЅРµРЅРѕ", tone: "danger" }
+  { key: "draft", label: "Черновик", tone: "neutral" },
+  { key: "ordered", label: "Заказано", tone: "accent" },
+  { key: "in_transit", label: "В пути", tone: "warning" },
+  { key: "received", label: "Принято", tone: "success" },
+  { key: "cancelled", label: "Отменено", tone: "danger" }
 ];
 
 const FINANCE_ENTRY_KINDS = [
-  { key: "income", label: "РџСЂРёС…РѕРґ", tone: "success" },
-  { key: "expense", label: "Р Р°СЃС…РѕРґ", tone: "danger" },
-  { key: "transfer", label: "РџРµСЂРµРјРµС‰РµРЅРёРµ", tone: "accent" }
+  { key: "income", label: "Приход", tone: "success" },
+  { key: "expense", label: "Расход", tone: "danger" },
+  { key: "transfer", label: "Перемещение", tone: "accent" }
 ];
 
 const PRODUCTION_JOB_STATUSES = [
-  { key: "queue", label: "РћС‡РµСЂРµРґСЊ", tone: "neutral" },
-  { key: "prep", label: "РџРѕРґРіРѕС‚РѕРІРєР°", tone: "info" },
-  { key: "in_work", label: "Р’ СЂР°Р±РѕС‚Рµ", tone: "accent" },
-  { key: "qa", label: "РљРѕРЅС‚СЂРѕР»СЊ", tone: "warning" },
-  { key: "done", label: "Р“РѕС‚РѕРІРѕ", tone: "success" },
-  { key: "paused", label: "РџР°СѓР·Р°", tone: "danger" }
+  { key: "queue", label: "Очередь", tone: "neutral" },
+  { key: "prep", label: "Подготовка", tone: "info" },
+  { key: "in_work", label: "В работе", tone: "accent" },
+  { key: "qa", label: "Контроль", tone: "warning" },
+  { key: "done", label: "Готово", tone: "success" },
+  { key: "paused", label: "Пауза", tone: "danger" }
 ];
 
 const TASK_STATUSES = [
-  { key: "backlog", label: "РћС‡РµСЂРµРґСЊ", tone: "neutral" },
-  { key: "todo", label: "Рљ Р·Р°РїСѓСЃРєСѓ", tone: "accent" },
-  { key: "in_progress", label: "Р’ СЂР°Р±РѕС‚Рµ", tone: "info" },
-  { key: "review", label: "РџСЂРѕРІРµСЂРєР°", tone: "warning" },
-  { key: "done", label: "Р“РѕС‚РѕРІРѕ", tone: "success" }
+  { key: "backlog", label: "Очередь", tone: "neutral" },
+  { key: "todo", label: "К запуску", tone: "accent" },
+  { key: "in_progress", label: "В работе", tone: "info" },
+  { key: "review", label: "Проверка", tone: "warning" },
+  { key: "done", label: "Готово", tone: "success" }
 ];
 
 const TASK_PRIORITIES = [
-  { key: "low", label: "РќРёР·РєРёР№" },
-  { key: "medium", label: "РЎСЂРµРґРЅРёР№" },
-  { key: "high", label: "Р’С‹СЃРѕРєРёР№" },
-  { key: "urgent", label: "РЎСЂРѕС‡РЅС‹Р№" }
+  { key: "low", label: "Низкий" },
+  { key: "medium", label: "Средний" },
+  { key: "high", label: "Высокий" },
+  { key: "urgent", label: "Срочный" }
 ];
 
 const CUSTOM_FIELD_TYPES = [
-  { key: "text", label: "РўРµРєСЃС‚" },
-  { key: "textarea", label: "Р‘РѕР»СЊС€РѕР№ С‚РµРєСЃС‚" },
-  { key: "number", label: "Р§РёСЃР»Рѕ" },
-  { key: "date", label: "Р”Р°С‚Р°" },
-  { key: "select", label: "РЎРїРёСЃРѕРє" },
-  { key: "checkbox", label: "Р”Р° / РЅРµС‚" }
+  { key: "text", label: "Текст" },
+  { key: "textarea", label: "Большой текст" },
+  { key: "number", label: "Число" },
+  { key: "date", label: "Дата" },
+  { key: "select", label: "Список" },
+  { key: "checkbox", label: "Да / нет" }
 ];
 
 const FORMULA_FORMATS = [
-  { key: "number", label: "Р§РёСЃР»Рѕ" },
-  { key: "money", label: "Р”РµРЅСЊРіРё" },
-  { key: "percent", label: "РџСЂРѕС†РµРЅС‚С‹" },
-  { key: "text", label: "РўРµРєСЃС‚" }
+  { key: "number", label: "Число" },
+  { key: "money", label: "Деньги" },
+  { key: "percent", label: "Проценты" },
+  { key: "text", label: "Текст" }
 ];
 
 const BUILDER_META = {
   crm: {
-    entityLabel: "СЃРґРµР»РєР°",
-    defaultViewLabel: "Р’СЃРµ СЃРґРµР»РєРё",
+    entityLabel: "сделка",
+    defaultViewLabel: "Все сделки",
     baseFields: [
-      { key: "title", label: "РЎРґРµР»РєР°", type: "text", showInForm: true, showInTable: true, showInCard: true },
-      { key: "client", label: "РљР»РёРµРЅС‚", type: "text", showInForm: true, showInTable: true, showInCard: true },
-      { key: "channel", label: "РљР°РЅР°Р»", type: "text", showInForm: true, showInTable: true, showInCard: false },
-      { key: "owner", label: "РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№", type: "text", showInForm: true, showInTable: true, showInCard: false },
+      { key: "title", label: "Сделка", type: "text", showInForm: true, showInTable: true, showInCard: true },
+      { key: "client", label: "Клиент", type: "text", showInForm: true, showInTable: true, showInCard: true },
+      { key: "channel", label: "Канал", type: "text", showInForm: true, showInTable: true, showInCard: false },
+      { key: "owner", label: "Ответственный", type: "text", showInForm: true, showInTable: true, showInCard: false },
       {
         key: "stage",
-        label: "РЎС‚Р°РґРёСЏ",
+        label: "Стадия",
         type: "select",
         options: CRM_STAGES.map((item) => item.label),
         showInForm: true,
         showInTable: true,
         showInCard: false
       },
-      { key: "amount", label: "РЎСѓРјРјР°", type: "number", showInForm: true, showInTable: true, showInCard: true },
-      { key: "deadline", label: "РЎСЂРѕРє", type: "date", showInForm: true, showInTable: true, showInCard: false },
-      { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№", type: "textarea", showInForm: true, showInTable: false, showInCard: false }
+      { key: "amount", label: "Сумма", type: "number", showInForm: true, showInTable: true, showInCard: true },
+      { key: "deadline", label: "Срок", type: "date", showInForm: true, showInTable: true, showInCard: false },
+      { key: "note", label: "Комментарий", type: "textarea", showInForm: true, showInTable: false, showInCard: false }
     ]
   },
   warehouse: {
-    entityLabel: "РїРѕР·РёС†РёСЏ",
-    defaultViewLabel: "Р’СЃРµ РїРѕР·РёС†РёРё",
+    entityLabel: "позиция",
+    defaultViewLabel: "Все позиции",
     baseFields: [
-      { key: "name", label: "РџРѕР·РёС†РёСЏ", type: "text", showInForm: true, showInTable: true, showInCard: true },
+      { key: "name", label: "Позиция", type: "text", showInForm: true, showInTable: true, showInCard: true },
       { key: "sku", label: "SKU", type: "text", showInForm: true, showInTable: true, showInCard: false },
-      { key: "category", label: "РљР°С‚РµРіРѕСЂРёСЏ", type: "text", showInForm: true, showInTable: true, showInCard: false },
-      { key: "unit", label: "Р•Рґ. РёР·Рј.", type: "text", showInForm: true, showInTable: false, showInCard: false },
-      { key: "openingStock", label: "РЎС‚Р°СЂС‚РѕРІС‹Р№ РѕСЃС‚Р°С‚РѕРє", type: "number", showInForm: true, showInTable: false, showInCard: false },
-      { key: "minStock", label: "РњРёРЅРёРјСѓРј", type: "number", showInForm: true, showInTable: true, showInCard: false },
-      { key: "available", label: "Р”РѕСЃС‚СѓРїРЅРѕ", type: "number", showInForm: false, showInTable: true, showInCard: true },
-      { key: "reserved", label: "Р РµР·РµСЂРІ", type: "number", showInForm: false, showInTable: true, showInCard: false },
-      { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№", type: "textarea", showInForm: true, showInTable: false, showInCard: false }
+      { key: "category", label: "Категория", type: "text", showInForm: true, showInTable: true, showInCard: false },
+      { key: "unit", label: "Ед. изм.", type: "text", showInForm: true, showInTable: false, showInCard: false },
+      { key: "openingStock", label: "Стартовый остаток", type: "number", showInForm: true, showInTable: false, showInCard: false },
+      { key: "minStock", label: "Минимум", type: "number", showInForm: true, showInTable: true, showInCard: false },
+      { key: "available", label: "Доступно", type: "number", showInForm: false, showInTable: true, showInCard: true },
+      { key: "reserved", label: "Резерв", type: "number", showInForm: false, showInTable: true, showInCard: false },
+      { key: "note", label: "Комментарий", type: "textarea", showInForm: true, showInTable: false, showInCard: false }
     ]
   },
   tasks: {
-    entityLabel: "Р·Р°РґР°С‡Р°",
-    defaultViewLabel: "Р’СЃРµ Р·Р°РґР°С‡Рё",
+    entityLabel: "задача",
+    defaultViewLabel: "Все задачи",
     baseFields: [
-      { key: "title", label: "Р—Р°РґР°С‡Р°", type: "text", showInForm: true, showInTable: true, showInCard: true },
-      { key: "owner", label: "РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№", type: "text", showInForm: true, showInTable: true, showInCard: false },
+      { key: "title", label: "Задача", type: "text", showInForm: true, showInTable: true, showInCard: true },
+      { key: "owner", label: "Ответственный", type: "text", showInForm: true, showInTable: true, showInCard: false },
       {
         key: "status",
-        label: "РЎС‚Р°С‚СѓСЃ",
+        label: "Статус",
         type: "select",
         options: TASK_STATUSES.map((item) => item.label),
         showInForm: true,
@@ -177,68 +177,68 @@ const BUILDER_META = {
       },
       {
         key: "priority",
-        label: "РџСЂРёРѕСЂРёС‚РµС‚",
+        label: "Приоритет",
         type: "select",
         options: TASK_PRIORITIES.map((item) => item.label),
         showInForm: true,
         showInTable: true,
         showInCard: true
       },
-      { key: "sprintId", label: "РС‚РµСЂР°С†РёСЏ", type: "text", showInForm: true, showInTable: true, showInCard: false },
-      { key: "dueDate", label: "РЎСЂРѕРє", type: "date", showInForm: true, showInTable: true, showInCard: false },
-      { key: "blocked", label: "Р•СЃС‚СЊ Р±Р»РѕРєРµСЂ", type: "checkbox", showInForm: true, showInTable: true, showInCard: true },
-      { key: "note", label: "РљРѕРјРјРµРЅС‚Р°СЂРёР№", type: "textarea", showInForm: true, showInTable: false, showInCard: false }
+      { key: "sprintId", label: "терация", type: "text", showInForm: true, showInTable: true, showInCard: false },
+      { key: "dueDate", label: "Срок", type: "date", showInForm: true, showInTable: true, showInCard: false },
+      { key: "blocked", label: "Есть блокер", type: "checkbox", showInForm: true, showInTable: true, showInCard: true },
+      { key: "note", label: "Комментарий", type: "textarea", showInForm: true, showInTable: false, showInCard: false }
     ]
   }
 };
 
 const MODULE_MODE_CONFIG = {
   directories: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "lists", label: "РЎРїСЂР°РІРѕС‡РЅРёРєРё" }
+    { key: "overview", label: "Обзор" },
+    { key: "lists", label: "Справочники" }
   ],
   crm: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "board", label: "Р’РѕСЂРѕРЅРєР°" },
-    { key: "table", label: "РўР°Р±Р»РёС†Р°" },
-    { key: "form", label: "РљР°СЂС‚РѕС‡РєР°" }
+    { key: "overview", label: "Обзор" },
+    { key: "board", label: "Воронка" },
+    { key: "table", label: "Таблица" },
+    { key: "form", label: "Карточка" }
   ],
   warehouse: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "catalog", label: "РћСЃС‚Р°С‚РєРё" },
-    { key: "products", label: "РўРѕРІР°СЂС‹" },
-    { key: "purchases", label: "Р—Р°РєСѓРїРєРё" },
-    { key: "finance", label: "Р”РµРЅСЊРіРё" },
-    { key: "production", label: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ" },
-    { key: "movements", label: "Р”РІРёР¶РµРЅРёСЏ" },
-    { key: "form", label: "Р¤РѕСЂРјС‹" }
+    { key: "overview", label: "Обзор" },
+    { key: "catalog", label: "Остатки" },
+    { key: "products", label: "Товары" },
+    { key: "purchases", label: "Закупки" },
+    { key: "finance", label: "Деньги" },
+    { key: "production", label: "Производство" },
+    { key: "movements", label: "Движения" },
+    { key: "form", label: "Формы" }
   ],
   products: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "products", label: "РўРѕРІР°СЂС‹" }
+    { key: "overview", label: "Обзор" },
+    { key: "products", label: "Товары" }
   ],
   purchases: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "purchases", label: "Р—Р°РєСѓРїРєРё" }
+    { key: "overview", label: "Обзор" },
+    { key: "purchases", label: "Закупки" }
   ],
   money: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "finance", label: "Р”РµРЅСЊРіРё" }
+    { key: "overview", label: "Обзор" },
+    { key: "finance", label: "Деньги" }
   ],
   production: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "production", label: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ" }
+    { key: "overview", label: "Обзор" },
+    { key: "production", label: "Производство" }
   ],
   tasks: [
-    { key: "overview", label: "РћР±Р·РѕСЂ" },
-    { key: "board", label: "РљР°РЅР±Р°РЅ" },
-    { key: "table", label: "Р›РµРЅС‚Р°" },
-    { key: "form", label: "Р¤РѕСЂРјС‹" }
+    { key: "overview", label: "Обзор" },
+    { key: "board", label: "Канбан" },
+    { key: "table", label: "Лента" },
+    { key: "form", label: "Формы" }
   ]
 };
 
 if (Array.isArray(MODULE_MODE_CONFIG.warehouse) && !MODULE_MODE_CONFIG.warehouse.some((item) => item.key === "history")) {
-  MODULE_MODE_CONFIG.warehouse.splice(2, 0, { key: "history", label: "РСЃС‚РѕСЂРёСЏ" });
+  MODULE_MODE_CONFIG.warehouse.splice(2, 0, { key: "history", label: "стория" });
 }
 
 const LIVE_UI_STORAGE_PREFIX = "dom-neona:live-ui";
@@ -253,65 +253,65 @@ const DEFAULT_DIRECTORY_LISTS = [
   {
     id: "crm_channels",
     key: "crm_channels",
-    title: "РљР°РЅР°Р»С‹ CRM",
-    description: "РСЃС‚РѕС‡РЅРёРєРё Р»РёРґРѕРІ Рё Р·Р°РєР°Р·РѕРІ.",
-    options: ["РђРІРёС‚Рѕ", "РЎР°Р№С‚", "РќР°С€ РєР»РёРµРЅС‚", "VK", "РЎРѕРѕР±С‰РµСЃС‚РІРѕ", "Р РµРєРѕРјРµРЅРґР°С†РёРё"]
+    title: "Каналы CRM",
+    description: "сточники лидов и заказов.",
+    options: ["Авито", "Сайт", "Наш клиент", "VK", "Сообщество", "Рекомендации"]
   },
   {
     id: "team_members",
     key: "team_members",
-    title: "РЎРѕС‚СЂСѓРґРЅРёРєРё",
-    description: "РњРµРЅРµРґР¶РµСЂС‹, РґРёР·Р°Р№РЅРµСЂС‹, РјР°СЃС‚РµСЂР° Рё РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Рµ.",
-    options: ["РќРёРєРёС‚Р° РЎСѓС…РѕС‚РёРЅ"]
+    title: "Сотрудники",
+    description: "Менеджеры, дизайнеры, мастера и ответственные.",
+    options: ["Никита Сухотин"]
   },
   {
     id: "warehouse_categories",
     key: "warehouse_categories",
-    title: "РљР°С‚РµРіРѕСЂРёРё СЃРєР»Р°РґР°",
-    description: "Р“СЂСѓРїРїС‹ С‚РѕРІР°СЂРѕРІ Рё РјР°С‚РµСЂРёР°Р»РѕРІ.",
-    options: ["РќРµРѕРЅ", "Р‘Р»РѕРєРё РїРёС‚Р°РЅРёСЏ", "РџСЂРѕС„РёР»СЊ", "РљСЂРµРїРµР¶", "Р Р°СЃС…РѕРґРЅРёРєРё"]
+    title: "Категории склада",
+    description: "Группы товаров и материалов.",
+    options: ["Неон", "Блоки питания", "Профиль", "Крепеж", "Расходники"]
   },
   {
     id: "warehouse_units",
     key: "warehouse_units",
-    title: "Р•РґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёСЏ",
-    description: "Р•РґРёРЅРёС†С‹ РґР»СЏ РєР°С‚Р°Р»РѕРіР° С‚РѕРІР°СЂРѕРІ Рё РјР°С‚РµСЂРёР°Р»РѕРІ.",
-    options: ["С€С‚", "Рј", "РєРѕРјРїР»", "СѓРїР°Рє"]
+    title: "Единицы измерения",
+    description: "Единицы для каталога товаров и материалов.",
+    options: ["шт", "м", "компл", "упак"]
   },
   {
     id: "suppliers",
     key: "suppliers",
-    title: "РџРѕСЃС‚Р°РІС‰РёРєРё",
-    description: "РљРѕРЅС‚СЂР°РіРµРЅС‚С‹ РґР»СЏ Р·Р°РєСѓРїРѕРє, С‚РѕРІР°СЂРѕРІ Рё РґРµРЅРµР¶РЅС‹С… РѕРїРµСЂР°С†РёР№.",
-    options: ["РћРћРћ Р›РђР™Рў", "РћСЃРЅРѕРІРЅРѕР№ РїРѕСЃС‚Р°РІС‰РёРє"]
+    title: "Поставщики",
+    description: "Контрагенты для закупок, товаров и денежных операций.",
+    options: ["ООО ЛАЙТ", "Основной поставщик"]
   },
   {
     id: "product_groups",
     key: "product_groups",
-    title: "Р“СЂСѓРїРїС‹ С‚РѕРІР°СЂРѕРІ",
-    description: "РљР°С‚РµРіРѕСЂРёРё С‚РѕРІР°СЂРЅРѕРіРѕ РєР°С‚Р°Р»РѕРіР° РґР»СЏ РїСЂРѕРґР°Р¶Рё Рё РїСЂРѕРёР·РІРѕРґСЃС‚РІР°.",
-    options: ["Р’С‹РІРµСЃРєРё", "РќРµРѕРЅ", "РљРѕРјРїР»РµРєС‚СѓСЋС‰РёРµ", "РЈСЃР»СѓРіРё"]
+    title: "Группы товаров",
+    description: "Категории товарного каталога для продажи и производства.",
+    options: ["Вывески", "Неон", "Комплектующие", "Услуги"]
   },
   {
     id: "finance_accounts",
     key: "finance_accounts",
-    title: "РЎС‡РµС‚Р° Рё РєР°СЃСЃС‹",
-    description: "РљСѓРґР° РїСЂРёС…РѕРґСЏС‚ Рё РѕС‚РєСѓРґР° СѓС…РѕРґСЏС‚ РґРµРЅСЊРіРё.",
-    options: ["РћСЃРЅРѕРІРЅРѕР№ СЃС‡РµС‚", "РљР°СЃСЃР°", "РљР°СЂС‚Р°", "РџР°СЂС‚РЅРµСЂСЃРєРёР№ СЃС‡РµС‚"]
+    title: "Счета и кассы",
+    description: "Куда приходят и откуда уходят деньги.",
+    options: ["Основной счет", "Касса", "Карта", "Партнерский счет"]
   },
   {
     id: "finance_categories",
     key: "finance_categories",
-    title: "РЎС‚Р°С‚СЊРё РґРµРЅРµРі",
-    description: "РЎС‚Р°С‚СЊРё РїСЂРёС…РѕРґРѕРІ, СЂР°СЃС…РѕРґРѕРІ Рё РїРµСЂРµРјРµС‰РµРЅРёР№.",
-    options: ["РџСЂРѕРґР°Р¶Р°", "Р—Р°РєСѓРїРєР°", "Р—Р°СЂРїР»Р°С‚Р°", "Р”РѕСЃС‚Р°РІРєР°", "РќР°Р»РѕРіРё", "РџРµСЂРµРјРµС‰РµРЅРёРµ"]
+    title: "Статьи денег",
+    description: "Статьи приходов, расходов и перемещений.",
+    options: ["Продажа", "Закупка", "Зарплата", "Доставка", "Налоги", "Перемещение"]
   },
   {
     id: "production_stages",
     key: "production_stages",
-    title: "Р­С‚Р°РїС‹ РїСЂРѕРёР·РІРѕРґСЃС‚РІР°",
-    description: "РЎС‚Р°С‚СѓСЃС‹ Рё СЌС‚Р°РїС‹ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅС‹С… Р·Р°РґР°С‡.",
-    options: ["РћС‡РµСЂРµРґСЊ", "РџРѕРґРіРѕС‚РѕРІРєР°", "Р’ СЂР°Р±РѕС‚Рµ", "РљРѕРЅС‚СЂРѕР»СЊ", "Р“РѕС‚РѕРІРѕ", "РџР°СѓР·Р°"]
+    title: "Этапы производства",
+    description: "Статусы и этапы производственных задач.",
+    options: ["Очередь", "Подготовка", "В работе", "Контроль", "Готово", "Пауза"]
   }
 ];
 
@@ -391,7 +391,7 @@ function normalizeDateInput(value) {
 
 function formatDate(value) {
   const normalized = normalizeDateInput(value);
-  if (!normalized) return "вЂ”";
+  if (!normalized) return "—";
   const [year, month, day] = normalized.split("-");
   return `${day}.${month}.${year}`;
 }
@@ -410,19 +410,19 @@ function sumBy(list, mapper) {
 
 function repairMojibakeText(value) {
   if (typeof value !== "string") return value;
-  if (!/[ÐÑРСЃЃв]/.test(value)) return value;
+  if (!/[с]/.test(value)) return value;
   try {
     let repaired = decodeURIComponent(escape(value));
-    if (/[ÐÑРСЃЃв]/.test(repaired) && repaired !== value) {
+    if (/[с]/.test(repaired) && repaired !== value) {
       try {
         const repairedTwice = decodeURIComponent(escape(repaired));
-        if (/[А-Яа-яЁё₽]/.test(repairedTwice)) repaired = repairedTwice;
+        if (/[--]/.test(repairedTwice)) repaired = repairedTwice;
       } catch {
         // Ignore second-pass failures.
       }
     }
-    repaired = repaired.replace(/в‚Ѕ/g, "₽").replace(/вЂ”/g, "—").replace(/вЂў/g, "•");
-    return /[А-Яа-яЁё₽]/.test(repaired) ? repaired : value;
+    repaired = repaired.replace(/₽/g, "").replace(/—/g, "").replace(/•/g, "");
+    return /[--]/.test(repaired) ? repaired : value;
   } catch {
     return value;
   }
@@ -461,20 +461,20 @@ function getSnapshotSheetByName(snapshot, name) {
 }
 
 const SNAPSHOT_MONTH_NAMES = [
-  "янв",
-  "фев",
-  "мар",
-  "апр",
-  "май",
-  "мая",
-  "июн",
-  "июл",
-  "авг",
-  "сен",
-  "сент",
-  "окт",
-  "ноя",
-  "дек"
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  "",
+  ""
 ];
 
 function getSnapshotRowDisplay(row, columnIndex) {
@@ -547,25 +547,25 @@ function parseLight2MetricsSeries(sheet) {
   );
 
   return headerColumns
-    .filter((columnIndex) => repairMojibakeText(getSnapshotRowDisplay(sumRow, columnIndex)).startsWith("Сумма"))
+    .filter((columnIndex) => repairMojibakeText(getSnapshotRowDisplay(sumRow, columnIndex)).startsWith(""))
     .map((columnIndex) => {
       const group = yearGroups.find((entry) => columnIndex >= entry.start && columnIndex <= entry.end);
       return {
         columnIndex,
         monthLabel: getSnapshotRowDisplay(headerRow, columnIndex),
         yearLabel: compactText(group?.yearLabel),
-        revenue: getSnapshotMetricNumber(rowMap, ["Выручка"], columnIndex) || 0,
-        cost: getSnapshotMetricNumber(rowMap, ["Себестоимость"], columnIndex) || 0,
-        grossProfit: getSnapshotMetricNumber(rowMap, ["Валовая прибыль"], columnIndex) || 0,
-        operatingExpenses: getSnapshotMetricNumber(rowMap, ["Операционные расходы"], columnIndex) || 0,
-        operatingProfit: getSnapshotMetricNumber(rowMap, ["Операционная прибыль"], columnIndex) || 0,
-        taxes: getSnapshotMetricNumber(rowMap, ["Налоги и сборы"], columnIndex) || 0,
-        netProfit: getSnapshotMetricNumber(rowMap, ["Чистая прибыль"], columnIndex) || 0,
-        margin: getSnapshotMetricNumber(rowMap, ["Маржа"], columnIndex) || 0,
-        averageCheck: getSnapshotMetricNumber(rowMap, ["Средний чек", "Чек"], columnIndex) || 0,
-        sales: getSnapshotMetricNumber(rowMap, ["Продаж", "Продажи"], columnIndex) || 0,
-        warehouse: getSnapshotMetricNumber(rowMap, ["Склад"], columnIndex) || 0,
-        tbuMoney: getSnapshotMetricNumber(rowMap, ["ТБУ в деньгах"], columnIndex) || 0
+        revenue: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
+        cost: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
+        grossProfit: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
+        operatingExpenses: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
+        operatingProfit: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
+        taxes: getSnapshotMetricNumber(rowMap, ["  "], columnIndex) || 0,
+        netProfit: getSnapshotMetricNumber(rowMap, [" "], columnIndex) || 0,
+        margin: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
+        averageCheck: getSnapshotMetricNumber(rowMap, [" ", ""], columnIndex) || 0,
+        sales: getSnapshotMetricNumber(rowMap, ["", ""], columnIndex) || 0,
+        warehouse: getSnapshotMetricNumber(rowMap, [""], columnIndex) || 0,
+        tbuMoney: getSnapshotMetricNumber(rowMap, ["  "], columnIndex) || 0
       };
     })
     .filter((item) => item.revenue || item.netProfit || item.sales || item.averageCheck);
@@ -573,10 +573,10 @@ function parseLight2MetricsSeries(sheet) {
 
 function buildLight2DashboardFallback(snapshot) {
   if (!snapshot?.sheets?.length) return null;
-  const metricsSheet = getSnapshotSheetByName(snapshot, "Метрики");
-  const purchasesSheet = getSnapshotSheetByName(snapshot, "Закупки");
-  const settlementsSheet = getSnapshotSheetByName(snapshot, "Взаиморасчет с мастерами");
-  const assetsSheet = getSnapshotSheetByName(snapshot, "Активы");
+  const metricsSheet = getSnapshotSheetByName(snapshot, "");
+  const purchasesSheet = getSnapshotSheetByName(snapshot, "");
+  const settlementsSheet = getSnapshotSheetByName(snapshot, "  ");
+  const assetsSheet = getSnapshotSheetByName(snapshot, "");
   const metricsSeries = parseLight2MetricsSeries(metricsSheet);
   const latestMetrics = metricsSeries.at(-1) || null;
   let balanceTotal = 0;
@@ -594,7 +594,7 @@ function buildLight2DashboardFallback(snapshot) {
     const employee = repairMojibakeText(compactText(row?.cells?.["2"]?.display || row?.cells?.["1"]?.display || ""));
     if (!employee) return;
     const status = repairMojibakeText(compactText(row?.cells?.["6"]?.display || row?.cells?.["5"]?.display || ""));
-    if (["Взаиморасчет произведен", "Архив"].includes(status)) return;
+    if ([" ", ""].includes(status)) return;
     openSettlementsCount += 1;
     const amount = parseDashboardLooseNumber(row?.cells?.["3"]?.display || row?.cells?.["4"]?.display || row?.cells?.["5"]?.display);
     if (amount !== null && amount > 0) settlementsPayout += amount;
@@ -653,14 +653,14 @@ function getTaskStatusMeta(statusKey) {
 }
 
 function getPriorityLabel(priorityKey) {
-  return TASK_PRIORITIES.find((item) => item.key === priorityKey)?.label || "РЎСЂРµРґРЅРёР№";
+  return TASK_PRIORITIES.find((item) => item.key === priorityKey)?.label || "Средний";
 }
 
 function sanitizeKey(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9_Р°-СЏС‘-]+/gi, "_")
+    .replace(/[^a-z0-9_а-яё-]+/gi, "_")
     .replace(/-+/g, "_")
     .replace(/^_+|_+$/g, "");
 }
@@ -852,7 +852,7 @@ function normalizeTaskHistoryEntry(entry) {
   return {
     id: compactText(entry.id || ""),
     date: date || new Date().toISOString(),
-    title: title || "РЎРѕР±С‹С‚РёРµ Р·Р°РґР°С‡Рё",
+    title: title || "Событие задачи",
     meta: compactText(entry.meta || entry.description || ""),
     tone: ["neutral", "success", "warning", "danger", "info", "accent"].includes(entry.tone) ? entry.tone : "neutral",
     moduleKey: compactText(entry.moduleKey || "tasks") || "tasks",
@@ -884,41 +884,41 @@ function appendTaskHistory(task, ...entries) {
 }
 
 function buildTaskChangeMeta(previous, next, sprintOptions = []) {
-  if (!previous) return "РљР°СЂС‚РѕС‡РєР° Р·Р°РІРµРґРµРЅР° РІ СЂР°Р±РѕС‡РµРј РєРѕРЅС‚СѓСЂРµ.";
+  if (!previous) return "Карточка заведена в рабочем контуре.";
   const sprintMap = new Map((sprintOptions || []).map((sprint) => [compactText(sprint.id), compactText(sprint.title)]));
   const changes = [];
 
-  if (compactText(previous.title) !== compactText(next.title)) changes.push("РЅР°Р·РІР°РЅРёРµ");
-  if (compactText(previous.owner) !== compactText(next.owner)) changes.push("РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№");
+  if (compactText(previous.title) !== compactText(next.title)) changes.push("название");
+  if (compactText(previous.owner) !== compactText(next.owner)) changes.push("ответственный");
   if (compactText(previous.status) !== compactText(next.status)) {
-    changes.push(`СЃС‚Р°С‚СѓСЃ: ${getTaskStatusMeta(previous.status).label} -> ${getTaskStatusMeta(next.status).label}`);
+    changes.push(`статус: ${getTaskStatusMeta(previous.status).label} -> ${getTaskStatusMeta(next.status).label}`);
   }
   if (compactText(previous.priority) !== compactText(next.priority)) {
-    changes.push(`РїСЂРёРѕСЂРёС‚РµС‚: ${getPriorityLabel(previous.priority)} -> ${getPriorityLabel(next.priority)}`);
+    changes.push(`приоритет: ${getPriorityLabel(previous.priority)} -> ${getPriorityLabel(next.priority)}`);
   }
   if (compactText(previous.sprintId) !== compactText(next.sprintId)) {
-    const before = sprintMap.get(compactText(previous.sprintId)) || "Р±РµР· РёС‚РµСЂР°С†РёРё";
-    const after = sprintMap.get(compactText(next.sprintId)) || "Р±РµР· РёС‚РµСЂР°С†РёРё";
-    changes.push(`РёС‚РµСЂР°С†РёСЏ: ${before} -> ${after}`);
+    const before = sprintMap.get(compactText(previous.sprintId)) || "без итерации";
+    const after = sprintMap.get(compactText(next.sprintId)) || "без итерации";
+    changes.push(`итерация: ${before} -> ${after}`);
   }
   if (normalizeDateInput(previous.dueDate) !== normalizeDateInput(next.dueDate)) {
-    changes.push(`СЃСЂРѕРє: ${formatDate(previous.dueDate)} -> ${formatDate(next.dueDate)}`);
+    changes.push(`срок: ${formatDate(previous.dueDate)} -> ${formatDate(next.dueDate)}`);
   }
   if (Boolean(previous.blocked) !== Boolean(next.blocked)) {
-    changes.push(next.blocked ? "РґРѕР±Р°РІР»РµРЅ Р±Р»РѕРєРµСЂ" : "Р±Р»РѕРєРµСЂ СЃРЅСЏС‚");
+    changes.push(next.blocked ? "добавлен блокер" : "блокер снят");
   }
-  if (compactText(previous.note) !== compactText(next.note)) changes.push("РєРѕРјРјРµРЅС‚Р°СЂРёР№");
-  if (JSON.stringify(previous.custom || {}) !== JSON.stringify(next.custom || {})) changes.push("РєР°СЃС‚РѕРјРЅС‹Рµ РїРѕР»СЏ");
+  if (compactText(previous.note) !== compactText(next.note)) changes.push("комментарий");
+  if (JSON.stringify(previous.custom || {}) !== JSON.stringify(next.custom || {})) changes.push("кастомные поля");
 
-  return changes.length ? changes.join(" вЂў ") : "РћР±РЅРѕРІР»РµРЅС‹ РґРµС‚Р°Р»Рё РєР°СЂС‚РѕС‡РєРё.";
+  return changes.length ? changes.join(" • ") : "Обновлены детали карточки.";
 }
 
 function getTaskSourceLabel(context) {
-  if (!context) return "Р СѓС‡РЅР°СЏ Р·Р°РґР°С‡Р°";
+  if (!context) return "Ручная задача";
   if (context.type === "crm" || context.type === "crm-signal") return "CRM";
-  if (context.type === "warehouse" || context.type === "warehouse-signal") return "РЎРєР»Р°Рґ";
-  if (context.type === "sales-signal") return "РџСЂРѕРґР°Р¶Рё";
-  return "РЎРІСЏР·Р°РЅРЅС‹Р№ РєРѕРЅС‚СѓСЂ";
+  if (context.type === "warehouse" || context.type === "warehouse-signal") return "Склад";
+  if (context.type === "sales-signal") return "Продажи";
+  return "Связанный контур";
 }
 
 function getCustomFields(moduleKey, doc) {
@@ -938,8 +938,8 @@ function getRecordValue(record, key) {
 function formatFieldValue(field, rawValue) {
   if (field?.type === "number") return formatNumber(rawValue || 0);
   if (field?.type === "date") return formatDate(rawValue);
-  if (field?.type === "checkbox") return rawValue ? "Р”Р°" : "РќРµС‚";
-  return compactText(rawValue) || "вЂ”";
+  if (field?.type === "checkbox") return rawValue ? "Да" : "Нет";
+  return compactText(rawValue) || "—";
 }
 
 function renderCustomFieldInput(escapeHtml, field, value) {
@@ -959,7 +959,7 @@ function renderCustomFieldInput(escapeHtml, field, value) {
     return `<label class="permission-flag"><input class="form-check-input" type="checkbox" name="${escapeHtml(name)}" ${value ? "checked" : ""} /><span>${escapeHtml(field.label)}</span></label>`;
   }
   if (field.type === "select") {
-    return `<label><span>${escapeHtml(field.label)}</span><select class="form-select" name="${escapeHtml(name)}"><option value="">РќРµ РІС‹Р±СЂР°РЅРѕ</option>${options.map((option) => `<option value="${escapeHtml(option)}" ${String(value || "") === option ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}</select></label>`;
+    return `<label><span>${escapeHtml(field.label)}</span><select class="form-select" name="${escapeHtml(name)}"><option value="">Не выбрано</option>${options.map((option) => `<option value="${escapeHtml(option)}" ${String(value || "") === option ? "selected" : ""}>${escapeHtml(option)}</option>`).join("")}</select></label>`;
   }
   return `<label><span>${escapeHtml(field.label)}</span><input class="form-control" type="text" name="${escapeHtml(name)}" value="${escapeHtml(String(value || ""))}" /></label>`;
 }
@@ -970,8 +970,8 @@ function renderCustomFieldSection(moduleKey, doc, record, escapeHtml) {
   return `
     <div class="workspace-custom-block">
       <div class="workspace-custom-block__head">
-        <strong>РќР°СЃС‚СЂР°РёРІР°РµРјС‹Рµ РїРѕР»СЏ</strong>
-        <span>Р”РѕР±Р°РІР»СЏСЋС‚СЃСЏ С‡РµСЂРµР· РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЂР°Р·РґРµР»Р°</span>
+        <strong>Настраиваемые поля</strong>
+        <span>Добавляются через конструктор раздела</span>
       </div>
       <div class="workspace-custom-grid">
         ${fields.map((field) => renderCustomFieldInput(escapeHtml, field, getRecordValue(record, field.key))).join("")}
@@ -1047,7 +1047,7 @@ function getFormulaHelpers(records) {
 function formatFormulaValue(format, value) {
   if (format === "money") return formatMoney(value);
   if (format === "percent") return `${toNumber(value).toFixed(2)}%`;
-  if (format === "text") return String(value ?? "вЂ”");
+  if (format === "text") return String(value ?? "—");
   return formatNumber(value);
 }
 
@@ -1080,9 +1080,9 @@ function getFormulaMetrics(moduleKey, doc, records) {
           maxOf: Math.max
         }
       });
-      return { label: formula.label, value: formatFormulaValue(formula.format, value), caption: "Р¤РѕСЂРјСѓР»Р° РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР°" };
+      return { label: formula.label, value: formatFormulaValue(formula.format, value), caption: "Формула конструктора" };
     } catch (error) {
-      return { label: formula.label, value: "РћС€РёР±РєР°", caption: error.message || "Р¤РѕСЂРјСѓР»Р° РЅРµ СЂР°СЃСЃС‡РёС‚Р°Р»Р°СЃСЊ" };
+      return { label: formula.label, value: "Ошибка", caption: error.message || "Формула не рассчиталась" };
     }
   });
 }
@@ -1100,7 +1100,7 @@ function renderViewTabs(moduleKey, doc, uiState, escapeHtml) {
           `
         )
         .join("")}
-      ${uiState.activeViewId === "adhoc" ? '<span class="workspace-view-tab workspace-view-tab--ghost">РўРµРєСѓС‰РёР№ С„РёР»СЊС‚СЂ</span>' : ""}
+      ${uiState.activeViewId === "adhoc" ? '<span class="workspace-view-tab workspace-view-tab--ghost">Текущий фильтр</span>' : ""}
     </div>
   `;
 }
@@ -1116,19 +1116,19 @@ function renderBuilderPanel(moduleKey, doc, uiState, escapeHtml) {
     <section class="workspace-panel workspace-builder ${uiState.configOpen ? "" : "d-none"}">
       <div class="panel-heading">
         <div class="workspace-hero__copy">
-          <h4>РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЂР°Р·РґРµР»Р°</h4>
-          <div class="compact-help">РЎРѕР±РёСЂР°Р№С‚Рµ СЃРѕР±СЃС‚РІРµРЅРЅС‹Рµ РІРєР»Р°РґРєРё, РїРѕР»СЏ Рё KPI Р±РµР· РѕС‚РґРµР»СЊРЅРѕР№ СЂР°Р·СЂР°Р±РѕС‚РєРё Р±Р°Р·С‹.</div>
+          <h4>Конструктор раздела</h4>
+          <div class="compact-help">Собирайте собственные вкладки, поля и KPI без отдельной разработки базы.</div>
         </div>
       </div>
       <div class="builder-grid">
         <article class="builder-card">
           <div class="builder-card__head">
-            <strong>Р’РєР»Р°РґРєРё-РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ</strong>
-            <span>РЎРѕС…СЂР°РЅСЏСЋС‚ С‚РµРєСѓС‰РёРµ С„РёР»СЊС‚СЂС‹ РєР°Рє РѕС‚РґРµР»СЊРЅСѓСЋ РІРєР»Р°РґРєСѓ.</span>
+            <strong>Вкладки-представления</strong>
+            <span>Сохраняют текущие фильтры как отдельную вкладку.</span>
           </div>
           <form class="builder-form" data-builder-action="view">
-            <input class="form-control" type="text" name="label" placeholder="РќР°РїСЂРёРјРµСЂ: РЎСЂРѕС‡РЅС‹Рµ СЃРґРµР»РєРё" required />
-            <button class="btn btn-dark btn-sm" type="submit">РЎРѕС…СЂР°РЅРёС‚СЊ РІРєР»Р°РґРєСѓ</button>
+            <input class="form-control" type="text" name="label" placeholder="Например: Срочные сделки" required />
+            <button class="btn btn-dark btn-sm" type="submit">Сохранить вкладку</button>
           </form>
           <div class="builder-list">
             ${
@@ -1141,33 +1141,33 @@ function renderBuilderPanel(moduleKey, doc, uiState, escapeHtml) {
                             <strong>${escapeHtml(view.label)}</strong>
                             <span>${escapeHtml(JSON.stringify(view.filters))}</span>
                           </div>
-                          <button class="btn btn-sm btn-outline-danger" type="button" data-builder-view-delete="${escapeHtml(view.id)}">РЈРґР°Р»РёС‚СЊ</button>
+                          <button class="btn btn-sm btn-outline-danger" type="button" data-builder-view-delete="${escapeHtml(view.id)}">Удалить</button>
                         </div>
                       `
                     )
                     .join("")
-                : '<div class="workspace-empty workspace-empty--tight">Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹С… РІРєР»Р°РґРѕРє РїРѕРєР° РЅРµС‚.</div>'
+                : '<div class="workspace-empty workspace-empty--tight">Дополнительных вкладок пока нет.</div>'
             }
           </div>
         </article>
         <article class="builder-card">
           <div class="builder-card__head">
-            <strong>РќР°СЃС‚СЂР°РёРІР°РµРјС‹Рµ РїРѕР»СЏ</strong>
-            <span>РџРѕР»СЏ РјРѕР¶РЅРѕ РІС‹РІРѕРґРёС‚СЊ РІ С„РѕСЂРјСѓ, С‚Р°Р±Р»РёС†Сѓ Рё РєР°СЂС‚РѕС‡РєСѓ РѕС‚РґРµР»СЊРЅРѕ.</span>
+            <strong>Настраиваемые поля</strong>
+            <span>Поля можно выводить в форму, таблицу и карточку отдельно.</span>
           </div>
           <form class="builder-form builder-form--stack" data-builder-action="field">
             <div class="workspace-form-grid">
-              <label><span>РљР»СЋС‡ РїРѕР»СЏ</span><input class="form-control" type="text" name="key" placeholder="client_city" required /></label>
-              <label><span>РџРѕРґРїРёСЃСЊ</span><input class="form-control" type="text" name="label" placeholder="Р“РѕСЂРѕРґ РєР»РёРµРЅС‚Р°" required /></label>
-              <label><span>РўРёРї</span><select class="form-select" name="type">${CUSTOM_FIELD_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label>
-              <label><span>РћРїС†РёРё СЃРїРёСЃРєР°</span><input class="form-control" type="text" name="options" placeholder="Р’ СЂР°Р±РѕС‚Рµ, РќР° РїР°СѓР·Рµ, РђСЂС…РёРІ" /></label>
+              <label><span>Ключ поля</span><input class="form-control" type="text" name="key" placeholder="client_city" required /></label>
+              <label><span>Подпись</span><input class="form-control" type="text" name="label" placeholder="Город клиента" required /></label>
+              <label><span>Тип</span><select class="form-select" name="type">${CUSTOM_FIELD_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label>
+              <label><span>Опции списка</span><input class="form-control" type="text" name="options" placeholder="В работе, На паузе, Архив" /></label>
             </div>
             <div class="builder-checks">
-              <label class="permission-flag"><input class="form-check-input" type="checkbox" name="showInForm" checked /><span>РџРѕРєР°Р·С‹РІР°С‚СЊ РІ С„РѕСЂРјРµ</span></label>
-              <label class="permission-flag"><input class="form-check-input" type="checkbox" name="showInTable" checked /><span>РџРѕРєР°Р·С‹РІР°С‚СЊ РІ С‚Р°Р±Р»РёС†Рµ</span></label>
-              <label class="permission-flag"><input class="form-check-input" type="checkbox" name="showInCard" /><span>РџРѕРєР°Р·С‹РІР°С‚СЊ РІ РєР°СЂС‚РѕС‡РєРµ</span></label>
+              <label class="permission-flag"><input class="form-check-input" type="checkbox" name="showInForm" checked /><span>Показывать в форме</span></label>
+              <label class="permission-flag"><input class="form-check-input" type="checkbox" name="showInTable" checked /><span>Показывать в таблице</span></label>
+              <label class="permission-flag"><input class="form-check-input" type="checkbox" name="showInCard" /><span>Показывать в карточке</span></label>
             </div>
-            <button class="btn btn-dark btn-sm" type="submit">Р”РѕР±Р°РІРёС‚СЊ РїРѕР»Рµ</button>
+            <button class="btn btn-dark btn-sm" type="submit">Добавить поле</button>
           </form>
           <div class="builder-list">
             ${
@@ -1178,31 +1178,31 @@ function renderBuilderPanel(moduleKey, doc, uiState, escapeHtml) {
                         <div class="builder-list-item">
                           <div>
                             <strong>${escapeHtml(field.label)}</strong>
-                            <span>${escapeHtml(field.key)} вЂў ${escapeHtml(field.type)}</span>
+                            <span>${escapeHtml(field.key)} • ${escapeHtml(field.type)}</span>
                           </div>
-                          <button class="btn btn-sm btn-outline-danger" type="button" data-builder-field-delete="${escapeHtml(field.key)}">РЈРґР°Р»РёС‚СЊ</button>
+                          <button class="btn btn-sm btn-outline-danger" type="button" data-builder-field-delete="${escapeHtml(field.key)}">Удалить</button>
                         </div>
                       `
                     )
                     .join("")
-                : `<div class="workspace-empty workspace-empty--tight">РџРѕРєР° РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ С‚РѕР»СЊРєРѕ Р±Р°Р·РѕРІС‹Рµ РїРѕР»СЏ ${escapeHtml(meta.entityLabel)}.</div>`
+                : `<div class="workspace-empty workspace-empty--tight">Пока используются только базовые поля ${escapeHtml(meta.entityLabel)}.</div>`
             }
           </div>
         </article>
         <article class="builder-card">
           <div class="builder-card__head">
-            <strong>Р¤РѕСЂРјСѓР»С‹ Рё KPI</strong>
-            <span>Р¤РѕСЂРјСѓР»С‹ СЃС‡РёС‚Р°СЋС‚ РїРѕРєР°Р·Р°С‚РµР»Рё РїРѕ С‚РµРєСѓС‰РµРјСѓ РЅР°Р±РѕСЂСѓ РґР°РЅРЅС‹С….</span>
+            <strong>Формулы и KPI</strong>
+            <span>Формулы считают показатели по текущему набору данных.</span>
           </div>
           <form class="builder-form builder-form--stack" data-builder-action="formula">
             <div class="workspace-form-grid">
-              <label><span>РљР»СЋС‡</span><input class="form-control" type="text" name="key" placeholder="pipeline_margin" required /></label>
-              <label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="label" placeholder="РњР°СЂР¶Р° РІ РІРѕСЂРѕРЅРєРµ" required /></label>
-              <label><span>Р¤РѕСЂРјР°С‚</span><select class="form-select" name="format">${FORMULA_FORMATS.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label>
+              <label><span>Ключ</span><input class="form-control" type="text" name="key" placeholder="pipeline_margin" required /></label>
+              <label><span>Название</span><input class="form-control" type="text" name="label" placeholder="Маржа в воронке" required /></label>
+              <label><span>Формат</span><select class="form-select" name="format">${FORMULA_FORMATS.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label>
             </div>
-            <label><span>Р¤РѕСЂРјСѓР»Р°</span><input class="form-control" type="text" name="expression" placeholder='РќР°РїСЂРёРјРµСЂ: sum("amount") / Math.max(count(), 1)' required /></label>
-            <div class="compact-help">Р”РѕСЃС‚СѓРїРЅС‹Рµ С„СѓРЅРєС†РёРё: <code>count()</code>, <code>countWhere("field","value")</code>, <code>sum("field")</code>, <code>avg("field")</code>, <code>min("field")</code>, <code>max("field")</code>, <code>percent(a,b)</code>.</div>
-            <button class="btn btn-dark btn-sm" type="submit">Р”РѕР±Р°РІРёС‚СЊ С„РѕСЂРјСѓР»Сѓ</button>
+            <label><span>Формула</span><input class="form-control" type="text" name="expression" placeholder='Например: sum("amount") / Math.max(count(), 1)' required /></label>
+            <div class="compact-help">Доступные функции: <code>count()</code>, <code>countWhere("field","value")</code>, <code>sum("field")</code>, <code>avg("field")</code>, <code>min("field")</code>, <code>max("field")</code>, <code>percent(a,b)</code>.</div>
+            <button class="btn btn-dark btn-sm" type="submit">Добавить формулу</button>
           </form>
           <div class="builder-list">
             ${
@@ -1215,23 +1215,23 @@ function renderBuilderPanel(moduleKey, doc, uiState, escapeHtml) {
                             <strong>${escapeHtml(formula.label)}</strong>
                             <span>${escapeHtml(formula.expression)}</span>
                           </div>
-                          <button class="btn btn-sm btn-outline-danger" type="button" data-builder-formula-delete="${escapeHtml(formula.key)}">РЈРґР°Р»РёС‚СЊ</button>
+                          <button class="btn btn-sm btn-outline-danger" type="button" data-builder-formula-delete="${escapeHtml(formula.key)}">Удалить</button>
                         </div>
                       `
                     )
                     .join("")
-                : '<div class="workspace-empty workspace-empty--tight">Р¤РѕСЂРјСѓР»С‹ РїРѕРєР° РЅРµ РґРѕР±Р°РІР»РµРЅС‹.</div>'
+                : '<div class="workspace-empty workspace-empty--tight">Формулы пока не добавлены.</div>'
             }
           </div>
         </article>
         <article class="builder-card">
           <div class="builder-card__head">
-            <strong>JSON-СЃС…РµРјР° СЂР°Р·РґРµР»Р°</strong>
-            <span>Р”Р»СЏ РјР°РєСЃРёРјР°Р»СЊРЅРѕ РіРёР±РєРѕР№ РЅР°СЃС‚СЂРѕР№РєРё РјРѕР¶РЅРѕ РїСЂР°РІРёС‚СЊ views, fields Рё formulas С†РµР»РёРєРѕРј РѕРґРЅРёРј JSON.</span>
+            <strong>JSON-схема раздела</strong>
+            <span>Для максимально гибкой настройки можно править views, fields и formulas целиком одним JSON.</span>
           </div>
           <form class="builder-form builder-form--stack" data-builder-action="schema">
             <label>
-              <span>РЎС…РµРјР° РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР°</span>
+              <span>Схема конструктора</span>
               <textarea class="form-control" name="schema" rows="18">${escapeHtml(
                 JSON.stringify(
                   {
@@ -1244,8 +1244,8 @@ function renderBuilderPanel(moduleKey, doc, uiState, escapeHtml) {
                 )
               )}</textarea>
             </label>
-            <div class="compact-help">РџРѕРґРґРµСЂР¶РёРІР°СЋС‚СЃСЏ С‚СЂРё РјР°СЃСЃРёРІР°: <code>views</code>, <code>fields</code>, <code>formulas</code>. РџРѕСЃР»Рµ СЃРѕС…СЂР°РЅРµРЅРёСЏ СЃС…РµРјР° РЅРѕСЂРјР°Р»РёР·СѓРµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.</div>
-            <button class="btn btn-dark btn-sm" type="submit">РЎРѕС…СЂР°РЅРёС‚СЊ JSON-СЃС…РµРјСѓ</button>
+            <div class="compact-help">Поддерживаются три массива: <code>views</code>, <code>fields</code>, <code>formulas</code>. После сохранения схема нормализуется автоматически.</div>
+            <button class="btn btn-dark btn-sm" type="submit">Сохранить JSON-схему</button>
           </form>
         </article>
       </div>
@@ -1338,7 +1338,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     const uiState = ui[resolveLiveModuleKey(moduleKey)] || ui[moduleKey];
     const options = MODULE_MODE_CONFIG[moduleKey] || MODULE_MODE_CONFIG[resolveLiveModuleKey(moduleKey)] || [];
     return `
-      <div class="workspace-mode-tabs" role="tablist" aria-label="Р РµР¶РёРјС‹ СЂР°Р·РґРµР»Р°">
+      <div class="workspace-mode-tabs" role="tablist" aria-label="Режимы раздела">
         ${options
           .map(
             (option) => `
@@ -1356,13 +1356,13 @@ function buildModeTabs(moduleKey, escapeFn) {
     const canonicalModuleKey = resolveLiveModuleKey(moduleKey);
     const uiState = ui[canonicalModuleKey] || ui[moduleKey] || {};
     const modeOptions = MODULE_MODE_CONFIG[moduleKey] || MODULE_MODE_CONFIG[canonicalModuleKey] || [];
-    const activeModeLabel = modeOptions.find((item) => item.key === uiState.mode)?.label || "РћР±Р·РѕСЂ";
-    const activeViewLabel = uiState.activeViewId === "adhoc" ? "РўРµРєСѓС‰РёР№ С„РёР»СЊС‚СЂ" : "РЎРѕС…СЂР°РЅРµРЅРЅС‹Р№";
+    const activeModeLabel = modeOptions.find((item) => item.key === uiState.mode)?.label || "Обзор";
+    const activeViewLabel = uiState.activeViewId === "adhoc" ? "Текущий фильтр" : "Сохраненный";
     return `
       <div class="workspace-command-bar">
         <div class="workspace-command-bar__meta">
-          <span class="workspace-command-chip">Р РµР¶РёРј: ${escapeFn(activeModeLabel)}</span>
-          <span class="workspace-command-chip">Р’РёРґ: ${escapeFn(activeViewLabel)}</span>
+          <span class="workspace-command-chip">Режим: ${escapeFn(activeModeLabel)}</span>
+          <span class="workspace-command-chip">Вид: ${escapeFn(activeViewLabel)}</span>
         </div>
         <div class="workspace-command-bar__actions">
           ${actions.join("")}
@@ -1374,7 +1374,7 @@ function buildModeTabs(moduleKey, escapeFn) {
   function renderDraftBadge(moduleKey, formKey) {
     const draft = readDraft(moduleKey, formKey);
     if (!draft || !Object.keys(draft).length) return "";
-    return '<div class="workspace-inline-hint">Р•СЃС‚СЊ С‡РµСЂРЅРѕРІРёРє. РћРЅ СѓР¶Рµ РїРѕРґСЃС‚Р°РІР»РµРЅ РІ С„РѕСЂРјСѓ Рё РЅРµ РїРѕС‚РµСЂСЏРµС‚СЃСЏ РїРѕСЃР»Рµ РѕР±РЅРѕРІР»РµРЅРёСЏ СЃС‚СЂР°РЅРёС†С‹.</div>';
+    return '<div class="workspace-inline-hint">Есть черновик. Он уже подставлен в форму и не потеряется после обновления страницы.</div>';
   }
 
   async function exportModuleData(moduleKey) {
@@ -1388,24 +1388,24 @@ function buildModeTabs(moduleKey, escapeFn) {
     link.click();
     link.remove();
     URL.revokeObjectURL(url);
-    setStatus("JSON РІС‹РіСЂСѓР¶РµРЅ.", "success");
+    setStatus("JSON выгружен.", "success");
   }
 
   async function importModuleData(moduleKey) {
-    const raw = window.prompt("Р’СЃС‚Р°РІСЊС‚Рµ JSON СЌРєСЃРїРѕСЂС‚ СЌС‚РѕРіРѕ СЂР°Р·РґРµР»Р° С†РµР»РёРєРѕРј.");
+    const raw = window.prompt("Вставьте JSON экспорт этого раздела целиком.");
     if (!raw) return;
     let parsed;
     try {
       parsed = JSON.parse(raw);
     } catch (error) {
-      throw new Error(`JSON РЅРµ СЂР°СЃРїРѕР·РЅР°РЅ: ${error.message || "РѕС€РёР±РєР° СЃРёРЅС‚Р°РєСЃРёСЃР°"}`);
+      throw new Error(`JSON не распознан: ${error.message || "ошибка синтаксиса"}`);
     }
-    await saveDocument(moduleKey, parsed, "JSON СЂР°Р·РґРµР»Р° РёРјРїРѕСЂС‚РёСЂРѕРІР°РЅ.");
+    await saveDocument(moduleKey, parsed, "JSON раздела импортирован.");
     await rerenderCurrentModule();
   }
 
   function duplicateTitle(value) {
-    return compactText(value) ? `${compactText(value)} РєРѕРїРёСЏ` : "РљРѕРїРёСЏ";
+    return compactText(value) ? `${compactText(value)} копия` : "Копия";
   }
 
   const ui = {
@@ -1593,8 +1593,8 @@ function buildModeTabs(moduleKey, escapeFn) {
 
   function deriveSalesDealStage(order) {
     const status = compactText(order.status).toLowerCase();
-    if (status.includes("РѕС‚РјРµРЅ")) return "lost";
-    if (status.includes("РіРѕС‚РѕРІ")) return "done";
+    if (status.includes("отмен")) return "lost";
+    if (status.includes("готов")) return "done";
     if (order.productionStart || order.productionEnd || order.paidDate) return "production";
     if (order.invoiceDate) return "quote";
     return "lead";
@@ -1614,7 +1614,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     const doneOrders = orders.filter((order) => deriveSalesDealStage(order) === "done");
     const leadChannels = new Map();
     orders.forEach((order) => {
-      const key = compactText(order.leadChannel || order.salesChannel || "Р‘РµР· РєР°РЅР°Р»Р°");
+      const key = compactText(order.leadChannel || order.salesChannel || "Без канала");
       leadChannels.set(key, (leadChannels.get(key) || 0) + 1);
     });
     return {
@@ -1628,9 +1628,9 @@ function buildModeTabs(moduleKey, escapeFn) {
   }
 
   function getCalculatorLabel(appId) {
-    if (appId === EXTERNAL_SHARED_APPS.myCalculator) return "РњРѕР№ РєР°Р»СЊРєСѓР»СЏС‚РѕСЂ";
-    if (appId === "part-calculator") return "РџР°СЂС‚РЅРµСЂСЃРєРёР№ РєР°Р»СЊРєСѓР»СЏС‚РѕСЂ";
-    if (appId.startsWith("part-calculator:")) return `РџР°СЂС‚РЅРµСЂ: ${appId.split(":")[1] || "Р±РµР· РёРјРµРЅРё"}`;
+    if (appId === EXTERNAL_SHARED_APPS.myCalculator) return "Мой калькулятор";
+    if (appId === "part-calculator") return "Партнерский калькулятор";
+    if (appId.startsWith("part-calculator:")) return `Партнер: ${appId.split(":")[1] || "без имени"}`;
     return appId;
   }
 
@@ -1643,7 +1643,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         appId: payloadRecord?.app_id || "",
         label: getCalculatorLabel(payloadRecord?.app_id || ""),
         id: compactText(tab.id) || `tab_${index + 1}`,
-        name: compactText(tab.name) || `Р’РєР»Р°РґРєР° ${index + 1}`,
+        name: compactText(tab.name) || `Вкладка ${index + 1}`,
         hidden: Boolean(tab.hidden),
         status: compactText(tab?.data?.status),
         quantities: tab?.data?.quantities && typeof tab.data.quantities === "object" ? tab.data.quantities : {},
@@ -1690,7 +1690,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         entry.tabsCount += 1;
         entry.sources.add(tab.label);
         if (entry.examples.length < 4) {
-          entry.examples.push(`${tab.label} вЂў ${tab.name}`);
+          entry.examples.push(`${tab.label} • ${tab.name}`);
         }
       });
     });
@@ -1748,16 +1748,16 @@ function buildModeTabs(moduleKey, escapeFn) {
     const sourceApp = compactText(task?.integration?.sourceApp || "");
     const family = compactText(task?.integration?.family || "");
     if (sourceApp === "platform_risk_engine") {
-      if (family === "CRM") return { label: "РР· CRM", moduleKey: "crm" };
-      if (family === "РЎРєР»Р°Рґ") return { label: "РР· РЎРєР»Р°РґР°", moduleKey: "warehouse" };
-      if (family === "РџСЂРѕРґР°Р¶Рё") return { label: "РР· РџСЂРѕРґР°Р¶", moduleKey: "sales" };
-      return { label: "РР· СЃРёРіРЅР°Р»Р°", moduleKey: "tasks" };
+      if (family === "CRM") return { label: "з CRM", moduleKey: "crm" };
+      if (family === "Склад") return { label: "з Склада", moduleKey: "warehouse" };
+      if (family === "Продажи") return { label: "з Продаж", moduleKey: "sales" };
+      return { label: "з сигнала", moduleKey: "tasks" };
     }
     if (sourceApp === "platform_crm_manual" || compactText(task?.sourceKey).startsWith("crm-deal:")) {
-      return { label: "РЎРІСЏР·Р°РЅРѕ СЃРѕ СЃРґРµР»РєРѕР№", moduleKey: "crm" };
+      return { label: "Связано со сделкой", moduleKey: "crm" };
     }
     if (sourceApp === "platform_warehouse_manual" || compactText(task?.sourceKey).startsWith("warehouse-item:")) {
-      return { label: "РЎРІСЏР·Р°РЅРѕ СЃРѕ СЃРєР»Р°РґРѕРј", moduleKey: "warehouse" };
+      return { label: "Связано со складом", moduleKey: "warehouse" };
     }
     return null;
   }
@@ -1800,8 +1800,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       const reservation = buildDealReservationMap(warehouseDoc).get(sourceKey) || { qty: 0, rows: [] };
       return {
         type: "crm",
-        title: deal?.title || deal?.client || "CRM-СЃРґРµР»РєР°",
-        subtitle: deal?.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ",
+        title: deal?.title || deal?.client || "CRM-сделка",
+        subtitle: deal?.client || "Клиент не указан",
         moduleKey: "crm",
         entityId: deal?.id || "",
         tone: getCrmStageMeta(deal?.stage).tone,
@@ -1826,8 +1826,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       const decoratedItem = snapshot.items.find((entry) => entry.id === itemId) || null;
       return {
         type: "warehouse",
-        title: item?.name || item?.sku || "РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР°",
-        subtitle: item?.sku || item?.category || "РЎРєР»Р°РґСЃРєРѕР№ РєРѕРЅС‚СѓСЂ",
+        title: item?.name || item?.sku || "Позиция склада",
+        subtitle: item?.sku || item?.category || "Складской контур",
         moduleKey: "warehouse",
         entityId: item?.id || "",
         tone: decoratedItem?.low ? "danger" : "success",
@@ -1845,8 +1845,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       const deal = (crmDoc?.deals || []).find((entry) => entry.id === dealId) || null;
       return {
         type: "crm-signal",
-        title: deal?.title || task.title || "РЎРёРіРЅР°Р» CRM",
-        subtitle: "РџСЂРѕСЃСЂРѕС‡РµРЅРЅР°СЏ СЃРґРµР»РєР°",
+        title: deal?.title || task.title || "Сигнал CRM",
+        subtitle: "Просроченная сделка",
         moduleKey: "crm",
         entityId: deal?.id || "",
         tone: "warning",
@@ -1863,8 +1863,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       const item = snapshot.items.find((entry) => entry.id === itemId) || null;
       return {
         type: "warehouse-signal",
-        title: item?.name || task.title || "РЎРёРіРЅР°Р» СЃРєР»Р°РґР°",
-        subtitle: "РќРёР·РєРёР№ РѕСЃС‚Р°С‚РѕРє",
+        title: item?.name || task.title || "Сигнал склада",
+        subtitle: "Низкий остаток",
         moduleKey: "warehouse",
         entityId: item?.id || "",
         tone: item?.low ? "danger" : "warning",
@@ -1879,8 +1879,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       const order = getSalesOrderBySourceId(salesSnapshot, sourceKey.slice("sales-invoice:".length));
       return {
         type: "sales-signal",
-        title: order?.orderNumber || order?.title || task.title || "РЎРёРіРЅР°Р» РѕРїР»Р°С‚С‹",
-        subtitle: order?.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ",
+        title: order?.orderNumber || order?.title || task.title || "Сигнал оплаты",
+        subtitle: order?.client || "Клиент не указан",
         moduleKey: "sales",
         entityId: "",
         tone: order?.paidDate ? "success" : "accent",
@@ -1897,58 +1897,58 @@ function buildModeTabs(moduleKey, escapeFn) {
   function buildTaskOperationCards(task, context) {
     const dueDate = normalizeDateInput(task?.dueDate);
     const overdue = dueDate && dueDate < todayString() && compactText(task?.status) !== "done";
-    const sprintTitle = compactText(task?.sprint?.title || "") || "Р‘РµР· РёС‚РµСЂР°С†РёРё";
+    const sprintTitle = compactText(task?.sprint?.title || "") || "Без итерации";
     const cards = [
       {
-        label: "РЎС‚Р°С‚СѓСЃ",
+        label: "Статус",
         value: getTaskStatusMeta(task?.status).label,
-        caption: overdue ? "СЃСЂРѕРє СѓР¶Рµ РїСЂРѕСЃСЂРѕС‡РµРЅ" : "СЂР°Р±РѕС‡РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РєР°СЂС‚РѕС‡РєРё",
+        caption: overdue ? "срок уже просрочен" : "рабочее состояние карточки",
         tone: overdue ? "danger" : getTaskStatusMeta(task?.status).tone
       },
       {
-        label: "РџСЂРёРѕСЂРёС‚РµС‚",
+        label: "Приоритет",
         value: getPriorityLabel(task?.priority),
-        caption: task?.owner ? `РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№: ${task.owner}` : "РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№ РЅРµ РЅР°Р·РЅР°С‡РµРЅ",
+        caption: task?.owner ? `ответственный: ${task.owner}` : "ответственный не назначен",
         tone: task?.priority === "urgent" ? "danger" : task?.priority === "high" ? "warning" : "neutral"
       },
       {
-        label: "РЎСЂРѕРє",
-        value: dueDate ? formatDate(dueDate) : "РќРµ Р·Р°РґР°РЅ",
-        caption: overdue ? "С‚СЂРµР±СѓРµС‚ СЃСЂРѕС‡РЅРѕРіРѕ РІРЅРёРјР°РЅРёСЏ" : dueDate ? "РєРѕРЅС‚СЂРѕР»СЊ РїРѕ РєР°Р»РµРЅРґР°СЂСЋ" : "РґР°С‚Р° РїРѕРєР° РЅРµ СѓРєР°Р·Р°РЅР°",
+        label: "Срок",
+        value: dueDate ? formatDate(dueDate) : "Не задан",
+        caption: overdue ? "требует срочного внимания" : dueDate ? "контроль по календарю" : "дата пока не указана",
         tone: overdue ? "danger" : dueDate ? "info" : "neutral"
       },
       {
-        label: "РС‚РµСЂР°С†РёСЏ",
+        label: "терация",
         value: sprintTitle,
-        caption: sprintTitle === "Р‘РµР· РёС‚РµСЂР°С†РёРё" ? "РЅРµ РїСЂРёРІСЏР·Р°РЅР° Рє СЃРїСЂРёРЅС‚Сѓ" : "СЂР°Р±РѕС‡РёР№ С†РёРєР» Р·Р°РґР°С‡Рё",
-        tone: sprintTitle === "Р‘РµР· РёС‚РµСЂР°С†РёРё" ? "neutral" : "accent"
+        caption: sprintTitle === "Без итерации" ? "не привязана к спринту" : "рабочий цикл задачи",
+        tone: sprintTitle === "Без итерации" ? "neutral" : "accent"
       },
       {
-        label: "РСЃС‚РѕС‡РЅРёРє",
+        label: "сточник",
         value: getTaskSourceLabel(context),
-        caption: context?.title ? compactText(context.title) : "СЂСѓС‡РЅРѕР№ РєРѕРЅС‚СѓСЂ",
+        caption: context?.title ? compactText(context.title) : "ручной контур",
         tone: context?.tone || "neutral"
       },
       {
-        label: "Р‘Р»РѕРєРµСЂ",
-        value: task?.blocked ? "Р”Р°" : "РќРµС‚",
-        caption: task?.blocked ? "РЅСѓР¶РЅР° РїРѕРјРѕС‰СЊ РёР»Рё СЂРµС€РµРЅРёРµ" : "РєСЂРёС‚РёС‡РЅС‹С… Р±Р»РѕРєРµСЂРѕРІ РЅРµС‚",
+        label: "Блокер",
+        value: task?.blocked ? "Да" : "Нет",
+        caption: task?.blocked ? "нужна помощь или решение" : "критичных блокеров нет",
         tone: task?.blocked ? "danger" : "success"
       }
     ];
 
     if (typeof context?.amount !== "undefined") {
       cards.push({
-        label: "РЎСѓРјРјР° РєРѕРЅС‚СѓСЂР°",
+        label: "Сумма контура",
         value: formatMoney(context.amount || 0),
-        caption: "СЃРІСЏР·Р°РЅРЅС‹Р№ С„РёРЅР°РЅСЃРѕРІС‹Р№ РѕР±СЉС‘Рј",
+        caption: "связанный финансовый объём",
         tone: "info"
       });
     } else if (typeof context?.available !== "undefined") {
       cards.push({
-        label: "Р”РѕСЃС‚СѓРїРЅРѕ РЅР° СЃРєР»Р°РґРµ",
+        label: "Доступно на складе",
         value: formatNumber(context.available || 0),
-        caption: `${formatNumber(context.onHand || 0)} РЅР° СЂСѓРєР°С… вЂў ${formatNumber(context.reserved || 0)} РІ СЂРµР·РµСЂРІРµ`,
+        caption: `${formatNumber(context.onHand || 0)} на руках • ${formatNumber(context.reserved || 0)} в резерве`,
         tone: context?.available > 0 ? "success" : "danger"
       });
     }
@@ -1962,11 +1962,11 @@ function buildModeTabs(moduleKey, escapeFn) {
       ? task.history.map((entry) => normalizeTaskHistoryEntry(entry)).filter(Boolean)
       : [];
 
-    if (!history.some((entry) => compactText(entry.title) === "Р—Р°РґР°С‡Р° СЃРѕР·РґР°РЅР°")) {
+    if (!history.some((entry) => compactText(entry.title) === "Задача создана")) {
       events.push({
         date: task?.createdAt || new Date().toISOString(),
-        title: "Р—Р°РґР°С‡Р° СЃРѕР·РґР°РЅР°",
-        meta: compactText(task?.title || "Р‘РµР· РЅР°Р·РІР°РЅРёСЏ"),
+        title: "Задача создана",
+        meta: compactText(task?.title || "Без названия"),
         tone: "neutral",
         moduleKey: "tasks",
         entityId: task?.id || ""
@@ -1975,8 +1975,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (task?.updatedAt && compactText(task.updatedAt) !== compactText(task.createdAt)) {
       events.push({
         date: task.updatedAt,
-        title: "РљР°СЂС‚РѕС‡РєР° РѕР±РЅРѕРІР»РµРЅР°",
-        meta: `${getTaskStatusMeta(task.status).label} вЂў ${getPriorityLabel(task.priority)}`,
+        title: "Карточка обновлена",
+        meta: `${getTaskStatusMeta(task.status).label} • ${getPriorityLabel(task.priority)}`,
         tone: getTaskStatusMeta(task.status).tone,
         moduleKey: "tasks",
         entityId: task?.id || ""
@@ -1985,8 +1985,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (normalizeDateInput(task?.dueDate)) {
       events.push({
         date: normalizeDateInput(task.dueDate),
-        title: compactText(task?.status) === "done" ? "Р¤РёРЅР°Р»СЊРЅС‹Р№ СЃСЂРѕРє Р·Р°РґР°С‡Рё" : "РљРѕРЅС‚СЂРѕР»СЊРЅС‹Р№ СЃСЂРѕРє",
-        meta: compactText(task?.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ"),
+        title: compactText(task?.status) === "done" ? "Финальный срок задачи" : "Контрольный срок",
+        meta: compactText(task?.owner || "Без ответственного"),
         tone: compactText(task?.status) === "done" ? "success" : "warning",
         moduleKey: "tasks",
         entityId: task?.id || ""
@@ -1998,8 +1998,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (context?.order?.invoiceDate) {
       events.push({
         date: context.order.invoiceDate,
-        title: "РџРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РІС‹СЃС‚Р°РІР»РµРЅ СЃС‡С‘С‚",
-        meta: `${compactText(context.order.orderNumber || context.order.title || "Р—Р°РєР°Р·")} вЂў ${formatMoney(context.order.amount || 0)}`,
+        title: "По источнику выставлен счёт",
+        meta: `${compactText(context.order.orderNumber || context.order.title || "Заказ")} • ${formatMoney(context.order.amount || 0)}`,
         tone: "accent",
         moduleKey: "sales"
       });
@@ -2007,8 +2007,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (context?.order?.paidDate) {
       events.push({
         date: context.order.paidDate,
-        title: "РџРѕ РёСЃС‚РѕС‡РЅРёРєСѓ РїСЂРёС€Р»Р° РѕРїР»Р°С‚Р°",
-        meta: `${compactText(context.order.orderNumber || context.order.title || "Р—Р°РєР°Р·")} вЂў ${formatMoney(context.order.paidAmount || context.order.amount || 0)}`,
+        title: "По источнику пришла оплата",
+        meta: `${compactText(context.order.orderNumber || context.order.title || "Заказ")} • ${formatMoney(context.order.paidAmount || context.order.amount || 0)}`,
         tone: "success",
         moduleKey: "sales"
       });
@@ -2016,8 +2016,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     (context?.reservation?.rows || []).forEach((movement) => {
       events.push({
         date: movement.date || movement.createdAt,
-        title: movement.kind === "release" ? "Р РµР·РµСЂРІ РїРѕ Р·Р°РґР°С‡Рµ СЃРЅСЏС‚" : "РџРѕРґ Р·Р°РґР°С‡Сѓ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ РјР°С‚РµСЂРёР°Р»",
-        meta: `${formatNumber(movement.qty || 0)} вЂў ${compactText(movement.note || "РЎРєР»Р°РґСЃРєРѕР№ СЂРµР·РµСЂРІ")}`,
+        title: movement.kind === "release" ? "Резерв по задаче снят" : "Под задачу зарезервирован материал",
+        meta: `${formatNumber(movement.qty || 0)} • ${compactText(movement.note || "Складской резерв")}`,
         tone: movement.kind === "release" ? "neutral" : "info",
         moduleKey: movement.itemId ? "warehouse" : "",
         entityId: movement.itemId || ""
@@ -2026,8 +2026,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     (context?.movements || []).forEach((movement) => {
       events.push({
         date: movement.date || movement.createdAt,
-        title: "РЎРєР»Р°РґСЃРєРѕРµ РґРІРёР¶РµРЅРёРµ РїРѕ РёСЃС‚РѕС‡РЅРёРєСѓ",
-        meta: `${compactText(WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === movement.kind)?.label || movement.kind)} вЂў ${formatNumber(movement.qty || 0)}`,
+        title: "Складское движение по источнику",
+        meta: `${compactText(WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === movement.kind)?.label || movement.kind)} • ${formatNumber(movement.qty || 0)}`,
         tone: movement.kind === "in" ? "success" : movement.kind === "out" ? "warning" : "info",
         moduleKey: movement.itemId ? "warehouse" : "",
         entityId: movement.itemId || ""
@@ -2047,33 +2047,33 @@ function buildModeTabs(moduleKey, escapeFn) {
     const overdue = normalizeDateInput(deal?.deadline) && normalizeDateInput(deal?.deadline) < todayString();
     return [
       {
-        label: "РЎС‡РµС‚",
-        value: order?.invoiceDate ? "Р’С‹СЃС‚Р°РІР»РµРЅ" : "РќРµС‚",
-        caption: order?.invoiceDate ? formatDate(order.invoiceDate) : "СЃС‡РµС‚ РµС‰Рµ РЅРµ РІС‹СЃС‚Р°РІР»РµРЅ",
+        label: "Счет",
+        value: order?.invoiceDate ? "Выставлен" : "Нет",
+        caption: order?.invoiceDate ? formatDate(order.invoiceDate) : "счет еще не выставлен",
         tone: order?.invoiceDate ? "accent" : "neutral"
       },
       {
-        label: "РћРїР»Р°С‚Р°",
-        value: order?.paidDate ? "РћРїР»Р°С‡РµРЅ" : order?.invoiceDate ? "РћР¶РёРґР°РµС‚" : "вЂ”",
-        caption: order?.paidDate ? formatDate(order.paidDate) : order?.invoiceDate ? "СЃС‡РµС‚ Р±РµР· РѕРїР»Р°С‚С‹" : "РЅРµС‚ РїР»Р°С‚РµР¶Р°",
+        label: "Оплата",
+        value: order?.paidDate ? "Оплачен" : order?.invoiceDate ? "Ожидает" : "—",
+        caption: order?.paidDate ? formatDate(order.paidDate) : order?.invoiceDate ? "счет без оплаты" : "нет платежа",
         tone: order?.paidDate ? "success" : order?.invoiceDate ? "warning" : "neutral"
       },
       {
-        label: "Р—Р°РґР°С‡Рё",
+        label: "Задачи",
         value: formatNumber(openTasks.length),
-        caption: blockedTasks.length ? `${blockedTasks.length} СЃ Р±Р»РѕРєРµСЂРѕРј` : `${linkedTasks.length} РІСЃРµРіРѕ`,
+        caption: blockedTasks.length ? `${blockedTasks.length} с блокером` : `${linkedTasks.length} всего`,
         tone: blockedTasks.length ? "danger" : openTasks.length ? "warning" : "success"
       },
       {
-        label: "РњР°С‚РµСЂРёР°Р»С‹",
+        label: "Материалы",
         value: formatNumber(reservation?.qty || 0),
-        caption: reservation?.rows?.length ? `${reservation.rows.length} РґРІРёР¶РµРЅРёР№ СЂРµР·РµСЂРІР°` : deal?.stage === "production" ? "СЂРµР·РµСЂРІ РµС‰Рµ РЅРµ СЃРѕР·РґР°РЅ" : "СЂРµР·РµСЂРІ РЅРµ РЅСѓР¶РµРЅ",
+        caption: reservation?.rows?.length ? `${reservation.rows.length} движений резерва` : deal?.stage === "production" ? "резерв еще не создан" : "резерв не нужен",
         tone: reservation?.qty > 0 ? "info" : deal?.stage === "production" ? "warning" : "neutral"
       },
       {
-        label: "РЎСЂРѕРє",
-        value: normalizeDateInput(deal?.deadline) ? formatDate(deal.deadline) : "вЂ”",
-        caption: overdue ? "СЃСЂРѕРє СѓР¶Рµ РїСЂРѕС€РµР»" : "РїРѕ РєР°СЂС‚РѕС‡РєРµ СЃРґРµР»РєРё",
+        label: "Срок",
+        value: normalizeDateInput(deal?.deadline) ? formatDate(deal.deadline) : "—",
+        caption: overdue ? "срок уже прошел" : "по карточке сделки",
         tone: overdue ? "danger" : "neutral"
       }
     ];
@@ -2081,21 +2081,21 @@ function buildModeTabs(moduleKey, escapeFn) {
 
   function buildDealTimeline(deal, order, reservationRows, tasks) {
     const events = [];
-    const dealTitle = compactText(deal?.title || deal?.client || "РЎРґРµР»РєР°");
+    const dealTitle = compactText(deal?.title || deal?.client || "Сделка");
 
     if (deal?.createdAt) {
       events.push({
         date: deal.createdAt,
-        title: "РЎРґРµР»РєР° СЃРѕР·РґР°РЅР°",
-        meta: `${dealTitle}${deal?.owner ? ` вЂў ${compactText(deal.owner)}` : ""}`,
+        title: "Сделка создана",
+        meta: `${dealTitle}${deal?.owner ? ` • ${compactText(deal.owner)}` : ""}`,
         tone: "neutral"
       });
     }
     if (deal?.updatedAt && compactText(deal.updatedAt) !== compactText(deal.createdAt)) {
       events.push({
         date: deal.updatedAt,
-        title: "РЎРґРµР»РєР° РѕР±РЅРѕРІР»РµРЅР°",
-        meta: `${getCrmStageMeta(deal.stage).label}${deal?.amount ? ` вЂў ${formatMoney(deal.amount)}` : ""}`,
+        title: "Сделка обновлена",
+        meta: `${getCrmStageMeta(deal.stage).label}${deal?.amount ? ` • ${formatMoney(deal.amount)}` : ""}`,
         tone: getCrmStageMeta(deal.stage).tone
       });
     }
@@ -2103,8 +2103,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (order?.createdAt) {
       events.push({
         date: order.createdAt,
-        title: "Р—Р°РєР°Р· РїРѕСЏРІРёР»СЃСЏ РІ РџСЂРѕРґР°Р¶Р°С…",
-        meta: `${compactText(order.orderNumber || order.title || "Р—Р°РєР°Р·")} вЂў ${compactText(order.client || "РєР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ")}`,
+        title: "Заказ появился в Продажах",
+        meta: `${compactText(order.orderNumber || order.title || "Заказ")} • ${compactText(order.client || "клиент не указан")}`,
         tone: "neutral",
         moduleKey: "sales"
       });
@@ -2112,8 +2112,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (order?.invoiceDate) {
       events.push({
         date: order.invoiceDate,
-        title: "РЎС‡РµС‚ РІС‹СЃС‚Р°РІР»РµРЅ",
-        meta: `${compactText(order.orderNumber || "Р—Р°РєР°Р·")} вЂў ${formatMoney(order.amount || 0)}`,
+        title: "Счет выставлен",
+        meta: `${compactText(order.orderNumber || "Заказ")} • ${formatMoney(order.amount || 0)}`,
         tone: "accent",
         moduleKey: "sales"
       });
@@ -2121,8 +2121,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (order?.paidDate) {
       events.push({
         date: order.paidDate,
-        title: "РЎС‡РµС‚ РѕРїР»Р°С‡РµРЅ",
-        meta: `${compactText(order.orderNumber || "Р—Р°РєР°Р·")} вЂў ${formatMoney(order.paidAmount || order.amount || 0)}`,
+        title: "Счет оплачен",
+        meta: `${compactText(order.orderNumber || "Заказ")} • ${formatMoney(order.paidAmount || order.amount || 0)}`,
         tone: "success",
         moduleKey: "sales"
       });
@@ -2130,8 +2130,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (order?.productionStart) {
       events.push({
         date: order.productionStart,
-        title: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ Р·Р°РїСѓС‰РµРЅРѕ",
-        meta: compactText(order.orderNumber || order.title || "Р—Р°РєР°Р·"),
+        title: "Производство запущено",
+        meta: compactText(order.orderNumber || order.title || "Заказ"),
         tone: "warning",
         moduleKey: "sales"
       });
@@ -2139,8 +2139,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (order?.productionEnd) {
       events.push({
         date: order.productionEnd,
-        title: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ Р·Р°РІРµСЂС€РµРЅРѕ",
-        meta: compactText(order.orderNumber || order.title || "Р—Р°РєР°Р·"),
+        title: "Производство завершено",
+        meta: compactText(order.orderNumber || order.title || "Заказ"),
         tone: "success",
         moduleKey: "sales"
       });
@@ -2148,8 +2148,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (order?.deliveryDate) {
       events.push({
         date: order.deliveryDate,
-        title: "РџР»Р°РЅРѕРІР°СЏ РґР°С‚Р° РІС‹РґР°С‡Рё / РґРѕСЃС‚Р°РІРєРё",
-        meta: compactText(order.orderNumber || order.title || "Р—Р°РєР°Р·"),
+        title: "Плановая дата выдачи / доставки",
+        meta: compactText(order.orderNumber || order.title || "Заказ"),
         tone: "info",
         moduleKey: "sales"
       });
@@ -2158,8 +2158,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     (tasks || []).forEach((task) => {
       events.push({
         date: task.updatedAt || task.createdAt,
-        title: "Р—Р°РґР°С‡Р° РїРѕ СЃРґРµР»РєРµ",
-        meta: `${compactText(task.title || "Р—Р°РґР°С‡Р°")} вЂў ${getTaskStatusMeta(task.status).label} вЂў ${getPriorityLabel(task.priority)}`,
+        title: "Задача по сделке",
+        meta: `${compactText(task.title || "Задача")} • ${getTaskStatusMeta(task.status).label} • ${getPriorityLabel(task.priority)}`,
         tone: getTaskStatusMeta(task.status).tone,
         moduleKey: "tasks",
         entityId: task.id
@@ -2169,8 +2169,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     (reservationRows || []).forEach((movement) => {
       events.push({
         date: movement.date || movement.createdAt,
-        title: movement.kind === "release" ? "Р РµР·РµСЂРІ СЃРЅСЏС‚" : "РњР°С‚РµСЂРёР°Р» Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ",
-        meta: `${formatNumber(movement.qty || 0)} вЂў ${compactText(movement.note || "РЎРєР»Р°РґСЃРєРѕР№ СЂРµР·РµСЂРІ")}`,
+        title: movement.kind === "release" ? "Резерв снят" : "Материал зарезервирован",
+        meta: `${formatNumber(movement.qty || 0)} • ${compactText(movement.note || "Складской резерв")}`,
         tone: movement.kind === "release" ? "neutral" : "info",
         moduleKey: movement.itemId ? "warehouse" : "",
         entityId: movement.itemId || ""
@@ -2190,33 +2190,33 @@ function buildModeTabs(moduleKey, escapeFn) {
     const deals = relatedDeals || [];
     return [
       {
-        label: "РћСЃС‚Р°С‚РѕРє",
+        label: "Остаток",
         value: formatNumber(item?.available || 0),
-        caption: `${formatNumber(item?.onHand || 0)} РЅР° СЂСѓРєР°С… вЂў ${formatNumber(item?.reserved || 0)} РІ СЂРµР·РµСЂРІРµ`,
+        caption: `${formatNumber(item?.onHand || 0)} на руках • ${formatNumber(item?.reserved || 0)} в резерве`,
         tone: item?.low ? "danger" : "success"
       },
       {
-        label: "РЎРїСЂРѕСЃ",
+        label: "Спрос",
         value: formatNumber(demandEntry?.qtyTotal || 0),
-        caption: demandEntry?.tabsCount ? `${formatNumber(demandEntry.tabsCount)} РІРєР»Р°РґРѕРє РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ` : "СЃРїСЂРѕСЃ РїРѕРєР° РЅРµ РЅР°Р№РґРµРЅ",
+        caption: demandEntry?.tabsCount ? `${formatNumber(demandEntry.tabsCount)} вкладок калькуляторов` : "спрос пока не найден",
         tone: demandEntry?.qtyTotal ? "accent" : "neutral"
       },
       {
-        label: "РЎРґРµР»РєРё",
+        label: "Сделки",
         value: formatNumber(deals.length),
-        caption: deals.length ? "РјР°С‚РµСЂРёР°Р» СѓР¶Рµ СѓС‡Р°СЃС‚РІСѓРµС‚ РІ CRM-СЃРґРµР»РєР°С…" : "РїРѕРєР° РЅРµ РїСЂРёРІСЏР·Р°РЅ Рє СЃРґРµР»РєР°Рј",
+        caption: deals.length ? "материал уже участвует в CRM-сделках" : "пока не привязан к сделкам",
         tone: deals.length ? "info" : "neutral"
       },
       {
-        label: "Р—Р°РґР°С‡Рё",
+        label: "Задачи",
         value: formatNumber(openTasks.length),
-        caption: blockedTasks.length ? `${blockedTasks.length} СЃ Р±Р»РѕРєРµСЂРѕРј` : `${tasks.length} РІСЃРµРіРѕ`,
+        caption: blockedTasks.length ? `${blockedTasks.length} с блокером` : `${tasks.length} всего`,
         tone: blockedTasks.length ? "danger" : openTasks.length ? "warning" : "neutral"
       },
       {
-        label: "РњРёРЅРёРјСѓРј",
+        label: "Минимум",
         value: formatNumber(item?.minStock || 0),
-        caption: item?.low ? "РЅРёР¶Рµ Р±РµР·РѕРїР°СЃРЅРѕРіРѕ РѕСЃС‚Р°С‚РєР°" : "Р·Р°РїР°СЃ РІ РЅРѕСЂРјРµ",
+        caption: item?.low ? "ниже безопасного остатка" : "запас в норме",
         tone: item?.low ? "danger" : "success"
       }
     ];
@@ -2227,40 +2227,40 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (item?.createdAt) {
       events.push({
         date: item.createdAt,
-        title: "РџРѕР·РёС†РёСЏ Р·Р°РІРµРґРµРЅР°",
-        meta: `${compactText(item.name || item.sku || "РњР°С‚РµСЂРёР°Р»")} вЂў СЃС‚Р°СЂС‚ ${formatNumber(item.openingStock || 0)}`,
+        title: "Позиция заведена",
+        meta: `${compactText(item.name || item.sku || "Материал")} • старт ${formatNumber(item.openingStock || 0)}`,
         tone: "neutral"
       });
     }
     if (item?.updatedAt && compactText(item.updatedAt) !== compactText(item.createdAt)) {
       events.push({
         date: item.updatedAt,
-        title: "РљР°СЂС‚РѕС‡РєР° РїРѕР·РёС†РёРё РѕР±РЅРѕРІР»РµРЅР°",
-        meta: `${compactText(item.category || "Р±РµР· РєР°С‚РµРіРѕСЂРёРё")} вЂў РјРёРЅРёРјСѓРј ${formatNumber(item.minStock || 0)}`,
+        title: "Карточка позиции обновлена",
+        meta: `${compactText(item.category || "без категории")} • минимум ${formatNumber(item.minStock || 0)}`,
         tone: "neutral"
       });
     }
     if (demandEntry?.qtyTotal) {
       events.push({
         date: new Date().toISOString(),
-        title: "РћР±РЅР°СЂСѓР¶РµРЅ СЃРїСЂРѕСЃ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ",
-        meta: `${formatNumber(demandEntry.qtyTotal)} вЂў ${compactText((demandEntry.sources || []).join(", ") || "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂС‹")}`,
+        title: "Обнаружен спрос из калькуляторов",
+        meta: `${formatNumber(demandEntry.qtyTotal)} • ${compactText((demandEntry.sources || []).join(", ") || "Калькуляторы")}`,
         tone: "accent"
       });
     }
     (movements || []).forEach((movement) => {
       const movementTitle =
         movement.kind === "in"
-          ? "РџСЂРёС…РѕРґ РјР°С‚РµСЂРёР°Р»Р°"
+          ? "Приход материала"
           : movement.kind === "out"
-            ? "РЎРїРёСЃР°РЅРёРµ РјР°С‚РµСЂРёР°Р»Р°"
+            ? "Списание материала"
             : movement.kind === "reserve"
-              ? "РњР°С‚РµСЂРёР°Р» Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅ"
-              : "Р РµР·РµСЂРІ СЃРЅСЏС‚";
+              ? "Материал зарезервирован"
+              : "Резерв снят";
       events.push({
         date: movement.date || movement.createdAt,
         title: movementTitle,
-        meta: `${formatNumber(movement.qty || 0)} вЂў ${compactText(movement.note || "Р‘РµР· РєРѕРјРјРµРЅС‚Р°СЂРёСЏ")}`,
+        meta: `${formatNumber(movement.qty || 0)} • ${compactText(movement.note || "Без комментария")}`,
         tone:
           movement.kind === "in"
             ? "success"
@@ -2276,8 +2276,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     (linkedTasks || []).forEach((task) => {
       events.push({
         date: task.updatedAt || task.createdAt,
-        title: "Р—Р°РґР°С‡Р° РїРѕ РїРѕР·РёС†РёРё",
-        meta: `${compactText(task.title || "Р—Р°РґР°С‡Р°")} вЂў ${getTaskStatusMeta(task.status).label} вЂў ${getPriorityLabel(task.priority)}`,
+        title: "Задача по позиции",
+        meta: `${compactText(task.title || "Задача")} • ${getTaskStatusMeta(task.status).label} • ${getPriorityLabel(task.priority)}`,
         tone: getTaskStatusMeta(task.status).tone,
         moduleKey: "tasks",
         entityId: task.id
@@ -2286,8 +2286,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     (relatedDeals || []).forEach((deal) => {
       events.push({
         date: deal.updatedAt || deal.createdAt || "",
-        title: "РњР°С‚РµСЂРёР°Р» СѓС‡Р°СЃС‚РІСѓРµС‚ РІ СЃРґРµР»РєРµ",
-        meta: `${compactText(deal.title || deal.client || "РЎРґРµР»РєР°")} вЂў ${getCrmStageMeta(deal.stage).label}`,
+        title: "Материал участвует в сделке",
+        meta: `${compactText(deal.title || deal.client || "Сделка")} • ${getCrmStageMeta(deal.stage).label}`,
         tone: getCrmStageMeta(deal.stage).tone,
         moduleKey: "crm",
         entityId: deal.id
@@ -2303,20 +2303,20 @@ function buildModeTabs(moduleKey, escapeFn) {
     (doc.movements || []).forEach((movement) => {
       const meta =
         movement.kind === "in"
-          ? { label: "РџСЂРёС…РѕРґ", tone: "success" }
+          ? { label: "Приход", tone: "success" }
           : movement.kind === "out"
-            ? { label: "РЎРїРёСЃР°РЅРёРµ", tone: "warning" }
+            ? { label: "Списание", tone: "warning" }
             : movement.kind === "reserve"
-              ? { label: "Р РµР·РµСЂРІ", tone: "info" }
-              : { label: "РЎРЅСЏС‚РёРµ СЂРµР·РµСЂРІР°", tone: "neutral" };
+              ? { label: "Резерв", tone: "info" }
+              : { label: "Снятие резерва", tone: "neutral" };
       const item = itemLookup.get(movement.itemId);
       entries.push({
         id: `movement:${movement.id}`,
         date: movement.date || movement.createdAt || "",
         family: "movement",
         label: meta.label,
-        title: item?.name || item?.sku || "РЎРєР»Р°РґСЃРєР°СЏ РїРѕР·РёС†РёСЏ",
-        meta: `${formatNumber(movement.qty || 0)} вЂў ${compactText(movement.note || "Р‘РµР· РєРѕРјРјРµРЅС‚Р°СЂРёСЏ")}`,
+        title: item?.name || item?.sku || "Складская позиция",
+        meta: `${formatNumber(movement.qty || 0)} • ${compactText(movement.note || "Без комментария")}`,
         tone: meta.tone,
         amount: movement.qty || 0,
         action: movement.itemId ? { type: "item", id: movement.itemId } : { type: "mode", mode: "movements" }
@@ -2329,9 +2329,9 @@ function buildModeTabs(moduleKey, escapeFn) {
         id: `purchase:${purchase.id}`,
         date: purchase.date || purchase.updatedAt || purchase.createdAt || "",
         family: "purchase",
-        label: "Р—Р°РєСѓРїРєР°",
-        title: purchase.number || purchase.supplier || "Р—Р°РєСѓРїРєР°",
-        meta: `${meta.label} вЂў ${purchase.supplier || "Р‘РµР· РїРѕСЃС‚Р°РІС‰РёРєР°"}`,
+        label: "Закупка",
+        title: purchase.number || purchase.supplier || "Закупка",
+        meta: `${meta.label} • ${purchase.supplier || "Без поставщика"}`,
         tone: meta.tone,
         amount: purchase.amount || 0,
         action: { type: "purchase", id: purchase.id }
@@ -2345,8 +2345,8 @@ function buildModeTabs(moduleKey, escapeFn) {
         date: entry.date || entry.updatedAt || entry.createdAt || "",
         family: "finance",
         label: meta.label,
-        title: entry.category || entry.counterparty || entry.account || "Р”РµРЅРµР¶РЅР°СЏ РѕРїРµСЂР°С†РёСЏ",
-        meta: `${entry.account || "Р‘РµР· СЃС‡РµС‚Р°"} вЂў ${entry.counterparty || "Р‘РµР· РєРѕРЅС‚СЂР°РіРµРЅС‚Р°"}`,
+        title: entry.category || entry.counterparty || entry.account || "Денежная операция",
+        meta: `${entry.account || "Без счета"} • ${entry.counterparty || "Без контрагента"}`,
         tone: meta.tone,
         amount: entry.amount || 0,
         action: { type: "finance", id: entry.id }
@@ -2359,9 +2359,9 @@ function buildModeTabs(moduleKey, escapeFn) {
         id: `production:${job.id}`,
         date: job.deadline || job.updatedAt || job.createdAt || "",
         family: "production",
-        label: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ",
-        title: job.title || job.itemLabel || "РџСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРµ Р·Р°РґР°РЅРёРµ",
-        meta: `${meta.label} вЂў ${job.assignee || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ"}`,
+        label: "Производство",
+        title: job.title || job.itemLabel || "Производственное задание",
+        meta: `${meta.label} • ${job.assignee || "Без ответственного"}`,
         tone: meta.tone,
         amount: job.qty || 0,
         action: { type: "production", id: job.id }
@@ -2388,11 +2388,11 @@ function buildModeTabs(moduleKey, escapeFn) {
       signals.push({
         sourceKey: `crm-overdue:${deal.id}`,
         family: "CRM",
-        title: `Р”РѕР¶Р°С‚СЊ СЃРґРµР»РєСѓ: ${compactText(deal.title || deal.client || "Р±РµР· РЅР°Р·РІР°РЅРёСЏ")}`,
+        title: `Дожать сделку: ${compactText(deal.title || deal.client || "без названия")}`,
         owner: compactText(deal.owner),
         priority: "high",
         dueDate: deadline,
-        note: `РџСЂРѕСЃСЂРѕС‡РµРЅРЅР°СЏ CRM-СЃРґРµР»РєР°. РљР»РёРµРЅС‚: ${compactText(deal.client || "РЅРµ СѓРєР°Р·Р°РЅ")}. РЎС‚Р°РґРёСЏ: ${getCrmStageMeta(deal.stage).label}.`,
+        note: `Просроченная CRM-сделка. Клиент: ${compactText(deal.client || "не указан")}. Стадия: ${getCrmStageMeta(deal.stage).label}.`,
         alreadyExists: taskSourceKeys.has(`crm-overdue:${deal.id}`)
       });
     });
@@ -2401,12 +2401,12 @@ function buildModeTabs(moduleKey, escapeFn) {
       const sourceKey = `warehouse-low:${item.id}`;
       signals.push({
         sourceKey,
-        family: "РЎРєР»Р°Рґ",
-        title: `РџРѕРїРѕР»РЅРёС‚СЊ СЃРєР»Р°Рґ: ${compactText(item.name || item.sku || "РїРѕР·РёС†РёСЏ")}`,
-        owner: "Р—Р°РєСѓРїРєРё",
+        family: "Склад",
+        title: `Пополнить склад: ${compactText(item.name || item.sku || "позиция")}`,
+        owner: "Закупки",
         priority: "high",
         dueDate: today,
-        note: `Р”РѕСЃС‚СѓРїРЅС‹Р№ РѕСЃС‚Р°С‚РѕРє ${formatNumber(item.available)} РЅРёР¶Рµ РјРёРЅРёРјСѓРјР° ${formatNumber(item.minStock || 0)}. SKU: ${compactText(item.sku || "вЂ”")}.`,
+        note: `Доступный остаток ${formatNumber(item.available)} ниже минимума ${formatNumber(item.minStock || 0)}. SKU: ${compactText(item.sku || "—")}.`,
         alreadyExists: taskSourceKeys.has(sourceKey)
       });
     });
@@ -2415,12 +2415,12 @@ function buildModeTabs(moduleKey, escapeFn) {
       const sourceKey = `sales-invoice:${order.sourceId}`;
       signals.push({
         sourceKey,
-        family: "РџСЂРѕРґР°Р¶Рё",
-        title: `РџСЂРѕРІРµСЂРёС‚СЊ РѕРїР»Р°С‚Сѓ СЃС‡РµС‚Р°: ${compactText(order.orderNumber || order.title || "Р·Р°РєР°Р·")}`,
+        family: "Продажи",
+        title: `Проверить оплату счета: ${compactText(order.orderNumber || order.title || "заказ")}`,
         owner: compactText(order.manager),
         priority: "urgent",
         dueDate: order.invoiceDate || today,
-        note: `РЎС‡РµС‚ РІС‹СЃС‚Р°РІР»РµРЅ ${formatDate(order.invoiceDate)}, РѕРїР»Р°С‚С‹ РїРѕРєР° РЅРµС‚. РљР»РёРµРЅС‚: ${compactText(order.client || "РЅРµ СѓРєР°Р·Р°РЅ")}.`,
+        note: `Счет выставлен ${formatDate(order.invoiceDate)}, оплаты пока нет. Клиент: ${compactText(order.client || "не указан")}.`,
         alreadyExists: taskSourceKeys.has(sourceKey)
       });
     });
@@ -2448,7 +2448,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     return `
       <div class="workspace-hero">
         <div>
-          <div class="placeholder-eyebrow">Р–РёРІРѕР№ СЂР°Р±РѕС‡РёР№ РјРѕРґСѓР»СЊ</div>
+          <div class="placeholder-eyebrow">Живой рабочий модуль</div>
           <h3>${escapeHtml(modules[moduleKey]?.title || moduleKey)}</h3>
           <p>${escapeHtml(modules[moduleKey]?.subtitle || config?.intro || "")}</p>
         </div>
@@ -2469,7 +2469,7 @@ function buildModeTabs(moduleKey, escapeFn) {
   }
 
   function renderAccessHint(moduleKey) {
-    return `<div class="workspace-empty"><strong>${escapeHtml(modules[moduleKey]?.title || moduleKey)}</strong><div class="mt-2">Р”Р»СЏ СЌС‚РѕРіРѕ СЂР°Р·РґРµР»Р° Сѓ РІР°С€РµР№ СЂРѕР»Рё СЃРµР№С‡Р°СЃ С‚РѕР»СЊРєРѕ РїСЂРѕСЃРјРѕС‚СЂ. РђРЅР°Р»РёР·РёСЂРѕРІР°С‚СЊ РјРѕР¶РЅРѕ, СЂРµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РЅРµР»СЊР·СЏ.</div></div>`;
+    return `<div class="workspace-empty"><strong>${escapeHtml(modules[moduleKey]?.title || moduleKey)}</strong><div class="mt-2">Для этого раздела у вашей роли сейчас только просмотр. Анализировать можно, редактировать нельзя.</div></div>`;
   }
 
   function renderRelatedLinks(moduleKey) {
@@ -2478,7 +2478,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       .filter((key) => hasModuleAccess(key))
       .map((key) => `<button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="${escapeHtml(key)}">${escapeHtml(modules[key]?.title || key)}</button>`)
       .join("");
-    return `<div class="workspace-links"><div class="compact-help">РЎРІСЏР·Р°РЅРЅС‹Рµ СЂР°Р·РґРµР»С‹ РїР»Р°С‚С„РѕСЂРјС‹</div><div class="d-flex flex-wrap gap-2">${links || '<span class="text-muted">РЎРІСЏР·Р°РЅРЅС‹Рµ СЂР°Р·РґРµР»С‹ РїРѕСЏРІСЏС‚СЃСЏ РїРѕСЃР»Рµ РІС‹РґР°С‡Рё РґРѕСЃС‚СѓРїРѕРІ.</span>'}</div></div>`;
+    return `<div class="workspace-links"><div class="compact-help">Связанные разделы платформы</div><div class="d-flex flex-wrap gap-2">${links || '<span class="text-muted">Связанные разделы появятся после выдачи доступов.</span>'}</div></div>`;
   }
 
   function activateView(moduleKey, doc, viewId) {
@@ -2512,23 +2512,23 @@ function buildModeTabs(moduleKey, escapeFn) {
       null;
     const selectedOptions = selectedList?.options || [];
     const metrics = [
-      { label: "РўРѕРІР°СЂС‹", value: formatNumber(snapshot.products.length), caption: "РІ РїСЂРѕРґР°СЋС‰РµРј РєР°С‚Р°Р»РѕРіРµ" },
-      { label: "Р—Р°РєСѓРїРєРё", value: formatNumber(snapshot.purchases.length), caption: `${formatMoney(snapshot.purchasesTotal)} РІ Р·Р°РєР°Р·Р°С…` },
-      { label: "Р‘Р°Р»Р°РЅСЃ", value: formatMoney(snapshot.incomeTotal - snapshot.expenseTotal), caption: `${formatMoney(snapshot.incomeTotal)} РїСЂРёС…РѕРґ вЂў ${formatMoney(snapshot.expenseTotal)} СЂР°СЃС…РѕРґ` },
-      { label: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ", value: formatNumber(snapshot.productionActive), caption: "Р°РєС‚РёРІРЅС‹С… Р·Р°РґР°РЅРёР№" },
-      { label: "РЎРїСЂР°РІРѕС‡РЅРёРєРѕРІ", value: formatNumber(allLists.length), caption: "РѕР±С‰Р°СЏ Р±РёР±Р»РёРѕС‚РµРєР° СЃРїРёСЃРєРѕРІ" },
-      { label: "Р—РЅР°С‡РµРЅРёР№", value: formatNumber(sumBy(allLists, (list) => (list.options || []).length)), caption: "РІСЃРµРіРѕ РІС‹РїР°РґР°СЋС‰РёС… Р·РЅР°С‡РµРЅРёР№" },
-      { label: "РљР°РЅР°Р»С‹ CRM", value: formatNumber(getDirectoryOptions("crm_channels").length), caption: "РіРѕС‚РѕРІРѕ РґР»СЏ Р»РёРґРѕРІ Рё РїСЂРѕРґР°Р¶" },
-      { label: "РЎРѕС‚СЂСѓРґРЅРёРєРё", value: formatNumber(getDirectoryOptions("team_members").length), caption: "РµРґРёРЅС‹Р№ СЃРїРёСЃРѕРє РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹С…" }
+      { label: "Товары", value: formatNumber(snapshot.products.length), caption: "в продающем каталоге" },
+      { label: "Закупки", value: formatNumber(snapshot.purchases.length), caption: `${formatMoney(snapshot.purchasesTotal)} в заказах` },
+      { label: "Баланс", value: formatMoney(snapshot.incomeTotal - snapshot.expenseTotal), caption: `${formatMoney(snapshot.incomeTotal)} приход • ${formatMoney(snapshot.expenseTotal)} расход` },
+      { label: "Производство", value: formatNumber(snapshot.productionActive), caption: "активных заданий" },
+      { label: "Справочников", value: formatNumber(allLists.length), caption: "общая библиотека списков" },
+      { label: "Значений", value: formatNumber(sumBy(allLists, (list) => (list.options || []).length)), caption: "всего выпадающих значений" },
+      { label: "Каналы CRM", value: formatNumber(getDirectoryOptions("crm_channels").length), caption: "готово для лидов и продаж" },
+      { label: "Сотрудники", value: formatNumber(getDirectoryOptions("team_members").length), caption: "единый список ответственных" }
     ];
     const actionBar = renderActionBar(
       "directories",
       [
-        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-directory-new>РќРѕРІС‹Р№ СЃРїСЂР°РІРѕС‡РЅРёРє</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-edit>РќР°СЃС‚СЂРѕРёС‚СЊ СЃРїРёСЃРѕРє</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-option-new>Р”РѕР±Р°РІРёС‚СЊ Р·РЅР°С‡РµРЅРёРµ</button>' : "",
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="directories">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="directories">РРјРїРѕСЂС‚ JSON</button>' : ""
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-directory-new>Новый справочник</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-edit>Настроить список</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-directory-option-new>Добавить значение</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="directories">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="directories">мпорт JSON</button>' : ""
       ].filter(Boolean),
       escapeHtml
     );
@@ -2540,15 +2540,15 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${actionBar}
         <div class="workspace-toolbar">
           <div class="workspace-toolbar__group">
-            <input class="form-control" type="search" placeholder="РџРѕРёСЃРє РїРѕ РЅР°Р·РІР°РЅРёСЋ, РєР»СЋС‡Сѓ РёР»Рё Р·РЅР°С‡РµРЅРёСЋ" value="${escapeHtml(filters.search)}" data-live-filter="search" />
+            <input class="form-control" type="search" placeholder="Поиск по названию, ключу или значению" value="${escapeHtml(filters.search)}" data-live-filter="search" />
           </div>
           <div class="workspace-toolbar__group workspace-toolbar__group--end">
-            <span class="workspace-note">РЎРїСЂР°РІРѕС‡РЅРёРєРё РїРѕРґРєР»СЋС‡Р°СЋС‚СЃСЏ Рє С„РѕСЂРјР°Рј CRM, РЎРєР»Р°РґР° Рё РўР°СЃРєС‚СЂРµРєРµСЂР° Р±РµР· РґРІРѕР№РЅРѕР№ РЅР°СЃС‚СЂРѕР№РєРё.</span>
+            <span class="workspace-note">Справочники подключаются к формам CRM, Склада и Тасктрекера без двойной настройки.</span>
           </div>
         </div>
         <div class="workspace-grid workspace-grid--3">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РљР°С‚Р°Р»РѕРі</h4><div class="compact-help">РЎРѕР·РґР°РІР°Р№С‚Рµ СЃРїРёСЃРєРё РѕРґРёРЅ СЂР°Р· Рё РёСЃРїРѕР»СЊР·СѓР№С‚Рµ РёС… РІРѕ РІСЃРµР№ РїР»Р°С‚С„РѕСЂРјРµ.</div></div></div>
+            <div class="panel-heading"><div><h4>Каталог</h4><div class="compact-help">Создавайте списки один раз и используйте их во всей платформе.</div></div></div>
             <div class="workspace-stack">
               ${filteredLists.length
                 ? filteredLists
@@ -2557,41 +2557,41 @@ function buildModeTabs(moduleKey, escapeFn) {
                         <button class="workspace-list-item workspace-list-item--button ${selectedList?.key === list.key ? "workspace-list-item--active" : ""}" type="button" data-directory-select="${escapeHtml(list.key)}">
                           <div>
                             <strong>${escapeHtml(list.title)}</strong>
-                            <div class="workspace-list-item__meta">${escapeHtml(list.key)} вЂў ${escapeHtml(list.description || "Р‘РµР· РѕРїРёСЃР°РЅРёСЏ")}</div>
+                            <div class="workspace-list-item__meta">${escapeHtml(list.key)} • ${escapeHtml(list.description || "Без описания")}</div>
                           </div>
                           <div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber((list.options || []).length))}</div></div>
                         </button>
                       `
                     )
                     .join("")
-                : '<div class="workspace-empty workspace-empty--tight">РЎРїСЂР°РІРѕС‡РЅРёРєРё РїРѕРєР° РЅРµ РЅР°Р№РґРµРЅС‹.</div>'}
+                : '<div class="workspace-empty workspace-empty--tight">Справочники пока не найдены.</div>'}
             </div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${selectedList ? "РќР°СЃС‚СЂРѕР№РєРё СЃРїРёСЃРєР°" : "РќРѕРІС‹Р№ СЃРїРёСЃРѕРє"}</h4><div class="compact-help">РљР»СЋС‡ Р»СѓС‡С€Рµ РЅРµ РјРµРЅСЏС‚СЊ С‡Р°СЃС‚Рѕ: РЅР° РЅРµРіРѕ РјРѕРіСѓС‚ СЃСЃС‹Р»Р°С‚СЊСЃСЏ РїРѕР»СЏ Рё РІС‹РїР°РґР°С€РєРё.</div></div></div>
+            <div class="panel-heading"><div><h4>${selectedList ? "Настройки списка" : "Новый список"}</h4><div class="compact-help">Ключ лучше не менять часто: на него могут ссылаться поля и выпадашки.</div></div></div>
             ${canEdit
-              ? `${selectedList ? `<div class="workspace-stage-strip"><div class="workspace-stage-card"><span>РљР»СЋС‡</span><strong>${escapeHtml(selectedList.key || "вЂ”")}</strong></div><div class="workspace-stage-card"><span>Р—РЅР°С‡РµРЅРёР№</span><strong>${escapeHtml(formatNumber(selectedOptions.length))}</strong></div></div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-directory-edit>Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РІ РѕРєРЅРµ</button>${selectedList && canManage ? `<button class="btn btn-outline-danger" type="button" data-directory-delete="${escapeHtml(selectedList.key)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div>` : `<div class="workspace-empty workspace-empty--tight">РЎРѕР·РґР°Р№С‚Рµ РїРµСЂРІС‹Р№ СЃРїСЂР°РІРѕС‡РЅРёРє С‡РµСЂРµР· РІСЃРїР»С‹РІР°СЋС‰РµРµ РѕРєРЅРѕ, С‡С‚РѕР±С‹ РЅРµ РїРµСЂРµРіСЂСѓР¶Р°С‚СЊ СЌС‚РѕС‚ СЌРєСЂР°РЅ РґР»РёРЅРЅРѕР№ С„РѕСЂРјРѕР№.</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-directory-new>РЎРѕР·РґР°С‚СЊ СЃРїСЂР°РІРѕС‡РЅРёРє</button></div>`}<form id="directoriesListForm" class="workspace-form d-none">
+              ? `${selectedList ? `<div class="workspace-stage-strip"><div class="workspace-stage-card"><span>Ключ</span><strong>${escapeHtml(selectedList.key || "—")}</strong></div><div class="workspace-stage-card"><span>Значений</span><strong>${escapeHtml(formatNumber(selectedOptions.length))}</strong></div></div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-directory-edit>Редактировать в окне</button>${selectedList && canManage ? `<button class="btn btn-outline-danger" type="button" data-directory-delete="${escapeHtml(selectedList.key)}">Удалить</button>` : ""}</div>` : `<div class="workspace-empty workspace-empty--tight">Создайте первый справочник через всплывающее окно, чтобы не перегружать этот экран длинной формой.</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-directory-new>Создать справочник</button></div>`}<form id="directoriesListForm" class="workspace-form d-none">
                   <input type="hidden" name="id" value="${escapeHtml(selectedList?.id || "")}" />
                   <div class="workspace-form-grid">
-                    <label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="title" value="${escapeHtml(selectedList?.title || "")}" placeholder="РљР°РЅР°Р»С‹ CRM" required /></label>
-                    <label><span>РљР»СЋС‡</span><input class="form-control" type="text" name="key" value="${escapeHtml(selectedList?.key || "")}" placeholder="crm_channels" required /></label>
+                    <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(selectedList?.title || "")}" placeholder="Каналы CRM" required /></label>
+                    <label><span>Ключ</span><input class="form-control" type="text" name="key" value="${escapeHtml(selectedList?.key || "")}" placeholder="crm_channels" required /></label>
                   </div>
-                  <label><span>РћРїРёСЃР°РЅРёРµ</span><textarea class="form-control" name="description" rows="3" placeholder="Р”Р»СЏ С‡РµРіРѕ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЌС‚РѕС‚ СЃРїСЂР°РІРѕС‡РЅРёРє">${escapeHtml(selectedList?.description || "")}</textarea></label>
+                  <label><span>Описание</span><textarea class="form-control" name="description" rows="3" placeholder="Для чего используется этот справочник">${escapeHtml(selectedList?.description || "")}</textarea></label>
                   <div class="workspace-form__actions">
-                    <button class="btn btn-dark" type="submit">${selectedList ? "РЎРѕС…СЂР°РЅРёС‚СЊ СЃРїРёСЃРѕРє" : "РЎРѕР·РґР°С‚СЊ СЃРїРёСЃРѕРє"}</button>
-                    ${selectedList && canManage ? `<button class="btn btn-outline-danger" type="button" data-directory-delete="${escapeHtml(selectedList.key)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}
+                    <button class="btn btn-dark" type="submit">${selectedList ? "Сохранить список" : "Создать список"}</button>
+                    ${selectedList && canManage ? `<button class="btn btn-outline-danger" type="button" data-directory-delete="${escapeHtml(selectedList.key)}">Удалить</button>` : ""}
                   </div>
                 </form>`
               : renderAccessHint("directories")}
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р—РЅР°С‡РµРЅРёСЏ</h4><div class="compact-help">Р—РЅР°С‡РµРЅРёСЏ СЃСЂР°Р·Сѓ РїРѕСЏРІСЏС‚СЃСЏ РІ РІР°С€РёС… РІС‹РїР°РґР°СЋС‰РёС… СЃРїРёСЃРєР°С… Рё РїРѕРґСЃРєР°Р·РєР°С….</div></div></div>
+            <div class="panel-heading"><div><h4>Значения</h4><div class="compact-help">Значения сразу появятся в ваших выпадающих списках и подсказках.</div></div></div>
             ${selectedList
               ? `${canEdit
-                  ? `<div class="workspace-card__actions"><button class="btn btn-dark" type="button" data-directory-option-new>Р”РѕР±Р°РІРёС‚СЊ Р·РЅР°С‡РµРЅРёРµ</button><span class="workspace-note">Р—РЅР°С‡РµРЅРёРµ РѕС‚РєСЂРѕРµС‚СЃСЏ РІ РѕС‚РґРµР»СЊРЅРѕР№ РєР°СЂС‚РѕС‡РєРµ Рё СЃСЂР°Р·Сѓ РїРѕРїР°РґС‘С‚ РІРѕ РІСЃРµ РІС‹РїР°РґР°СЋС‰РёРµ СЃРїРёСЃРєРё.</span></div><form id="directoriesOptionForm" class="workspace-form workspace-form--inline d-none">
+                  ? `<div class="workspace-card__actions"><button class="btn btn-dark" type="button" data-directory-option-new>Добавить значение</button><span class="workspace-note">Значение откроется в отдельной карточке и сразу попадёт во все выпадающие списки.</span></div><form id="directoriesOptionForm" class="workspace-form workspace-form--inline d-none">
                       <input type="hidden" name="key" value="${escapeHtml(selectedList.key)}" />
-                      <label class="workspace-form__grow"><span>РќРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ</span><input class="form-control" type="text" name="option" placeholder="Р”РѕР±Р°РІРёС‚СЊ Р·РЅР°С‡РµРЅРёРµ" required /></label>
-                      <button class="btn btn-dark" type="submit">Р”РѕР±Р°РІРёС‚СЊ</button>
+                      <label class="workspace-form__grow"><span>Новое значение</span><input class="form-control" type="text" name="option" placeholder="Добавить значение" required /></label>
+                      <button class="btn btn-dark" type="submit">Добавить</button>
                     </form>`
                   : ""}
                 <div class="workspace-stack mt-3">
@@ -2602,16 +2602,16 @@ function buildModeTabs(moduleKey, escapeFn) {
                             <div class="workspace-list-item">
                               <div>
                                 <strong>${escapeHtml(option)}</strong>
-                                <div class="workspace-list-item__meta">РџРѕР·РёС†РёСЏ ${escapeHtml(String(index + 1))}</div>
+                                <div class="workspace-list-item__meta">Позиция ${escapeHtml(String(index + 1))}</div>
                               </div>
-                              ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-directory-option-delete="${escapeHtml(`${selectedList.key}:${option}`)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}
+                              ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-directory-option-delete="${escapeHtml(`${selectedList.key}:${option}`)}">Удалить</button>` : ""}
                             </div>
                           `
                         )
                         .join("")
-                    : '<div class="workspace-empty workspace-empty--tight">Р’ СЌС‚РѕРј СЃРїРёСЃРєРµ РїРѕРєР° РЅРµС‚ Р·РЅР°С‡РµРЅРёР№.</div>'}
+                    : '<div class="workspace-empty workspace-empty--tight">В этом списке пока нет значений.</div>'}
                 </div>`
-              : '<div class="workspace-empty workspace-empty--tight">Р’С‹Р±РµСЂРёС‚Рµ СЃРїСЂР°РІРѕС‡РЅРёРє СЃР»РµРІР° РёР»Рё СЃРѕР·РґР°Р№С‚Рµ РЅРѕРІС‹Р№.</div>'}
+              : '<div class="workspace-empty workspace-empty--tight">Выберите справочник слева или создайте новый.</div>'}
           </section>
         </div>
         ${renderRelatedLinks("directories")}
@@ -2636,27 +2636,27 @@ function buildModeTabs(moduleKey, escapeFn) {
     const reservation = buildDealReservationMap(warehouseDoc).get(getCrmDealSourceKey(deal.id));
     const integrationMeta =
       compactText(deal?.integration?.sourceApp) === EXTERNAL_SHARED_APPS.sales
-        ? `<div class="workspace-card__meta">РСЃС‚РѕС‡РЅРёРє: РџСЂРѕРґР°Р¶Рё вЂў Р·Р°РєР°Р· ${escapeHtml(compactText(deal?.integration?.orderNumber || "вЂ”"))}</div>`
+        ? `<div class="workspace-card__meta">сточник: Продажи • заказ ${escapeHtml(compactText(deal?.integration?.orderNumber || "—"))}</div>`
         : "";
     return `
       <article class="workspace-card workspace-card--${escapeHtml(stage.tone)}">
         <div class="workspace-card__head">
-          <strong>${escapeHtml(deal.title || "РЎРґРµР»РєР°")}</strong>
+          <strong>${escapeHtml(deal.title || "Сделка")}</strong>
           <span>${escapeHtml(formatMoney(deal.amount || 0))}</span>
         </div>
-        <div class="workspace-card__meta">${escapeHtml(deal.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ")} вЂў ${escapeHtml(deal.channel || "РљР°РЅР°Р» РЅРµ СѓРєР°Р·Р°РЅ")}</div>
-        <div class="workspace-card__meta">${escapeHtml(deal.owner || "РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№ РЅРµ РЅР°Р·РЅР°С‡РµРЅ")} вЂў СЃСЂРѕРє ${escapeHtml(formatDate(deal.deadline))}</div>
-        ${reservation?.qty ? `<div class="workspace-card__meta">РњР°С‚РµСЂРёР°Р»РѕРІ РІ СЂРµР·РµСЂРІРµ: ${escapeHtml(formatNumber(reservation.qty))}</div>` : ""}
+        <div class="workspace-card__meta">${escapeHtml(deal.client || "Клиент не указан")} • ${escapeHtml(deal.channel || "Канал не указан")}</div>
+        <div class="workspace-card__meta">${escapeHtml(deal.owner || "Ответственный не назначен")} • срок ${escapeHtml(formatDate(deal.deadline))}</div>
+        ${reservation?.qty ? `<div class="workspace-card__meta">Материалов в резерве: ${escapeHtml(formatNumber(reservation.qty))}</div>` : ""}
         ${integrationMeta}
         ${deal.note ? `<div class="workspace-card__note">${escapeHtml(deal.note)}</div>` : ""}
         ${renderCustomCardSection("crm", doc, deal, escapeHtml)}
         <div class="workspace-card__footer">
           ${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-crm-stage-select="${escapeHtml(deal.id)}">${CRM_STAGES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === deal.stage ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(stage.tone)}">${escapeHtml(stage.label)}</span>`}
           <div class="workspace-card__actions">
-            ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">РР·РјРµРЅРёС‚СЊ</button>` : ""}
-            ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">РљРѕРїРёСЏ</button>` : ""}
-            ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-task-from-deal="${escapeHtml(deal.id)}">Р—Р°РґР°С‡Р°</button>` : ""}
-            ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-crm-delete="${escapeHtml(deal.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}
+            ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">зменить</button>` : ""}
+            ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button>` : ""}
+            ${canEdit ? `<button class="btn btn-sm btn-outline-secondary" type="button" data-crm-task-from-deal="${escapeHtml(deal.id)}">Задача</button>` : ""}
+            ${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-crm-delete="${escapeHtml(deal.id)}">Удалить</button>` : ""}
           </div>
         </div>
       </article>
@@ -2700,11 +2700,11 @@ function buildModeTabs(moduleKey, escapeFn) {
       : [];
     const reserveDealOptions = sortByDateDesc(openDeals.length ? openDeals : doc.deals || [], "updatedAt");
     const metrics = [
-      { label: "РђРєС‚РёРІРЅС‹Рµ СЃРґРµР»РєРё", value: formatNumber(openDeals.length), caption: "Р±РµР· Р·Р°РєСЂС‹С‚С‹С… Рё РїРѕС‚РµСЂСЏРЅРЅС‹С…" },
-      { label: "РЎСѓРјРјР° РІ РІРѕСЂРѕРЅРєРµ", value: formatMoney(sumBy(openDeals, (deal) => deal.amount || 0)), caption: "РїРѕ С‚РµРєСѓС‰РёРј СЃС‚Р°РґРёСЏРј" },
-      { label: "Р’ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµ", value: formatNumber((doc.deals || []).filter((deal) => deal.stage === "production").length), caption: "РіРѕС‚РѕРІС‹ Рє РёСЃРїРѕР»РЅРµРЅРёСЋ" },
-      { label: "РџСЂРѕСЃСЂРѕС‡РµРЅРѕ", value: formatNumber(overdueCount), caption: "С‚СЂРµР±СѓСЋС‚ РІРЅРёРјР°РЅРёСЏ" },
-      { label: "РР· РџСЂРѕРґР°Р¶", value: formatNumber(salesImportable.length), caption: "РјРѕР¶РЅРѕ Р·Р°Р±СЂР°С‚СЊ РІ CRM" },
+      { label: "Активные сделки", value: formatNumber(openDeals.length), caption: "без закрытых и потерянных" },
+      { label: "Сумма в воронке", value: formatMoney(sumBy(openDeals, (deal) => deal.amount || 0)), caption: "по текущим стадиям" },
+      { label: "В производстве", value: formatNumber((doc.deals || []).filter((deal) => deal.stage === "production").length), caption: "готовы к исполнению" },
+      { label: "Просрочено", value: formatNumber(overdueCount), caption: "требуют внимания" },
+      { label: "з Продаж", value: formatNumber(salesImportable.length), caption: "можно забрать в CRM" },
       ...getFormulaMetrics("crm", doc, filtered)
     ];
     const customHeader = renderCustomTableHeader("crm", doc, escapeHtml);
@@ -2716,14 +2716,14 @@ function buildModeTabs(moduleKey, escapeFn) {
     const actionBar = renderActionBar(
       "crm",
       [
-        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-crm-new>РќРѕРІР°СЏ СЃРґРµР»РєР°</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-crm-import-sales>Р—Р°Р±СЂР°С‚СЊ РёР· РџСЂРѕРґР°Р¶</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-crm-reserve-open>Р РµР·РµСЂРІ РїРѕРґ СЃРґРµР»РєСѓ</button>' : "",
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Р’РѕСЂРѕРЅРєР°</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">РўР°Р±Р»РёС†Р°</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="crm">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="crm">РРјРїРѕСЂС‚ JSON</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="crm:deal">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє</button>' : ""
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-crm-new>Новая сделка</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-crm-import-sales>Забрать из Продаж</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-crm-reserve-open>Резерв под сделку</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Воронка</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Таблица</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="crm">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="crm">мпорт JSON</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="crm:deal">Сбросить черновик</button>' : ""
       ].filter(Boolean),
       escapeHtml
     );
@@ -2733,25 +2733,25 @@ function buildModeTabs(moduleKey, escapeFn) {
             .map((deal) => {
               const stage = getCrmStageMeta(deal.stage);
               const reservation = reservationMap.get(getCrmDealSourceKey(deal.id));
-              return `<tr><td><strong>${escapeHtml(deal.title || "РЎРґРµР»РєР°")}</strong>${reservation?.qty ? `<div class="workspace-table__sub">Р РµР·РµСЂРІ: ${escapeHtml(formatNumber(reservation.qty))}</div>` : ""}</td><td>${escapeHtml(deal.client || "вЂ”")}</td><td>${escapeHtml(stage.label)}</td><td>${escapeHtml(deal.owner || "вЂ”")}</td><td>${escapeHtml(deal.channel || "вЂ”")}</td><td>${escapeHtml(formatMoney(deal.amount || 0))}</td><td>${escapeHtml(formatDate(deal.deadline))}</td>${renderCustomTableCells("crm", doc, deal, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">РћС‚РєСЂС‹С‚СЊ</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">РљРѕРїРёСЏ</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-task-from-deal="${escapeHtml(deal.id)}">Р—Р°РґР°С‡Р°</button>` : ""}</div></td></tr>`;
+              return `<tr><td><strong>${escapeHtml(deal.title || "Сделка")}</strong>${reservation?.qty ? `<div class="workspace-table__sub">Резерв: ${escapeHtml(formatNumber(reservation.qty))}</div>` : ""}</td><td>${escapeHtml(deal.client || "—")}</td><td>${escapeHtml(stage.label)}</td><td>${escapeHtml(deal.owner || "—")}</td><td>${escapeHtml(deal.channel || "—")}</td><td>${escapeHtml(formatMoney(deal.amount || 0))}</td><td>${escapeHtml(formatDate(deal.deadline))}</td>${renderCustomTableCells("crm", doc, deal, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-edit="${escapeHtml(deal.id)}">Открыть</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(deal.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-crm-task-from-deal="${escapeHtml(deal.id)}">Задача</button>` : ""}</div></td></tr>`;
             })
             .join("")
-        : `<tr><td colspan="${8 + getVisibleCustomFields("crm", doc, "showInTable").length}" class="text-muted">РџРѕ С‚РµРєСѓС‰РёРј С„РёР»СЊС‚СЂР°Рј СЃРґРµР»РѕРє РЅРµС‚.</td></tr>`;
+        : `<tr><td colspan="${8 + getVisibleCustomFields("crm", doc, "showInTable").length}" class="text-muted">По текущим фильтрам сделок нет.</td></tr>`;
 
     return `
       <div class="workspace-shell">
         ${renderWorkspaceHeader("crm")}
         ${renderMetricGrid(metrics)}
         <section class="workspace-panel workspace-panel--muted">
-          <div class="panel-heading"><div><h4>РњРѕСЃС‚ СЃ РџСЂРѕРґР°Р¶Р°РјРё</h4><div class="compact-help">РџР»Р°С‚С„РѕСЂРјР° РІРёРґРёС‚ Р¶РёРІС‹Рµ Р·Р°РєР°Р·С‹ РёР· СЂР°Р·РґРµР»Р° РџСЂРѕРґР°Р¶Рё Рё РјРѕР¶РµС‚ Р·Р°Р±СЂР°С‚СЊ РёС… РІ CRM Р±РµР· РґРІРѕР№РЅРѕРіРѕ РІРІРѕРґР°.</div></div><div class="workspace-note">РћР±РЅРѕРІР»РµРЅРѕ: ${escapeHtml(formatDate(salesSnapshot.updatedAt))}</div></div>
+          <div class="panel-heading"><div><h4>Мост с Продажами</h4><div class="compact-help">Платформа видит живые заказы из раздела Продажи и может забрать их в CRM без двойного ввода.</div></div><div class="workspace-note">Обновлено: ${escapeHtml(formatDate(salesSnapshot.updatedAt))}</div></div>
           <div class="workspace-stage-strip">
-            <div class="workspace-stage-card"><span>Р—Р°РєР°Р·РѕРІ РІ РџСЂРѕРґР°Р¶Р°С…</span><strong>${escapeHtml(formatNumber(salesSnapshot.orders.length))}</strong></div>
-            <div class="workspace-stage-card"><span>РЎС‡РµС‚Р° Р±РµР· РѕРїР»Р°С‚С‹</span><strong>${escapeHtml(formatNumber(salesSnapshot.unpaidInvoices.length))}</strong></div>
-            <div class="workspace-stage-card"><span>Р’ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµ</span><strong>${escapeHtml(formatNumber(salesSnapshot.productionOrders.length))}</strong></div>
-            <div class="workspace-stage-card"><span>РќРµ РёРјРїРѕСЂС‚РёСЂРѕРІР°РЅРѕ</span><strong>${escapeHtml(formatNumber(salesImportable.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Заказов в Продажах</span><strong>${escapeHtml(formatNumber(salesSnapshot.orders.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Счета без оплаты</span><strong>${escapeHtml(formatNumber(salesSnapshot.unpaidInvoices.length))}</strong></div>
+            <div class="workspace-stage-card"><span>В производстве</span><strong>${escapeHtml(formatNumber(salesSnapshot.productionOrders.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Не импортировано</span><strong>${escapeHtml(formatNumber(salesImportable.length))}</strong></div>
           </div>
           <div class="workspace-stack mt-3">
-            ${(salesImportable.slice(0, 6) || []).map((order) => `<div class="workspace-list-item"><div><strong>${escapeHtml(order.orderNumber || order.title || "Р—Р°РєР°Р·")}</strong><div class="workspace-list-item__meta">${escapeHtml(order.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ")} вЂў ${escapeHtml(order.leadChannel || order.salesChannel || "Р‘РµР· РєР°РЅР°Р»Р°")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(order.amount || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(order.manager || "Р‘РµР· РјРµРЅРµРґР¶РµСЂР°")}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РќРѕРІС‹С… Р·Р°РєР°Р·РѕРІ РёР· РџСЂРѕРґР°Р¶ РґР»СЏ РёРјРїРѕСЂС‚Р° РїРѕРєР° РЅРµС‚.</div>'}
+            ${(salesImportable.slice(0, 6) || []).map((order) => `<div class="workspace-list-item"><div><strong>${escapeHtml(order.orderNumber || order.title || "Заказ")}</strong><div class="workspace-list-item__meta">${escapeHtml(order.client || "Клиент не указан")} • ${escapeHtml(order.leadChannel || order.salesChannel || "Без канала")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(order.amount || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(order.manager || "Без менеджера")}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Новых заказов из Продаж для импорта пока нет.</div>'}
           </div>
         </section>
         ${renderViewTabs("crm", doc, ui.crm, escapeHtml)}
@@ -2759,65 +2759,65 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${actionBar}
         <div class="workspace-toolbar">
           <div class="workspace-toolbar__group">
-            <input class="form-control" type="search" placeholder="РџРѕРёСЃРє РїРѕ РєР»РёРµРЅС‚Сѓ, РєР°РЅР°Р»Сѓ, РЅР°Р·РІР°РЅРёСЋ" value="${escapeHtml(filters.search)}" data-live-filter="search" />
-            <select class="form-select" data-live-filter="stage"><option value="all">Р’СЃРµ СЃС‚Р°РґРёРё</option>${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${filters.stage === stage.key ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select>
-            <select class="form-select" data-live-filter="owner"><option value="all">Р’СЃРµ РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Рµ</option>${owners.map((owner) => `<option value="${escapeHtml(owner)}" ${filters.owner === owner ? "selected" : ""}>${escapeHtml(owner)}</option>`).join("")}</select>
+            <input class="form-control" type="search" placeholder="Поиск по клиенту, каналу, названию" value="${escapeHtml(filters.search)}" data-live-filter="search" />
+            <select class="form-select" data-live-filter="stage"><option value="all">Все стадии</option>${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${filters.stage === stage.key ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select>
+            <select class="form-select" data-live-filter="owner"><option value="all">Все ответственные</option>${owners.map((owner) => `<option value="${escapeHtml(owner)}" ${filters.owner === owner ? "selected" : ""}>${escapeHtml(owner)}</option>`).join("")}</select>
           </div>
           <div class="workspace-toolbar__group workspace-toolbar__group--end">
-            ${canEdit ? `<button class="btn btn-dark" type="button" data-live-mode="form">РљР°СЂС‚РѕС‡РєР°</button>` : `<span class="workspace-note">Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ РґР»СЏ РІР°С€РµР№ СЂРѕР»Рё</span>`}
-            <button class="btn btn-outline-dark" type="button" data-live-filters-reset="crm">РЎР±СЂРѕСЃРёС‚СЊ С„РёР»СЊС‚СЂС‹</button>
-            ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="crm">${ui.crm.configOpen ? "РЎРєСЂС‹С‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ" : "РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ"}</button>` : ""}
+            ${canEdit ? `<button class="btn btn-dark" type="button" data-live-mode="form">Карточка</button>` : `<span class="workspace-note">Редактирование отключено для вашей роли</span>`}
+            <button class="btn btn-outline-dark" type="button" data-live-filters-reset="crm">Сбросить фильтры</button>
+            ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="crm">${ui.crm.configOpen ? "Скрыть конструктор" : "Конструктор"}</button>` : ""}
           </div>
         </div>
         ${canManage ? renderBuilderPanel("crm", doc, ui.crm, escapeHtml) : ""}
         ${modeIs(filters, "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${editDeal ? "РљР°СЂС‚РѕС‡РєР° СЃРґРµР»РєРё" : "РќРѕРІР°СЏ СЃРґРµР»РєР°"}</h4><div class="compact-help">РљР°СЂС‚РѕС‡РєР° СЃС‚СЂРѕРёС‚СЃСЏ РїРѕРґ РІР°С€ С†РёРєР»: Р»РёРґ в†’ РєРІР°Р»РёС„РёРєР°С†РёСЏ в†’ РљРџ/СЃС‡РµС‚ в†’ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ в†’ Р·Р°РєСЂС‹С‚РёРµ.</div></div></div>
-            ${canEdit ? `${renderDraftBadge("crm", "deal")}<div class="workspace-empty workspace-empty--tight">${editDeal ? "РЎРґРµР»РєР° СѓР¶Рµ РІС‹Р±СЂР°РЅР° Рё РѕС‚РєСЂС‹С‚Р° РІ С„РѕРєСѓСЃРµ СЃРїСЂР°РІР°. Р”Р»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ РёСЃРїРѕР»СЊР·СѓР№С‚Рµ РІСЃРїР»С‹РІР°СЋС‰СѓСЋ РєР°СЂС‚РѕС‡РєСѓ, С‡С‚РѕР±С‹ РЅРµ РїРµСЂРµРіСЂСѓР¶Р°С‚СЊ СЌРєСЂР°РЅ." : "РЎРѕР·РґР°РІР°Р№С‚Рµ СЃРґРµР»РєРё С‡РµСЂРµР· РІСЃРїР»С‹РІР°СЋС‰СѓСЋ РєР°СЂС‚РѕС‡РєСѓ. РўР°Рє РѕР±Р·РѕСЂ РѕСЃС‚Р°С‘С‚СЃСЏ С‡РёСЃС‚С‹Рј, Р° СЃР°РјР° С„РѕСЂРјР° РЅРµ Р»РѕРјР°РµС‚ СЂРёС‚Рј СЂР°Р±РѕС‚С‹."}</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-crm-new>${editDeal ? "РќРѕРІР°СЏ СЃРґРµР»РєР°" : "РЎРѕР·РґР°С‚СЊ СЃРґРµР»РєСѓ"}</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-edit="${escapeHtml(editDeal.id)}">Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РІ РѕРєРЅРµ</button><button class="btn btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(editDeal.id)}">РЎРґРµР»Р°С‚СЊ РєРѕРїРёСЋ</button>` : ""}</div>${editDeal ? `<div class="workspace-stage-strip mt-3"><div class="workspace-stage-card"><span>РљР»РёРµРЅС‚</span><strong>${escapeHtml(editDeal.client || "вЂ”")}</strong></div><div class="workspace-stage-card"><span>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</span><strong>${escapeHtml(editDeal.owner || "вЂ”")}</strong></div><div class="workspace-stage-card"><span>РЎСЂРѕРє</span><strong>${escapeHtml(formatDate(editDeal.deadline))}</strong></div></div>` : ""}` : renderAccessHint("crm")}
+            <div class="panel-heading"><div><h4>${editDeal ? "Карточка сделки" : "Новая сделка"}</h4><div class="compact-help">Карточка строится под ваш цикл: лид → квалификация → КП/счет → производство → закрытие.</div></div></div>
+            ${canEdit ? `${renderDraftBadge("crm", "deal")}<div class="workspace-empty workspace-empty--tight">${editDeal ? "Сделка уже выбрана и открыта в фокусе справа. Для редактирования используйте всплывающую карточку, чтобы не перегружать экран." : "Создавайте сделки через всплывающую карточку. Так обзор остаётся чистым, а сама форма не ломает ритм работы."}</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-crm-new>${editDeal ? "Новая сделка" : "Создать сделку"}</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-edit="${escapeHtml(editDeal.id)}">Редактировать в окне</button><button class="btn btn-outline-secondary" type="button" data-crm-duplicate="${escapeHtml(editDeal.id)}">Сделать копию</button>` : ""}</div>${editDeal ? `<div class="workspace-stage-strip mt-3"><div class="workspace-stage-card"><span>Клиент</span><strong>${escapeHtml(editDeal.client || "—")}</strong></div><div class="workspace-stage-card"><span>Ответственный</span><strong>${escapeHtml(editDeal.owner || "—")}</strong></div><div class="workspace-stage-card"><span>Срок</span><strong>${escapeHtml(formatDate(editDeal.deadline))}</strong></div></div>` : ""}` : renderAccessHint("crm")}
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${editDeal ? "РЎРІСЏР·Р°РЅРЅС‹Р№ РєРѕРЅС‚СѓСЂ СЃРґРµР»РєРё" : "Р¤РѕРєСѓСЃ РЅРµРґРµР»Рё"}</h4><div class="compact-help">${editDeal ? "РСЃС‚РѕС‡РЅРёРє, Р·Р°РґР°С‡Рё Рё СЂРµР·РµСЂРІ РјР°С‚РµСЂРёР°Р»РѕРІ СЃРѕР±СЂР°РЅС‹ СЂСЏРґРѕРј СЃ РєР°СЂС‚РѕС‡РєРѕР№, С‡С‚РѕР±С‹ РїРѕ СЃРґРµР»РєРµ РЅРµ РїСЂРёС…РѕРґРёР»РѕСЃСЊ Р±РµРіР°С‚СЊ РїРѕ РјРѕРґСѓР»СЏРј." : "Р‘С‹СЃС‚СЂС‹Р№ СЃСЂРµР· РїРѕ С‚РµРј СЃРґРµР»РєР°Рј, РєРѕС‚РѕСЂС‹Рј РїСЂСЏРјРѕ СЃРµР№С‡Р°СЃ РЅСѓР¶РµРЅ РєРѕРЅС‚СЂРѕР»СЊ."}</div></div></div>
-            ${editDeal ? `<div class="workspace-stage-strip"><div class="workspace-stage-card"><span>РЎС‚Р°РґРёСЏ</span><strong>${escapeHtml(getCrmStageMeta(editDeal.stage).label)}</strong></div><div class="workspace-stage-card"><span>РЎРІСЏР·Р°РЅРЅС‹С… Р·Р°РґР°С‡</span><strong>${escapeHtml(formatNumber(editDealTasks.length))}</strong></div><div class="workspace-stage-card"><span>Р’ СЂРµР·РµСЂРІРµ</span><strong>${escapeHtml(formatNumber(editDealReservation.qty || 0))}</strong></div><div class="workspace-stage-card"><span>РЎСѓРјРјР° СЃРґРµР»РєРё</span><strong>${escapeHtml(formatMoney(editDeal.amount || 0))}</strong></div></div>
+            <div class="panel-heading"><div><h4>${editDeal ? "Связанный контур сделки" : "Фокус недели"}</h4><div class="compact-help">${editDeal ? "сточник, задачи и резерв материалов собраны рядом с карточкой, чтобы по сделке не приходилось бегать по модулям." : "Быстрый срез по тем сделкам, которым прямо сейчас нужен контроль."}</div></div></div>
+            ${editDeal ? `<div class="workspace-stage-strip"><div class="workspace-stage-card"><span>Стадия</span><strong>${escapeHtml(getCrmStageMeta(editDeal.stage).label)}</strong></div><div class="workspace-stage-card"><span>Связанных задач</span><strong>${escapeHtml(formatNumber(editDealTasks.length))}</strong></div><div class="workspace-stage-card"><span>В резерве</span><strong>${escapeHtml(formatNumber(editDealReservation.qty || 0))}</strong></div><div class="workspace-stage-card"><span>Сумма сделки</span><strong>${escapeHtml(formatMoney(editDeal.amount || 0))}</strong></div></div>
             <div class="workspace-stack mt-3">
-              ${editDealSourceOrder ? `<div><div class="panel-heading panel-heading--compact"><div><h4>РСЃС‚РѕС‡РЅРёРє РёР· РџСЂРѕРґР°Р¶</h4><div class="compact-help">РЎРІСЏР·Р°РЅРЅС‹Р№ Р·Р°РєР°Р·, РёР· РєРѕС‚РѕСЂРѕРіРѕ РїСЂРёС€Р»Р° РёР»Рё СЃ РєРѕС‚РѕСЂС‹Рј СЃРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°РЅР° СЌС‚Р° СЃРґРµР»РєР°.</div></div></div><div class="workspace-list-item"><div><strong>${escapeHtml(editDealSourceOrder.orderNumber || editDealSourceOrder.title || "Р—Р°РєР°Р·")}</strong><div class="workspace-list-item__meta">${escapeHtml(editDealSourceOrder.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ")} вЂў ${escapeHtml(editDealSourceOrder.manager || "Р‘РµР· РјРµРЅРµРґР¶РµСЂР°")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(editDealSourceOrder.amount || 0))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">РћС‚РєСЂС‹С‚СЊ РџСЂРѕРґР°Р¶Рё</button></div></div></div></div>` : ""}
-              <div><div class="panel-heading panel-heading--compact"><div><h4>РЎРІСЏР·Р°РЅРЅС‹Рµ Р·Р°РґР°С‡Рё</h4><div class="compact-help">Р—Р°РґР°С‡Рё, Р·Р°РІРµРґРµРЅРЅС‹Рµ РёР· СЌС‚РѕР№ СЃРґРµР»РєРё РёР»Рё СЂР°Р±РѕС‚Р°СЋС‰РёРµ РїРѕ РЅРµР№.</div></div></div><div class="workspace-stack">${editDealTasks.length ? editDealTasks.slice(0, 5).map((task) => `<div class="workspace-list-item"><div><strong>${escapeHtml(task.title || "Р—Р°РґР°С‡Р°")}</strong><div class="workspace-list-item__meta">${escapeHtml(task.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ")} вЂў ${escapeHtml(getTaskStatusMeta(task.status).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getTaskStatusMeta(task.status).tone)}">${escapeHtml(getPriorityLabel(task.priority))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(task.id)}">РћС‚РєСЂС‹С‚СЊ Р·Р°РґР°С‡Сѓ</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">РЎРІСЏР·Р°РЅРЅС‹С… Р·Р°РґР°С‡ РїРѕРєР° РЅРµС‚.</div>'}</div></div>
-              <div><div class="panel-heading panel-heading--compact"><div><h4>РњР°С‚РµСЂРёР°Р»С‹ РІ СЂРµР·РµСЂРІРµ</h4><div class="compact-help">Р’СЃРµ СЂРµР·РµСЂРІС‹ РїРѕРґ СЌС‚Сѓ СЃРґРµР»РєСѓ РїРѕРґС‚СЏРіРёРІР°СЋС‚СЃСЏ РёР· СЃРєР»Р°РґСЃРєРѕРіРѕ РјРѕРґСѓР»СЏ.</div></div></div><div class="workspace-stack">${editDealReservation.rows.length ? sortByDateDesc(editDealReservation.rows, "date").slice(0, 5).map((movement) => { const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); const movementLabel = movement.kind === "release" ? "СЃРЅСЏС‚РёРµ СЂРµР·РµСЂРІР°" : "СЂРµР·РµСЂРІ"; return `<div class="workspace-list-item"><div><strong>${escapeHtml(item?.name || "РџРѕР·РёС†РёСЏ")}</strong><div class="workspace-list-item__meta">${escapeHtml(movementLabel)} вЂў ${escapeHtml(formatDate(movement.date))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div>${movement.itemId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="warehouse:${escapeHtml(movement.itemId)}">РћС‚РєСЂС‹С‚СЊ РїРѕР·РёС†РёСЋ</button></div>` : ""}</div></div>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Р РµР·РµСЂРІРѕРІ РїРѕ СЌС‚РѕР№ СЃРґРµР»РєРµ РїРѕРєР° РЅРµС‚.</div>'}</div></div>
+              ${editDealSourceOrder ? `<div><div class="panel-heading panel-heading--compact"><div><h4>сточник из Продаж</h4><div class="compact-help">Связанный заказ, из которого пришла или с которым синхронизирована эта сделка.</div></div></div><div class="workspace-list-item"><div><strong>${escapeHtml(editDealSourceOrder.orderNumber || editDealSourceOrder.title || "Заказ")}</strong><div class="workspace-list-item__meta">${escapeHtml(editDealSourceOrder.client || "Клиент не указан")} • ${escapeHtml(editDealSourceOrder.manager || "Без менеджера")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(editDealSourceOrder.amount || 0))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть Продажи</button></div></div></div></div>` : ""}
+              <div><div class="panel-heading panel-heading--compact"><div><h4>Связанные задачи</h4><div class="compact-help">Задачи, заведенные из этой сделки или работающие по ней.</div></div></div><div class="workspace-stack">${editDealTasks.length ? editDealTasks.slice(0, 5).map((task) => `<div class="workspace-list-item"><div><strong>${escapeHtml(task.title || "Задача")}</strong><div class="workspace-list-item__meta">${escapeHtml(task.owner || "Без ответственного")} • ${escapeHtml(getTaskStatusMeta(task.status).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getTaskStatusMeta(task.status).tone)}">${escapeHtml(getPriorityLabel(task.priority))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(task.id)}">Открыть задачу</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">Связанных задач пока нет.</div>'}</div></div>
+              <div><div class="panel-heading panel-heading--compact"><div><h4>Материалы в резерве</h4><div class="compact-help">Все резервы под эту сделку подтягиваются из складского модуля.</div></div></div><div class="workspace-stack">${editDealReservation.rows.length ? sortByDateDesc(editDealReservation.rows, "date").slice(0, 5).map((movement) => { const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); const movementLabel = movement.kind === "release" ? "снятие резерва" : "резерв"; return `<div class="workspace-list-item"><div><strong>${escapeHtml(item?.name || "Позиция")}</strong><div class="workspace-list-item__meta">${escapeHtml(movementLabel)} • ${escapeHtml(formatDate(movement.date))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div>${movement.itemId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="warehouse:${escapeHtml(movement.itemId)}">Открыть позицию</button></div>` : ""}</div></div>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Резервов по этой сделке пока нет.</div>'}</div></div>
             </div>` : `<div class="workspace-stage-strip">${stageSummary}</div>
-            <div class="workspace-stack">${(sortByDateDesc(openDeals, "deadline").slice(0, 6) || []).map((deal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(deal.title || "РЎРґРµР»РєР°")}</strong><div class="workspace-list-item__meta">${escapeHtml(deal.client || "вЂ”")} вЂў ${escapeHtml(deal.owner || "вЂ”")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getCrmStageMeta(deal.stage).tone)}">${escapeHtml(getCrmStageMeta(deal.stage).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(deal.deadline))}</div></div></div>`).join("") || '<div class="workspace-empty">РђРєС‚РёРІРЅС‹С… СЃРґРµР»РѕРє РїРѕРєР° РЅРµС‚.</div>'}</div>`}
+            <div class="workspace-stack">${(sortByDateDesc(openDeals, "deadline").slice(0, 6) || []).map((deal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(deal.title || "Сделка")}</strong><div class="workspace-list-item__meta">${escapeHtml(deal.client || "—")} • ${escapeHtml(deal.owner || "—")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getCrmStageMeta(deal.stage).tone)}">${escapeHtml(getCrmStageMeta(deal.stage).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(deal.deadline))}</div></div></div>`).join("") || '<div class="workspace-empty">Активных сделок пока нет.</div>'}</div>`}
           </section>
         </div>` : ""}
         ${modeIs(filters, "overview", "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р РµР·РµСЂРІ РјР°С‚РµСЂРёР°Р»РѕРІ РїРѕРґ СЃРґРµР»РєСѓ</h4><div class="compact-help">РњРѕР¶РЅРѕ СЃСЂР°Р·Сѓ РїСЂРёРІСЏР·Р°С‚СЊ СЂРµР·РµСЂРІ СЃРєР»Р°РґР° Рє РєРѕРЅРєСЂРµС‚РЅРѕР№ CRM-СЃРґРµР»РєРµ, С‡С‚РѕР±С‹ Р·Р°РґР°С‡Р° Рё РјР°С‚РµСЂРёР°Р» РЅРµ Р¶РёР»Рё РѕС‚РґРµР»СЊРЅРѕ.</div></div></div>
-            ${canEdit ? `<div class="workspace-empty workspace-empty--tight">Р РµР·РµСЂРІ РјР°С‚РµСЂРёР°Р»РѕРІ С‚РµРїРµСЂСЊ РѕС‚РєСЂС‹РІР°РµС‚СЃСЏ РѕС‚РґРµР»СЊРЅРѕР№ РІСЃРїР»С‹РІР°СЋС‰РµР№ РєР°СЂС‚РѕС‡РєРѕР№: РјРµРЅСЊС€Рµ РІРёР·СѓР°Р»СЊРЅРѕРіРѕ С€СѓРјР° Рё СѓРґРѕР±РЅРµРµ СЂР°Р±РѕС‚Р°С‚СЊ РЅР° РЅРѕСѓС‚Р±СѓРєРµ.</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-crm-reserve-open>РћС‚РєСЂС‹С‚СЊ СЂРµР·РµСЂРІ</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-reserve-open>Р РµР·РµСЂРІ РїРѕРґ РІС‹Р±СЂР°РЅРЅСѓСЋ СЃРґРµР»РєСѓ</button>` : ""}</div>` : renderAccessHint("crm")}
+            <div class="panel-heading"><div><h4>Резерв материалов под сделку</h4><div class="compact-help">Можно сразу привязать резерв склада к конкретной CRM-сделке, чтобы задача и материал не жили отдельно.</div></div></div>
+            ${canEdit ? `<div class="workspace-empty workspace-empty--tight">Резерв материалов теперь открывается отдельной всплывающей карточкой: меньше визуального шума и удобнее работать на ноутбуке.</div><div class="workspace-card__actions mt-3"><button class="btn btn-dark" type="button" data-crm-reserve-open>Открыть резерв</button>${editDeal ? `<button class="btn btn-outline-dark" type="button" data-crm-reserve-open>Резерв под выбранную сделку</button>` : ""}</div>` : renderAccessHint("crm")}
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РЎРІСЏР·Р°РЅРЅС‹Рµ СЂРµР·РµСЂРІС‹</h4><div class="compact-help">РџРѕСЃР»РµРґРЅРёРµ СЂРµР·РµСЂРІС‹ РјР°С‚РµСЂРёР°Р»РѕРІ, РєРѕС‚РѕСЂС‹Рµ СѓР¶Рµ СЃРІСЏР·Р°РЅС‹ СЃРѕ СЃРґРµР»РєР°РјРё CRM.</div></div></div>
-            <div class="workspace-stack">${(sortByDateDesc((warehouseDoc.movements || []).filter((movement) => compactText(movement?.integration?.sourceKey || "").startsWith("crm-deal:")), "date").slice(0, 6) || []).map((movement) => { const deal = (doc.deals || []).find((entry) => getCrmDealSourceKey(entry.id) === compactText(movement?.integration?.sourceKey || "")); const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); return `<div class="workspace-list-item"><div><strong>${escapeHtml(deal?.title || "РЎРґРµР»РєР°")}</strong><div class="workspace-list-item__meta">${escapeHtml(item?.name || "РџРѕР·РёС†РёСЏ")} вЂў ${escapeHtml(movement.kind === "release" ? "СЃРЅСЏС‚РёРµ СЂРµР·РµСЂРІР°" : "СЂРµР·РµСЂРІ")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(movement.date))}</div></div></div>`; }).join("") || '<div class="workspace-empty workspace-empty--tight">РЎРІСЏР·Р°РЅРЅС‹С… СЂРµР·РµСЂРІРѕРІ РїРѕРєР° РЅРµС‚.</div>'}</div>
+            <div class="panel-heading"><div><h4>Связанные резервы</h4><div class="compact-help">Последние резервы материалов, которые уже связаны со сделками CRM.</div></div></div>
+            <div class="workspace-stack">${(sortByDateDesc((warehouseDoc.movements || []).filter((movement) => compactText(movement?.integration?.sourceKey || "").startsWith("crm-deal:")), "date").slice(0, 6) || []).map((movement) => { const deal = (doc.deals || []).find((entry) => getCrmDealSourceKey(entry.id) === compactText(movement?.integration?.sourceKey || "")); const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); return `<div class="workspace-list-item"><div><strong>${escapeHtml(deal?.title || "Сделка")}</strong><div class="workspace-list-item__meta">${escapeHtml(item?.name || "Позиция")} • ${escapeHtml(movement.kind === "release" ? "снятие резерва" : "резерв")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(movement.date))}</div></div></div>`; }).join("") || '<div class="workspace-empty workspace-empty--tight">Связанных резервов пока нет.</div>'}</div>
           </section>
         </div>` : ""}
         ${modeIs(filters, "form") && editDeal ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РћРїРµСЂР°С†РёРѕРЅРЅС‹Р№ СЃС‚Р°С‚СѓСЃ СЃРґРµР»РєРё</h4><div class="compact-help">Р—РґРµСЃСЊ РІРёРґРЅРѕ, РіРґРµ СЃРґРµР»РєР° СЃРµР№С‡Р°СЃ СѓРїРёСЂР°РµС‚СЃСЏ: РІ СЃС‡РµС‚, РѕРїР»Р°С‚Сѓ, Р·Р°РґР°С‡Рё, РјР°С‚РµСЂРёР°Р»С‹ РёР»Рё СЃСЂРѕРєРё.</div></div></div>
+            <div class="panel-heading"><div><h4>Операционный статус сделки</h4><div class="compact-help">Здесь видно, где сделка сейчас упирается: в счет, оплату, задачи, материалы или сроки.</div></div></div>
             <div class="workspace-stage-strip">${editDealOperationCards.map((card) => `<div class="workspace-stage-card"><span>${escapeHtml(card.label)}</span><strong>${escapeHtml(card.value)}</strong><small class="workspace-list-item__meta">${escapeHtml(card.caption)}</small></div>`).join("")}</div>
             <div class="workspace-card__actions mt-3">
-              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-task-from-deal="${escapeHtml(editDeal.id)}">${editDealTasks.length ? "РћС‚РєСЂС‹С‚СЊ Р·Р°РґР°С‡Сѓ" : "РЎРѕР·РґР°С‚СЊ Р·Р°РґР°С‡Сѓ"}</button>` : ""}
-              ${editDealSourceOrder ? `<button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">РћС‚РєСЂС‹С‚СЊ РІ РџСЂРѕРґР°Р¶Р°С…</button>` : ""}
-              ${editDealReservation.rows?.[0]?.itemId ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="warehouse:${escapeHtml(editDealReservation.rows[0].itemId)}">РћС‚РєСЂС‹С‚СЊ РјР°С‚РµСЂРёР°Р»</button>` : ""}
+              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-crm-task-from-deal="${escapeHtml(editDeal.id)}">${editDealTasks.length ? "Открыть задачу" : "Создать задачу"}</button>` : ""}
+              ${editDealSourceOrder ? `<button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть в Продажах</button>` : ""}
+              ${editDealReservation.rows?.[0]?.itemId ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="warehouse:${escapeHtml(editDealReservation.rows[0].itemId)}">Открыть материал</button>` : ""}
             </div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р›РµРЅС‚Р° СЃРґРµР»РєРё</h4><div class="compact-help">РСЃС‚РѕСЂРёСЏ СЃРѕР±РёСЂР°РµС‚СЃСЏ РёР· CRM, РџСЂРѕРґР°Р¶, Р—Р°РґР°С‡ Рё СЃРєР»Р°РґСЃРєРёС… СЂРµР·РµСЂРІРѕРІ.</div></div><div class="workspace-note">РЎРѕР±С‹С‚РёР№: ${escapeHtml(formatNumber(editDealTimeline.length))}</div></div>
-            <div class="workspace-stack">${editDealTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Р‘РµР· РґРµС‚Р°Р»РµР№")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">РћС‚РєСЂС‹С‚СЊ</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">РћС‚РєСЂС‹С‚СЊ</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РЎРѕР±С‹С‚РёР№ РїРѕ СЃРґРµР»РєРµ РїРѕРєР° РЅРµС‚.</div>'}</div>
+            <div class="panel-heading"><div><h4>Лента сделки</h4><div class="compact-help">стория собирается из CRM, Продаж, Задач и складских резервов.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editDealTimeline.length))}</div></div>
+            <div class="workspace-stack">${editDealTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Событий по сделке пока нет.</div>'}</div>
           </section>
         </div>` : ""}
         ${modeIs(filters, "board") ? `<section class="workspace-panel">
-          <div class="panel-heading"><div><h4>Р’РѕСЂРѕРЅРєР° СЃРґРµР»РѕРє</h4><div class="compact-help">РљР°СЂС‚РѕС‡РєРё РјРѕР¶РЅРѕ Р±С‹СЃС‚СЂРѕ РїРµСЂРµРІРѕРґРёС‚СЊ РјРµР¶РґСѓ СЃС‚Р°РґРёСЏРјРё РїСЂСЏРјРѕ РёР· СЃРїРёСЃРєР°.</div></div><div class="workspace-note">РџРѕРєР°Р·Р°РЅРѕ: ${escapeHtml(String(filtered.length))}</div></div>
-          <div class="workspace-board workspace-board--crm">${CRM_STAGES.map((stage) => { const stageDeals = filtered.filter((deal) => deal.stage === stage.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(stage.label)}</strong><span>${escapeHtml(String(stageDeals.length))}</span></div><div class="workspace-lane__body">${stageDeals.map((deal) => renderCrmCard(doc, deal, canEdit, canManage)).join("") || '<div class="workspace-empty workspace-empty--tight">РџСѓСЃС‚Рѕ</div>'}</div></article>`; }).join("")}</div>
+          <div class="panel-heading"><div><h4>Воронка сделок</h4><div class="compact-help">Карточки можно быстро переводить между стадиями прямо из списка.</div></div><div class="workspace-note">Показано: ${escapeHtml(String(filtered.length))}</div></div>
+          <div class="workspace-board workspace-board--crm">${CRM_STAGES.map((stage) => { const stageDeals = filtered.filter((deal) => deal.stage === stage.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(stage.label)}</strong><span>${escapeHtml(String(stageDeals.length))}</span></div><div class="workspace-lane__body">${stageDeals.map((deal) => renderCrmCard(doc, deal, canEdit, canManage)).join("") || '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
         </section>` : ""}
         ${modeIs(filters, "table") ? `<section class="workspace-panel">
-          <div class="panel-heading"><div><h4>РЎРїРёСЃРѕРє СЃРґРµР»РѕРє</h4><div class="compact-help">РќРёР¶РЅСЏСЏ С‚Р°Р±Р»РёС†Р° СѓРґРѕР±РЅР° РґР»СЏ РїРѕРёСЃРєР° Рё Р±С‹СЃС‚СЂРѕРіРѕ РїРµСЂРµС…РѕРґР° Рє РЅСѓР¶РЅРѕР№ РєР°СЂС‚РѕС‡РєРµ.</div></div></div>
-          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>РЎРґРµР»РєР°</th><th>РљР»РёРµРЅС‚</th><th>РЎС‚Р°РґРёСЏ</th><th>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</th><th>РљР°РЅР°Р»</th><th>РЎСѓРјРјР°</th><th>РЎСЂРѕРє</th>${customHeader}<th></th></tr></thead><tbody>${dealTableRows}</tbody></table></div>
+          <div class="panel-heading"><div><h4>Список сделок</h4><div class="compact-help">Нижняя таблица удобна для поиска и быстрого перехода к нужной карточке.</div></div></div>
+          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Сделка</th><th>Клиент</th><th>Стадия</th><th>Ответственный</th><th>Канал</th><th>Сумма</th><th>Срок</th>${customHeader}<th></th></tr></thead><tbody>${dealTableRows}</tbody></table></div>
         </section>` : ""}
         ${renderRelatedLinks("crm")}
       </div>
@@ -2979,10 +2979,10 @@ function buildModeTabs(moduleKey, escapeFn) {
     const recentMovements = sortByDateDesc(doc.movements || [], "date").slice(0, 10);
     const historyEntries = buildWarehouseHistoryEntries(doc);
     const historyTypeOptions = [
-      { value: "movement", label: "Р”РІРёР¶РµРЅРёСЏ" },
-      { value: "purchase", label: "Р—Р°РєСѓРїРєРё" },
-      { value: "finance", label: "Р”РµРЅСЊРіРё" },
-      { value: "production", label: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ" }
+      { value: "movement", label: "Движения" },
+      { value: "purchase", label: "Закупки" },
+      { value: "finance", label: "Деньги" },
+      { value: "production", label: "Производство" }
     ];
     const filteredHistory = historyEntries.filter((entry) => {
       const blob = [entry.label, entry.title, entry.meta, entry.family].join(" ");
@@ -2994,108 +2994,108 @@ function buildModeTabs(moduleKey, escapeFn) {
     const moduleFilterMeta = (() => {
       if (moduleKey === "warehouse" && currentMode === "history") {
         return {
-          placeholder: "РџРѕРёСЃРє РїРѕ РёСЃС‚РѕСЂРёРё, РєРѕРјРјРµРЅС‚Р°СЂРёСЋ, СЃС‡РµС‚Сѓ, Р·Р°РєСѓРїРєРµ РёР»Рё РґРІРёР¶РµРЅРёСЋ",
-          allLabel: "Р’СЃРµ СЃРѕР±С‹С‚РёСЏ",
+          placeholder: "Поиск по истории, комментарию, счету, закупке или движению",
+          allLabel: "Все события",
           options: historyTypeOptions,
-          primaryButtons: '<button class="btn btn-outline-dark" type="button" data-live-mode="overview">Рљ РѕР±Р·РѕСЂСѓ</button><button class="btn btn-outline-dark" type="button" data-live-mode="movements">Р”РІРёР¶РµРЅРёСЏ</button>'
+          primaryButtons: '<button class="btn btn-outline-dark" type="button" data-live-mode="overview">К обзору</button><button class="btn btn-outline-dark" type="button" data-live-mode="movements">Движения</button>'
         };
       }
       if (moduleKey === "products") {
         return {
-          placeholder: "РџРѕРёСЃРє РїРѕ С‚РѕРІР°СЂСѓ, РіСЂСѓРїРїРµ, РїРѕСЃС‚Р°РІС‰РёРєСѓ",
-          allLabel: "Р’СЃРµ РіСЂСѓРїРїС‹",
+          placeholder: "Поиск по товару, группе, поставщику",
+          allLabel: "Все группы",
           options: productGroups,
           primaryButtons: canEdit
-            ? '<button class="btn btn-dark" type="button" data-warehouse-product-new>РќРѕРІС‹Р№ С‚РѕРІР°СЂ</button><button class="btn btn-outline-dark" type="button" data-live-mode="catalog">РћС‚РєСЂС‹С‚СЊ РѕСЃС‚Р°С‚РєРё</button>'
-            : '<span class="workspace-note">Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ РґР»СЏ РІР°С€РµР№ СЂРѕР»Рё</span>'
+            ? '<button class="btn btn-dark" type="button" data-warehouse-product-new>Новый товар</button><button class="btn btn-outline-dark" type="button" data-live-mode="catalog">Открыть остатки</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
         };
       }
       if (moduleKey === "purchases") {
         return {
-          placeholder: "РџРѕРёСЃРє РїРѕ РЅРѕРјРµСЂСѓ, РїРѕСЃС‚Р°РІС‰РёРєСѓ, СЃС‚Р°С‚СѓСЃСѓ",
-          allLabel: "Р’СЃРµ СЃС‚Р°С‚СѓСЃС‹",
+          placeholder: "Поиск по номеру, поставщику, статусу",
+          allLabel: "Все статусы",
           options: WAREHOUSE_PURCHASE_STATUSES.map((status) => ({ value: status.key, label: status.label })),
           primaryButtons: canEdit
-            ? '<button class="btn btn-dark" type="button" data-warehouse-purchase-new>РќРѕРІР°СЏ Р·Р°РєСѓРїРєР°</button><button class="btn btn-outline-dark" type="button" data-live-mode="products">РўРѕРІР°СЂС‹</button>'
-            : '<span class="workspace-note">Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ РґР»СЏ РІР°С€РµР№ СЂРѕР»Рё</span>'
+            ? '<button class="btn btn-dark" type="button" data-warehouse-purchase-new>Новая закупка</button><button class="btn btn-outline-dark" type="button" data-live-mode="products">Товары</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
         };
       }
       if (moduleKey === "money") {
         return {
-          placeholder: "РџРѕРёСЃРє РїРѕ СЃС‡РµС‚Сѓ, СЃС‚Р°С‚СЊРµ, РєРѕРЅС‚СЂР°РіРµРЅС‚Сѓ",
-          allLabel: "Р’СЃРµ СЃС‡РµС‚Р°",
+          placeholder: "Поиск по счету, статье, контрагенту",
+          allLabel: "Все счета",
           options: financeAccounts,
           primaryButtons: canEdit
-            ? '<button class="btn btn-dark" type="button" data-warehouse-finance-new>РќРѕРІР°СЏ РѕРїРµСЂР°С†РёСЏ</button><button class="btn btn-outline-dark" type="button" data-live-mode="purchases">Р—Р°РєСѓРїРєРё</button>'
-            : '<span class="workspace-note">Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ РґР»СЏ РІР°С€РµР№ СЂРѕР»Рё</span>'
+            ? '<button class="btn btn-dark" type="button" data-warehouse-finance-new>Новая операция</button><button class="btn btn-outline-dark" type="button" data-live-mode="purchases">Закупки</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
         };
       }
       if (moduleKey === "production") {
         return {
-          placeholder: "РџРѕРёСЃРє РїРѕ Р·Р°РґР°РЅРёСЋ, СЌС‚Р°РїСѓ, РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРјСѓ",
-          allLabel: "Р’СЃРµ СЌС‚Р°РїС‹",
+          placeholder: "Поиск по заданию, этапу, ответственному",
+          allLabel: "Все этапы",
           options: PRODUCTION_JOB_STATUSES.map((status) => ({ value: status.key, label: status.label })),
           primaryButtons: canEdit
-            ? '<button class="btn btn-dark" type="button" data-warehouse-production-new>Р’ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ</button><button class="btn btn-outline-dark" type="button" data-live-mode="products">РўРѕРІР°СЂС‹</button>'
-            : '<span class="workspace-note">Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ РґР»СЏ РІР°С€РµР№ СЂРѕР»Рё</span>'
+            ? '<button class="btn btn-dark" type="button" data-warehouse-production-new>В производство</button><button class="btn btn-outline-dark" type="button" data-live-mode="products">Товары</button>'
+            : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
         };
       }
       return {
-        placeholder: "РџРѕРёСЃРє РїРѕ РїРѕР·РёС†РёРё, SKU, РєР°С‚РµРіРѕСЂРёРё",
-        allLabel: "Р’СЃРµ РєР°С‚РµРіРѕСЂРёРё",
+        placeholder: "Поиск по позиции, SKU, категории",
+        allLabel: "Все категории",
         options: categories,
         primaryButtons: canEdit
-          ? '<button class="btn btn-dark" type="button" data-warehouse-item-new>РќРѕРІР°СЏ РїРѕР·РёС†РёСЏ</button><button class="btn btn-outline-dark" type="button" data-warehouse-movement-pick="">РќРѕРІРѕРµ РґРІРёР¶РµРЅРёРµ</button>'
-          : '<span class="workspace-note">Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ РґР»СЏ РІР°С€РµР№ СЂРѕР»Рё</span>'
+          ? '<button class="btn btn-dark" type="button" data-warehouse-item-new>Новая позиция</button><button class="btn btn-outline-dark" type="button" data-warehouse-movement-pick="">Новое движение</button>'
+          : '<span class="workspace-note">Редактирование отключено для вашей роли</span>'
       };
     })();
     const metrics = (() => {
       if (moduleKey === "products") {
         return [
-          { label: "РўРѕРІР°СЂРѕРІ", value: formatNumber(snapshot.products.length), caption: "РІ РїСЂРѕРґР°СЋС‰РµРј РєР°С‚Р°Р»РѕРіРµ" },
-          { label: "Р“СЂСѓРїРї", value: formatNumber(productGroups.length), caption: "С‚РѕРІР°СЂРЅС‹Рµ РЅР°РїСЂР°РІР»РµРЅРёСЏ" },
-          { label: "РџРѕСЃС‚Р°РІС‰РёРєРѕРІ", value: formatNumber(new Set((doc.products || []).map((item) => compactText(item.supplier)).filter(Boolean)).size), caption: "Р°РєС‚РёРІРЅС‹Рµ РєРѕРЅС‚СЂР°РіРµРЅС‚С‹" },
-          { label: "РЎСЂРµРґРЅСЏСЏ Р·Р°РєСѓРїРєР°", value: formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.purchasePrice || 0) / filteredProducts.length : 0), caption: "РїРѕ С‚РµРєСѓС‰РµР№ РІС‹Р±РѕСЂРєРµ" },
-          { label: "РЎСЂРµРґРЅСЏСЏ РїСЂРѕРґР°Р¶Р°", value: formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.salePrice || 0) / filteredProducts.length : 0), caption: "РїРѕ С‚РµРєСѓС‰РµР№ РІС‹Р±РѕСЂРєРµ" },
-          { label: "РњР°СЂР¶Р°", value: formatMoney(sumBy(filteredProducts, (item) => (item.salePrice || 0) - (item.purchasePrice || 0))), caption: "РІР°Р»РѕРІР°СЏ РїРѕ РІС‹Р±РѕСЂРєРµ" }
+          { label: "Товаров", value: formatNumber(snapshot.products.length), caption: "в продающем каталоге" },
+          { label: "Групп", value: formatNumber(productGroups.length), caption: "товарные направления" },
+          { label: "Поставщиков", value: formatNumber(new Set((doc.products || []).map((item) => compactText(item.supplier)).filter(Boolean)).size), caption: "активные контрагенты" },
+          { label: "Средняя закупка", value: formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.purchasePrice || 0) / filteredProducts.length : 0), caption: "по текущей выборке" },
+          { label: "Средняя продажа", value: formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.salePrice || 0) / filteredProducts.length : 0), caption: "по текущей выборке" },
+          { label: "Маржа", value: formatMoney(sumBy(filteredProducts, (item) => (item.salePrice || 0) - (item.purchasePrice || 0))), caption: "валовая по выборке" }
         ];
       }
       if (moduleKey === "purchases") {
         return [
-          { label: "Р—Р°РєСѓРїРѕРє", value: formatNumber(snapshot.purchases.length), caption: "РІСЃРµРіРѕ РІ РєРѕРЅС‚СѓСЂРµ" },
-          { label: "Р’ РѕР±РѕСЂРѕС‚Рµ", value: formatMoney(snapshot.purchasesTotal || 0), caption: "РѕР±С‰Р°СЏ СЃСѓРјРјР° Р·Р°РєР°Р·РѕРІ" },
-          { label: "РџСЂРёРЅСЏС‚Рѕ", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "received").length), caption: "СѓР¶Рµ РЅР° СЃРєР»Р°РґРµ" },
-          { label: "Р’ РїСѓС‚Рё", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "in_transit").length), caption: "РµС‰Рµ РЅРµ РїРѕСЃС‚СѓРїРёР»Рё" },
-          { label: "Р§РµСЂРЅРѕРІРёРєРё", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "draft").length), caption: "РЅРµ РѕС‚РїСЂР°РІР»РµРЅС‹ РїРѕСЃС‚Р°РІС‰РёРєСѓ" },
-          { label: "РЎСЂРµРґРЅРёР№ С‡РµРє", value: formatMoney(filteredPurchases.length ? sumBy(filteredPurchases, (item) => item.amount || 0) / filteredPurchases.length : 0), caption: "РїРѕ С‚РµРєСѓС‰РµР№ РІС‹Р±РѕСЂРєРµ" }
+          { label: "Закупок", value: formatNumber(snapshot.purchases.length), caption: "всего в контуре" },
+          { label: "В обороте", value: formatMoney(snapshot.purchasesTotal || 0), caption: "общая сумма заказов" },
+          { label: "Принято", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "received").length), caption: "уже на складе" },
+          { label: "В пути", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "in_transit").length), caption: "еще не поступили" },
+          { label: "Черновики", value: formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === "draft").length), caption: "не отправлены поставщику" },
+          { label: "Средний чек", value: formatMoney(filteredPurchases.length ? sumBy(filteredPurchases, (item) => item.amount || 0) / filteredPurchases.length : 0), caption: "по текущей выборке" }
         ];
       }
       if (moduleKey === "money") {
         return [
-          { label: "Р‘Р°Р»Р°РЅСЃ", value: formatMoney((snapshot.incomeTotal || 0) - (snapshot.expenseTotal || 0)), caption: "РїСЂРёС…РѕРґ РјРёРЅСѓСЃ СЂР°СЃС…РѕРґ" },
-          { label: "РџСЂРёС…РѕРґ", value: formatMoney(snapshot.incomeTotal || 0), caption: "РґРµРЅРµР¶РЅС‹Р№ РїРѕС‚РѕРє РІРЅСѓС‚СЂСЊ" },
-          { label: "Р Р°СЃС…РѕРґ", value: formatMoney(snapshot.expenseTotal || 0), caption: "РґРµРЅРµР¶РЅС‹Р№ РїРѕС‚РѕРє РЅР°СЂСѓР¶Сѓ" },
-          { label: "РћРїРµСЂР°С†РёР№", value: formatNumber(filteredFinance.length), caption: "РїРѕ С‚РµРєСѓС‰РµР№ РІС‹Р±РѕСЂРєРµ" },
-          { label: "РЎС‡РµС‚РѕРІ", value: formatNumber(financeAccounts.length), caption: "Р°РєС‚РёРІРЅС‹Рµ РєР°СЃСЃС‹ Рё СЃС‡РµС‚Р°" },
-          { label: "РљРѕРЅС‚СЂР°РіРµРЅС‚РѕРІ", value: formatNumber(new Set((doc.financeEntries || []).map((entry) => compactText(entry.counterparty)).filter(Boolean)).size), caption: "РІ РґРµРЅРµР¶РЅС‹С… РѕРїРµСЂР°С†РёСЏС…" }
+          { label: "Баланс", value: formatMoney((snapshot.incomeTotal || 0) - (snapshot.expenseTotal || 0)), caption: "приход минус расход" },
+          { label: "Приход", value: formatMoney(snapshot.incomeTotal || 0), caption: "денежный поток внутрь" },
+          { label: "Расход", value: formatMoney(snapshot.expenseTotal || 0), caption: "денежный поток наружу" },
+          { label: "Операций", value: formatNumber(filteredFinance.length), caption: "по текущей выборке" },
+          { label: "Счетов", value: formatNumber(financeAccounts.length), caption: "активные кассы и счета" },
+          { label: "Контрагентов", value: formatNumber(new Set((doc.financeEntries || []).map((entry) => compactText(entry.counterparty)).filter(Boolean)).size), caption: "в денежных операциях" }
         ];
       }
       if (moduleKey === "production") {
         return [
-          { label: "РђРєС‚РёРІРЅС‹Рµ", value: formatNumber(snapshot.productionActive || 0), caption: "РЅРµ Р·Р°РІРµСЂС€РµРЅС‹ Рё РЅРµ РЅР° РїР°СѓР·Рµ" },
-          { label: "Р’ РѕС‡РµСЂРµРґРё", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "queue").length), caption: "РѕР¶РёРґР°СЋС‚ Р·Р°РїСѓСЃРє" },
-          { label: "Р’ СЂР°Р±РѕС‚Рµ", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "in_work").length), caption: "Сѓ РёСЃРїРѕР»РЅРёС‚РµР»РµР№" },
-          { label: "РљРѕРЅС‚СЂРѕР»СЊ", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "qa").length), caption: "РЅР° РїСЂРѕРІРµСЂРєРµ" },
-          { label: "РЎРѕС‚СЂСѓРґРЅРёРєРѕРІ", value: formatNumber(new Set((doc.productionJobs || []).map((item) => compactText(item.assignee)).filter(Boolean)).size), caption: "РІ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРј С†РёРєР»Рµ" },
-          { label: "РћР±СЉРµРј", value: formatNumber(sumBy(filteredProduction, (item) => item.qty || 0)), caption: "РїРѕ С‚РµРєСѓС‰РµР№ РІС‹Р±РѕСЂРєРµ" }
+          { label: "Активные", value: formatNumber(snapshot.productionActive || 0), caption: "не завершены и не на паузе" },
+          { label: "В очереди", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "queue").length), caption: "ожидают запуск" },
+          { label: "В работе", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "in_work").length), caption: "у исполнителей" },
+          { label: "Контроль", value: formatNumber((doc.productionJobs || []).filter((item) => compactText(item.stage) === "qa").length), caption: "на проверке" },
+          { label: "Сотрудников", value: formatNumber(new Set((doc.productionJobs || []).map((item) => compactText(item.assignee)).filter(Boolean)).size), caption: "в производственном цикле" },
+          { label: "Объем", value: formatNumber(sumBy(filteredProduction, (item) => item.qty || 0)), caption: "по текущей выборке" }
         ];
       }
       return [
-        { label: "РџРѕР·РёС†РёР№", value: formatNumber(snapshot.items.length), caption: "РІ РєР°С‚Р°Р»РѕРіРµ РјР°С‚РµСЂРёР°Р»РѕРІ" },
-        { label: "РќР° СЂСѓРєР°С…", value: formatNumber(snapshot.onHandTotal), caption: "РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ" },
-        { label: "Р’ СЂРµР·РµСЂРІРµ", value: formatNumber(snapshot.reservedTotal), caption: "РїРѕРґ С‚РµРєСѓС‰РёРµ Р·Р°РєР°Р·С‹" },
-        { label: "РќСѓР¶РЅРѕ РїРѕРїРѕР»РЅРёС‚СЊ", value: formatNumber(snapshot.lowItems.length), caption: "РЅРёР¶Рµ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ Р·Р°РїР°СЃР°" },
-        { label: "РР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ", value: formatNumber(calculatorSnapshot.activeTabs), caption: "Р°РєС‚РёРІРЅС‹С… РІРєР»Р°РґРѕРє СЃРїСЂРѕСЃР°" },
+        { label: "Позиций", value: formatNumber(snapshot.items.length), caption: "в каталоге материалов" },
+        { label: "На руках", value: formatNumber(snapshot.onHandTotal), caption: "общее количество" },
+        { label: "В резерве", value: formatNumber(snapshot.reservedTotal), caption: "под текущие заказы" },
+        { label: "Нужно пополнить", value: formatNumber(snapshot.lowItems.length), caption: "ниже минимального запаса" },
+        { label: "з калькуляторов", value: formatNumber(calculatorSnapshot.activeTabs), caption: "активных вкладок спроса" },
         ...getFormulaMetrics("warehouse", doc, filteredItems)
       ];
     })();
@@ -3103,69 +3103,69 @@ function buildModeTabs(moduleKey, escapeFn) {
     const warehouseActionButtons = (() => {
       if (moduleKey === "products") {
         return [
-          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-product-new>РќРѕРІС‹Р№ С‚РѕРІР°СЂ</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">РћСЃС‚Р°С‚РєРё</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Р—Р°РєСѓРїРєРё</button>' : "",
-          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">РРјРїРѕСЂС‚ JSON</button>' : "",
-          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:product">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє С‚РѕРІР°СЂР°</button>' : ""
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-product-new>Новый товар</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Закупки</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:product">Сбросить черновик товара</button>' : ""
         ];
       }
       if (moduleKey === "purchases") {
         return [
-          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-purchase-new>РќРѕРІР°СЏ Р·Р°РєСѓРїРєР°</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">РўРѕРІР°СЂС‹</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="finance">Р”РµРЅСЊРіРё</button>' : "",
-          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">РРјРїРѕСЂС‚ JSON</button>' : "",
-          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:purchase">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє Р·Р°РєСѓРїРєРё</button>' : ""
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-purchase-new>Новая закупка</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">Товары</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="finance">Деньги</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:purchase">Сбросить черновик закупки</button>' : ""
         ];
       }
       if (moduleKey === "money") {
         return [
-          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-finance-new>РќРѕРІР°СЏ РѕРїРµСЂР°С†РёСЏ</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Р—Р°РєСѓРїРєРё</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="production">РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ</button>' : "",
-          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">РРјРїРѕСЂС‚ JSON</button>' : "",
-          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:finance">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє РґРµРЅРµРі</button>' : ""
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-finance-new>Новая операция</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Закупки</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="production">Производство</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:finance">Сбросить черновик денег</button>' : ""
         ];
       }
       if (moduleKey === "production") {
         return [
-          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-production-new>Р’ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">РўРѕРІР°СЂС‹</button>' : "",
-          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">РћСЃС‚Р°С‚РєРё</button>' : "",
-          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">РРјРїРѕСЂС‚ JSON</button>' : "",
-          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє РїСЂРѕРёР·РІРѕРґСЃС‚РІР°</button>' : ""
+          canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-production-new>В производство</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">Товары</button>' : "",
+          canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>' : "",
+          '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+          canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+          canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">Сбросить черновик производства</button>' : ""
         ];
       }
       return [
-        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-item-new>РќРѕРІР°СЏ РїРѕР·РёС†РёСЏ</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-product-new>РќРѕРІС‹Р№ С‚РѕРІР°СЂ</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-purchase-new>РќРѕРІР°СЏ Р·Р°РєСѓРїРєР°</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-finance-new>РќРѕРІР°СЏ РѕРїРµСЂР°С†РёСЏ</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-production-new>Р’ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-seed-demand>Р”РѕР±Р°РІРёС‚СЊ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ</button>' : "",
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">РўРѕРІР°СЂС‹</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Р—Р°РєСѓРїРєРё</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="finance">Р”РµРЅСЊРіРё</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="production">РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ</button>',
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="movements">Р”РІРёР¶РµРЅРёСЏ</button>' : "",
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">РћСЃС‚Р°С‚РєРё</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">РРјРїРѕСЂС‚ JSON</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:item">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє РїРѕР·РёС†РёРё</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:movement">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє РґРІРёР¶РµРЅРёСЏ</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:product">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє С‚РѕРІР°СЂР°</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:purchase">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє Р·Р°РєСѓРїРєРё</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:finance">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє РґРµРЅРµРі</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє РїСЂРѕРёР·РІРѕРґСЃС‚РІР°</button>' : ""
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-warehouse-item-new>Новая позиция</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-product-new>Новый товар</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-purchase-new>Новая закупка</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-finance-new>Новая операция</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-production-new>В производство</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-warehouse-seed-demand>Добавить из калькуляторов</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="products">Товары</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="purchases">Закупки</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="finance">Деньги</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="production">Производство</button>',
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="movements">Движения</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="catalog">Остатки</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="warehouse">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="warehouse">мпорт JSON</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:item">Сбросить черновик позиции</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:movement">Сбросить черновик движения</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:product">Сбросить черновик товара</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:purchase">Сбросить черновик закупки</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:finance">Сбросить черновик денег</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="warehouse:production">Сбросить черновик производства</button>' : ""
       ];
     })();
     if (moduleKey === "warehouse" && !warehouseActionButtons.some((action) => String(action).includes('data-live-mode="history"'))) {
-      warehouseActionButtons.splice(10, 0, '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="history">РСЃС‚РѕСЂРёСЏ</button>');
+      warehouseActionButtons.splice(10, 0, '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="history">стория</button>');
     }
     const warehouseActionBar = renderActionBar(
       moduleKey,
@@ -3181,15 +3181,15 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${renderWorkspaceHeader(moduleKey)}
         ${renderMetricGrid(metrics)}
         ${showDemandPanel ? `<section class="workspace-panel workspace-panel--muted" data-mode-section="overview catalog products">
-          <div class="panel-heading"><div><h4>РЎРїСЂРѕСЃ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ</h4><div class="compact-help">РџР»Р°С‚С„РѕСЂРјР° РІРёРґРёС‚ Р°РєС‚РёРІРЅС‹Рµ РІРєР»Р°РґРєРё РёР· Р»РёС‡РЅРѕРіРѕ Рё РїР°СЂС‚РЅРµСЂСЃРєРёС… РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ Рё РїРѕРґСЃРІРµС‡РёРІР°РµС‚ Р°СЂС‚РёРєСѓР»С‹, РєРѕС‚РѕСЂС‹Рµ СЃС‚РѕРёС‚ РґРµСЂР¶Р°С‚СЊ РїРѕРґ СЂСѓРєРѕР№.</div></div><div class="workspace-note">${escapeHtml(formatNumber(calculatorSnapshot.invoiceIssuedTabs))} СЃС‡РµС‚РѕРІ РІС‹СЃС‚Р°РІР»РµРЅРѕ вЂў ${escapeHtml(formatNumber(calculatorSnapshot.invoicePaidTabs))} РѕРїР»Р°С‡РµРЅРѕ</div></div>
+          <div class="panel-heading"><div><h4>Спрос из калькуляторов</h4><div class="compact-help">Платформа видит активные вкладки из личного и партнерских калькуляторов и подсвечивает артикулы, которые стоит держать под рукой.</div></div><div class="workspace-note">${escapeHtml(formatNumber(calculatorSnapshot.invoiceIssuedTabs))} счетов выставлено • ${escapeHtml(formatNumber(calculatorSnapshot.invoicePaidTabs))} оплачено</div></div>
           <div class="workspace-stage-strip">
-            <div class="workspace-stage-card"><span>РђРєС‚РёРІРЅС‹С… РІРєР»Р°РґРѕРє</span><strong>${escapeHtml(formatNumber(calculatorSnapshot.activeTabs))}</strong></div>
-            <div class="workspace-stage-card"><span>РђСЂС‚РёРєСѓР»РѕРІ СЃРѕ СЃРїСЂРѕСЃРѕРј</span><strong>${escapeHtml(formatNumber(demandBridge.length))}</strong></div>
-            <div class="workspace-stage-card"><span>РќРµ Р·Р°РІРµРґРµРЅРѕ РЅР° СЃРєР»Р°РґРµ</span><strong>${escapeHtml(formatNumber(missingDemand.length))}</strong></div>
-            <div class="workspace-stage-card"><span>РљСЂРёС‚РёС‡РЅРѕ РїРѕ РѕСЃС‚Р°С‚РєСѓ</span><strong>${escapeHtml(formatNumber(criticalDemand.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Активных вкладок</span><strong>${escapeHtml(formatNumber(calculatorSnapshot.activeTabs))}</strong></div>
+            <div class="workspace-stage-card"><span>Артикулов со спросом</span><strong>${escapeHtml(formatNumber(demandBridge.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Не заведено на складе</span><strong>${escapeHtml(formatNumber(missingDemand.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Критично по остатку</span><strong>${escapeHtml(formatNumber(criticalDemand.length))}</strong></div>
           </div>
           <div class="workspace-stack mt-3">
-            ${(demandBridge.slice(0, 8) || []).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.match?.name || entry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.sku)} вЂў ${escapeHtml(entry.sources.join(", ") || "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂС‹")}</div></div><div class="text-end"><div class="workspace-tag ${entry.missing ? "workspace-tag--warning" : entry.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(entry.qtyTotal))}</div><div class="workspace-list-item__meta mt-1">${entry.missing ? "РЅРµС‚ РїРѕР·РёС†РёРё" : `РґРѕСЃС‚СѓРїРЅРѕ ${escapeHtml(formatNumber(entry.match?.available || 0))}`}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РЎРїСЂРѕСЃ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ РїРѕРєР° РЅРµ РЅР°Р№РґРµРЅ.</div>'}
+            ${(demandBridge.slice(0, 8) || []).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.match?.name || entry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.sku)} • ${escapeHtml(entry.sources.join(", ") || "Калькуляторы")}</div></div><div class="text-end"><div class="workspace-tag ${entry.missing ? "workspace-tag--warning" : entry.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(entry.qtyTotal))}</div><div class="workspace-list-item__meta mt-1">${entry.missing ? "нет позиции" : `доступно ${escapeHtml(formatNumber(entry.match?.available || 0))}`}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Спрос из калькуляторов пока не найден.</div>'}
           </div>
         </section>` : ""}
         ${renderViewTabs(moduleKey, doc, ui.warehouse, escapeHtml)}
@@ -3202,50 +3202,50 @@ function buildModeTabs(moduleKey, escapeFn) {
           </div>
           <div class="workspace-toolbar__group workspace-toolbar__group--end">
             ${moduleFilterMeta.primaryButtons}
-            ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="warehouse">${ui.warehouse.configOpen ? "РЎРєСЂС‹С‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ" : "РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ"}</button>` : ""}
+            ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="warehouse">${ui.warehouse.configOpen ? "Скрыть конструктор" : "Конструктор"}</button>` : ""}
           </div>
         </div>
         ${canManage ? renderBuilderPanel(moduleKey, doc, ui.warehouse, escapeHtml) : ""}
         ${modeIs(filters, "history") ? `<section class="workspace-panel workspace-panel--active" data-mode-section="history">
           <div class="panel-heading">
             <div>
-              <h4>РСЃС‚РѕСЂРёСЏ СЃРєР»Р°РґР°</h4>
-              <div class="compact-help">Р•РґРёРЅР°СЏ Р»РµРЅС‚Р° СЃРєР»Р°РґР°, Р·Р°РєСѓРїРѕРє, РґРµРЅРµРі Рё РїСЂРѕРёР·РІРѕРґСЃС‚РІР°. Р—РґРµСЃСЊ СѓРґРѕР±РЅРѕ РїСЂРѕРІРµСЂСЏС‚СЊ РїРѕСЃР»РµРґРЅРёРµ РґРµР№СЃС‚РІРёСЏ Р±РµР· РїРµСЂРµС…РѕРґРѕРІ РїРѕ СЂР°Р·РґРµР»Р°Рј.</div>
+              <h4>стория склада</h4>
+              <div class="compact-help">Единая лента склада, закупок, денег и производства. Здесь удобно проверять последние действия без переходов по разделам.</div>
             </div>
-            <div class="workspace-note">РЎРѕР±С‹С‚РёР№: ${escapeHtml(formatNumber(filteredHistory.length))}</div>
+            <div class="workspace-note">Событий: ${escapeHtml(formatNumber(filteredHistory.length))}</div>
           </div>
           <div class="workspace-stage-strip">
-            <div class="workspace-stage-card"><span>Р’СЃРµРіРѕ</span><strong>${escapeHtml(formatNumber(historyEntries.length))}</strong><small class="workspace-list-item__meta">РІ РµРґРёРЅРѕР№ РёСЃС‚РѕСЂРёРё</small></div>
-            <div class="workspace-stage-card"><span>Р—Р° 24 С‡Р°СЃР°</span><strong>${escapeHtml(formatNumber(filteredHistory.filter((entry) => Date.now() - new Date(entry.date).getTime() <= 24 * 60 * 60 * 1000).length))}</strong><small class="workspace-list-item__meta">РїРѕСЃР»РµРґРЅСЏСЏ Р°РєС‚РёРІРЅРѕСЃС‚СЊ</small></div>
-            <div class="workspace-stage-card"><span>РџРѕ Р·Р°РєСѓРїРєР°Рј</span><strong>${escapeHtml(formatNumber(filteredHistory.filter((entry) => entry.family === "purchase").length))}</strong><small class="workspace-list-item__meta">РІ С‚РµРєСѓС‰РµРј С„РёР»СЊС‚СЂРµ</small></div>
-            <div class="workspace-stage-card"><span>Р”РµРЅСЊРіРё</span><strong>${escapeHtml(formatMoney(sumBy(filteredHistory.filter((entry) => entry.family === "finance"), (entry) => entry.amount || 0)))}</strong><small class="workspace-list-item__meta">СЃСѓРјРјР° РѕРїРµСЂР°С†РёР№</small></div>
+            <div class="workspace-stage-card"><span>Всего</span><strong>${escapeHtml(formatNumber(historyEntries.length))}</strong><small class="workspace-list-item__meta">в единой истории</small></div>
+            <div class="workspace-stage-card"><span>За 24 часа</span><strong>${escapeHtml(formatNumber(filteredHistory.filter((entry) => Date.now() - new Date(entry.date).getTime() <= 24 * 60 * 60 * 1000).length))}</strong><small class="workspace-list-item__meta">последняя активность</small></div>
+            <div class="workspace-stage-card"><span>По закупкам</span><strong>${escapeHtml(formatNumber(filteredHistory.filter((entry) => entry.family === "purchase").length))}</strong><small class="workspace-list-item__meta">в текущем фильтре</small></div>
+            <div class="workspace-stage-card"><span>Деньги</span><strong>${escapeHtml(formatMoney(sumBy(filteredHistory.filter((entry) => entry.family === "finance"), (entry) => entry.amount || 0)))}</strong><small class="workspace-list-item__meta">сумма операций</small></div>
           </div>
           <div class="workspace-grid workspace-grid--2 mt-3">
             <section class="workspace-panel workspace-panel--active" data-mode-section="history">
               <div class="panel-heading panel-heading--compact">
                 <div>
-                  <h4>РџРѕСЃР»РµРґРЅРёРµ СЃРѕР±С‹С‚РёСЏ</h4>
-                  <div class="compact-help">Р›РµРЅС‚Р° РїРѕРєР°Р·С‹РІР°РµС‚ РїРѕСЃР»РµРґРЅРµРµ РґРІРёР¶РµРЅРёРµ РїРѕ СЃРєР»Р°РґСѓ, РїР»Р°С‚РµР¶, Р·Р°РєСѓРїРєСѓ РёР»Рё РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРµ РґРµР№СЃС‚РІРёРµ.</div>
+                  <h4>Последние события</h4>
+                  <div class="compact-help">Лента показывает последнее движение по складу, платеж, закупку или производственное действие.</div>
                 </div>
               </div>
               <div class="workspace-stack">
-                ${filteredHistory.slice(0, 18).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.label)} вЂў ${escapeHtml(entry.meta || "Р‘РµР· РґРµС‚Р°Р»РµР№")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(entry.tone || "neutral")}">${escapeHtml(formatDate(entry.date))}</div><div class="workspace-list-item__meta mt-1">${entry.family === "finance" ? escapeHtml(formatMoney(entry.amount || 0)) : escapeHtml(formatNumber(entry.amount || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РџРѕ РІС‹Р±СЂР°РЅРЅС‹Рј С„РёР»СЊС‚СЂР°Рј РёСЃС‚РѕСЂРёСЏ РїРѕРєР° РїСѓСЃС‚Р°СЏ.</div>'}
+                ${filteredHistory.slice(0, 18).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.label)} • ${escapeHtml(entry.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(entry.tone || "neutral")}">${escapeHtml(formatDate(entry.date))}</div><div class="workspace-list-item__meta mt-1">${entry.family === "finance" ? escapeHtml(formatMoney(entry.amount || 0)) : escapeHtml(formatNumber(entry.amount || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">По выбранным фильтрам история пока пустая.</div>'}
               </div>
             </section>
             <section class="workspace-panel workspace-panel--active" data-mode-section="history">
               <div class="panel-heading panel-heading--compact">
                 <div>
-                  <h4>Р–СѓСЂРЅР°Р» РґРµР№СЃС‚РІРёР№</h4>
-                  <div class="compact-help">Р‘С‹СЃС‚СЂС‹Р№ РїРµСЂРµС…РѕРґ РїСЂСЏРјРѕ РІ РЅСѓР¶РЅСѓСЋ СЃСѓС‰РЅРѕСЃС‚СЊ: РїРѕР·РёС†РёСЋ, Р·Р°РєСѓРїРєСѓ, РѕРїРµСЂР°С†РёСЋ РёР»Рё РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ.</div>
+                  <h4>Журнал действий</h4>
+                  <div class="compact-help">Быстрый переход прямо в нужную сущность: позицию, закупку, операцию или производство.</div>
                 </div>
               </div>
               <div class="table-shell">
                 <table class="table table-sm align-middle workspace-table">
                   <thead>
-                    <tr><th>Р”Р°С‚Р°</th><th>РўРёРї</th><th>РЎРѕР±С‹С‚РёРµ</th><th>Р”РµС‚Р°Р»Рё</th><th>Р—РЅР°С‡РµРЅРёРµ</th><th></th></tr>
+                    <tr><th>Дата</th><th>Тип</th><th>Событие</th><th>Детали</th><th>Значение</th><th></th></tr>
                   </thead>
                   <tbody>
-                    ${filteredHistory.length ? filteredHistory.map((entry) => `<tr><td>${escapeHtml(formatDate(entry.date))}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(entry.tone || "neutral")}">${escapeHtml(entry.label)}</span></td><td><strong>${escapeHtml(entry.title)}</strong></td><td>${escapeHtml(entry.meta || "вЂ”")}</td><td>${entry.family === "finance" ? escapeHtml(formatMoney(entry.amount || 0)) : escapeHtml(formatNumber(entry.amount || 0))}</td><td class="text-end">${entry.action?.type === "item" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(entry.action.id)}">РћС‚РєСЂС‹С‚СЊ</button>` : entry.action?.type === "purchase" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-purchase-edit="${escapeHtml(entry.action.id)}">РћС‚РєСЂС‹С‚СЊ</button>` : entry.action?.type === "finance" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-finance-edit="${escapeHtml(entry.action.id)}">РћС‚РєСЂС‹С‚СЊ</button>` : entry.action?.type === "production" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-production-edit="${escapeHtml(entry.action.id)}">РћС‚РєСЂС‹С‚СЊ</button>` : entry.action?.type === "mode" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-live-mode="${escapeHtml(entry.action.mode)}">РћС‚РєСЂС‹С‚СЊ</button>` : ""}</td></tr>`).join("") : '<tr><td colspan="6" class="text-muted">РџРѕ С‚РµРєСѓС‰РёРј С„РёР»СЊС‚СЂР°Рј РёСЃС‚РѕСЂРёСЏ РїСѓСЃС‚Р°.</td></tr>'}
+                    ${filteredHistory.length ? filteredHistory.map((entry) => `<tr><td>${escapeHtml(formatDate(entry.date))}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(entry.tone || "neutral")}">${escapeHtml(entry.label)}</span></td><td><strong>${escapeHtml(entry.title)}</strong></td><td>${escapeHtml(entry.meta || "—")}</td><td>${entry.family === "finance" ? escapeHtml(formatMoney(entry.amount || 0)) : escapeHtml(formatNumber(entry.amount || 0))}</td><td class="text-end">${entry.action?.type === "item" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "purchase" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-purchase-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "finance" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-finance-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "production" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-production-edit="${escapeHtml(entry.action.id)}">Открыть</button>` : entry.action?.type === "mode" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-live-mode="${escapeHtml(entry.action.mode)}">Открыть</button>` : ""}</td></tr>`).join("") : '<tr><td colspan="6" class="text-muted">По текущим фильтрам история пуста.</td></tr>'}
                   </tbody>
                 </table>
               </div>
@@ -3254,96 +3254,96 @@ function buildModeTabs(moduleKey, escapeFn) {
         </section>` : ""}
         ${modeIs(filters, "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${editItem ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РїРѕР·РёС†РёРё" : "РќРѕРІР°СЏ РїРѕР·РёС†РёСЏ СЃРєР»Р°РґР°"}</h4><div class="compact-help">РљР°С‚Р°Р»РѕРі РјРѕР¶РЅРѕ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РєР°Рє РѕР±С‰РёР№ СЃРїСЂР°РІРѕС‡РЅРёРє РјР°С‚РµСЂРёР°Р»РѕРІ РґР»СЏ СЃРєР»Р°РґР° Рё Р±СѓРґСѓС‰РёС… РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ.</div></div></div>
-            ${canEdit ? `<form id="warehouseItemForm" class="workspace-form" data-draft-form="item"><input type="hidden" name="id" value="${escapeHtml(editItem?.id || "")}" /><div class="workspace-form-grid"><label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="name" value="${escapeHtml(editItem?.name || "")}" required /></label><label><span>SKU / Р°СЂС‚РёРєСѓР»</span><input class="form-control" type="text" name="sku" value="${escapeHtml(editItem?.sku || "")}" /></label><label><span>РљР°С‚РµРіРѕСЂРёСЏ</span><input class="form-control" type="text" name="category" value="${escapeHtml(editItem?.category || "")}" /></label><label><span>Р•Рґ. РёР·Рј.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(editItem?.unit || "С€С‚")}" /></label><label><span>РЎС‚Р°СЂС‚РѕРІС‹Р№ РѕСЃС‚Р°С‚РѕРє</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(String(toNumber(editItem?.openingStock || 0) || ""))}" /></label><label><span>РњРёРЅРёРјСѓРј</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(String(toNumber(editItem?.minStock || 0) || ""))}" /></label></div><label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="3">${escapeHtml(editItem?.note || "")}</textarea></label>${renderCustomFieldSection("warehouse", doc, editItem, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editItem ? "РЎРѕС…СЂР°РЅРёС‚СЊ РїРѕР·РёС†РёСЋ" : "Р”РѕР±Р°РІРёС‚СЊ РїРѕР·РёС†РёСЋ"}</button><button class="btn btn-outline-secondary" type="button" data-warehouse-item-new>РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button></div></form>` : renderAccessHint("warehouse")}
+            <div class="panel-heading"><div><h4>${editItem ? "Редактирование позиции" : "Новая позиция склада"}</h4><div class="compact-help">Каталог можно использовать как общий справочник материалов для склада и будущих калькуляторов.</div></div></div>
+            ${canEdit ? `<form id="warehouseItemForm" class="workspace-form" data-draft-form="item"><input type="hidden" name="id" value="${escapeHtml(editItem?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(editItem?.name || "")}" required /></label><label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(editItem?.sku || "")}" /></label><label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(editItem?.category || "")}" /></label><label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(editItem?.unit || "шт")}" /></label><label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(String(toNumber(editItem?.openingStock || 0) || ""))}" /></label><label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(String(toNumber(editItem?.minStock || 0) || ""))}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3">${escapeHtml(editItem?.note || "")}</textarea></label>${renderCustomFieldSection("warehouse", doc, editItem, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editItem ? "Сохранить позицию" : "Добавить позицию"}</button><button class="btn btn-outline-secondary" type="button" data-warehouse-item-new>Очистить форму</button></div></form>` : renderAccessHint("warehouse")}
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р”РІРёР¶РµРЅРёРµ РїРѕ СЃРєР»Р°РґСѓ</h4><div class="compact-help">РџСЂРёС…РѕРґ, СЃРїРёСЃР°РЅРёРµ Рё СЂРµР·РµСЂРІС‹ Р»СѓС‡С€Рµ РІРЅРѕСЃРёС‚СЊ РѕС‚РґРµР»СЊРЅРѕ вЂ” РѕСЃС‚Р°С‚РєРё СЃС‡РёС‚Р°СЋС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё.</div></div></div>
-            ${canEdit ? `<form id="warehouseMovementForm" class="workspace-form" data-draft-form="movement"><div class="workspace-form-grid"><label><span>РџРѕР·РёС†РёСЏ</span><select class="form-select" name="itemId" required><option value="">Р’С‹Р±РµСЂРёС‚Рµ РїРѕР·РёС†РёСЋ</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${filters.movementItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label><label><span>РўРёРї</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label><label><span>РљРѕР»РёС‡РµСЃС‚РІРѕ</span><input class="form-control" type="number" min="0" step="1" name="qty" required /></label><label><span>Р”Р°С‚Р°</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="3"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">РЎРѕС…СЂР°РЅРёС‚СЊ РґРІРёР¶РµРЅРёРµ</button></div></form>` : renderAccessHint("warehouse")}
+            <div class="panel-heading"><div><h4>Движение по складу</h4><div class="compact-help">Приход, списание и резервы лучше вносить отдельно — остатки считаются автоматически.</div></div></div>
+            ${canEdit ? `<form id="warehouseMovementForm" class="workspace-form" data-draft-form="movement"><div class="workspace-form-grid"><label><span>Позиция</span><select class="form-select" name="itemId" required><option value="">Выберите позицию</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${filters.movementItemId === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label><label><span>Тип</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`).join("")}</select></label><label><span>Количество</span><input class="form-control" type="number" min="0" step="1" name="qty" required /></label><label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(todayString())}" /></label></div><label><span>Комментарий</span><textarea class="form-control" name="note" rows="3"></textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить движение</button></div></form>` : renderAccessHint("warehouse")}
           </section>
         </div>` : ""}
         ${editItem ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РљРѕРЅС‚СѓСЂ РїРѕР·РёС†РёРё</h4><div class="compact-help">РЎРѕР±РёСЂР°РµС‚ РІ РѕРґРЅРѕРј РјРµСЃС‚Рµ РѕСЃС‚Р°С‚РѕРє, СЃРїСЂРѕСЃ, СЃРґРµР»РєРё Рё Р·Р°РґР°С‡Рё РїРѕ С‚РµРєСѓС‰РµРјСѓ РјР°С‚РµСЂРёР°Р»Сѓ.</div></div></div>
+            <div class="panel-heading"><div><h4>Контур позиции</h4><div class="compact-help">Собирает в одном месте остаток, спрос, сделки и задачи по текущему материалу.</div></div></div>
             <div class="workspace-stage-strip">${editItemOperationCards.map((card) => `<div class="workspace-stage-card"><span>${escapeHtml(card.label)}</span><strong>${escapeHtml(card.value)}</strong><small class="workspace-list-item__meta">${escapeHtml(card.caption)}</small></div>`).join("")}</div>
             <div class="workspace-card__actions mt-3">
-              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-task-from-item="${escapeHtml(editItem.id)}">${editItemPrimaryTask ? "РћС‚РєСЂС‹С‚СЊ Р·Р°РґР°С‡Сѓ" : "РЎРѕР·РґР°С‚СЊ Р·Р°РґР°С‡Сѓ"}</button>` : ""}
-              ${relatedDeals[0]?.id ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="crm:${escapeHtml(relatedDeals[0].id)}">РћС‚РєСЂС‹С‚СЊ СЃРґРµР»РєСѓ</button>` : ""}
-              <button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-movement-pick="${escapeHtml(editItem.id)}">Р”РѕР±Р°РІРёС‚СЊ РґРІРёР¶РµРЅРёРµ</button>
+              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-task-from-item="${escapeHtml(editItem.id)}">${editItemPrimaryTask ? "Открыть задачу" : "Создать задачу"}</button>` : ""}
+              ${relatedDeals[0]?.id ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="crm:${escapeHtml(relatedDeals[0].id)}">Открыть сделку</button>` : ""}
+              <button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-movement-pick="${escapeHtml(editItem.id)}">Добавить движение</button>
             </div>
             <div class="workspace-stack mt-3">
-              <div><div class="panel-heading panel-heading--compact"><div><h4>РЎРїСЂРѕСЃ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ</h4><div class="compact-help">РџРѕРєР°Р·С‹РІР°РµС‚, РіРґРµ СЌС‚РѕС‚ РјР°С‚РµСЂРёР°Р» СѓР¶Рµ С„РёРіСѓСЂРёСЂСѓРµС‚ РІ СЂР°СЃС‡РµС‚Р°С….</div></div></div><div class="workspace-stack">${editDemandEntry ? editDemandEntry.examples?.length ? editDemandEntry.examples.map((example) => `<div class="workspace-list-item"><div><strong>${escapeHtml(editDemandEntry.match?.name || editItem.name || editDemandEntry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml(example)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber(editDemandEntry.qtyTotal || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml((editDemandEntry.sources || []).join(", ") || "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂС‹")}</div></div></div>`).join("") : `<div class="workspace-list-item"><div><strong>${escapeHtml(editItem.name || editDemandEntry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml((editDemandEntry.sources || []).join(", ") || "РљР°Р»СЊРєСѓР»СЏС‚РѕСЂС‹")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber(editDemandEntry.qtyTotal || 0))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">РџРѕ РєР°Р»СЊРєСѓР»СЏС‚РѕСЂР°Рј СЃРїСЂРѕСЃ РЅР° СЌС‚Сѓ РїРѕР·РёС†РёСЋ РїРѕРєР° РЅРµ РЅР°Р№РґРµРЅ.</div>'}</div></div>
-              <div><div class="panel-heading panel-heading--compact"><div><h4>РЎРІСЏР·Р°РЅРЅС‹Рµ СЃРґРµР»РєРё</h4><div class="compact-help">РЎРґРµР»РєРё, РіРґРµ СЌС‚РѕС‚ РјР°С‚РµСЂРёР°Р» СѓР¶Рµ СѓС€С‘Р» РІ СЂРµР·РµСЂРІ РёР»Рё СѓС‡Р°СЃС‚РІСѓРµС‚ РІ РїРѕРґРіРѕС‚РѕРІРєРµ Р·Р°РєР°Р·Р°.</div></div></div><div class="workspace-stack">${relatedDeals.length ? relatedDeals.slice(0, 5).map((deal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(deal.title || "РЎРґРµР»РєР°")}</strong><div class="workspace-list-item__meta">${escapeHtml(deal.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ")} вЂў ${escapeHtml(getCrmStageMeta(deal.stage).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getCrmStageMeta(deal.stage).tone)}">${escapeHtml(formatMoney(deal.amount || 0))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="crm:${escapeHtml(deal.id)}">РћС‚РєСЂС‹С‚СЊ</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">РЎРґРµР»РѕРє РїРѕ СЌС‚РѕР№ РїРѕР·РёС†РёРё РїРѕРєР° РЅРµС‚.</div>'}</div></div>
+              <div><div class="panel-heading panel-heading--compact"><div><h4>Спрос из калькуляторов</h4><div class="compact-help">Показывает, где этот материал уже фигурирует в расчетах.</div></div></div><div class="workspace-stack">${editDemandEntry ? editDemandEntry.examples?.length ? editDemandEntry.examples.map((example) => `<div class="workspace-list-item"><div><strong>${escapeHtml(editDemandEntry.match?.name || editItem.name || editDemandEntry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml(example)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber(editDemandEntry.qtyTotal || 0))}</div><div class="workspace-list-item__meta mt-1">${escapeHtml((editDemandEntry.sources || []).join(", ") || "Калькуляторы")}</div></div></div>`).join("") : `<div class="workspace-list-item"><div><strong>${escapeHtml(editItem.name || editDemandEntry.sku)}</strong><div class="workspace-list-item__meta">${escapeHtml((editDemandEntry.sources || []).join(", ") || "Калькуляторы")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatNumber(editDemandEntry.qtyTotal || 0))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">По калькуляторам спрос на эту позицию пока не найден.</div>'}</div></div>
+              <div><div class="panel-heading panel-heading--compact"><div><h4>Связанные сделки</h4><div class="compact-help">Сделки, где этот материал уже ушёл в резерв или участвует в подготовке заказа.</div></div></div><div class="workspace-stack">${relatedDeals.length ? relatedDeals.slice(0, 5).map((deal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(deal.title || "Сделка")}</strong><div class="workspace-list-item__meta">${escapeHtml(deal.client || "Клиент не указан")} • ${escapeHtml(getCrmStageMeta(deal.stage).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getCrmStageMeta(deal.stage).tone)}">${escapeHtml(formatMoney(deal.amount || 0))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="crm:${escapeHtml(deal.id)}">Открыть</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">Сделок по этой позиции пока нет.</div>'}</div></div>
             </div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р›РµРЅС‚Р° РїРѕР·РёС†РёРё</h4><div class="compact-help">РСЃС‚РѕСЂРёСЏ СЃРѕР±РёСЂР°РµС‚СЃСЏ РёР· РєР°СЂС‚РѕС‡РєРё РјР°С‚РµСЂРёР°Р»Р°, РґРІРёР¶РµРЅРёР№, Р·Р°РґР°С‡ Рё СЃРІСЏР·РµР№ СЃРѕ СЃРґРµР»РєР°РјРё.</div></div><div class="workspace-note">РЎРѕР±С‹С‚РёР№: ${escapeHtml(formatNumber(editItemTimeline.length))}</div></div>
-            <div class="workspace-stack">${editItemTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Р‘РµР· РґРµС‚Р°Р»РµР№")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">РћС‚РєСЂС‹С‚СЊ</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">РћС‚РєСЂС‹С‚СЊ</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РСЃС‚РѕСЂРёСЏ РїРѕ РїРѕР·РёС†РёРё РїРѕРєР° РїСѓСЃС‚Р°СЏ.</div>'}</div>
+            <div class="panel-heading"><div><h4>Лента позиции</h4><div class="compact-help">стория собирается из карточки материала, движений, задач и связей со сделками.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editItemTimeline.length))}</div></div>
+            <div class="workspace-stack">${editItemTimeline.slice(0, 10).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">стория по позиции пока пустая.</div>'}</div>
           </section>
         </div>` : ""}
         <div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РўРµРєСѓС‰РёРµ РѕСЃС‚Р°С‚РєРё</h4><div class="compact-help">Р”РѕСЃС‚СѓРїРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ = РЅР° СЂСѓРєР°С… в€’ СЂРµР·РµСЂРІ.</div></div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>РџРѕР·РёС†РёСЏ</th><th>РљР°С‚РµРіРѕСЂРёСЏ</th><th>РќР° СЂСѓРєР°С…</th><th>Р РµР·РµСЂРІ</th><th>Р”РѕСЃС‚СѓРїРЅРѕ</th><th>РњРёРЅРёРјСѓРј</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "Р±РµР· Р°СЂС‚РёРєСѓР»Р°")} вЂў ${escapeHtml(item.unit || "С€С‚")}</div></td><td>${escapeHtml(item.category || "вЂ”")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-item-duplicate="${escapeHtml(item.id)}">РљРѕРїРёСЏ</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Р”РІРёР¶РµРЅРёРµ</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-task-from-item="${escapeHtml(item.id)}">Р—Р°РґР°С‡Р°</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">РџРѕР·РёС†РёРё РЅРµ РЅР°Р№РґРµРЅС‹. Р”РѕР±Р°РІСЊС‚Рµ РїРµСЂРІСѓСЋ Р·Р°РїРёСЃСЊ РёР»Рё СЃРјРµРЅРёС‚Рµ С„РёР»СЊС‚СЂ.</td></tr>`}</tbody></table></div>
+            <div class="panel-heading"><div><h4>Текущие остатки</h4><div class="compact-help">Доступное количество = на руках − резерв.</div></div></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Позиция</th><th>Категория</th><th>На руках</th><th>Резерв</th><th>Доступно</th><th>Минимум</th>${customHeader}<th></th></tr></thead><tbody>${filteredItems.length ? filteredItems.map((item) => `<tr><td><strong>${escapeHtml(item.name)}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.category || "—")}</td><td>${escapeHtml(formatNumber(item.onHand))}</td><td>${escapeHtml(formatNumber(item.reserved))}</td><td><span class="workspace-tag ${item.low ? "workspace-tag--danger" : "workspace-tag--success"}">${escapeHtml(formatNumber(item.available))}</span></td><td>${escapeHtml(formatNumber(item.minStock || 0))}</td>${renderCustomTableCells("warehouse", doc, item, escapeHtml)}<td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-item-edit="${escapeHtml(item.id)}">зменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-item-duplicate="${escapeHtml(item.id)}">Копия</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-movement-pick="${escapeHtml(item.id)}">Движение</button><button class="btn btn-sm btn-outline-secondary" type="button" data-warehouse-task-from-item="${escapeHtml(item.id)}">Задача</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-item-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("warehouse", doc, "showInTable").length}" class="text-muted">Позиции не найдены. Добавьте первую запись или смените фильтр.</td></tr>`}</tbody></table></div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РџРѕСЃР»РµРґРЅРёРµ РґРІРёР¶РµРЅРёСЏ</h4><div class="compact-help">РћС‚СЃСЋРґР° СѓРґРѕР±РЅРѕ РєРѕРЅС‚СЂРѕР»РёСЂРѕРІР°С‚СЊ, С‡С‚Рѕ Рё РєРѕРіРґР° СѓС€Р»Рѕ РІ СЂРµР·РµСЂРІ РёР»Рё Р±С‹Р»Рѕ СЃРїРёСЃР°РЅРѕ.</div></div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Р”Р°С‚Р°</th><th>РџРѕР·РёС†РёСЏ</th><th>РўРёРї</th><th>РљРѕР»-РІРѕ</th><th>РљРѕРјРјРµРЅС‚Р°СЂРёР№</th><th></th></tr></thead><tbody>${recentMovements.length ? recentMovements.map((movement) => { const item = (doc.items || []).find((entry) => entry.id === movement.itemId); const kind = WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === movement.kind); return `<tr><td>${escapeHtml(formatDate(movement.date))}</td><td>${escapeHtml(item?.name || "РџРѕР·РёС†РёСЏ СѓРґР°Р»РµРЅР°")}</td><td>${escapeHtml(kind?.label || movement.kind)}</td><td>${escapeHtml(formatNumber(movement.qty || 0))}</td><td>${escapeHtml(movement.note || "вЂ”")}</td><td class="text-end">${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-movement-delete="${escapeHtml(movement.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Р”РІРёР¶РµРЅРёР№ РїРѕРєР° РЅРµС‚.</td></tr>'}</tbody></table></div>
-            <div class="workspace-stack mt-3"><div class="panel-heading panel-heading--compact"><div><h4>РќСѓР¶РЅРѕ РїРѕРїРѕР»РЅРёС‚СЊ</h4><div class="compact-help">РљСЂРёС‚РёС‡РЅС‹Рµ РїРѕР·РёС†РёРё, РіРґРµ РґРѕСЃС‚СѓРїРЅС‹Р№ РѕСЃС‚Р°С‚РѕРє РЅРёР¶Рµ РјРёРЅРёРјСѓРјР°.</div></div></div>${snapshot.lowItems.length ? snapshot.lowItems.map((item) => `<div class="workspace-list-item"><div><strong>${escapeHtml(item.name)}</strong><div class="workspace-list-item__meta">${escapeHtml(item.category || "вЂ”")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--danger">${escapeHtml(formatNumber(item.available))}</div><div class="workspace-list-item__meta mt-1">РјРёРЅРёРјСѓРј ${escapeHtml(formatNumber(item.minStock || 0))}</div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">РљСЂРёС‚РёС‡РЅС‹С… РѕСЃС‚Р°С‚РєРѕРІ РЅРµС‚.</div>'}</div>
+            <div class="panel-heading"><div><h4>Последние движения</h4><div class="compact-help">Отсюда удобно контролировать, что и когда ушло в резерв или было списано.</div></div></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Дата</th><th>Позиция</th><th>Тип</th><th>Кол-во</th><th>Комментарий</th><th></th></tr></thead><tbody>${recentMovements.length ? recentMovements.map((movement) => { const item = (doc.items || []).find((entry) => entry.id === movement.itemId); const kind = WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === movement.kind); return `<tr><td>${escapeHtml(formatDate(movement.date))}</td><td>${escapeHtml(item?.name || "Позиция удалена")}</td><td>${escapeHtml(kind?.label || movement.kind)}</td><td>${escapeHtml(formatNumber(movement.qty || 0))}</td><td>${escapeHtml(movement.note || "—")}</td><td class="text-end">${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-movement-delete="${escapeHtml(movement.id)}">Удалить</button>` : ""}</td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Движений пока нет.</td></tr>'}</tbody></table></div>
+            <div class="workspace-stack mt-3"><div class="panel-heading panel-heading--compact"><div><h4>Нужно пополнить</h4><div class="compact-help">Критичные позиции, где доступный остаток ниже минимума.</div></div></div>${snapshot.lowItems.length ? snapshot.lowItems.map((item) => `<div class="workspace-list-item"><div><strong>${escapeHtml(item.name)}</strong><div class="workspace-list-item__meta">${escapeHtml(item.category || "—")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--danger">${escapeHtml(formatNumber(item.available))}</div><div class="workspace-list-item__meta mt-1">минимум ${escapeHtml(formatNumber(item.minStock || 0))}</div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">Критичных остатков нет.</div>'}</div>
           </section>
         </div>
         ${modeIs(filters, "overview", "products") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РўРѕРІР°СЂС‹</h4><div class="compact-help">РџСЂРѕРґР°СЋС‰РёР№ РєР°С‚Р°Р»РѕРі РїР»Р°С‚С„РѕСЂРјС‹: РіСЂСѓРїРїС‹, С†РµРЅС‹, РїРѕСЃС‚Р°РІС‰РёРєРё Рё РµРґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёСЏ.</div></div><div class="workspace-note">${escapeHtml(formatNumber(filteredProducts.length))} РїРѕР·РёС†РёР№</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>РўРѕРІР°СЂ</th><th>Р“СЂСѓРїРїР°</th><th>РџРѕСЃС‚Р°РІС‰РёРє</th><th>Р¦РµРЅР° Р·Р°РєСѓРїРєРё</th><th>Р¦РµРЅР° РїСЂРѕРґР°Р¶Рё</th><th></th></tr></thead><tbody>${filteredProducts.length ? filteredProducts.map((item) => `<tr><td><strong>${escapeHtml(item.name || "РўРѕРІР°СЂ")}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "Р±РµР· Р°СЂС‚РёРєСѓР»Р°")} вЂў ${escapeHtml(item.unit || "С€С‚")}</div></td><td>${escapeHtml(item.group || "вЂ”")}</td><td>${escapeHtml(item.supplier || "вЂ”")}</td><td>${escapeHtml(formatMoney(item.purchasePrice || 0))}</td><td>${escapeHtml(formatMoney(item.salePrice || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-product-edit="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-product-delete="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div></td></tr>`).join("") : '<tr><td colspan="6" class="text-muted">РўРѕРІР°СЂРЅС‹Р№ РєР°С‚Р°Р»РѕРі РїРѕРєР° РїСѓСЃС‚. Р”РѕР±Р°РІСЊС‚Рµ РїРµСЂРІСѓСЋ РїРѕР·РёС†РёСЋ С‡РµСЂРµР· РІСЃРїР»С‹РІР°СЋС‰РµРµ РѕРєРЅРѕ.</td></tr>'}</tbody></table></div>
+            <div class="panel-heading"><div><h4>Товары</h4><div class="compact-help">Продающий каталог платформы: группы, цены, поставщики и единицы измерения.</div></div><div class="workspace-note">${escapeHtml(formatNumber(filteredProducts.length))} позиций</div></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Товар</th><th>Группа</th><th>Поставщик</th><th>Цена закупки</th><th>Цена продажи</th><th></th></tr></thead><tbody>${filteredProducts.length ? filteredProducts.map((item) => `<tr><td><strong>${escapeHtml(item.name || "Товар")}</strong><div class="workspace-table__sub">${escapeHtml(item.sku || "без артикула")} • ${escapeHtml(item.unit || "шт")}</div></td><td>${escapeHtml(item.group || "—")}</td><td>${escapeHtml(item.supplier || "—")}</td><td>${escapeHtml(formatMoney(item.purchasePrice || 0))}</td><td>${escapeHtml(formatMoney(item.salePrice || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-product-edit="${escapeHtml(item.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-product-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`).join("") : '<tr><td colspan="6" class="text-muted">Товарный каталог пока пуст. Добавьте первую позицию через всплывающее окно.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р¤РѕРєСѓСЃ РїРѕ С‚РѕРІР°СЂР°Рј</h4><div class="compact-help">Р‘С‹СЃС‚СЂС‹Р№ РѕР±Р·РѕСЂ РїРѕ РєР°С‚Р°Р»РѕРіСѓ Рё С†РµРЅР°Рј Р±РµР· СѓС…РѕРґР° РІ РєР°СЂС‚РѕС‡РєРё.</div></div></div>
+            <div class="panel-heading"><div><h4>Фокус по товарам</h4><div class="compact-help">Быстрый обзор по каталогу и ценам без ухода в карточки.</div></div></div>
             <div class="workspace-stage-strip">
-              <div class="workspace-stage-card"><span>Р“СЂСѓРїРї</span><strong>${escapeHtml(formatNumber(productGroups.length))}</strong></div>
-              <div class="workspace-stage-card"><span>РџРѕСЃС‚Р°РІС‰РёРєРѕРІ</span><strong>${escapeHtml(formatNumber(new Set((doc.products || []).map((item) => compactText(item.supplier)).filter(Boolean)).size))}</strong></div>
-              <div class="workspace-stage-card"><span>РЎСЂРµРґРЅСЏСЏ Р·Р°РєСѓРїРєР°</span><strong>${escapeHtml(formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.purchasePrice || 0) / filteredProducts.length : 0))}</strong></div>
-              <div class="workspace-stage-card"><span>РЎСЂРµРґРЅСЏСЏ РїСЂРѕРґР°Р¶Р°</span><strong>${escapeHtml(formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.salePrice || 0) / filteredProducts.length : 0))}</strong></div>
+              <div class="workspace-stage-card"><span>Групп</span><strong>${escapeHtml(formatNumber(productGroups.length))}</strong></div>
+              <div class="workspace-stage-card"><span>Поставщиков</span><strong>${escapeHtml(formatNumber(new Set((doc.products || []).map((item) => compactText(item.supplier)).filter(Boolean)).size))}</strong></div>
+              <div class="workspace-stage-card"><span>Средняя закупка</span><strong>${escapeHtml(formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.purchasePrice || 0) / filteredProducts.length : 0))}</strong></div>
+              <div class="workspace-stage-card"><span>Средняя продажа</span><strong>${escapeHtml(formatMoney(filteredProducts.length ? sumBy(filteredProducts, (item) => item.salePrice || 0) / filteredProducts.length : 0))}</strong></div>
             </div>
-            <div class="workspace-stack mt-3">${filteredProducts.slice(0, 6).map((item) => `<div class="workspace-list-item"><div><strong>${escapeHtml(item.name || "РўРѕРІР°СЂ")}</strong><div class="workspace-list-item__meta">${escapeHtml(item.group || "Р‘РµР· РіСЂСѓРїРїС‹")} вЂў ${escapeHtml(item.supplier || "Р‘РµР· РїРѕСЃС‚Р°РІС‰РёРєР°")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney((item.salePrice || 0) - (item.purchasePrice || 0)))}</div><div class="workspace-list-item__meta mt-1">РјР°СЂР¶Р° Р·Р° РµРґРёРЅРёС†Сѓ</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РџРѕРєР° РЅРµС‚ С‚РѕРІР°СЂРѕРІ РґР»СЏ РѕР±Р·РѕСЂР°.</div>'}</div>
+            <div class="workspace-stack mt-3">${filteredProducts.slice(0, 6).map((item) => `<div class="workspace-list-item"><div><strong>${escapeHtml(item.name || "Товар")}</strong><div class="workspace-list-item__meta">${escapeHtml(item.group || "Без группы")} • ${escapeHtml(item.supplier || "Без поставщика")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney((item.salePrice || 0) - (item.purchasePrice || 0)))}</div><div class="workspace-list-item__meta mt-1">маржа за единицу</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Пока нет товаров для обзора.</div>'}</div>
           </section>
         </div>` : ""}
         ${modeIs(filters, "overview", "purchases") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р—Р°РєСѓРїРєРё</h4><div class="compact-help">Р—Р°РєР°Р·С‹ РїРѕСЃС‚Р°РІС‰РёРєР°Рј, РєРѕРЅС‚СЂРѕР»СЊ СЃС‚Р°С‚СѓСЃРѕРІ Рё РѕР±С‰РёС… СЃСѓРјРј.</div></div><div class="workspace-note">${escapeHtml(formatMoney(snapshot.purchasesTotal || 0))} РІ РѕР±РѕСЂРѕС‚Рµ</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>РќРѕРјРµСЂ</th><th>РџРѕСЃС‚Р°РІС‰РёРє</th><th>РЎС‚Р°С‚СѓСЃ</th><th>Р”Р°С‚Р°</th><th>РЎСѓРјРјР°</th><th></th></tr></thead><tbody>${filteredPurchases.length ? filteredPurchases.map((item) => { const meta = getPurchaseStatusMeta(item.status); return `<tr><td><strong>${escapeHtml(item.number || "Р—Р°РєСѓРїРєР°")}</strong></td><td>${escapeHtml(item.supplier || "вЂ”")}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(item.date))}</td><td>${escapeHtml(formatMoney(item.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-purchase-edit="${escapeHtml(item.id)}">РР·РјРµРЅРёС‚СЊ</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-purchase-delete="${escapeHtml(item.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Р—Р°РєСѓРїРѕРє РїРѕРєР° РЅРµС‚.</td></tr>'}</tbody></table></div>
+            <div class="panel-heading"><div><h4>Закупки</h4><div class="compact-help">Заказы поставщикам, контроль статусов и общих сумм.</div></div><div class="workspace-note">${escapeHtml(formatMoney(snapshot.purchasesTotal || 0))} в обороте</div></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Номер</th><th>Поставщик</th><th>Статус</th><th>Дата</th><th>Сумма</th><th></th></tr></thead><tbody>${filteredPurchases.length ? filteredPurchases.map((item) => { const meta = getPurchaseStatusMeta(item.status); return `<tr><td><strong>${escapeHtml(item.number || "Закупка")}</strong></td><td>${escapeHtml(item.supplier || "—")}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(item.date))}</td><td>${escapeHtml(formatMoney(item.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-purchase-edit="${escapeHtml(item.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-purchase-delete="${escapeHtml(item.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Закупок пока нет.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РЎС‚Р°С‚СѓСЃС‹ Р·Р°РєСѓРїРѕРє</h4><div class="compact-help">Р“РґРµ СЃРµР№С‡Р°СЃ Р·Р°РІРёСЃР°СЋС‚ Р·Р°РєСѓРїРєРё Рё РєР°РєРёРµ РїРѕСЃС‚Р°РІС‰РёРєРё Р·Р°РіСЂСѓР¶РµРЅС‹ СЃРёР»СЊРЅРµРµ.</div></div></div>
+            <div class="panel-heading"><div><h4>Статусы закупок</h4><div class="compact-help">Где сейчас зависают закупки и какие поставщики загружены сильнее.</div></div></div>
             <div class="workspace-mini-grid">${WAREHOUSE_PURCHASE_STATUSES.map((status) => `<div class="dashboard-mini dashboard-mini--${escapeHtml(status.tone)}"><span>${escapeHtml(status.label)}</span><strong>${escapeHtml(formatNumber((doc.purchases || []).filter((item) => compactText(item.status) === status.key).length))}</strong></div>`).join("")}</div>
-            <div class="workspace-stack mt-3">${filteredPurchases.slice(0, 6).map((item) => `<div class="workspace-list-item"><div><strong>${escapeHtml(item.number || "Р—Р°РєСѓРїРєР°")}</strong><div class="workspace-list-item__meta">${escapeHtml(item.supplier || "вЂ”")} вЂў ${escapeHtml(formatDate(item.date))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getPurchaseStatusMeta(item.status).tone)}">${escapeHtml(getPurchaseStatusMeta(item.status).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatMoney(item.amount || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РќРµС‚ РґР°РЅРЅС‹С… РїРѕ Р·Р°РєСѓРїРєР°Рј.</div>'}</div>
+            <div class="workspace-stack mt-3">${filteredPurchases.slice(0, 6).map((item) => `<div class="workspace-list-item"><div><strong>${escapeHtml(item.number || "Закупка")}</strong><div class="workspace-list-item__meta">${escapeHtml(item.supplier || "—")} • ${escapeHtml(formatDate(item.date))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getPurchaseStatusMeta(item.status).tone)}">${escapeHtml(getPurchaseStatusMeta(item.status).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatMoney(item.amount || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Нет данных по закупкам.</div>'}</div>
           </section>
         </div>` : ""}
         ${modeIs(filters, "overview", "finance") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р”РµРЅСЊРіРё</h4><div class="compact-help">РџСЂРёС…РѕРґС‹, СЂР°СЃС…РѕРґС‹ Рё РїРµСЂРµРјРµС‰РµРЅРёСЏ РїРѕ СЃС‡РµС‚Р°Рј РїР»Р°С‚С„РѕСЂРјС‹.</div></div><div class="workspace-note">Р‘Р°Р»Р°РЅСЃ ${escapeHtml(formatMoney(snapshot.incomeTotal - snapshot.expenseTotal))}</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Р”Р°С‚Р°</th><th>РўРёРї</th><th>РЎС‡РµС‚</th><th>РЎС‚Р°С‚СЊСЏ</th><th>РљРѕРЅС‚СЂР°РіРµРЅС‚</th><th>РЎСѓРјРјР°</th><th></th></tr></thead><tbody>${filteredFinance.length ? filteredFinance.map((entry) => { const meta = getFinanceKindMeta(entry.kind); return `<tr><td>${escapeHtml(formatDate(entry.date))}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(entry.account || "вЂ”")}</td><td>${escapeHtml(entry.category || "вЂ”")}</td><td>${escapeHtml(entry.counterparty || "вЂ”")}</td><td>${escapeHtml(formatMoney(entry.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-finance-edit="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-finance-delete="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="7" class="text-muted">Р”РµРЅРµР¶РЅС‹С… РѕРїРµСЂР°С†РёР№ РїРѕРєР° РЅРµС‚.</td></tr>'}</tbody></table></div>
+            <div class="panel-heading"><div><h4>Деньги</h4><div class="compact-help">Приходы, расходы и перемещения по счетам платформы.</div></div><div class="workspace-note">Баланс ${escapeHtml(formatMoney(snapshot.incomeTotal - snapshot.expenseTotal))}</div></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Дата</th><th>Тип</th><th>Счет</th><th>Статья</th><th>Контрагент</th><th>Сумма</th><th></th></tr></thead><tbody>${filteredFinance.length ? filteredFinance.map((entry) => { const meta = getFinanceKindMeta(entry.kind); return `<tr><td>${escapeHtml(formatDate(entry.date))}</td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(entry.account || "—")}</td><td>${escapeHtml(entry.category || "—")}</td><td>${escapeHtml(entry.counterparty || "—")}</td><td>${escapeHtml(formatMoney(entry.amount || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-finance-edit="${escapeHtml(entry.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-finance-delete="${escapeHtml(entry.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="7" class="text-muted">Денежных операций пока нет.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РЎС‡РµС‚Р° Рё РєР°СЃСЃС‹</h4><div class="compact-help">РџРѕРєР°Р·С‹РІР°РµС‚, РіРґРµ СЃРµР№С‡Р°СЃ Р»РµР¶РёС‚ РѕР±РѕСЂРѕС‚ Рё РєР°РєРёРµ СЃС‚Р°С‚СЊРё Р°РєС‚РёРІРЅРµРµ РІСЃРµРіРѕ.</div></div></div>
+            <div class="panel-heading"><div><h4>Счета и кассы</h4><div class="compact-help">Показывает, где сейчас лежит оборот и какие статьи активнее всего.</div></div></div>
             <div class="workspace-stage-strip">
-              <div class="workspace-stage-card"><span>РџСЂРёС…РѕРґ</span><strong>${escapeHtml(formatMoney(snapshot.incomeTotal || 0))}</strong></div>
-              <div class="workspace-stage-card"><span>Р Р°СЃС…РѕРґ</span><strong>${escapeHtml(formatMoney(snapshot.expenseTotal || 0))}</strong></div>
-              <div class="workspace-stage-card"><span>РћРїРµСЂР°С†РёР№</span><strong>${escapeHtml(formatNumber(filteredFinance.length))}</strong></div>
-              <div class="workspace-stage-card"><span>РЎС‡РµС‚РѕРІ</span><strong>${escapeHtml(formatNumber(new Set((doc.financeEntries || []).map((entry) => compactText(entry.account)).filter(Boolean)).size))}</strong></div>
+              <div class="workspace-stage-card"><span>Приход</span><strong>${escapeHtml(formatMoney(snapshot.incomeTotal || 0))}</strong></div>
+              <div class="workspace-stage-card"><span>Расход</span><strong>${escapeHtml(formatMoney(snapshot.expenseTotal || 0))}</strong></div>
+              <div class="workspace-stage-card"><span>Операций</span><strong>${escapeHtml(formatNumber(filteredFinance.length))}</strong></div>
+              <div class="workspace-stage-card"><span>Счетов</span><strong>${escapeHtml(formatNumber(new Set((doc.financeEntries || []).map((entry) => compactText(entry.account)).filter(Boolean)).size))}</strong></div>
             </div>
-            <div class="workspace-stack mt-3">${(getDirectoryOptions("finance_accounts") || []).map((account) => `<div class="workspace-list-item"><div><strong>${escapeHtml(account)}</strong><div class="workspace-list-item__meta">РћРїРµСЂР°С†РёР№: ${escapeHtml(formatNumber((doc.financeEntries || []).filter((entry) => compactText(entry.account) === compactText(account)).length))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(sumBy((doc.financeEntries || []).filter((entry) => compactText(entry.account) === compactText(account) && compactText(entry.kind) === "income"), (entry) => entry.amount || 0) - sumBy((doc.financeEntries || []).filter((entry) => compactText(entry.account) === compactText(account) && compactText(entry.kind) === "expense"), (entry) => entry.amount || 0)))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РЎРїСЂР°РІРѕС‡РЅРёРєРё СЃС‡РµС‚РѕРІ РїРѕРєР° РїСѓСЃС‚С‹.</div>'}</div>
+            <div class="workspace-stack mt-3">${(getDirectoryOptions("finance_accounts") || []).map((account) => `<div class="workspace-list-item"><div><strong>${escapeHtml(account)}</strong><div class="workspace-list-item__meta">Операций: ${escapeHtml(formatNumber((doc.financeEntries || []).filter((entry) => compactText(entry.account) === compactText(account)).length))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(sumBy((doc.financeEntries || []).filter((entry) => compactText(entry.account) === compactText(account) && compactText(entry.kind) === "income"), (entry) => entry.amount || 0) - sumBy((doc.financeEntries || []).filter((entry) => compactText(entry.account) === compactText(account) && compactText(entry.kind) === "expense"), (entry) => entry.amount || 0)))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Справочники счетов пока пусты.</div>'}</div>
           </section>
         </div>` : ""}
         ${modeIs(filters, "overview", "production") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ</h4><div class="compact-help">РџСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅС‹Рµ Р·Р°РґР°РЅРёСЏ, СЃСЂРѕРєРё, РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Рµ Рё СЃРІСЏР·РєР° СЃ РјР°С‚РµСЂРёР°Р»Р°РјРё.</div></div><div class="workspace-note">${escapeHtml(formatNumber(snapshot.productionActive || 0))} Р°РєС‚РёРІРЅС‹С…</div></div>
-            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Р—Р°РґР°РЅРёРµ</th><th>Р­С‚Р°Рї</th><th>РЎСЂРѕРє</th><th>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</th><th>РљРѕР»-РІРѕ</th><th></th></tr></thead><tbody>${filteredProduction.length ? filteredProduction.map((entry) => { const meta = getProductionStatusMeta(entry.stage); return `<tr><td><strong>${escapeHtml(entry.title || "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ")}</strong><div class="workspace-table__sub">${escapeHtml(entry.itemLabel || "Р‘РµР· РїРѕР·РёС†РёРё")}</div></td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(entry.deadline))}</td><td>${escapeHtml(entry.assignee || "вЂ”")}</td><td>${escapeHtml(formatNumber(entry.qty || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-production-edit="${escapeHtml(entry.id)}">РР·РјРµРЅРёС‚СЊ</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-production-delete="${escapeHtml(entry.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">РџСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅС‹С… Р·Р°РґР°РЅРёР№ РїРѕРєР° РЅРµС‚.</td></tr>'}</tbody></table></div>
+            <div class="panel-heading"><div><h4>Производство</h4><div class="compact-help">Производственные задания, сроки, ответственные и связка с материалами.</div></div><div class="workspace-note">${escapeHtml(formatNumber(snapshot.productionActive || 0))} активных</div></div>
+            <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задание</th><th>Этап</th><th>Срок</th><th>Ответственный</th><th>Кол-во</th><th></th></tr></thead><tbody>${filteredProduction.length ? filteredProduction.map((entry) => { const meta = getProductionStatusMeta(entry.stage); return `<tr><td><strong>${escapeHtml(entry.title || "Производство")}</strong><div class="workspace-table__sub">${escapeHtml(entry.itemLabel || "Без позиции")}</div></td><td><span class="workspace-tag workspace-tag--${escapeHtml(meta.tone)}">${escapeHtml(meta.label)}</span></td><td>${escapeHtml(formatDate(entry.deadline))}</td><td>${escapeHtml(entry.assignee || "—")}</td><td>${escapeHtml(formatNumber(entry.qty || 0))}</td><td class="text-end"><div class="d-flex justify-content-end gap-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-warehouse-production-edit="${escapeHtml(entry.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-warehouse-production-delete="${escapeHtml(entry.id)}">Удалить</button>` : ""}</div></td></tr>`; }).join("") : '<tr><td colspan="6" class="text-muted">Производственных заданий пока нет.</td></tr>'}</tbody></table></div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р­С‚Р°РїС‹ РїСЂРѕРёР·РІРѕРґСЃС‚РІР°</h4><div class="compact-help">РЎСЂР°Р·Сѓ РІРёРґРЅРѕ, РіРґРµ СЂР°Р±РѕС‚Р° РІ РѕС‡РµСЂРµРґРё, РіРґРµ РІ РїСЂРѕС†РµСЃСЃРµ Рё РіРґРµ С‚РѕСЂРјРѕР·РёС‚ РєРѕРЅС‚СЂРѕР»СЊ.</div></div></div>
+            <div class="panel-heading"><div><h4>Этапы производства</h4><div class="compact-help">Сразу видно, где работа в очереди, где в процессе и где тормозит контроль.</div></div></div>
             <div class="workspace-mini-grid">${PRODUCTION_JOB_STATUSES.map((status) => `<div class="dashboard-mini dashboard-mini--${escapeHtml(status.tone)}"><span>${escapeHtml(status.label)}</span><strong>${escapeHtml(formatNumber((doc.productionJobs || []).filter((entry) => compactText(entry.stage) === status.key).length))}</strong></div>`).join("")}</div>
-            <div class="workspace-stack mt-3">${filteredProduction.slice(0, 6).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.title || "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ")}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.assignee || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ")} вЂў ${escapeHtml(formatDate(entry.deadline))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getProductionStatusMeta(entry.stage).tone)}">${escapeHtml(getProductionStatusMeta(entry.stage).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatNumber(entry.qty || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РќРµС‚ Р°РєС‚РёРІРЅС‹С… РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅС‹С… Р·Р°РґР°РЅРёР№.</div>'}</div>
+            <div class="workspace-stack mt-3">${filteredProduction.slice(0, 6).map((entry) => `<div class="workspace-list-item"><div><strong>${escapeHtml(entry.title || "Производство")}</strong><div class="workspace-list-item__meta">${escapeHtml(entry.assignee || "Без ответственного")} • ${escapeHtml(formatDate(entry.deadline))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getProductionStatusMeta(entry.stage).tone)}">${escapeHtml(getProductionStatusMeta(entry.stage).label)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatNumber(entry.qty || 0))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Нет активных производственных заданий.</div>'}</div>
           </section>
         </div>` : ""}
         ${renderRelatedLinks(moduleKey)}
@@ -3389,26 +3389,26 @@ function buildModeTabs(moduleKey, escapeFn) {
     const editTaskTimeline = editTask ? buildTaskTimeline(editTask, editTaskContext) : [];
     const editTaskPrimaryRelated = editTaskContext?.relatedTasks?.[0] || null;
     const metrics = [
-      { label: "РћС‚РєСЂС‹С‚С‹Рµ Р·Р°РґР°С‡Рё", value: formatNumber(openTasks.length), caption: "Р±РµР· Р·Р°РІРµСЂС€РµРЅРЅС‹С…" },
-      { label: "Р’ СЂР°Р±РѕС‚Рµ", value: formatNumber(taskList.filter((task) => task.status === "in_progress").length), caption: "Р°РєС‚РёРІРЅРѕРµ РёСЃРїРѕР»РЅРµРЅРёРµ" },
-      { label: "Р‘Р»РѕРєРµСЂС‹", value: formatNumber(blockedCount), caption: "С‚СЂРµР±СѓСЋС‚ СЂРµС€РµРЅРёСЏ" },
-      { label: "РџСЂРѕСЃСЂРѕС‡РµРЅРѕ", value: formatNumber(overdue), caption: "СЃСЂРѕРє СѓР¶Рµ РїСЂРѕС€РµР»" },
-      { label: "РќРѕРІС‹Рµ СЃРёРіРЅР°Р»С‹", value: formatNumber(taskSignals.newSignals.length), caption: "РјРѕР¶РЅРѕ РїСЂРµРІСЂР°С‚РёС‚СЊ РІ Р·Р°РґР°С‡Рё" },
+      { label: "Открытые задачи", value: formatNumber(openTasks.length), caption: "без завершенных" },
+      { label: "В работе", value: formatNumber(taskList.filter((task) => task.status === "in_progress").length), caption: "активное исполнение" },
+      { label: "Блокеры", value: formatNumber(blockedCount), caption: "требуют решения" },
+      { label: "Просрочено", value: formatNumber(overdue), caption: "срок уже прошел" },
+      { label: "Новые сигналы", value: formatNumber(taskSignals.newSignals.length), caption: "можно превратить в задачи" },
       ...getFormulaMetrics("tasks", doc, filteredTasks)
     ];
     const customHeader = renderCustomTableHeader("tasks", doc, escapeHtml);
     const tasksActionBar = renderActionBar(
       "tasks",
       [
-        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-task-new>РќРѕРІР°СЏ Р·Р°РґР°С‡Р°</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-sprint-new>РќРѕРІР°СЏ РёС‚РµСЂР°С†РёСЏ</button>' : "",
-        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-task-generate-signals>РЎРѕР±СЂР°С‚СЊ РёР· СЂРёСЃРєРѕРІ</button>' : "",
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">РљР°РЅР±Р°РЅ</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Р›РµРЅС‚Р°</button>',
-        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="tasks">Р­РєСЃРїРѕСЂС‚ JSON</button>',
-        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="tasks">РРјРїРѕСЂС‚ JSON</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:task">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє Р·Р°РґР°С‡Рё</button>' : "",
-        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:sprint">РЎР±СЂРѕСЃРёС‚СЊ С‡РµСЂРЅРѕРІРёРє РёС‚РµСЂР°С†РёРё</button>' : ""
+        canEdit ? '<button class="btn btn-dark btn-sm" type="button" data-task-new>Новая задача</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-sprint-new>Новая итерация</button>' : "",
+        canEdit ? '<button class="btn btn-outline-dark btn-sm" type="button" data-task-generate-signals>Собрать из рисков</button>' : "",
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="board">Канбан</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-live-mode="table">Лента</button>',
+        '<button class="btn btn-outline-dark btn-sm" type="button" data-module-export="tasks">Экспорт JSON</button>',
+        canManage ? '<button class="btn btn-outline-dark btn-sm" type="button" data-module-import="tasks">мпорт JSON</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:task">Сбросить черновик задачи</button>' : "",
+        canEdit ? '<button class="btn btn-outline-secondary btn-sm" type="button" data-module-draft-clear="tasks:sprint">Сбросить черновик итерации</button>' : ""
       ].filter(Boolean),
       escapeHtml
     );
@@ -3418,15 +3418,15 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${renderWorkspaceHeader("tasks")}
         ${renderMetricGrid(metrics)}
         <section class="workspace-panel workspace-panel--muted">
-          <div class="panel-heading"><div><h4>РћРїРµСЂР°С†РёРѕРЅРЅС‹Рµ СЃРёРіРЅР°Р»С‹</h4><div class="compact-help">Р—РґРµСЃСЊ СЃРѕР±РёСЂР°СЋС‚СЃСЏ СЂРµР°Р»СЊРЅС‹Рµ СЂРёСЃРєРё РёР· CRM, РџСЂРѕРґР°Р¶ Рё РЎРєР»Р°РґР°, С‡С‚РѕР±С‹ РёС… РјРѕР¶РЅРѕ Р±С‹Р»Рѕ РѕРґРЅРёРј РґРµР№СЃС‚РІРёРµРј РїСЂРµРІСЂР°С‚РёС‚СЊ РІ Р·Р°РґР°С‡Рё.</div></div><div class="workspace-note">Р’СЃРµРіРѕ СЃРёРіРЅР°Р»РѕРІ: ${escapeHtml(formatNumber(taskSignals.total))}</div></div>
+          <div class="panel-heading"><div><h4>Операционные сигналы</h4><div class="compact-help">Здесь собираются реальные риски из CRM, Продаж и Склада, чтобы их можно было одним действием превратить в задачи.</div></div><div class="workspace-note">Всего сигналов: ${escapeHtml(formatNumber(taskSignals.total))}</div></div>
           <div class="workspace-stage-strip">
-            <div class="workspace-stage-card"><span>РќРѕРІС‹С… Р·Р°РґР°С‡ Рє СЃРѕР·РґР°РЅРёСЋ</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.length))}</strong></div>
-            <div class="workspace-stage-card"><span>РЈР¶Рµ Р·Р°РІРµРґРµРЅРѕ</span><strong>${escapeHtml(formatNumber(taskSignals.signals.filter((signal) => signal.alreadyExists).length))}</strong></div>
-            <div class="workspace-stage-card"><span>РџСЂРёРѕСЂРёС‚РµС‚ urgent</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.filter((signal) => signal.priority === "urgent").length))}</strong></div>
-            <div class="workspace-stage-card"><span>РџСЂРёРѕСЂРёС‚РµС‚ high</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.filter((signal) => signal.priority === "high").length))}</strong></div>
+            <div class="workspace-stage-card"><span>Новых задач к созданию</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.length))}</strong></div>
+            <div class="workspace-stage-card"><span>Уже заведено</span><strong>${escapeHtml(formatNumber(taskSignals.signals.filter((signal) => signal.alreadyExists).length))}</strong></div>
+            <div class="workspace-stage-card"><span>Приоритет urgent</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.filter((signal) => signal.priority === "urgent").length))}</strong></div>
+            <div class="workspace-stage-card"><span>Приоритет high</span><strong>${escapeHtml(formatNumber(taskSignals.newSignals.filter((signal) => signal.priority === "high").length))}</strong></div>
           </div>
           <div class="workspace-stack mt-3">
-            ${(taskSignals.signals.slice(0, 8) || []).map((signal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(signal.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(signal.family)} вЂў ${escapeHtml(signal.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ")}</div></div><div class="text-end"><div class="workspace-tag ${signal.alreadyExists ? "workspace-tag--neutral" : signal.priority === "urgent" ? "workspace-tag--danger" : "workspace-tag--warning"}">${escapeHtml(signal.alreadyExists ? "СѓР¶Рµ РµСЃС‚СЊ" : signal.priority)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(signal.dueDate))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РћРїРµСЂР°С†РёРѕРЅРЅС‹С… СЃРёРіРЅР°Р»РѕРІ РїРѕРєР° РЅРµС‚.</div>'}
+            ${(taskSignals.signals.slice(0, 8) || []).map((signal) => `<div class="workspace-list-item"><div><strong>${escapeHtml(signal.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(signal.family)} • ${escapeHtml(signal.owner || "Без ответственного")}</div></div><div class="text-end"><div class="workspace-tag ${signal.alreadyExists ? "workspace-tag--neutral" : signal.priority === "urgent" ? "workspace-tag--danger" : "workspace-tag--warning"}">${escapeHtml(signal.alreadyExists ? "уже есть" : signal.priority)}</div><div class="workspace-list-item__meta mt-1">${escapeHtml(formatDate(signal.dueDate))}</div></div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">Операционных сигналов пока нет.</div>'}
           </div>
         </section>
         ${renderViewTabs("tasks", doc, ui.tasks, escapeHtml)}
@@ -3434,93 +3434,93 @@ function buildModeTabs(moduleKey, escapeFn) {
         ${tasksActionBar}
         <div class="workspace-toolbar">
           <div class="workspace-toolbar__group">
-            <input class="form-control" type="search" placeholder="РџРѕРёСЃРє РїРѕ Р·Р°РґР°С‡Рµ, РІР»Р°РґРµР»СЊС†Сѓ, РёС‚РµСЂР°С†РёРё" value="${escapeHtml(filters.search)}" data-live-filter="search" />
-            <select class="form-select" data-live-filter="status"><option value="all">Р’СЃРµ СЃС‚Р°С‚СѓСЃС‹</option>${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${filters.status === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select>
-            <select class="form-select" data-live-filter="sprint"><option value="all">Р’СЃРµ РёС‚РµСЂР°С†РёРё</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${filters.sprint === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select>
-            <select class="form-select" data-live-filter="owner"><option value="all">Р’СЃРµ РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Рµ</option>${owners.map((owner) => `<option value="${escapeHtml(owner)}" ${filters.owner === owner ? "selected" : ""}>${escapeHtml(owner)}</option>`).join("")}</select>
+            <input class="form-control" type="search" placeholder="Поиск по задаче, владельцу, итерации" value="${escapeHtml(filters.search)}" data-live-filter="search" />
+            <select class="form-select" data-live-filter="status"><option value="all">Все статусы</option>${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${filters.status === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select>
+            <select class="form-select" data-live-filter="sprint"><option value="all">Все итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${filters.sprint === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select>
+            <select class="form-select" data-live-filter="owner"><option value="all">Все ответственные</option>${owners.map((owner) => `<option value="${escapeHtml(owner)}" ${filters.owner === owner ? "selected" : ""}>${escapeHtml(owner)}</option>`).join("")}</select>
           </div>
           <div class="workspace-toolbar__group workspace-toolbar__group--end">
-            ${canEdit ? `<button class="btn btn-dark" type="button" data-task-new>РќРѕРІР°СЏ Р·Р°РґР°С‡Р°</button><button class="btn btn-outline-dark" type="button" data-sprint-new>РќРѕРІР°СЏ РёС‚РµСЂР°С†РёСЏ</button>` : `<span class="workspace-note">Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕС‚РєР»СЋС‡РµРЅРѕ РґР»СЏ РІР°С€РµР№ СЂРѕР»Рё</span>`}
-            ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="tasks">${ui.tasks.configOpen ? "РЎРєСЂС‹С‚СЊ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ" : "РљРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ"}</button>` : ""}
+            ${canEdit ? `<button class="btn btn-dark" type="button" data-task-new>Новая задача</button><button class="btn btn-outline-dark" type="button" data-sprint-new>Новая итерация</button>` : `<span class="workspace-note">Редактирование отключено для вашей роли</span>`}
+            ${canManage ? `<button class="btn btn-outline-dark" type="button" data-builder-toggle="tasks">${ui.tasks.configOpen ? "Скрыть конструктор" : "Конструктор"}</button>` : ""}
           </div>
         </div>
         ${canManage ? renderBuilderPanel("tasks", doc, ui.tasks, escapeHtml) : ""}
         ${modeIs(filters, "form") ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${editTask ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ Р·Р°РґР°С‡Рё" : "РќРѕРІР°СЏ Р·Р°РґР°С‡Р°"}</h4><div class="compact-help">Р—Р°РґР°С‡Рё РјРѕР¶РЅРѕ РІРµСЃС‚Рё РїРѕ РѕС‚РґРµР»Р°Рј, РёРЅРёС†РёР°С‚РёРІР°Рј Рё РїСЂРѕРµРєС‚Р°Рј. Р‘С‹СЃС‚СЂС‹Р№ РїРµСЂРµРІРѕРґ РјРµР¶РґСѓ РєРѕР»РѕРЅРєР°РјРё РѕСЃС‚Р°РµС‚СЃСЏ РїСЂСЏРјРѕ РЅР° РєР°СЂС‚РѕС‡РєР°С….</div></div></div>
-            ${canEdit ? `<form id="tasksTaskForm" class="workspace-form" data-draft-form="task"><input type="hidden" name="id" value="${escapeHtml(editTask?.id || "")}" /><div class="workspace-form-grid"><label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="title" value="${escapeHtml(editTask?.title || "")}" required /></label><label><span>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editTask?.owner || "")}" /></label><label><span>РЎС‚Р°С‚СѓСЃ</span><select class="form-select" name="status">${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${(editTask?.status || "backlog") === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select></label><label><span>РџСЂРёРѕСЂРёС‚РµС‚</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((priority) => `<option value="${escapeHtml(priority.key)}" ${(editTask?.priority || "medium") === priority.key ? "selected" : ""}>${escapeHtml(priority.label)}</option>`).join("")}</select></label><label><span>РС‚РµСЂР°С†РёСЏ</span><select class="form-select" name="sprintId"><option value="">Р‘РµР· РёС‚РµСЂР°С†РёРё</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${editTask?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label><label><span>РЎСЂРѕРє</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(editTask?.dueDate || ""))}" /></label></div><label class="permission-flag"><input class="form-check-input" type="checkbox" name="blocked" ${editTask?.blocked ? "checked" : ""} /><span>Р•СЃС‚СЊ Р±Р»РѕРєРµСЂ / РЅСѓР¶РЅР° РїРѕРјРѕС‰СЊ</span></label><label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editTask?.note || "")}</textarea></label>${renderCustomFieldSection("tasks", doc, editTask, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editTask ? "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РґР°С‡Сѓ" : "Р”РѕР±Р°РІРёС‚СЊ Р·Р°РґР°С‡Сѓ"}</button><button class="btn btn-outline-secondary" type="button" data-task-new>РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button></div></form>` : renderAccessHint("tasks")}
+            <div class="panel-heading"><div><h4>${editTask ? "Редактирование задачи" : "Новая задача"}</h4><div class="compact-help">Задачи можно вести по отделам, инициативам и проектам. Быстрый перевод между колонками остается прямо на карточках.</div></div></div>
+            ${canEdit ? `<form id="tasksTaskForm" class="workspace-form" data-draft-form="task"><input type="hidden" name="id" value="${escapeHtml(editTask?.id || "")}" /><div class="workspace-form-grid"><label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(editTask?.title || "")}" required /></label><label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(editTask?.owner || "")}" /></label><label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((status) => `<option value="${escapeHtml(status.key)}" ${(editTask?.status || "backlog") === status.key ? "selected" : ""}>${escapeHtml(status.label)}</option>`).join("")}</select></label><label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((priority) => `<option value="${escapeHtml(priority.key)}" ${(editTask?.priority || "medium") === priority.key ? "selected" : ""}>${escapeHtml(priority.label)}</option>`).join("")}</select></label><label><span>терация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${editTask?.sprintId === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label><label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(editTask?.dueDate || ""))}" /></label></div><label class="permission-flag"><input class="form-check-input" type="checkbox" name="blocked" ${editTask?.blocked ? "checked" : ""} /><span>Есть блокер / нужна помощь</span></label><label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(editTask?.note || "")}</textarea></label>${renderCustomFieldSection("tasks", doc, editTask, escapeHtml)}<div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editTask ? "Сохранить задачу" : "Добавить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-task-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>${editSprint ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РёС‚РµСЂР°С†РёРё" : "РќРѕРІР°СЏ РёС‚РµСЂР°С†РёСЏ"}</h4><div class="compact-help">РС‚РµСЂР°С†РёСЏ РїРѕРјРѕРіР°РµС‚ РґРµСЂР¶Р°С‚СЊ РІ С„РѕРєСѓСЃРµ Р±Р»РёР¶Р°Р№С€РёР№ СЂР°Р±РѕС‡РёР№ С†РёРєР» Рё СЂР°СЃРїСЂРµРґРµР»СЏС‚СЊ Р·Р°РґР°С‡Рё РїРѕ СЌС‚Р°РїР°Рј.</div></div></div>
-            ${canEdit ? `<form id="tasksSprintForm" class="workspace-form" data-draft-form="sprint"><input type="hidden" name="id" value="${escapeHtml(editSprint?.id || "")}" /><div class="workspace-form-grid"><label><span>РќР°Р·РІР°РЅРёРµ РёС‚РµСЂР°С†РёРё</span><input class="form-control" type="text" name="title" value="${escapeHtml(editSprint?.title || "")}" required /></label><label><span>РЎС‚Р°СЂС‚</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(editSprint?.startDate || ""))}" /></label><label><span>Р¤РёРЅРёС€</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(editSprint?.endDate || ""))}" /></label></div><label><span>Р¦РµР»СЊ РёС‚РµСЂР°С†РёРё</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(editSprint?.goal || "")}</textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editSprint ? "РЎРѕС…СЂР°РЅРёС‚СЊ РёС‚РµСЂР°С†РёСЋ" : "Р”РѕР±Р°РІРёС‚СЊ РёС‚РµСЂР°С†РёСЋ"}</button><button class="btn btn-outline-secondary" type="button" data-sprint-new>РћС‡РёСЃС‚РёС‚СЊ С„РѕСЂРјСѓ</button></div></form>` : renderAccessHint("tasks")}
+            <div class="panel-heading"><div><h4>${editSprint ? "Редактирование итерации" : "Новая итерация"}</h4><div class="compact-help">терация помогает держать в фокусе ближайший рабочий цикл и распределять задачи по этапам.</div></div></div>
+            ${canEdit ? `<form id="tasksSprintForm" class="workspace-form" data-draft-form="sprint"><input type="hidden" name="id" value="${escapeHtml(editSprint?.id || "")}" /><div class="workspace-form-grid"><label><span>Название итерации</span><input class="form-control" type="text" name="title" value="${escapeHtml(editSprint?.title || "")}" required /></label><label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(editSprint?.startDate || ""))}" /></label><label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(editSprint?.endDate || ""))}" /></label></div><label><span>Цель итерации</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(editSprint?.goal || "")}</textarea></label><div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${editSprint ? "Сохранить итерацию" : "Добавить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-sprint-new>Очистить форму</button></div></form>` : renderAccessHint("tasks")}
           </section>
         </div>` : ""}
         ${editTask ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РљРѕРЅС‚СѓСЂ Р·Р°РґР°С‡Рё</h4><div class="compact-help">Р•РґРёРЅР°СЏ РєР°СЂС‚РѕС‡РєР° Р·Р°РґР°С‡Рё: С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ, Р±С‹СЃС‚СЂС‹Рµ РґРµР№СЃС‚РІРёСЏ Рё РІРµСЃСЊ СЃРѕСЃРµРґРЅРёР№ РєРѕРЅС‚РµРєСЃС‚ Р±РµР· РїРµСЂРµС…РѕРґРѕРІ РјРµР¶РґСѓ РјРѕРґСѓР»СЏРјРё.</div></div><div class="workspace-note">РћР±РЅРѕРІР»РµРЅРѕ ${escapeHtml(formatDate(editTask.updatedAt || editTask.createdAt))}</div></div>
+            <div class="panel-heading"><div><h4>Контур задачи</h4><div class="compact-help">Единая карточка задачи: текущее состояние, быстрые действия и весь соседний контекст без переходов между модулями.</div></div><div class="workspace-note">Обновлено ${escapeHtml(formatDate(editTask.updatedAt || editTask.createdAt))}</div></div>
             <div class="workspace-stage-strip">${editTaskOperationCards.map((card) => `<div class="workspace-stage-card"><span>${escapeHtml(card.label)}</span><strong>${escapeHtml(card.value)}</strong><small class="workspace-list-item__meta">${escapeHtml(card.caption)}</small></div>`).join("")}</div>
             <div class="workspace-card__actions mt-3">
-              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-set-status="${escapeHtml(editTask.id)}:${escapeHtml(editTask.status === "done" ? "todo" : "done")}">${editTask.status === "done" ? "Р’РµСЂРЅСѓС‚СЊ РІ СЂР°Р±РѕС‚Сѓ" : "РћС‚РјРµС‚РёС‚СЊ РІС‹РїРѕР»РЅРµРЅРЅРѕР№"}</button>` : ""}
-              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-toggle-blocked="${escapeHtml(editTask.id)}">${editTask.blocked ? "РЎРЅСЏС‚СЊ Р±Р»РѕРєРµСЂ" : "РџРѕСЃС‚Р°РІРёС‚СЊ Р±Р»РѕРєРµСЂ"}</button>` : ""}
-              ${editTaskContext?.moduleKey === "sales" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">РћС‚РєСЂС‹С‚СЊ РёСЃС‚РѕС‡РЅРёРє</button>` : editTaskContext?.entityId ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${editTaskContext.moduleKey}:${editTaskContext.entityId}`)}">РћС‚РєСЂС‹С‚СЊ РёСЃС‚РѕС‡РЅРёРє</button>` : ""}
-              ${editTaskPrimaryRelated ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(editTaskPrimaryRelated.id)}">РћС‚РєСЂС‹С‚СЊ СЃРІСЏР·Р°РЅРЅСѓСЋ Р·Р°РґР°С‡Сѓ</button>` : ""}
+              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-set-status="${escapeHtml(editTask.id)}:${escapeHtml(editTask.status === "done" ? "todo" : "done")}">${editTask.status === "done" ? "Вернуть в работу" : "Отметить выполненной"}</button>` : ""}
+              ${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-toggle-blocked="${escapeHtml(editTask.id)}">${editTask.blocked ? "Снять блокер" : "Поставить блокер"}</button>` : ""}
+              ${editTaskContext?.moduleKey === "sales" ? `<button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть источник</button>` : editTaskContext?.entityId ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${editTaskContext.moduleKey}:${editTaskContext.entityId}`)}">Открыть источник</button>` : ""}
+              ${editTaskPrimaryRelated ? `<button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(editTaskPrimaryRelated.id)}">Открыть связанную задачу</button>` : ""}
             </div>
             <div class="workspace-stack mt-3">
               <div class="workspace-list-item">
                 <div>
-                  <strong>${escapeHtml(editTask.title || "Р—Р°РґР°С‡Р°")}</strong>
-                  <div class="workspace-list-item__meta">${escapeHtml(editTask.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ")} вЂў ${escapeHtml(editTask.sprint?.title || "Р‘РµР· РёС‚РµСЂР°С†РёРё")}</div>
+                  <strong>${escapeHtml(editTask.title || "Задача")}</strong>
+                  <div class="workspace-list-item__meta">${escapeHtml(editTask.owner || "Без ответственного")} • ${escapeHtml(editTask.sprint?.title || "Без итерации")}</div>
                 </div>
                 <div class="text-end">
                   <div class="workspace-tag workspace-tag--${escapeHtml(getTaskStatusMeta(editTask.status).tone)}">${escapeHtml(getTaskStatusMeta(editTask.status).label)}</div>
                   <div class="workspace-list-item__meta mt-1">${escapeHtml(getPriorityLabel(editTask.priority))}</div>
                 </div>
               </div>
-              ${editTask.note ? `<div class="workspace-empty workspace-empty--tight">${escapeHtml(editTask.note)}</div>` : '<div class="workspace-empty workspace-empty--tight">РљРѕРјРјРµРЅС‚Р°СЂРёР№ Рє Р·Р°РґР°С‡Рµ РїРѕРєР° РЅРµ Р·Р°РїРѕР»РЅРµРЅ.</div>'}
-              ${editTaskContext ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "РСЃС‚РѕС‡РЅРёРє")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "РЎРІСЏР·Р°РЅРЅС‹Р№ РѕР±СЉРµРєС‚")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(editTaskContext.tone || "neutral")}">${escapeHtml(getTaskSourceLabel(editTaskContext))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">Р—Р°РґР°С‡Р° РїРѕРєР° РЅРµ РїСЂРёРІСЏР·Р°РЅР° Рє CRM, СЃРєР»Р°РґСѓ РёР»Рё РїСЂРѕРґР°Р¶Р°Рј.</div>'}
+              ${editTask.note ? `<div class="workspace-empty workspace-empty--tight">${escapeHtml(editTask.note)}</div>` : '<div class="workspace-empty workspace-empty--tight">Комментарий к задаче пока не заполнен.</div>'}
+              ${editTaskContext ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "сточник")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "Связанный объект")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(editTaskContext.tone || "neutral")}">${escapeHtml(getTaskSourceLabel(editTaskContext))}</div></div></div>` : '<div class="workspace-empty workspace-empty--tight">Задача пока не привязана к CRM, складу или продажам.</div>'}
             </div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>Р›РµРЅС‚Р° Р·Р°РґР°С‡Рё</h4><div class="compact-help">Р—РґРµСЃСЊ СЃРѕР±РёСЂР°РµС‚СЃСЏ Р¶РёРІР°СЏ РёСЃС‚РѕСЂРёСЏ СЃР°РјРѕР№ Р·Р°РґР°С‡Рё Рё СЃРѕР±С‹С‚РёР№ РёР· РµС‘ РёСЃС‚РѕС‡РЅРёРєР°: СЃРґРµР»РєРё, РѕРїР»Р°С‚С‹, СЂРµР·РµСЂРІРѕРІ Рё СЃРєР»Р°РґСЃРєРёС… РґРІРёР¶РµРЅРёР№.</div></div><div class="workspace-note">РЎРѕР±С‹С‚РёР№: ${escapeHtml(formatNumber(editTaskTimeline.length))}</div></div>
-            <div class="workspace-stack">${editTaskTimeline.slice(0, 12).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Р‘РµР· РґРµС‚Р°Р»РµР№")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">РћС‚РєСЂС‹С‚СЊ</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">РћС‚РєСЂС‹С‚СЊ</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">РСЃС‚РѕСЂРёСЏ РїРѕ Р·Р°РґР°С‡Рµ РїРѕРєР° РїСѓСЃС‚Р°СЏ.</div>'}</div>
+            <div class="panel-heading"><div><h4>Лента задачи</h4><div class="compact-help">Здесь собирается живая история самой задачи и событий из её источника: сделки, оплаты, резервов и складских движений.</div></div><div class="workspace-note">Событий: ${escapeHtml(formatNumber(editTaskTimeline.length))}</div></div>
+            <div class="workspace-stack">${editTaskTimeline.slice(0, 12).map((event) => `<div class="workspace-list-item"><div><strong>${escapeHtml(event.title)}</strong><div class="workspace-list-item__meta">${escapeHtml(event.meta || "Без деталей")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(event.tone || "neutral")}">${escapeHtml(formatDate(event.date))}</div>${event.moduleKey === "sales" ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть</button></div>` : event.entityId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${event.moduleKey}:${event.entityId}`)}">Открыть</button></div>` : ""}</div></div>`).join("") || '<div class="workspace-empty workspace-empty--tight">стория по задаче пока пустая.</div>'}</div>
           </section>
         </div>` : ""}
         ${editTask && editTaskContext ? `<div class="workspace-grid workspace-grid--2">
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РСЃС‚РѕС‡РЅРёРє Р·Р°РґР°С‡Рё</h4><div class="compact-help">РљР°СЂС‚РѕС‡РєР° СЃРІСЏР·Рё РїРѕРјРѕРіР°РµС‚ РїРѕРЅСЏС‚СЊ, РёР· РєР°РєРѕРіРѕ Р±РёР·РЅРµСЃ-РєРѕРЅС‚РµРєСЃС‚Р° Р·Р°РґР°С‡Р° РїСЂРёС€Р»Р° Рё РєСѓРґР° РѕРЅР° РІР»РёСЏРµС‚.</div></div></div>
+            <div class="panel-heading"><div><h4>сточник задачи</h4><div class="compact-help">Карточка связи помогает понять, из какого бизнес-контекста задача пришла и куда она влияет.</div></div></div>
             <div class="workspace-stage-strip">
-              <div class="workspace-stage-card"><span>РљРѕРЅС‚СѓСЂ</span><strong>${escapeHtml(editTaskContext.type === "crm" || editTaskContext.type === "crm-signal" ? "CRM" : editTaskContext.type === "warehouse" || editTaskContext.type === "warehouse-signal" ? "РЎРєР»Р°Рґ" : "РџСЂРѕРґР°Р¶Рё")}</strong></div>
-              ${typeof editTaskContext.amount !== "undefined" ? `<div class="workspace-stage-card"><span>РЎСѓРјРјР°</span><strong>${escapeHtml(formatMoney(editTaskContext.amount || 0))}</strong></div>` : ""}
-              ${typeof editTaskContext.available !== "undefined" ? `<div class="workspace-stage-card"><span>Р”РѕСЃС‚СѓРїРЅРѕ</span><strong>${escapeHtml(formatNumber(editTaskContext.available || 0))}</strong></div>` : ""}
-              ${editTaskContext.stageLabel ? `<div class="workspace-stage-card"><span>РЎС‚Р°С‚СѓСЃ</span><strong>${escapeHtml(editTaskContext.stageLabel)}</strong></div>` : ""}
-              ${editTaskContext.dueDate ? `<div class="workspace-stage-card"><span>РЎСЂРѕРє / РґР°С‚Р°</span><strong>${escapeHtml(formatDate(editTaskContext.dueDate))}</strong></div>` : ""}
+              <div class="workspace-stage-card"><span>Контур</span><strong>${escapeHtml(editTaskContext.type === "crm" || editTaskContext.type === "crm-signal" ? "CRM" : editTaskContext.type === "warehouse" || editTaskContext.type === "warehouse-signal" ? "Склад" : "Продажи")}</strong></div>
+              ${typeof editTaskContext.amount !== "undefined" ? `<div class="workspace-stage-card"><span>Сумма</span><strong>${escapeHtml(formatMoney(editTaskContext.amount || 0))}</strong></div>` : ""}
+              ${typeof editTaskContext.available !== "undefined" ? `<div class="workspace-stage-card"><span>Доступно</span><strong>${escapeHtml(formatNumber(editTaskContext.available || 0))}</strong></div>` : ""}
+              ${editTaskContext.stageLabel ? `<div class="workspace-stage-card"><span>Статус</span><strong>${escapeHtml(editTaskContext.stageLabel)}</strong></div>` : ""}
+              ${editTaskContext.dueDate ? `<div class="workspace-stage-card"><span>Срок / дата</span><strong>${escapeHtml(formatDate(editTaskContext.dueDate))}</strong></div>` : ""}
             </div>
             <div class="workspace-stack mt-3">
-              <div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "РСЃС‚РѕС‡РЅРёРє")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "РЎРІСЏР·Р°РЅРЅС‹Р№ РѕР±СЉРµРєС‚ РїР»Р°С‚С„РѕСЂРјС‹")}</div></div><div class="text-end">${editTaskContext.moduleKey === "sales" ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">РћС‚РєСЂС‹С‚СЊ РџСЂРѕРґР°Р¶Рё</button></div>` : editTaskContext.entityId ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${editTaskContext.moduleKey}:${editTaskContext.entityId}`)}">РћС‚РєСЂС‹С‚СЊ РёСЃС‚РѕС‡РЅРёРє</button></div>` : ""}</div></div>
-              ${editTaskContext.order ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.order.orderNumber || editTaskContext.order.title || "Р—Р°РєР°Р·")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.order.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ")} вЂў ${escapeHtml(editTaskContext.order.manager || "Р‘РµР· РјРµРЅРµРґР¶РµСЂР°")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(editTaskContext.order.amount || 0))}</div></div></div>` : ""}
+              <div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.title || "сточник")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.subtitle || "Связанный объект платформы")}</div></div><div class="text-end">${editTaskContext.moduleKey === "sales" ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-placeholder-open="sales">Открыть Продажи</button></div>` : editTaskContext.entityId ? `<div class="workspace-card__actions"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="${escapeHtml(`${editTaskContext.moduleKey}:${editTaskContext.entityId}`)}">Открыть источник</button></div>` : ""}</div></div>
+              ${editTaskContext.order ? `<div class="workspace-list-item"><div><strong>${escapeHtml(editTaskContext.order.orderNumber || editTaskContext.order.title || "Заказ")}</strong><div class="workspace-list-item__meta">${escapeHtml(editTaskContext.order.client || "Клиент не указан")} • ${escapeHtml(editTaskContext.order.manager || "Без менеджера")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--accent">${escapeHtml(formatMoney(editTaskContext.order.amount || 0))}</div></div></div>` : ""}
               ${editTaskContext.note ? `<div class="workspace-empty workspace-empty--tight">${escapeHtml(editTaskContext.note)}</div>` : ""}
             </div>
           </section>
           <section class="workspace-panel">
-            <div class="panel-heading"><div><h4>РЎРІСЏР·Р°РЅРЅС‹Рµ РґРµР№СЃС‚РІРёСЏ</h4><div class="compact-help">РЎРѕСЃРµРґРЅРёРµ Р·Р°РґР°С‡Рё Рё РґРІРёР¶РµРЅРёСЏ, РєРѕС‚РѕСЂС‹Рµ РѕС‚РЅРѕСЃСЏС‚СЃСЏ Рє С‚РѕРјСѓ Р¶Рµ РёСЃС‚РѕС‡РЅРёРєСѓ.</div></div></div>
+            <div class="panel-heading"><div><h4>Связанные действия</h4><div class="compact-help">Соседние задачи и движения, которые относятся к тому же источнику.</div></div></div>
             <div class="workspace-stack">
-              ${editTaskContext.relatedTasks?.length ? editTaskContext.relatedTasks.slice(0, 5).map((task) => `<div class="workspace-list-item"><div><strong>${escapeHtml(task.title || "Р—Р°РґР°С‡Р°")}</strong><div class="workspace-list-item__meta">${escapeHtml(task.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ")} вЂў ${escapeHtml(getTaskStatusMeta(task.status).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getTaskStatusMeta(task.status).tone)}">${escapeHtml(getPriorityLabel(task.priority))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(task.id)}">РћС‚РєСЂС‹С‚СЊ</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">Р”СЂСѓРіРёС… СЃРІСЏР·Р°РЅРЅС‹С… Р·Р°РґР°С‡ РїРѕРєР° РЅРµС‚.</div>'}
-              ${editTaskContext.reservation?.rows?.length ? `<div><div class="panel-heading panel-heading--compact"><div><h4>Р РµР·РµСЂРІ РјР°С‚РµСЂРёР°Р»РѕРІ</h4><div class="compact-help">РњР°С‚РµСЂРёР°Р»С‹, СѓР¶Рµ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРЅС‹Рµ РїРѕРґ СЃРІСЏР·Р°РЅРЅС‹Р№ РёСЃС‚РѕС‡РЅРёРє.</div></div></div><div class="workspace-stack">${sortByDateDesc(editTaskContext.reservation.rows, "date").slice(0, 4).map((movement) => { const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); return `<div class="workspace-list-item"><div><strong>${escapeHtml(item?.name || "РџРѕР·РёС†РёСЏ")}</strong><div class="workspace-list-item__meta">${escapeHtml(movement.kind === "release" ? "СЃРЅСЏС‚РёРµ СЂРµР·РµСЂРІР°" : "СЂРµР·РµСЂРІ")} вЂў ${escapeHtml(formatDate(movement.date))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div>${movement.itemId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="warehouse:${escapeHtml(movement.itemId)}">РћС‚РєСЂС‹С‚СЊ</button></div>` : ""}</div></div>`; }).join("")}</div></div>` : ""}
-              ${editTaskContext.movements?.length ? `<div><div class="panel-heading panel-heading--compact"><div><h4>РџРѕСЃР»РµРґРЅРёРµ РґРІРёР¶РµРЅРёСЏ</h4><div class="compact-help">РЎРІРµР¶РёРµ РёР·РјРµРЅРµРЅРёСЏ РїРѕ СЃРєР»Р°РґСЃРєРѕР№ РїРѕР·РёС†РёРё, Рє РєРѕС‚РѕСЂРѕР№ РїСЂРёРІСЏР·Р°РЅР° Р·Р°РґР°С‡Р°.</div></div></div><div class="workspace-stack">${editTaskContext.movements.map((movement) => `<div class="workspace-list-item"><div><strong>${escapeHtml(WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === movement.kind)?.label || movement.kind)}</strong><div class="workspace-list-item__meta">${escapeHtml(formatDate(movement.date))} вЂў ${escapeHtml(movement.note || "Р‘РµР· РєРѕРјРјРµРЅС‚Р°СЂРёСЏ")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div></div></div>`).join("")}</div></div>` : ""}
+              ${editTaskContext.relatedTasks?.length ? editTaskContext.relatedTasks.slice(0, 5).map((task) => `<div class="workspace-list-item"><div><strong>${escapeHtml(task.title || "Задача")}</strong><div class="workspace-list-item__meta">${escapeHtml(task.owner || "Без ответственного")} • ${escapeHtml(getTaskStatusMeta(task.status).label)}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--${escapeHtml(getTaskStatusMeta(task.status).tone)}">${escapeHtml(getPriorityLabel(task.priority))}</div><div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="tasks:${escapeHtml(task.id)}">Открыть</button></div></div></div>`).join("") : '<div class="workspace-empty workspace-empty--tight">Других связанных задач пока нет.</div>'}
+              ${editTaskContext.reservation?.rows?.length ? `<div><div class="panel-heading panel-heading--compact"><div><h4>Резерв материалов</h4><div class="compact-help">Материалы, уже зарезервированные под связанный источник.</div></div></div><div class="workspace-stack">${sortByDateDesc(editTaskContext.reservation.rows, "date").slice(0, 4).map((movement) => { const item = (warehouseDoc.items || []).find((entry) => entry.id === movement.itemId); return `<div class="workspace-list-item"><div><strong>${escapeHtml(item?.name || "Позиция")}</strong><div class="workspace-list-item__meta">${escapeHtml(movement.kind === "release" ? "снятие резерва" : "резерв")} • ${escapeHtml(formatDate(movement.date))}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div>${movement.itemId ? `<div class="workspace-card__actions mt-2"><button class="btn btn-sm btn-outline-dark" type="button" data-linked-open="warehouse:${escapeHtml(movement.itemId)}">Открыть</button></div>` : ""}</div></div>`; }).join("")}</div></div>` : ""}
+              ${editTaskContext.movements?.length ? `<div><div class="panel-heading panel-heading--compact"><div><h4>Последние движения</h4><div class="compact-help">Свежие изменения по складской позиции, к которой привязана задача.</div></div></div><div class="workspace-stack">${editTaskContext.movements.map((movement) => `<div class="workspace-list-item"><div><strong>${escapeHtml(WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === movement.kind)?.label || movement.kind)}</strong><div class="workspace-list-item__meta">${escapeHtml(formatDate(movement.date))} • ${escapeHtml(movement.note || "Без комментария")}</div></div><div class="text-end"><div class="workspace-tag workspace-tag--info">${escapeHtml(formatNumber(movement.qty || 0))}</div></div></div>`).join("")}</div></div>` : ""}
             </div>
           </section>
         </div>` : ""}
         ${modeIs(filters, "overview", "form") ? `<section class="workspace-panel">
-          <div class="panel-heading"><div><h4>РС‚РµСЂР°С†РёРё</h4><div class="compact-help">РўРµРєСѓС‰РёР№ Р°РєС‚РёРІРЅС‹Р№ С†РёРєР»: ${escapeHtml(activeSprint?.title || "РЅРµ РІС‹Р±СЂР°РЅ")}</div></div></div>
-          <div class="workspace-sprint-strip">${sprintOptions.length ? sprintOptions.map((sprint) => { const sprintTasks = taskList.filter((task) => task.sprintId === sprint.id); return `<article class="workspace-sprint-card ${activeSprint?.id === sprint.id ? "active" : ""}"><div class="workspace-card__head"><strong>${escapeHtml(sprint.title)}</strong><span>${escapeHtml(String(sprintTasks.length))}</span></div><div class="workspace-card__meta">${escapeHtml(formatDate(sprint.startDate))} вЂ” ${escapeHtml(formatDate(sprint.endDate))}</div>${sprint.goal ? `<div class="workspace-card__note">${escapeHtml(sprint.goal)}</div>` : ""}<div class="workspace-card__actions mt-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-sprint-edit="${escapeHtml(sprint.id)}">РР·РјРµРЅРёС‚СЊ</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-sprint-delete="${escapeHtml(sprint.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">РС‚РµСЂР°С†РёРё РїРѕРєР° РЅРµ СЃРѕР·РґР°РЅС‹.</div>'}</div>
+          <div class="panel-heading"><div><h4>терации</h4><div class="compact-help">Текущий активный цикл: ${escapeHtml(activeSprint?.title || "не выбран")}</div></div></div>
+          <div class="workspace-sprint-strip">${sprintOptions.length ? sprintOptions.map((sprint) => { const sprintTasks = taskList.filter((task) => task.sprintId === sprint.id); return `<article class="workspace-sprint-card ${activeSprint?.id === sprint.id ? "active" : ""}"><div class="workspace-card__head"><strong>${escapeHtml(sprint.title)}</strong><span>${escapeHtml(String(sprintTasks.length))}</span></div><div class="workspace-card__meta">${escapeHtml(formatDate(sprint.startDate))} — ${escapeHtml(formatDate(sprint.endDate))}</div>${sprint.goal ? `<div class="workspace-card__note">${escapeHtml(sprint.goal)}</div>` : ""}<div class="workspace-card__actions mt-2">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-sprint-edit="${escapeHtml(sprint.id)}">зменить</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-sprint-delete="${escapeHtml(sprint.id)}">Удалить</button>` : ""}</div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">терации пока не созданы.</div>'}</div>
         </section>` : ""}
         ${modeIs(filters, "board") ? `<section class="workspace-panel">
-          <div class="panel-heading"><div><h4>РљР°РЅР±Р°РЅ</h4><div class="compact-help">РљР°СЂС‚РѕС‡РєРё РѕС‚СЂР°Р¶Р°СЋС‚ С‚РµРєСѓС‰СѓСЋ Р·Р°РіСЂСѓР·РєСѓ РєРѕРјР°РЅРґС‹ Рё РґР°СЋС‚ Р±С‹СЃС‚СЂС‹Р№ РґРѕСЃС‚СѓРї Рє РїСЂР°РІРєРµ СЃС‚Р°С‚СѓСЃР°.</div></div><div class="workspace-note">РџРѕРєР°Р·Р°РЅРѕ: ${escapeHtml(String(filteredTasks.length))}</div></div>
-          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => { const integration = getTaskIntegrationMeta(task); return `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Р—Р°РґР°С‡Р°")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ")} вЂў СЃСЂРѕРє ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Р‘РµР· РёС‚РµСЂР°С†РёРё")}</div>${integration ? `<div class="workspace-card__meta">${escapeHtml(integration.label)} вЂў <button class="btn btn-link btn-sm p-0 align-baseline" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">${escapeHtml(modules[integration.moduleKey]?.title || integration.moduleKey)}</button></div>` : ""}${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Р•СЃС‚СЊ Р±Р»РѕРєРµСЂ</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">РР·РјРµРЅРёС‚СЊ</button><button class="btn btn-sm btn-outline-secondary" type="button" data-task-duplicate="${escapeHtml(task.id)}">РљРѕРїРёСЏ</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">РЈРґР°Р»РёС‚СЊ</button>` : ""}</div></div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">РџСѓСЃС‚Рѕ</div>'}</div></article>`; }).join("")}</div>
+          <div class="panel-heading"><div><h4>Канбан</h4><div class="compact-help">Карточки отражают текущую загрузку команды и дают быстрый доступ к правке статуса.</div></div><div class="workspace-note">Показано: ${escapeHtml(String(filteredTasks.length))}</div></div>
+          <div class="workspace-board workspace-board--tasks">${TASK_STATUSES.map((status) => { const laneTasks = filteredTasks.filter((task) => task.status === status.key); return `<article class="workspace-lane"><div class="workspace-lane__head"><strong>${escapeHtml(status.label)}</strong><span>${escapeHtml(String(laneTasks.length))}</span></div><div class="workspace-lane__body">${laneTasks.length ? laneTasks.map((task) => { const integration = getTaskIntegrationMeta(task); return `<article class="workspace-card workspace-card--${escapeHtml(status.tone)}"><div class="workspace-card__head"><strong>${escapeHtml(task.title || "Задача")}</strong><span>${escapeHtml(getPriorityLabel(task.priority))}</span></div><div class="workspace-card__meta">${escapeHtml(task.owner || "Без ответственного")} • срок ${escapeHtml(formatDate(task.dueDate))}</div><div class="workspace-card__meta">${escapeHtml(task.sprint?.title || "Без итерации")}</div>${integration ? `<div class="workspace-card__meta">${escapeHtml(integration.label)} • <button class="btn btn-link btn-sm p-0 align-baseline" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">${escapeHtml(modules[integration.moduleKey]?.title || integration.moduleKey)}</button></div>` : ""}${task.note ? `<div class="workspace-card__note">${escapeHtml(task.note)}</div>` : ""}${renderCustomCardSection("tasks", doc, task, escapeHtml)}${task.blocked ? '<div class="workspace-tag workspace-tag--danger mt-2">Есть блокер</div>' : ""}<div class="workspace-card__footer">${canEdit ? `<select class="form-select form-select-sm workspace-inline-select" data-task-status-select="${escapeHtml(task.id)}">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${item.key === task.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select>` : `<span class="workspace-tag workspace-tag--${escapeHtml(status.tone)}">${escapeHtml(status.label)}</span>`}<div class="workspace-card__actions">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">зменить</button><button class="btn btn-sm btn-outline-secondary" type="button" data-task-duplicate="${escapeHtml(task.id)}">Копия</button>` : ""}${canManage ? `<button class="btn btn-sm btn-outline-danger" type="button" data-task-delete="${escapeHtml(task.id)}">Удалить</button>` : ""}</div></div></article>`; }).join("") : '<div class="workspace-empty workspace-empty--tight">Пусто</div>'}</div></article>`; }).join("")}</div>
         </section>` : ""}
         ${modeIs(filters, "table") ? `<section class="workspace-panel">
-          <div class="panel-heading"><div><h4>Р›РµРЅС‚Р° Р·Р°РґР°С‡</h4><div class="compact-help">РќРёР¶РЅСЏСЏ С‚Р°Р±Р»РёС†Р° РїРѕР»РµР·РЅР° РґР»СЏ СЃРѕСЂС‚РёСЂРѕРІРєРё Рё Р±С‹СЃС‚СЂРѕРіРѕ РїРµСЂРµС…РѕРґР° РІ РЅСѓР¶РЅСѓСЋ РєР°СЂС‚РѕС‡РєСѓ.</div></div></div>
-          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Р—Р°РґР°С‡Р°</th><th>РЎС‚Р°С‚СѓСЃ</th><th>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</th><th>РС‚РµСЂР°С†РёСЏ</th><th>РЎСЂРѕРє</th><th>РџСЂРёРѕСЂРёС‚РµС‚</th>${customHeader}<th></th></tr></thead><tbody>${filteredTasks.length ? filteredTasks.map((task) => { const status = getTaskStatusMeta(task.status); const integration = getTaskIntegrationMeta(task); return `<tr><td><strong>${escapeHtml(task.title || "Р—Р°РґР°С‡Р°")}</strong>${task.blocked ? '<div class="workspace-table__sub text-danger">Р•СЃС‚СЊ Р±Р»РѕРєРµСЂ</div>' : ""}${integration ? `<div class="workspace-table__sub">${escapeHtml(integration.label)}</div>` : ""}</td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(task.owner || "вЂ”")}</td><td>${escapeHtml(task.sprint?.title || "вЂ”")}</td><td>${escapeHtml(formatDate(task.dueDate))}</td><td>${escapeHtml(getPriorityLabel(task.priority))}</td>${renderCustomTableCells("tasks", doc, task, escapeHtml)}<td class="text-end">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">РћС‚РєСЂС‹С‚СЊ</button>` : ""}${integration ? `<button class="btn btn-sm btn-outline-secondary ms-2" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">РСЃС‚РѕС‡РЅРёРє</button>` : ""}</td></tr>`; }).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("tasks", doc, "showInTable").length}" class="text-muted">РџРѕ С‚РµРєСѓС‰РёРј С„РёР»СЊС‚СЂР°Рј Р·Р°РґР°С‡ РЅРµС‚.</td></tr>`}</tbody></table></div>
+          <div class="panel-heading"><div><h4>Лента задач</h4><div class="compact-help">Нижняя таблица полезна для сортировки и быстрого перехода в нужную карточку.</div></div></div>
+          <div class="table-shell"><table class="table table-sm align-middle workspace-table"><thead><tr><th>Задача</th><th>Статус</th><th>Ответственный</th><th>терация</th><th>Срок</th><th>Приоритет</th>${customHeader}<th></th></tr></thead><tbody>${filteredTasks.length ? filteredTasks.map((task) => { const status = getTaskStatusMeta(task.status); const integration = getTaskIntegrationMeta(task); return `<tr><td><strong>${escapeHtml(task.title || "Задача")}</strong>${task.blocked ? '<div class="workspace-table__sub text-danger">Есть блокер</div>' : ""}${integration ? `<div class="workspace-table__sub">${escapeHtml(integration.label)}</div>` : ""}</td><td>${escapeHtml(status.label)}</td><td>${escapeHtml(task.owner || "—")}</td><td>${escapeHtml(task.sprint?.title || "—")}</td><td>${escapeHtml(formatDate(task.dueDate))}</td><td>${escapeHtml(getPriorityLabel(task.priority))}</td>${renderCustomTableCells("tasks", doc, task, escapeHtml)}<td class="text-end">${canEdit ? `<button class="btn btn-sm btn-outline-dark" type="button" data-task-edit="${escapeHtml(task.id)}">Открыть</button>` : ""}${integration ? `<button class="btn btn-sm btn-outline-secondary ms-2" type="button" data-placeholder-open="${escapeHtml(integration.moduleKey)}">сточник</button>` : ""}</td></tr>`; }).join("") : `<tr><td colspan="${8 + getVisibleCustomFields("tasks", doc, "showInTable").length}" class="text-muted">По текущим фильтрам задач нет.</td></tr>`}</tbody></table></div>
         </section>` : ""}
         ${renderRelatedLinks("tasks")}
       </div>
@@ -3644,7 +3644,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     ui.crm.modal = "";
     clearDraft("crm", "deal");
     persistUiState("crm");
-    await saveDocument("crm", { ...doc, deals }, index >= 0 ? "РЎРґРµР»РєР° РѕР±РЅРѕРІР»РµРЅР°." : "РЎРґРµР»РєР° РґРѕР±Р°РІР»РµРЅР°.");
+    await saveDocument("crm", { ...doc, deals }, index >= 0 ? "Сделка обновлена." : "Сделка добавлена.");
     await rerenderCurrentModule();
   }
 
@@ -3658,7 +3658,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       name: compactText(formData.get("name")),
       sku: compactText(formData.get("sku")),
       category: compactText(formData.get("category")),
-      unit: compactText(formData.get("unit")) || "С€С‚",
+      unit: compactText(formData.get("unit")) || "шт",
       openingStock: toNumber(formData.get("openingStock")),
       minStock: toNumber(formData.get("minStock")),
       note: compactText(formData.get("note")),
@@ -3674,7 +3674,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     ui.warehouse.modal = "";
     clearDraft("warehouse", "item");
     persistUiState("warehouse");
-    await saveDocument("warehouse", { ...doc, items }, index >= 0 ? "РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР° РѕР±РЅРѕРІР»РµРЅР°." : "РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР° РґРѕР±Р°РІР»РµРЅР°.");
+    await saveDocument("warehouse", { ...doc, items }, index >= 0 ? "Позиция склада обновлена." : "Позиция склада добавлена.");
     await rerenderCurrentModule();
   }
 
@@ -3691,12 +3691,12 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    if (!record.itemId) throw new Error("Р’С‹Р±РµСЂРёС‚Рµ РїРѕР·РёС†РёСЋ РґР»СЏ РґРІРёР¶РµРЅРёСЏ.");
+    if (!record.itemId) throw new Error("Выберите позицию для движения.");
     ui.warehouse.movementItemId = record.itemId;
     ui.warehouse.modal = "";
     clearDraft("warehouse", "movement");
     persistUiState("warehouse");
-    await saveDocument("warehouse", { ...doc, movements: [record, ...(doc.movements || [])] }, "Р”РІРёР¶РµРЅРёРµ РїРѕ СЃРєР»Р°РґСѓ СЃРѕС…СЂР°РЅРµРЅРѕ.");
+    await saveDocument("warehouse", { ...doc, movements: [record, ...(doc.movements || [])] }, "Движение по складу сохранено.");
     await rerenderCurrentModule();
   }
 
@@ -3711,7 +3711,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       sku: compactText(formData.get("sku")),
       group: compactText(formData.get("group")),
       supplier: compactText(formData.get("supplier")),
-      unit: compactText(formData.get("unit")) || "С€С‚",
+      unit: compactText(formData.get("unit")) || "шт",
       purchasePrice: toNumber(formData.get("purchasePrice")),
       salePrice: toNumber(formData.get("salePrice")),
       note: compactText(formData.get("note")),
@@ -3719,7 +3719,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: existing?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    if (!record.name) throw new Error("РЈРєР°Р¶РёС‚Рµ РЅР°Р·РІР°РЅРёРµ С‚РѕРІР°СЂР°.");
+    if (!record.name) throw new Error("Укажите название товара.");
     const products = [...(doc.products || [])];
     const index = products.findIndex((item) => item.id === record.id);
     if (index >= 0) products[index] = record;
@@ -3729,7 +3729,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     ui.warehouse.mode = "products";
     clearDraft("warehouse", "product");
     persistUiState("warehouse");
-    await saveDocument("warehouse", { ...doc, products }, index >= 0 ? "РўРѕРІР°СЂ РѕР±РЅРѕРІР»РµРЅ." : "РўРѕРІР°СЂ РґРѕР±Р°РІР»РµРЅ.");
+    await saveDocument("warehouse", { ...doc, products }, index >= 0 ? "Товар обновлен." : "Товар добавлен.");
     await rerenderCurrentModule();
   }
 
@@ -3755,7 +3755,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: existing?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    if (!record.supplier) throw new Error("РЈРєР°Р¶РёС‚Рµ РїРѕСЃС‚Р°РІС‰РёРєР°.");
+    if (!record.supplier) throw new Error("Укажите поставщика.");
     const purchases = [...(doc.purchases || [])];
     const purchaseIndex = purchases.findIndex((item) => item.id === record.id);
     if (purchaseIndex >= 0) purchases[purchaseIndex] = record;
@@ -3773,7 +3773,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         kind: "in",
         qty,
         date: record.date,
-        note: record.note || `РџСЂРёРµРјРєР° РїРѕ Р·Р°РєСѓРїРєРµ ${record.number}`,
+        note: record.note || `Приемка по закупке ${record.number}`,
         integration: {
           sourceApp: "platform_purchase_flow",
           purchaseId: record.id
@@ -3795,7 +3795,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     await saveDocument(
       "warehouse",
       { ...doc, purchases, movements },
-      purchaseIndex >= 0 ? "Р—Р°РєСѓРїРєР° РѕР±РЅРѕРІР»РµРЅР°." : "Р—Р°РєСѓРїРєР° РґРѕР±Р°РІР»РµРЅР°."
+      purchaseIndex >= 0 ? "Закупка обновлена." : "Закупка добавлена."
     );
     await rerenderCurrentModule();
   }
@@ -3817,8 +3817,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: existing?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    if (!record.account) throw new Error("РЈРєР°Р¶РёС‚Рµ СЃС‡РµС‚ РёР»Рё РєР°СЃСЃСѓ.");
-    if (!record.category) throw new Error("РЈРєР°Р¶РёС‚Рµ СЃС‚Р°С‚СЊСЋ РѕРїРµСЂР°С†РёРё.");
+    if (!record.account) throw new Error("Укажите счет или кассу.");
+    if (!record.category) throw new Error("Укажите статью операции.");
     const financeEntries = [...(doc.financeEntries || [])];
     const index = financeEntries.findIndex((item) => item.id === record.id);
     if (index >= 0) financeEntries[index] = record;
@@ -3831,7 +3831,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     await saveDocument(
       "warehouse",
       { ...doc, financeEntries },
-      index >= 0 ? "РћРїРµСЂР°С†РёСЏ РѕР±РЅРѕРІР»РµРЅР°." : "РћРїРµСЂР°С†РёСЏ СЃРѕС…СЂР°РЅРµРЅР°."
+      index >= 0 ? "Операция обновлена." : "Операция сохранена."
     );
     await rerenderCurrentModule();
   }
@@ -3856,7 +3856,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: existing?.createdAt || new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    if (!record.title) throw new Error("РЈРєР°Р¶РёС‚Рµ РЅР°Р·РІР°РЅРёРµ Р·Р°РґР°РЅРёСЏ.");
+    if (!record.title) throw new Error("Укажите название задания.");
     const productionJobs = [...(doc.productionJobs || [])];
     const index = productionJobs.findIndex((item) => item.id === record.id);
     if (index >= 0) productionJobs[index] = record;
@@ -3869,7 +3869,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     await saveDocument(
       "warehouse",
       { ...doc, productionJobs },
-      index >= 0 ? "РџСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРµ Р·Р°РґР°РЅРёРµ РѕР±РЅРѕРІР»РµРЅРѕ." : "РџСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРµ Р·Р°РґР°РЅРёРµ РґРѕР±Р°РІР»РµРЅРѕ."
+      index >= 0 ? "Производственное задание обновлено." : "Производственное задание добавлено."
     );
     await rerenderCurrentModule();
   }
@@ -3894,7 +3894,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         existing,
         existing
           ? createTaskHistoryEntry({
-              title: "РљР°СЂС‚РѕС‡РєР° Р·Р°РґР°С‡Рё РѕР±РЅРѕРІР»РµРЅР°",
+              title: "Карточка задачи обновлена",
               meta: buildTaskChangeMeta(existing, {
                 title: compactText(formData.get("title")),
                 owner: compactText(formData.get("owner")),
@@ -3911,8 +3911,8 @@ function buildModeTabs(moduleKey, escapeFn) {
               entityId: existing.id
             })
           : createTaskHistoryEntry({
-              title: "Р—Р°РґР°С‡Р° СЃРѕР·РґР°РЅР°",
-              meta: "РљР°СЂС‚РѕС‡РєР° Р·Р°РІРµРґРµРЅР° РІСЂСѓС‡РЅСѓСЋ РІ С‚Р°СЃРєС‚СЂРµРєРµСЂРµ.",
+              title: "Задача создана",
+              meta: "Карточка заведена вручную в тасктрекере.",
               tone: "success",
               moduleKey: "tasks"
             })
@@ -3928,7 +3928,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     ui.tasks.modal = "";
     clearDraft("tasks", "task");
     persistUiState("tasks");
-    await saveDocument("tasks", { ...doc, tasks }, index >= 0 ? "Р—Р°РґР°С‡Р° РѕР±РЅРѕРІР»РµРЅР°." : "Р—Р°РґР°С‡Р° РґРѕР±Р°РІР»РµРЅР°.");
+    await saveDocument("tasks", { ...doc, tasks }, index >= 0 ? "Задача обновлена." : "Задача добавлена.");
     await rerenderCurrentModule();
   }
 
@@ -3954,7 +3954,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     ui.tasks.modal = "";
     clearDraft("tasks", "sprint");
     persistUiState("tasks");
-    await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "РС‚РµСЂР°С†РёСЏ РѕР±РЅРѕРІР»РµРЅР°." : "РС‚РµСЂР°С†РёСЏ РґРѕР±Р°РІР»РµРЅР°.");
+    await saveDocument("tasks", { ...doc, sprints }, index >= 0 ? "терация обновлена." : "терация добавлена.");
     await rerenderCurrentModule();
   }
 
@@ -3968,7 +3968,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       description: formData.get("description")
     });
     if (!incoming) {
-      throw new Error("РЈРєР°Р¶РёС‚Рµ РЅР°Р·РІР°РЅРёРµ Рё РєР»СЋС‡ СЃРїСЂР°РІРѕС‡РЅРёРєР°.");
+      throw new Error("Укажите название и ключ справочника.");
     }
     const lists = [...(doc.lists || [])];
     const existingIndex = lists.findIndex((list) => list.id === incoming.id || list.key === incoming.key);
@@ -3980,7 +3980,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     ui.directories.activeListId = incoming.key;
     ui.directories.modal = "";
     persistUiState("directories");
-    await saveDocument("directories", { ...doc, lists }, existingIndex >= 0 ? "РЎРїСЂР°РІРѕС‡РЅРёРє РѕР±РЅРѕРІР»С‘РЅ." : "РЎРїСЂР°РІРѕС‡РЅРёРє СЃРѕР·РґР°РЅ.");
+    await saveDocument("directories", { ...doc, lists }, existingIndex >= 0 ? "Справочник обновлён." : "Справочник создан.");
     await rerenderCurrentModule();
   }
 
@@ -3990,18 +3990,18 @@ function buildModeTabs(moduleKey, escapeFn) {
     const listKey = sanitizeKey(formData.get("key"));
     const option = compactText(formData.get("option"));
     if (!listKey || !option) {
-      throw new Error("Р’С‹Р±РµСЂРёС‚Рµ СЃРїСЂР°РІРѕС‡РЅРёРє Рё СѓРєР°Р¶РёС‚Рµ Р·РЅР°С‡РµРЅРёРµ.");
+      throw new Error("Выберите справочник и укажите значение.");
     }
     const lists = [...(doc.lists || [])];
     const index = lists.findIndex((list) => list.key === listKey || list.id === listKey);
     if (index < 0) {
-      throw new Error("РЎРїСЂР°РІРѕС‡РЅРёРє РЅРµ РЅР°Р№РґРµРЅ.");
+      throw new Error("Справочник не найден.");
     }
     lists[index] = { ...lists[index], options: [...new Set([...(lists[index].options || []), option])] };
     ui.directories.activeListId = lists[index].key;
     ui.directories.modal = "";
     persistUiState("directories");
-    await saveDocument("directories", { ...doc, lists }, "Р—РЅР°С‡РµРЅРёРµ РґРѕР±Р°РІР»РµРЅРѕ РІ СЃРїСЂР°РІРѕС‡РЅРёРє.");
+    await saveDocument("directories", { ...doc, lists }, "Значение добавлено в справочник.");
     await rerenderCurrentModule();
   }
 
@@ -4036,21 +4036,21 @@ function buildModeTabs(moduleKey, escapeFn) {
     const importableOrders = salesSnapshot.orders.filter((order) => !existingSourceKeys.has(getSalesSourceKey(order)));
 
     if (!importableOrders.length) {
-      setStatus("РќРѕРІС‹С… Р·Р°РєР°Р·РѕРІ РёР· РџСЂРѕРґР°Р¶ РґР»СЏ CRM РЅРµС‚.", "success");
+      setStatus("Новых заказов из Продаж для CRM нет.", "success");
       return;
     }
 
     importableOrders.forEach((order) => {
       nextDeals.unshift({
         id: createId("deal"),
-        title: compactText(order.title || `Р—Р°РєР°Р· ${order.orderNumber}`),
+        title: compactText(order.title || `Заказ ${order.orderNumber}`),
         client: compactText(order.client),
         channel: compactText(order.leadChannel || order.salesChannel),
         owner: compactText(order.manager),
         stage: deriveSalesDealStage(order),
         amount: toNumber(order.amount),
         deadline: normalizeDateInput(order.deliveryDate || order.invoiceDate || order.createdAt),
-        note: `РРјРїРѕСЂС‚ РёР· РџСЂРѕРґР°Р¶. Р—Р°РєР°Р· ${compactText(order.orderNumber || "Р±РµР· РЅРѕРјРµСЂР°")}${order.city ? ` вЂў ${order.city}` : ""}${order.status ? ` вЂў СЃС‚Р°С‚СѓСЃ: ${order.status}` : ""}.`,
+        note: `мпорт из Продаж. Заказ ${compactText(order.orderNumber || "без номера")}${order.city ? ` • ${order.city}` : ""}${order.status ? ` • статус: ${order.status}` : ""}.`,
         custom: {},
         integration: {
           sourceApp: EXTERNAL_SHARED_APPS.sales,
@@ -4066,7 +4066,7 @@ function buildModeTabs(moduleKey, escapeFn) {
 
     ui.crm.mode = "table";
     persistUiState("crm");
-    await saveDocument("crm", { ...doc, deals: nextDeals }, `РР· РџСЂРѕРґР°Р¶ РёРјРїРѕСЂС‚РёСЂРѕРІР°РЅРѕ ${importableOrders.length} СЃРґРµР»РѕРє.`);
+    await saveDocument("crm", { ...doc, deals: nextDeals }, `з Продаж импортировано ${importableOrders.length} сделок.`);
     await rerenderCurrentModule();
   }
 
@@ -4084,26 +4084,26 @@ function buildModeTabs(moduleKey, escapeFn) {
       .filter((entry) => !existingKeys.has(compactText(entry.sku).toLowerCase()))
       .map((entry) => ({
         id: createId("item"),
-        name: `РњР°С‚РµСЂРёР°Р» ${entry.sku}`,
+        name: `Материал ${entry.sku}`,
         sku: entry.sku,
-        category: "РРјРїРѕСЂС‚ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ",
-        unit: "РµРґ.",
+        category: "мпорт из калькуляторов",
+        unit: "ед.",
         openingStock: 0,
         minStock: Math.max(1, Math.ceil(toNumber(entry.qtyTotal))),
-        note: `РЎРѕР·РґР°РЅРѕ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ. РСЃС‚РѕС‡РЅРёРєРё: ${entry.sources.join(", ")}.`,
+        note: `Создано из калькуляторов. сточники: ${entry.sources.join(", ")}.`,
         custom: {},
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       }));
 
     if (!newItems.length) {
-      setStatus("Р’СЃРµ Р°СЂС‚РёРєСѓР»С‹ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ СѓР¶Рµ Р·Р°РІРµРґРµРЅС‹ РЅР° СЃРєР»Р°РґРµ.", "success");
+      setStatus("Все артикулы из калькуляторов уже заведены на складе.", "success");
       return;
     }
 
     ui.warehouse.mode = "catalog";
     persistUiState("warehouse");
-    await saveDocument("warehouse", { ...doc, items: [...newItems, ...(doc.items || [])] }, `РќР° СЃРєР»Р°Рґ РґРѕР±Р°РІР»РµРЅРѕ ${newItems.length} РїРѕР·РёС†РёР№ РёР· РєР°Р»СЊРєСѓР»СЏС‚РѕСЂРѕРІ.`);
+    await saveDocument("warehouse", { ...doc, items: [...newItems, ...(doc.items || [])] }, `На склад добавлено ${newItems.length} позиций из калькуляторов.`);
     await rerenderCurrentModule();
   }
 
@@ -4133,8 +4133,8 @@ function buildModeTabs(moduleKey, escapeFn) {
         sourceKey: signal.sourceKey,
         history: [
           createTaskHistoryEntry({
-            title: "Р—Р°РґР°С‡Р° СЃРѕР·РґР°РЅР° РёР· РѕРїРµСЂР°С†РёРѕРЅРЅРѕРіРѕ СЃРёРіРЅР°Р»Р°",
-            meta: `${signal.family} вЂў ${signal.note}`,
+            title: "Задача создана из операционного сигнала",
+            meta: `${signal.family} • ${signal.note}`,
             tone: signal.priority === "urgent" ? "danger" : "warning",
             moduleKey: "tasks"
           })
@@ -4144,13 +4144,13 @@ function buildModeTabs(moduleKey, escapeFn) {
       }));
 
     if (!records.length) {
-      setStatus("РќРѕРІС‹С… Р·Р°РґР°С‡ РёР· СЂРёСЃРєРѕРІ РЅРµ РЅР°Р№РґРµРЅРѕ.", "success");
+      setStatus("Новых задач из рисков не найдено.", "success");
       return;
     }
 
     ui.tasks.mode = "table";
     persistUiState("tasks");
-    await saveDocument("tasks", { ...doc, tasks: [...records, ...(doc.tasks || [])] }, `РЎРѕР·РґР°РЅРѕ ${records.length} Р·Р°РґР°С‡ РёР· РѕРїРµСЂР°С†РёРѕРЅРЅС‹С… СЃРёРіРЅР°Р»РѕРІ.`);
+    await saveDocument("tasks", { ...doc, tasks: [...records, ...(doc.tasks || [])] }, `Создано ${records.length} задач из операционных сигналов.`);
     await rerenderCurrentModule();
   }
 
@@ -4159,7 +4159,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     const tasksDoc = await ensureDocument("tasks");
     const deal = (crmDoc.deals || []).find((entry) => entry.id === dealId);
     if (!deal) {
-      setStatus("РЎРґРµР»РєР° РЅРµ РЅР°Р№РґРµРЅР°.", "error");
+      setStatus("Сделка не найдена.", "error");
       return;
     }
     const sourceKey = getCrmDealSourceKey(deal.id);
@@ -4174,20 +4174,20 @@ function buildModeTabs(moduleKey, escapeFn) {
           }
         })
       );
-      setStatus("РћС‚РєСЂС‹РІР°СЋ СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ Р·Р°РґР°С‡Сѓ РїРѕ СЃРґРµР»РєРµ.", "success");
+      setStatus("Открываю уже существующую задачу по сделке.", "success");
       return;
     }
     const sprintId = getCurrentActiveSprintId(tasksDoc);
     const record = {
       id: createId("task"),
-      title: `РЎРґРµР»РєР°: ${compactText(deal.title || deal.client || "Р±РµР· РЅР°Р·РІР°РЅРёСЏ")}`,
+      title: `Сделка: ${compactText(deal.title || deal.client || "без названия")}`,
       owner: compactText(deal.owner),
       status: "todo",
       priority: deal.stage === "production" ? "urgent" : "high",
       sprintId,
       dueDate: normalizeDateInput(deal.deadline) || todayString(),
       blocked: false,
-      note: `РЎРѕР·РґР°РЅРѕ РёР· CRM. РљР»РёРµРЅС‚: ${compactText(deal.client || "РЅРµ СѓРєР°Р·Р°РЅ")}. РЎС‚Р°РґРёСЏ: ${getCrmStageMeta(deal.stage).label}.`,
+      note: `Создано из CRM. Клиент: ${compactText(deal.client || "не указан")}. Стадия: ${getCrmStageMeta(deal.stage).label}.`,
       custom: {},
       integration: {
         sourceApp: "platform_crm_manual",
@@ -4197,8 +4197,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       sourceKey,
       history: [
         createTaskHistoryEntry({
-          title: "Р—Р°РґР°С‡Р° СЃРѕР·РґР°РЅР° РёР· CRM",
-          meta: `РЎРґРµР»РєР°: ${compactText(deal.title || deal.client || "Р±РµР· РЅР°Р·РІР°РЅРёСЏ")} вЂў ${getCrmStageMeta(deal.stage).label}`,
+          title: "Задача создана из CRM",
+          meta: `Сделка: ${compactText(deal.title || deal.client || "без названия")} • ${getCrmStageMeta(deal.stage).label}`,
           tone: deal.stage === "production" ? "warning" : "info",
           moduleKey: "crm",
           entityId: deal.id
@@ -4207,7 +4207,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    await saveDocument("tasks", { ...tasksDoc, tasks: [record, ...(tasksDoc.tasks || [])] }, "Р—Р°РґР°С‡Р° РїРѕ СЃРґРµР»РєРµ СЃРѕР·РґР°РЅР°.");
+    await saveDocument("tasks", { ...tasksDoc, tasks: [record, ...(tasksDoc.tasks || [])] }, "Задача по сделке создана.");
     rerenderDashboard();
     await rerenderCurrentModule();
   }
@@ -4217,7 +4217,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     const tasksDoc = await ensureDocument("tasks");
     const item = (warehouseDoc.items || []).find((entry) => entry.id === itemId);
     if (!item) {
-      setStatus("РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР° РЅРµ РЅР°Р№РґРµРЅР°.", "error");
+      setStatus("Позиция склада не найдена.", "error");
       return;
     }
     const sourceKey = getWarehouseItemSourceKey(item.id);
@@ -4232,20 +4232,20 @@ function buildModeTabs(moduleKey, escapeFn) {
           }
         })
       );
-      setStatus("РћС‚РєСЂС‹РІР°СЋ СѓР¶Рµ СЃСѓС‰РµСЃС‚РІСѓСЋС‰СѓСЋ Р·Р°РґР°С‡Сѓ РїРѕ РїРѕР·РёС†РёРё СЃРєР»Р°РґР°.", "success");
+      setStatus("Открываю уже существующую задачу по позиции склада.", "success");
       return;
     }
     const sprintId = getCurrentActiveSprintId(tasksDoc);
     const record = {
       id: createId("task"),
-      title: `РЎРєР»Р°Рґ: ${compactText(item.name || item.sku || "РїРѕР·РёС†РёСЏ")}`,
-      owner: "Р—Р°РєСѓРїРєРё",
+      title: `Склад: ${compactText(item.name || item.sku || "позиция")}`,
+      owner: "Закупки",
       status: "todo",
       priority: "high",
       sprintId,
       dueDate: todayString(),
       blocked: false,
-      note: `РЎРѕР·РґР°РЅРѕ РёР· СЃРєР»Р°РґР°. SKU: ${compactText(item.sku || "вЂ”")}. РњРёРЅРёРјСѓРј: ${formatNumber(item.minStock || 0)}.`,
+      note: `Создано из склада. SKU: ${compactText(item.sku || "—")}. Минимум: ${formatNumber(item.minStock || 0)}.`,
       custom: {},
       integration: {
         sourceApp: "platform_warehouse_manual",
@@ -4255,8 +4255,8 @@ function buildModeTabs(moduleKey, escapeFn) {
       sourceKey,
       history: [
         createTaskHistoryEntry({
-          title: "Р—Р°РґР°С‡Р° СЃРѕР·РґР°РЅР° РёР· СЃРєР»Р°РґР°",
-          meta: `РџРѕР·РёС†РёСЏ: ${compactText(item.name || item.sku || "Р±РµР· РЅР°Р·РІР°РЅРёСЏ")} вЂў РјРёРЅРёРјСѓРј ${formatNumber(item.minStock || 0)}`,
+          title: "Задача создана из склада",
+          meta: `Позиция: ${compactText(item.name || item.sku || "без названия")} • минимум ${formatNumber(item.minStock || 0)}`,
           tone: "warning",
           moduleKey: "warehouse",
           entityId: item.id
@@ -4265,7 +4265,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    await saveDocument("tasks", { ...tasksDoc, tasks: [record, ...(tasksDoc.tasks || [])] }, "Р—Р°РґР°С‡Р° РїРѕ РїРѕР·РёС†РёРё СЃРєР»Р°РґР° СЃРѕР·РґР°РЅР°.");
+    await saveDocument("tasks", { ...tasksDoc, tasks: [record, ...(tasksDoc.tasks || [])] }, "Задача по позиции склада создана.");
     rerenderDashboard();
     await rerenderCurrentModule();
   }
@@ -4278,12 +4278,12 @@ function buildModeTabs(moduleKey, escapeFn) {
     const itemId = compactText(formData.get("itemId"));
     const qty = toNumber(formData.get("qty"));
     if (!dealId || !itemId || qty <= 0) {
-      throw new Error("Р’С‹Р±РµСЂРёС‚Рµ СЃРґРµР»РєСѓ, РїРѕР·РёС†РёСЋ СЃРєР»Р°РґР° Рё РєРѕР»РёС‡РµСЃС‚РІРѕ.");
+      throw new Error("Выберите сделку, позицию склада и количество.");
     }
     const deal = (crmDoc.deals || []).find((entry) => entry.id === dealId);
     const item = (warehouseDoc.items || []).find((entry) => entry.id === itemId);
     if (!deal || !item) {
-      throw new Error("РЎРґРµР»РєР° РёР»Рё РїРѕР·РёС†РёСЏ СЃРєР»Р°РґР° РЅРµ РЅР°Р№РґРµРЅС‹.");
+      throw new Error("Сделка или позиция склада не найдены.");
     }
     ui.crm.modal = "";
     clearDraft("crm", "reserve");
@@ -4294,7 +4294,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       kind: "reserve",
       qty,
       date: normalizeDateInput(formData.get("date")) || todayString(),
-      note: compactText(formData.get("note")) || `Р РµР·РµСЂРІ РїРѕРґ СЃРґРµР»РєСѓ ${compactText(deal.title || deal.client || "Р±РµР· РЅР°Р·РІР°РЅРёСЏ")}`,
+      note: compactText(formData.get("note")) || `Резерв под сделку ${compactText(deal.title || deal.client || "без названия")}`,
       integration: {
         sourceApp: "platform_crm_manual",
         sourceKey: getCrmDealSourceKey(deal.id),
@@ -4304,7 +4304,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
-    await saveDocument("warehouse", { ...warehouseDoc, movements: [movement, ...(warehouseDoc.movements || [])] }, "Р РµР·РµСЂРІ РїРѕРґ СЃРґРµР»РєСѓ СЃРѕР·РґР°РЅ.");
+    await saveDocument("warehouse", { ...warehouseDoc, movements: [movement, ...(warehouseDoc.movements || [])] }, "Резерв под сделку создан.");
     await rerenderCurrentModule();
   }
 
@@ -4315,7 +4315,7 @@ function buildModeTabs(moduleKey, escapeFn) {
 
     if (action === "view") {
       const label = compactText(formData.get("label"));
-      if (!label) throw new Error("РЈРєР°Р¶РёС‚Рµ РЅР°Р·РІР°РЅРёРµ РІРєР»Р°РґРєРё.");
+      if (!label) throw new Error("Укажите название вкладки.");
       const filterKeys = Object.keys(getDefaultFilters(moduleKey));
       const nextView = {
         id: sanitizeKey(label) || createId("view"),
@@ -4323,7 +4323,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         filters: Object.fromEntries(filterKeys.map((key) => [key, ui[moduleKey][key]]))
       };
       const views = [createDefaultView(moduleKey), ...(doc.builder.views || []).filter((view) => view.id !== "default" && view.id !== nextView.id), nextView];
-      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, views } }, "Р’РєР»Р°РґРєР° СЃРѕС…СЂР°РЅРµРЅР°.");
+      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, views } }, "Вкладка сохранена.");
       ui[moduleKey].activeViewId = nextView.id;
       ui[moduleKey].configOpen = true;
       await rerenderCurrentModule();
@@ -4340,9 +4340,9 @@ function buildModeTabs(moduleKey, escapeFn) {
         showInTable: formData.get("showInTable") === "on",
         showInCard: formData.get("showInCard") === "on"
       });
-      if (!field) throw new Error("РЈРєР°Р¶РёС‚Рµ РєР»СЋС‡ Рё РїРѕРґРїРёСЃСЊ РїРѕР»СЏ.");
+      if (!field) throw new Error("Укажите ключ и подпись поля.");
       const fields = [...(doc.builder.fields || []).filter((item) => item.key !== field.key), field];
-      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, fields } }, "РџРѕР»Рµ РґРѕР±Р°РІР»РµРЅРѕ РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ.");
+      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, fields } }, "Поле добавлено в конструктор.");
       ui[moduleKey].configOpen = true;
       await rerenderCurrentModule();
       return;
@@ -4355,9 +4355,9 @@ function buildModeTabs(moduleKey, escapeFn) {
         expression: formData.get("expression"),
         format: formData.get("format")
       });
-      if (!formula || !formula.expression) throw new Error("РЈРєР°Р¶РёС‚Рµ РєР»СЋС‡, РЅР°Р·РІР°РЅРёРµ Рё С„РѕСЂРјСѓР»Сѓ.");
+      if (!formula || !formula.expression) throw new Error("Укажите ключ, название и формулу.");
       const formulas = [...(doc.builder.formulas || []).filter((item) => item.key !== formula.key), formula];
-      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, formulas } }, "Р¤РѕСЂРјСѓР»Р° РґРѕР±Р°РІР»РµРЅР°.");
+      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, formulas } }, "Формула добавлена.");
       ui[moduleKey].configOpen = true;
       await rerenderCurrentModule();
       return;
@@ -4366,16 +4366,16 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (action === "schema") {
       const rawSchema = compactText(formData.get("schema"));
       if (!rawSchema) {
-        throw new Error("Р’СЃС‚Р°РІСЊС‚Рµ JSON-СЃС…РµРјСѓ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР°.");
+        throw new Error("Вставьте JSON-схему конструктора.");
       }
       let parsed;
       try {
         parsed = JSON.parse(rawSchema);
       } catch (error) {
-        throw new Error(`JSON РЅРµ СЂР°СЃРїРѕР·РЅР°РЅ: ${error.message || "РѕС€РёР±РєР° СЃРёРЅС‚Р°РєСЃРёСЃР°"}`);
+        throw new Error(`JSON не распознан: ${error.message || "ошибка синтаксиса"}`);
       }
       const builder = normalizeBuilderSchema(moduleKey, parsed);
-      await saveDocument(moduleKey, { ...doc, builder }, "JSON-СЃС…РµРјР° РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂР° СЃРѕС…СЂР°РЅРµРЅР°.");
+      await saveDocument(moduleKey, { ...doc, builder }, "JSON-схема конструктора сохранена.");
       ui[moduleKey].configOpen = true;
       await rerenderCurrentModule();
     }
@@ -4486,7 +4486,7 @@ function buildModeTabs(moduleKey, escapeFn) {
               <h3>${escapeHtml(title)}</h3>
               ${subtitle ? `<p>${escapeHtml(subtitle)}</p>` : ""}
             </div>
-            <button class="btn btn-sm btn-outline-secondary" type="button" data-live-modal-close>Р—Р°РєСЂС‹С‚СЊ</button>
+            <button class="btn btn-sm btn-outline-secondary" type="button" data-live-modal-close>Закрыть</button>
           </div>
           <div class="workspace-modal__body">${formHtml}</div>
         </div>
@@ -4502,18 +4502,18 @@ function buildModeTabs(moduleKey, escapeFn) {
     const draft = readDraft("crm", "reserve");
     const selectedDealId = compactText(draft?.dealId || ui.crm.editId || "");
     return renderWorkspaceModalShell(
-      "Р РµР·РµСЂРІ РјР°С‚РµСЂРёР°Р»РѕРІ РїРѕРґ СЃРґРµР»РєСѓ",
+      "Резерв материалов под сделку",
       `<form id="crmReserveForm" class="workspace-form" data-draft-form="reserve">
         <div class="workspace-form-grid">
-          <label><span>РЎРґРµР»РєР°</span><select class="form-select" name="dealId" required><option value="">Р’С‹Р±РµСЂРёС‚Рµ СЃРґРµР»РєСѓ</option>${reserveDealOptions.map((deal) => `<option value="${escapeHtml(deal.id)}" ${selectedDealId === deal.id ? "selected" : ""}>${escapeHtml(deal.title || deal.client || "РЎРґРµР»РєР°")} вЂў ${escapeHtml(deal.client || "вЂ”")}</option>`).join("")}</select></label>
-          <label><span>РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР°</span><select class="form-select" name="itemId" required><option value="">Р’С‹Р±РµСЂРёС‚Рµ РјР°С‚РµСЂРёР°Р»</option>${(warehouseDoc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${compactText(draft?.itemId || "") === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""} вЂў РґРѕСЃС‚СѓРїРЅРѕ ${escapeHtml(formatNumber(toNumber(item.available || item.openingStock || 0)))}</option>`).join("")}</select></label>
-          <label><span>РљРѕР»РёС‡РµСЃС‚РІРѕ</span><input class="form-control" type="number" min="1" step="1" name="qty" value="${escapeHtml(compactText(draft?.qty || ""))}" required /></label>
-          <label><span>Р”Р°С‚Р°</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draft?.date || todayString()))}" /></label>
+          <label><span>Сделка</span><select class="form-select" name="dealId" required><option value="">Выберите сделку</option>${reserveDealOptions.map((deal) => `<option value="${escapeHtml(deal.id)}" ${selectedDealId === deal.id ? "selected" : ""}>${escapeHtml(deal.title || deal.client || "Сделка")} • ${escapeHtml(deal.client || "—")}</option>`).join("")}</select></label>
+          <label><span>Позиция склада</span><select class="form-select" name="itemId" required><option value="">Выберите материал</option>${(warehouseDoc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${compactText(draft?.itemId || "") === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""} • доступно ${escapeHtml(formatNumber(toNumber(item.available || item.openingStock || 0)))}</option>`).join("")}</select></label>
+          <label><span>Количество</span><input class="form-control" type="number" min="1" step="1" name="qty" value="${escapeHtml(compactText(draft?.qty || ""))}" required /></label>
+          <label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draft?.date || todayString()))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="3" placeholder="РќР°РїСЂРёРјРµСЂ: СЂРµР·РµСЂРІ РїРѕРґ РїСЂРѕРёР·РІРѕРґСЃС‚РІРѕ РёР»Рё РјРѕРЅС‚Р°Р¶">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Р РµР·РµСЂРІРёСЂРѕРІР°С‚СЊ</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="3" placeholder="Например: резерв под производство или монтаж">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Резервировать</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "РћС‚РґРµР»СЊРЅРѕРµ РѕРєРЅРѕ РґР»СЏ Р±С‹СЃС‚СЂРѕРіРѕ СЂРµР·РµСЂРІР° РјР°С‚РµСЂРёР°Р»РѕРІ РїРѕРґ СЃРґРµР»РєСѓ Р±РµР· РїРµСЂРµРіСЂСѓР·Р° РѕСЃРЅРѕРІРЅРѕРіРѕ СЌРєСЂР°РЅР°."
+      "Отдельное окно для быстрого резерва материалов под сделку без перегруза основного экрана."
     );
   }
 
@@ -4522,17 +4522,17 @@ function buildModeTabs(moduleKey, escapeFn) {
       (doc.lists || []).find((list) => list.id === ui.directories.activeListId || list.key === ui.directories.activeListId) ||
       null;
     return renderWorkspaceModalShell(
-      selectedList ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЃРїСЂР°РІРѕС‡РЅРёРєР°" : "РќРѕРІС‹Р№ СЃРїСЂР°РІРѕС‡РЅРёРє",
+      selectedList ? "Редактирование справочника" : "Новый справочник",
       `<form id="directoriesListForm" class="workspace-form">
         <input type="hidden" name="id" value="${escapeHtml(selectedList?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="title" value="${escapeHtml(selectedList?.title || "")}" placeholder="РќР°РїСЂРёРјРµСЂ: РљР°РЅР°Р»С‹ CRM" required /></label>
-          <label><span>РљР»СЋС‡</span><input class="form-control" type="text" name="key" value="${escapeHtml(selectedList?.key || "")}" placeholder="crm_channels" required /></label>
+          <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(selectedList?.title || "")}" placeholder="Например: Каналы CRM" required /></label>
+          <label><span>Ключ</span><input class="form-control" type="text" name="key" value="${escapeHtml(selectedList?.key || "")}" placeholder="crm_channels" required /></label>
         </div>
-        <label><span>РћРїРёСЃР°РЅРёРµ</span><textarea class="form-control" name="description" rows="3" placeholder="Р“РґРµ Рё РґР»СЏ С‡РµРіРѕ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ СЌС‚РѕС‚ СЃРїРёСЃРѕРє">${escapeHtml(selectedList?.description || "")}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${selectedList ? "РЎРѕС…СЂР°РЅРёС‚СЊ СЃРїСЂР°РІРѕС‡РЅРёРє" : "РЎРѕР·РґР°С‚СЊ СЃРїСЂР°РІРѕС‡РЅРёРє"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Описание</span><textarea class="form-control" name="description" rows="3" placeholder="Где и для чего используется этот список">${escapeHtml(selectedList?.description || "")}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${selectedList ? "Сохранить справочник" : "Создать справочник"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "РЎРїСЂР°РІРѕС‡РЅРёРє СЃРѕР·РґР°С‘С‚СЃСЏ РѕРґРёРЅ СЂР°Р· Рё РїРѕС‚РѕРј РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ С„РѕСЂРјР°С… CRM, СЃРєР»Р°РґР°, Р·Р°РґР°С‡ Рё РґСЂСѓРіРёС… СЂР°Р·РґРµР»РѕРІ."
+      "Справочник создаётся один раз и потом используется в формах CRM, склада, задач и других разделов."
     );
   }
 
@@ -4542,20 +4542,20 @@ function buildModeTabs(moduleKey, escapeFn) {
       null;
     if (!selectedList) {
       return renderWorkspaceModalShell(
-        "РЎРЅР°С‡Р°Р»Р° РІС‹Р±РµСЂРёС‚Рµ СЃРїСЂР°РІРѕС‡РЅРёРє",
-        `<div class="workspace-empty workspace-empty--tight">Р’С‹Р±РµСЂРёС‚Рµ СЃРїСЂР°РІРѕС‡РЅРёРє РІ РєР°С‚Р°Р»РѕРіРµ, Р° Р·Р°С‚РµРј РґРѕР±Р°РІР»СЏР№С‚Рµ Р·РЅР°С‡РµРЅРёСЏ.</div>`,
-        "Р—РЅР°С‡РµРЅРёСЏ РІСЃРµРіРґР° РґРѕР±Р°РІР»СЏСЋС‚СЃСЏ РІ РєРѕРЅРєСЂРµС‚РЅС‹Р№ СЃРїСЂР°РІРѕС‡РЅРёРє."
+        "Сначала выберите справочник",
+        `<div class="workspace-empty workspace-empty--tight">Выберите справочник в каталоге, а затем добавляйте значения.</div>`,
+        "Значения всегда добавляются в конкретный справочник."
       );
     }
     return renderWorkspaceModalShell(
-      "РќРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ СЃРїСЂР°РІРѕС‡РЅРёРєР°",
+      "Новое значение справочника",
       `<form id="directoriesOptionForm" class="workspace-form">
         <input type="hidden" name="key" value="${escapeHtml(selectedList.key)}" />
-        <label><span>РЎРїСЂР°РІРѕС‡РЅРёРє</span><input class="form-control" type="text" value="${escapeHtml(selectedList.title)}" disabled /></label>
-        <label><span>РќРѕРІРѕРµ Р·РЅР°С‡РµРЅРёРµ</span><input class="form-control" type="text" name="option" placeholder="Р”РѕР±Р°РІРёС‚СЊ Р·РЅР°С‡РµРЅРёРµ" required /></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Р”РѕР±Р°РІРёС‚СЊ Р·РЅР°С‡РµРЅРёРµ</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Справочник</span><input class="form-control" type="text" value="${escapeHtml(selectedList.title)}" disabled /></label>
+        <label><span>Новое значение</span><input class="form-control" type="text" name="option" placeholder="Добавить значение" required /></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Добавить значение</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "Р—РЅР°С‡РµРЅРёРµ СЃСЂР°Р·Сѓ РїРѕСЏРІРёС‚СЃСЏ РІ РІС‹РїР°РґР°СЋС‰РёС… СЃРїРёСЃРєР°С… РїР»Р°С‚С„РѕСЂРјС‹."
+      "Значение сразу появится в выпадающих списках платформы."
     );
   }
 
@@ -4563,23 +4563,23 @@ function buildModeTabs(moduleKey, escapeFn) {
     const existing = (doc.deals || []).find((deal) => deal.id === ui.crm.editId) || null;
     const draft = readDraft("crm", "deal");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЃРґРµР»РєРё" : "РќРѕРІР°СЏ СЃРґРµР»РєР°",
+      existing ? "Редактирование сделки" : "Новая сделка",
       `<form id="crmDealModalForm" class="workspace-form" data-draft-form="deal">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РќР°Р·РІР°РЅРёРµ СЃРґРµР»РєРё</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
-          <label><span>РљР»РёРµРЅС‚</span><input class="form-control" type="text" name="client" value="${escapeHtml(draftValue(existing?.client || "", draft?.client))}" required /></label>
-          <label><span>РљР°РЅР°Р»</span><input class="form-control" type="text" name="channel" value="${escapeHtml(draftValue(existing?.channel || "", draft?.channel))}" /></label>
-          <label><span>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue(existing?.owner || "", draft?.owner))}" /></label>
-          <label><span>РЎС‚Р°РґРёСЏ</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${((draftValue(existing?.stage || "lead", draft?.stage || "lead")) === stage.key) ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label>
-          <label><span>РЎСѓРјРјР°, в‚Ѕ</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(draftValue(existing?.amount || "", draft?.amount || ""))}" /></label>
-          <label><span>РЎСЂРѕРє</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(draftValue(existing?.deadline || "", draft?.deadline || "")))}" /></label>
+          <label><span>Название сделки</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
+          <label><span>Клиент</span><input class="form-control" type="text" name="client" value="${escapeHtml(draftValue(existing?.client || "", draft?.client))}" required /></label>
+          <label><span>Канал</span><input class="form-control" type="text" name="channel" value="${escapeHtml(draftValue(existing?.channel || "", draft?.channel))}" /></label>
+          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue(existing?.owner || "", draft?.owner))}" /></label>
+          <label><span>Стадия</span><select class="form-select" name="stage">${CRM_STAGES.map((stage) => `<option value="${escapeHtml(stage.key)}" ${((draftValue(existing?.stage || "lead", draft?.stage || "lead")) === stage.key) ? "selected" : ""}>${escapeHtml(stage.label)}</option>`).join("")}</select></label>
+          <label><span>Сумма, ₽</span><input class="form-control" type="number" min="0" step="1" name="amount" value="${escapeHtml(draftValue(existing?.amount || "", draft?.amount || ""))}" /></label>
+          <label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(draftValue(existing?.deadline || "", draft?.deadline || "")))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
         ${renderCustomFieldSection("crm", doc, existing || draft, escapeHtml)}
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ РёР·РјРµРЅРµРЅРёСЏ" : "РЎРѕС…СЂР°РЅРёС‚СЊ СЃРґРµР»РєСѓ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить изменения" : "Сохранить сделку"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      existing ? "РџРѕР»РЅР°СЏ РєР°СЂС‚РѕС‡РєР° СЃРґРµР»РєРё РІРѕ РІСЃРїР»С‹РІР°СЋС‰РµРј РѕРєРЅРµ Р±РµР· СѓС…РѕРґР° РёР· С‚РµРєСѓС‰РµРіРѕ СЂРµР¶РёРјР°." : "Р‘С‹СЃС‚СЂРѕРµ СЃРѕР·РґР°РЅРёРµ СЃРґРµР»РєРё РІРѕ РІСЃРїР»С‹РІР°СЋС‰РµРј РѕРєРЅРµ Р±РµР· СѓС…РѕРґР° РёР· С‚РµРєСѓС‰РµРіРѕ РІРёРґР°."
+      existing ? "Полная карточка сделки во всплывающем окне без ухода из текущего режима." : "Быстрое создание сделки во всплывающем окне без ухода из текущего вида."
     );
   }
 
@@ -4587,40 +4587,40 @@ function buildModeTabs(moduleKey, escapeFn) {
     const existing = (doc.items || []).find((item) => item.id === ui.warehouse.itemEditId) || null;
     const draft = readDraft("warehouse", "item");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РїРѕР·РёС†РёРё СЃРєР»Р°РґР°" : "РќРѕРІР°СЏ РїРѕР·РёС†РёСЏ СЃРєР»Р°РґР°",
+      existing ? "Редактирование позиции склада" : "Новая позиция склада",
       `<form id="warehouseItemModalForm" class="workspace-form" data-draft-form="item">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="name" value="${escapeHtml(draftValue(existing?.name || "", draft?.name))}" required /></label>
-          <label><span>SKU / Р°СЂС‚РёРєСѓР»</span><input class="form-control" type="text" name="sku" value="${escapeHtml(draftValue(existing?.sku || "", draft?.sku))}" /></label>
-          <label><span>РљР°С‚РµРіРѕСЂРёСЏ</span><input class="form-control" type="text" name="category" value="${escapeHtml(draftValue(existing?.category || "", draft?.category))}" /></label>
-          <label><span>Р•Рґ. РёР·Рј.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(draftValue(existing?.unit || "С€С‚", draft?.unit || "С€С‚"))}" /></label>
-          <label><span>РЎС‚Р°СЂС‚РѕРІС‹Р№ РѕСЃС‚Р°С‚РѕРє</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(draftValue(existing?.openingStock || "", draft?.openingStock || ""))}" /></label>
-          <label><span>РњРёРЅРёРјСѓРј</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(draftValue(existing?.minStock || "", draft?.minStock || ""))}" /></label>
+          <label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(draftValue(existing?.name || "", draft?.name))}" required /></label>
+          <label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(draftValue(existing?.sku || "", draft?.sku))}" /></label>
+          <label><span>Категория</span><input class="form-control" type="text" name="category" value="${escapeHtml(draftValue(existing?.category || "", draft?.category))}" /></label>
+          <label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(draftValue(existing?.unit || "шт", draft?.unit || "шт"))}" /></label>
+          <label><span>Стартовый остаток</span><input class="form-control" type="number" min="0" step="1" name="openingStock" value="${escapeHtml(draftValue(existing?.openingStock || "", draft?.openingStock || ""))}" /></label>
+          <label><span>Минимум</span><input class="form-control" type="number" min="0" step="1" name="minStock" value="${escapeHtml(draftValue(existing?.minStock || "", draft?.minStock || ""))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
         ${renderCustomFieldSection("warehouse", doc, existing || draft, escapeHtml)}
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ РїРѕР·РёС†РёСЋ" : "РЎРѕС…СЂР°РЅРёС‚СЊ РїРѕР·РёС†РёСЋ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить позицию" : "Сохранить позицию"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      existing ? "РџРѕР»РЅР°СЏ РєР°СЂС‚РѕС‡РєР° СЃРєР»Р°РґСЃРєРѕР№ РїРѕР·РёС†РёРё РІРѕ РІСЃРїР»С‹РІР°СЋС‰РµРј РѕРєРЅРµ Р±РµР· Р»РёС€РЅРµРіРѕ РїРµСЂРµС…РѕРґР° РїРѕ СЌРєСЂР°РЅСѓ." : "РЎРѕР·РґР°РЅРёРµ С‚РѕРІР°СЂР° РёР»Рё РјР°С‚РµСЂРёР°Р»Р° РІ РѕС‚РґРµР»СЊРЅРѕРј РѕРєРЅРµ РїРѕ Р»РѕРіРёРєРµ РњРѕР№РЎРєР»Р°Рґ."
+      existing ? "Полная карточка складской позиции во всплывающем окне без лишнего перехода по экрану." : "Создание товара или материала в отдельном окне по логике МойСклад."
     );
   }
 
   function renderWarehouseMovementCreateModal(doc) {
     const draft = readDraft("warehouse", "movement");
     return renderWorkspaceModalShell(
-      "РќРѕРІРѕРµ РґРІРёР¶РµРЅРёРµ РїРѕ СЃРєР»Р°РґСѓ",
+      "Новое движение по складу",
       `<form id="warehouseMovementModalForm" class="workspace-form" data-draft-form="movement">
         <div class="workspace-form-grid">
-          <label><span>РџРѕР·РёС†РёСЏ</span><select class="form-select" name="itemId" required><option value="">Р’С‹Р±РµСЂРёС‚Рµ РїРѕР·РёС†РёСЋ</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${(ui.warehouse.movementItemId === item.id || draft?.itemId === item.id) ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label>
-          <label><span>РўРёРї</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draft?.kind || "in") === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>РљРѕР»РёС‡РµСЃС‚РІРѕ</span><input class="form-control" type="number" min="0" step="1" name="qty" value="${escapeHtml(compactText(draft?.qty || ""))}" required /></label>
-          <label><span>Р”Р°С‚Р°</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draft?.date || todayString()))}" /></label>
+          <label><span>Позиция</span><select class="form-select" name="itemId" required><option value="">Выберите позицию</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${(ui.warehouse.movementItemId === item.id || draft?.itemId === item.id) ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label>
+          <label><span>Тип</span><select class="form-select" name="kind">${WAREHOUSE_MOVEMENT_TYPES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draft?.kind || "in") === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Количество</span><input class="form-control" type="number" min="0" step="1" name="qty" value="${escapeHtml(compactText(draft?.qty || ""))}" required /></label>
+          <label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draft?.date || todayString()))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">РЎРѕС…СЂР°РЅРёС‚СЊ РґРІРёР¶РµРЅРёРµ</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue("", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">Сохранить движение</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "РџСЂРёС…РѕРґ, СЃРїРёСЃР°РЅРёРµ Рё СЂРµР·РµСЂРІ С‚РµРїРµСЂСЊ РјРѕР¶РЅРѕ РІРЅРѕСЃРёС‚СЊ РІСЃРїР»С‹РІР°СЋС‰РёРј РѕРєРЅРѕРј."
+      "Приход, списание и резерв теперь можно вносить всплывающим окном."
     );
   }
 
@@ -4628,22 +4628,22 @@ function buildModeTabs(moduleKey, escapeFn) {
     const existing = (doc.products || []).find((item) => item.id === ui.warehouse.productEditId) || null;
     const draft = readDraft("warehouse", "product");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ С‚РѕРІР°СЂР°" : "РќРѕРІС‹Р№ С‚РѕРІР°СЂ",
+      existing ? "Редактирование товара" : "Новый товар",
       `<form id="warehouseProductModalForm" class="workspace-form" data-draft-form="product">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="name" value="${escapeHtml(draftValue(existing?.name || "", draft?.name))}" required /></label>
-          <label><span>SKU / Р°СЂС‚РёРєСѓР»</span><input class="form-control" type="text" name="sku" value="${escapeHtml(draftValue(existing?.sku || "", draft?.sku))}" /></label>
-          <label><span>Р“СЂСѓРїРїР°</span><input class="form-control" type="text" name="group" value="${escapeHtml(draftValue(existing?.group || "", draft?.group))}" /></label>
-          <label><span>РџРѕСЃС‚Р°РІС‰РёРє</span><input class="form-control" type="text" name="supplier" value="${escapeHtml(draftValue(existing?.supplier || "", draft?.supplier))}" /></label>
-          <label><span>Р•Рґ. РёР·Рј.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(draftValue(existing?.unit || "С€С‚", draft?.unit || "С€С‚"))}" /></label>
-          <label><span>Р—Р°РєСѓРїРѕС‡РЅР°СЏ С†РµРЅР°</span><input class="form-control" type="number" min="0" step="0.01" name="purchasePrice" value="${escapeHtml(draftValue(existing?.purchasePrice || "", draft?.purchasePrice))}" /></label>
-          <label><span>Р¦РµРЅР° РїСЂРѕРґР°Р¶Рё</span><input class="form-control" type="number" min="0" step="0.01" name="salePrice" value="${escapeHtml(draftValue(existing?.salePrice || "", draft?.salePrice))}" /></label>
+          <label><span>Название</span><input class="form-control" type="text" name="name" value="${escapeHtml(draftValue(existing?.name || "", draft?.name))}" required /></label>
+          <label><span>SKU / артикул</span><input class="form-control" type="text" name="sku" value="${escapeHtml(draftValue(existing?.sku || "", draft?.sku))}" /></label>
+          <label><span>Группа</span><input class="form-control" type="text" name="group" value="${escapeHtml(draftValue(existing?.group || "", draft?.group))}" /></label>
+          <label><span>Поставщик</span><input class="form-control" type="text" name="supplier" value="${escapeHtml(draftValue(existing?.supplier || "", draft?.supplier))}" /></label>
+          <label><span>Ед. изм.</span><input class="form-control" type="text" name="unit" value="${escapeHtml(draftValue(existing?.unit || "шт", draft?.unit || "шт"))}" /></label>
+          <label><span>Закупочная цена</span><input class="form-control" type="number" min="0" step="0.01" name="purchasePrice" value="${escapeHtml(draftValue(existing?.purchasePrice || "", draft?.purchasePrice))}" /></label>
+          <label><span>Цена продажи</span><input class="form-control" type="number" min="0" step="0.01" name="salePrice" value="${escapeHtml(draftValue(existing?.salePrice || "", draft?.salePrice))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ С‚РѕРІР°СЂ" : "РЎРѕР·РґР°С‚СЊ С‚РѕРІР°СЂ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить товар" : "Создать товар"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "РћС‚РґРµР»СЊРЅР°СЏ РєР°СЂС‚РѕС‡РєР° С‚РѕРІР°СЂР° РґР»СЏ РєР°С‚Р°Р»РѕРіР°, С†РµРЅ, РїРѕСЃС‚Р°РІС‰РёРєРѕРІ Рё РіРѕС‚РѕРІРѕР№ РїСЂРѕРґСѓРєС†РёРё."
+      "Отдельная карточка товара для каталога, цен, поставщиков и готовой продукции."
     );
   }
 
@@ -4651,24 +4651,24 @@ function buildModeTabs(moduleKey, escapeFn) {
     const existing = (doc.purchases || []).find((item) => item.id === ui.warehouse.purchaseEditId) || null;
     const draft = readDraft("warehouse", "purchase");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ Р·Р°РєСѓРїРєРё" : "РќРѕРІР°СЏ Р·Р°РєСѓРїРєР°",
+      existing ? "Редактирование закупки" : "Новая закупка",
       `<form id="warehousePurchaseModalForm" class="workspace-form" data-draft-form="purchase">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РќРѕРјРµСЂ</span><input class="form-control" type="text" name="number" value="${escapeHtml(draftValue(existing?.number || "", draft?.number))}" /></label>
-          <label><span>РџРѕСЃС‚Р°РІС‰РёРє</span><input class="form-control" type="text" name="supplier" value="${escapeHtml(draftValue(existing?.supplier || "", draft?.supplier))}" required /></label>
-          <label><span>РЎС‚Р°С‚СѓСЃ</span><select class="form-select" name="status">${WAREHOUSE_PURCHASE_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${draftValue(existing?.status || "draft", draft?.status || "draft") === item.key ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>Р”Р°С‚Р°</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draftValue(existing?.date || todayString(), draft?.date || todayString())))}" /></label>
-          <label><span>РћР¶РёРґР°РµРјР°СЏ РґР°С‚Р°</span><input class="form-control" type="date" name="expectedDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.expectedDate || "", draft?.expectedDate || "")))}" /></label>
-          <label><span>РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР°</span><select class="form-select" name="itemId"><option value="">Р‘РµР· РїРѕР·РёС†РёРё</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${draftValue(existing?.itemId || "", draft?.itemId || "") === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label>
-          <label><span>РљРѕР»РёС‡РµСЃС‚РІРѕ / РѕР±СЉРµРј</span><input class="form-control" type="number" min="0" step="0.01" name="qty" value="${escapeHtml(draftValue(existing?.qty || "", draft?.qty || ""))}" /></label>
-          <label><span>РЎС‡РµС‚ / РєР°СЃСЃР°</span><input class="form-control" type="text" name="account" value="${escapeHtml(draftValue(existing?.account || "", draft?.account))}" /></label>
-          <label><span>РЎСѓРјРјР°</span><input class="form-control" type="number" min="0" step="0.01" name="amount" value="${escapeHtml(draftValue(existing?.amount || "", draft?.amount))}" /></label>
+          <label><span>Номер</span><input class="form-control" type="text" name="number" value="${escapeHtml(draftValue(existing?.number || "", draft?.number))}" /></label>
+          <label><span>Поставщик</span><input class="form-control" type="text" name="supplier" value="${escapeHtml(draftValue(existing?.supplier || "", draft?.supplier))}" required /></label>
+          <label><span>Статус</span><select class="form-select" name="status">${WAREHOUSE_PURCHASE_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${draftValue(existing?.status || "draft", draft?.status || "draft") === item.key ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draftValue(existing?.date || todayString(), draft?.date || todayString())))}" /></label>
+          <label><span>Ожидаемая дата</span><input class="form-control" type="date" name="expectedDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.expectedDate || "", draft?.expectedDate || "")))}" /></label>
+          <label><span>Позиция склада</span><select class="form-select" name="itemId"><option value="">Без позиции</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${draftValue(existing?.itemId || "", draft?.itemId || "") === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label>
+          <label><span>Количество / объем</span><input class="form-control" type="number" min="0" step="0.01" name="qty" value="${escapeHtml(draftValue(existing?.qty || "", draft?.qty || ""))}" /></label>
+          <label><span>Счет / касса</span><input class="form-control" type="text" name="account" value="${escapeHtml(draftValue(existing?.account || "", draft?.account))}" /></label>
+          <label><span>Сумма</span><input class="form-control" type="number" min="0" step="0.01" name="amount" value="${escapeHtml(draftValue(existing?.amount || "", draft?.amount))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РєСѓРїРєСѓ" : "РЎРѕР·РґР°С‚СЊ Р·Р°РєСѓРїРєСѓ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить закупку" : "Создать закупку"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "Р—Р°РєСѓРїРєР° СЃСЂР°Р·Сѓ СЃРІСЏР·Р°РЅР° СЃ РїРѕСЃС‚Р°РІС‰РёРєРѕРј, СЃРєР»Р°РґСЃРєРѕР№ РїРѕР·РёС†РёРµР№ Рё РїСЂРёРµРјРєРѕР№ РЅР° СЃРєР»Р°Рґ."
+      "Закупка сразу связана с поставщиком, складской позицией и приемкой на склад."
     );
   }
 
@@ -4676,21 +4676,21 @@ function buildModeTabs(moduleKey, escapeFn) {
     const existing = (doc.financeEntries || []).find((item) => item.id === ui.warehouse.financeEditId) || null;
     const draft = readDraft("warehouse", "finance");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РѕРїРµСЂР°С†РёРё" : "РќРѕРІР°СЏ РґРµРЅРµР¶РЅР°СЏ РѕРїРµСЂР°С†РёСЏ",
+      existing ? "Редактирование операции" : "Новая денежная операция",
       `<form id="warehouseFinanceModalForm" class="workspace-form" data-draft-form="finance">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РўРёРї</span><select class="form-select" name="kind">${FINANCE_ENTRY_KINDS.map((item) => `<option value="${escapeHtml(item.key)}" ${draftValue(existing?.kind || "expense", draft?.kind || "expense") === item.key ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>Р”Р°С‚Р°</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draftValue(existing?.date || todayString(), draft?.date || todayString())))}" /></label>
-          <label><span>РЎС‡РµС‚</span><input class="form-control" type="text" name="account" value="${escapeHtml(draftValue(existing?.account || "", draft?.account))}" required /></label>
-          <label><span>РЎС‚Р°С‚СЊСЏ</span><input class="form-control" type="text" name="category" value="${escapeHtml(draftValue(existing?.category || "", draft?.category))}" required /></label>
-          <label><span>РљРѕРЅС‚СЂР°РіРµРЅС‚</span><input class="form-control" type="text" name="counterparty" value="${escapeHtml(draftValue(existing?.counterparty || "", draft?.counterparty))}" /></label>
-          <label><span>РЎСѓРјРјР°</span><input class="form-control" type="number" min="0" step="0.01" name="amount" value="${escapeHtml(draftValue(existing?.amount || "", draft?.amount))}" /></label>
+          <label><span>Тип</span><select class="form-select" name="kind">${FINANCE_ENTRY_KINDS.map((item) => `<option value="${escapeHtml(item.key)}" ${draftValue(existing?.kind || "expense", draft?.kind || "expense") === item.key ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Дата</span><input class="form-control" type="date" name="date" value="${escapeHtml(normalizeDateInput(draftValue(existing?.date || todayString(), draft?.date || todayString())))}" /></label>
+          <label><span>Счет</span><input class="form-control" type="text" name="account" value="${escapeHtml(draftValue(existing?.account || "", draft?.account))}" required /></label>
+          <label><span>Статья</span><input class="form-control" type="text" name="category" value="${escapeHtml(draftValue(existing?.category || "", draft?.category))}" required /></label>
+          <label><span>Контрагент</span><input class="form-control" type="text" name="counterparty" value="${escapeHtml(draftValue(existing?.counterparty || "", draft?.counterparty))}" /></label>
+          <label><span>Сумма</span><input class="form-control" type="number" min="0" step="0.01" name="amount" value="${escapeHtml(draftValue(existing?.amount || "", draft?.amount))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ РѕРїРµСЂР°С†РёСЋ" : "РЎРѕС…СЂР°РЅРёС‚СЊ РѕРїРµСЂР°С†РёСЋ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить операцию" : "Сохранить операцию"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "РџСЂРёС…РѕРґС‹, СЂР°СЃС…РѕРґС‹ Рё РїРµСЂРµРјРµС‰РµРЅРёСЏ РґРµРЅРµРі РІ РѕРґРЅРѕРј РѕРєРЅРµ СЃ РїСЂРёРІСЏР·РєРѕР№ Рє СЃС‡РµС‚Р°Рј Рё СЃС‚Р°С‚СЊСЏРј."
+      "Приходы, расходы и перемещения денег в одном окне с привязкой к счетам и статьям."
     );
   }
 
@@ -4698,21 +4698,21 @@ function buildModeTabs(moduleKey, escapeFn) {
     const existing = (doc.productionJobs || []).find((item) => item.id === ui.warehouse.productionEditId) || null;
     const draft = readDraft("warehouse", "production");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РїСЂРѕРёР·РІРѕРґСЃС‚РІР°" : "РќРѕРІРѕРµ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРµ Р·Р°РґР°РЅРёРµ",
+      existing ? "Редактирование производства" : "Новое производственное задание",
       `<form id="warehouseProductionModalForm" class="workspace-form" data-draft-form="production">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РќР°Р·РІР°РЅРёРµ Р·Р°РґР°РЅРёСЏ</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
-          <label><span>Р­С‚Р°Рї</span><select class="form-select" name="stage">${PRODUCTION_JOB_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${draftValue(existing?.stage || "queue", draft?.stage || "queue") === item.key ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>РЎСЂРѕРє</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(draftValue(existing?.deadline || todayString(), draft?.deadline || todayString())))}" /></label>
-          <label><span>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</span><input class="form-control" type="text" name="assignee" value="${escapeHtml(draftValue(existing?.assignee || "", draft?.assignee))}" /></label>
-          <label><span>РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР°</span><select class="form-select" name="itemId"><option value="">Р‘РµР· РїРѕР·РёС†РёРё</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${draftValue(existing?.itemId || "", draft?.itemId || "") === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label>
-          <label><span>РљРѕР»РёС‡РµСЃС‚РІРѕ</span><input class="form-control" type="number" min="0" step="0.01" name="qty" value="${escapeHtml(draftValue(existing?.qty || "", draft?.qty))}" /></label>
+          <label><span>Название задания</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
+          <label><span>Этап</span><select class="form-select" name="stage">${PRODUCTION_JOB_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${draftValue(existing?.stage || "queue", draft?.stage || "queue") === item.key ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Срок</span><input class="form-control" type="date" name="deadline" value="${escapeHtml(normalizeDateInput(draftValue(existing?.deadline || todayString(), draft?.deadline || todayString())))}" /></label>
+          <label><span>Ответственный</span><input class="form-control" type="text" name="assignee" value="${escapeHtml(draftValue(existing?.assignee || "", draft?.assignee))}" /></label>
+          <label><span>Позиция склада</span><select class="form-select" name="itemId"><option value="">Без позиции</option>${(doc.items || []).map((item) => `<option value="${escapeHtml(item.id)}" ${draftValue(existing?.itemId || "", draft?.itemId || "") === item.id ? "selected" : ""}>${escapeHtml(item.name)}${item.sku ? ` (${escapeHtml(item.sku)})` : ""}</option>`).join("")}</select></label>
+          <label><span>Количество</span><input class="form-control" type="number" min="0" step="0.01" name="qty" value="${escapeHtml(draftValue(existing?.qty || "", draft?.qty))}" /></label>
         </div>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РґР°РЅРёРµ" : "РЎРѕР·РґР°С‚СЊ Р·Р°РґР°РЅРёРµ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить задание" : "Создать задание"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      "РџСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅС‹Р№ РїРѕС‚РѕРє РїРѕ Р·Р°РґР°РЅРёСЏРј, СЃСЂРѕРєР°Рј Рё РѕС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Рј РІРЅСѓС‚СЂРё РѕР±С‰РµР№ РїР»Р°С‚С„РѕСЂРјС‹."
+      "Производственный поток по заданиям, срокам и ответственным внутри общей платформы."
     );
   }
 
@@ -4721,23 +4721,23 @@ function buildModeTabs(moduleKey, escapeFn) {
     const draft = readDraft("tasks", "task");
     const sprintOptions = sortByDateDesc(doc.sprints || [], "startDate");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ Р·Р°РґР°С‡Рё" : "РќРѕРІР°СЏ Р·Р°РґР°С‡Р°",
+      existing ? "Редактирование задачи" : "Новая задача",
       `<form id="tasksTaskModalForm" class="workspace-form" data-draft-form="task">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>Р—Р°РґР°С‡Р°</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
-          <label><span>РћС‚РІРµС‚СЃС‚РІРµРЅРЅС‹Р№</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue(existing?.owner || "", draft?.owner))}" /></label>
-          <label><span>РЎС‚Р°С‚СѓСЃ</span><select class="form-select" name="status">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.status || "todo", draft?.status || "todo")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>РџСЂРёРѕСЂРёС‚РµС‚</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.priority || "medium", draft?.priority || "medium")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
-          <label><span>РС‚РµСЂР°С†РёСЏ</span><select class="form-select" name="sprintId"><option value="">Р‘РµР· РёС‚РµСЂР°С†РёРё</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${(draftValue(existing?.sprintId || "", draft?.sprintId || "")) === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label>
-          <label><span>РЎСЂРѕРє</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.dueDate || "", draft?.dueDate || "")))}" /></label>
+          <label><span>Задача</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
+          <label><span>Ответственный</span><input class="form-control" type="text" name="owner" value="${escapeHtml(draftValue(existing?.owner || "", draft?.owner))}" /></label>
+          <label><span>Статус</span><select class="form-select" name="status">${TASK_STATUSES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.status || "todo", draft?.status || "todo")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>Приоритет</span><select class="form-select" name="priority">${TASK_PRIORITIES.map((item) => `<option value="${escapeHtml(item.key)}" ${((draftValue(existing?.priority || "medium", draft?.priority || "medium")) === item.key) ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}</select></label>
+          <label><span>терация</span><select class="form-select" name="sprintId"><option value="">Без итерации</option>${sprintOptions.map((sprint) => `<option value="${escapeHtml(sprint.id)}" ${(draftValue(existing?.sprintId || "", draft?.sprintId || "")) === sprint.id ? "selected" : ""}>${escapeHtml(sprint.title)}</option>`).join("")}</select></label>
+          <label><span>Срок</span><input class="form-control" type="date" name="dueDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.dueDate || "", draft?.dueDate || "")))}" /></label>
         </div>
-        <label class="workspace-check"><input class="form-check-input" type="checkbox" name="blocked" ${(draftValue(existing?.blocked ? "1" : "", draft?.blocked ? "1" : "")) ? "checked" : ""} /> <span>Р•СЃС‚СЊ Р±Р»РѕРєРµСЂ</span></label>
-        <label><span>РљРѕРјРјРµРЅС‚Р°СЂРёР№</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
+        <label class="workspace-check"><input class="form-check-input" type="checkbox" name="blocked" ${(draftValue(existing?.blocked ? "1" : "", draft?.blocked ? "1" : "")) ? "checked" : ""} /> <span>Есть блокер</span></label>
+        <label><span>Комментарий</span><textarea class="form-control" name="note" rows="4">${escapeHtml(draftValue(existing?.note || "", draft?.note))}</textarea></label>
         ${renderCustomFieldSection("tasks", doc, existing || draft, escapeHtml)}
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РґР°С‡Сѓ" : "РЎРѕС…СЂР°РЅРёС‚СЊ Р·Р°РґР°С‡Сѓ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить задачу" : "Сохранить задачу"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      existing ? "РџРѕР»РЅР°СЏ РєР°СЂС‚РѕС‡РєР° Р·Р°РґР°С‡Рё РІРѕ РІСЃРїР»С‹РІР°СЋС‰РµРј РѕРєРЅРµ Р±РµР· СѓС…РѕРґР° РёР· С‚РµРєСѓС‰РµРіРѕ СЂРµР¶РёРјР°." : "Р‘С‹СЃС‚СЂРѕРµ РґРѕР±Р°РІР»РµРЅРёРµ Р·Р°РґР°С‡Рё Р±РµР· РїРµСЂРµС…РѕРґР° РІ РєР°СЂС‚РѕС‡РєСѓ."
+      existing ? "Полная карточка задачи во всплывающем окне без ухода из текущего режима." : "Быстрое добавление задачи без перехода в карточку."
     );
   }
 
@@ -4746,18 +4746,18 @@ function buildModeTabs(moduleKey, escapeFn) {
     const existing = (doc.sprints || []).find((sprint) => sprint.id === ui.tasks.sprintEditId) || null;
     const draft = readDraft("tasks", "sprint");
     return renderWorkspaceModalShell(
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РёС‚РµСЂР°С†РёРё" : "РќРѕРІР°СЏ РёС‚РµСЂР°С†РёСЏ",
+      existing ? "Редактирование итерации" : "Новая итерация",
       `<form id="tasksSprintModalForm" class="workspace-form" data-draft-form="sprint">
         <input type="hidden" name="id" value="${escapeHtml(existing?.id || "")}" />
         <div class="workspace-form-grid">
-          <label><span>РќР°Р·РІР°РЅРёРµ</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
-          <label><span>РЎС‚Р°СЂС‚</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.startDate || "", draft?.startDate || "")))}" /></label>
-          <label><span>Р¤РёРЅРёС€</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.endDate || "", draft?.endDate || "")))}" /></label>
+          <label><span>Название</span><input class="form-control" type="text" name="title" value="${escapeHtml(draftValue(existing?.title || "", draft?.title))}" required /></label>
+          <label><span>Старт</span><input class="form-control" type="date" name="startDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.startDate || "", draft?.startDate || "")))}" /></label>
+          <label><span>Финиш</span><input class="form-control" type="date" name="endDate" value="${escapeHtml(normalizeDateInput(draftValue(existing?.endDate || "", draft?.endDate || "")))}" /></label>
         </div>
-        <label><span>Р¦РµР»СЊ</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(draftValue(existing?.goal || "", draft?.goal))}</textarea></label>
-        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "РЎРѕС…СЂР°РЅРёС‚СЊ РёС‚РµСЂР°С†РёСЋ" : "РЎРѕС…СЂР°РЅРёС‚СЊ РёС‚РµСЂР°С†РёСЋ"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>РћС‚РјРµРЅР°</button></div>
+        <label><span>Цель</span><textarea class="form-control" name="goal" rows="4">${escapeHtml(draftValue(existing?.goal || "", draft?.goal))}</textarea></label>
+        <div class="workspace-form__actions"><button class="btn btn-dark" type="submit">${existing ? "Сохранить итерацию" : "Сохранить итерацию"}</button><button class="btn btn-outline-secondary" type="button" data-live-modal-close>Отмена</button></div>
       </form>`,
-      existing ? "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ СЂР°Р±РѕС‡РµРіРѕ С†РёРєР»Р° РєРѕРјР°РЅРґС‹ Р±РµР· СѓС…РѕРґР° РёР· РєР°РЅР±Р°РЅР° Рё СЃРїРёСЃРєР°." : "РС‚РµСЂР°С†РёРё Р·Р°РґР°СЋС‚ СЂРёС‚Рј СЂР°Р±РѕС‚С‹ Рё РїСЂРёРѕСЂРёС‚РµС‚С‹ РєРѕРјР°РЅРґС‹."
+      existing ? "Редактирование рабочего цикла команды без ухода из канбана и списка." : "терации задают ритм работы и приоритеты команды."
     );
   }
 
@@ -4860,31 +4860,31 @@ function buildModeTabs(moduleKey, escapeFn) {
     const headingKey = MODULE_MODE_CONFIG[moduleKey] ? moduleKey : canonicalModuleKey;
     const headingMap = {
       crm: [
-        { text: "РљР°СЂС‚РѕС‡РєР° СЃРґРµР»РєРё", modes: "overview form" },
-        { text: "РќРѕРІР°СЏ СЃРґРµР»РєР°", modes: "overview form" },
-        { text: "Р¤РѕРєСѓСЃ РЅРµРґРµР»Рё", modes: "overview form" },
-        { text: "Р’РѕСЂРѕРЅРєР° СЃРґРµР»РѕРє", modes: "board" },
-        { text: "РЎРїРёСЃРѕРє СЃРґРµР»РѕРє", modes: "table" }
+        { text: "Карточка сделки", modes: "overview form" },
+        { text: "Новая сделка", modes: "overview form" },
+        { text: "Фокус недели", modes: "overview form" },
+        { text: "Воронка сделок", modes: "board" },
+        { text: "Список сделок", modes: "table" }
       ],
       warehouse: [
-        { text: "РќРѕРІР°СЏ РїРѕР·РёС†РёСЏ СЃРєР»Р°РґР°", modes: "form" },
-        { text: "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РїРѕР·РёС†РёРё", modes: "form" },
-        { text: "Р”РІРёР¶РµРЅРёРµ РїРѕ СЃРєР»Р°РґСѓ", modes: "form movements" },
-        { text: "РўРµРєСѓС‰РёРµ РѕСЃС‚Р°С‚РєРё", modes: "overview catalog" },
-        { text: "РџРѕСЃР»РµРґРЅРёРµ РґРІРёР¶РµРЅРёСЏ", modes: "overview movements" },
-        { text: "РўРѕРІР°СЂС‹", modes: "overview products" },
-        { text: "Р—Р°РєСѓРїРєРё", modes: "overview purchases" },
-        { text: "Р”РµРЅРµР¶РЅС‹Рµ РѕРїРµСЂР°С†РёРё", modes: "overview finance" },
-        { text: "РџСЂРѕРёР·РІРѕРґСЃС‚РІРѕ", modes: "overview production" }
+        { text: "Новая позиция склада", modes: "form" },
+        { text: "Редактирование позиции", modes: "form" },
+        { text: "Движение по складу", modes: "form movements" },
+        { text: "Текущие остатки", modes: "overview catalog" },
+        { text: "Последние движения", modes: "overview movements" },
+        { text: "Товары", modes: "overview products" },
+        { text: "Закупки", modes: "overview purchases" },
+        { text: "Денежные операции", modes: "overview finance" },
+        { text: "Производство", modes: "overview production" }
       ],
       tasks: [
-        { text: "РќРѕРІР°СЏ Р·Р°РґР°С‡Р°", modes: "form" },
-        { text: "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ Р·Р°РґР°С‡Рё", modes: "form" },
-        { text: "РќРѕРІР°СЏ РёС‚РµСЂР°С†РёСЏ", modes: "form" },
-        { text: "Р РµРґР°РєС‚РёСЂРѕРІР°РЅРёРµ РёС‚РµСЂР°С†РёРё", modes: "form" },
-        { text: "РС‚РµСЂР°С†РёРё", modes: "overview form" },
-        { text: "РљР°РЅР±Р°РЅ", modes: "board" },
-        { text: "Р›РµРЅС‚Р° Р·Р°РґР°С‡", modes: "table" }
+        { text: "Новая задача", modes: "form" },
+        { text: "Редактирование задачи", modes: "form" },
+        { text: "Новая итерация", modes: "form" },
+        { text: "Редактирование итерации", modes: "form" },
+        { text: "терации", modes: "overview form" },
+        { text: "Канбан", modes: "board" },
+        { text: "Лента задач", modes: "table" }
       ]
     };
     root.querySelectorAll(".workspace-panel").forEach((panel) => {
@@ -4954,7 +4954,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       const index = deals.findIndex((deal) => deal.id === crmStageSelect.dataset.crmStageSelect);
       if (index >= 0) {
         deals[index] = { ...deals[index], stage: crmStageSelect.value, updatedAt: new Date().toISOString() };
-        await saveDocument("crm", { ...doc, deals }, "РЎС‚Р°РґРёСЏ СЃРґРµР»РєРё РѕР±РЅРѕРІР»РµРЅР°.");
+        await saveDocument("crm", { ...doc, deals }, "Стадия сделки обновлена.");
         await rerenderCurrentModule();
       }
       return true;
@@ -4964,14 +4964,14 @@ function buildModeTabs(moduleKey, escapeFn) {
       const nextStatus = compactText(taskStatusSelect.value) || "todo";
       const updatedTask = await updateTaskRecord(
         taskStatusSelect.dataset.taskStatusSelect,
-        "РЎС‚Р°С‚СѓСЃ Р·Р°РґР°С‡Рё РѕР±РЅРѕРІР»РµРЅ.",
+        "Статус задачи обновлен.",
         (task) => ({
           ...task,
           status: nextStatus,
           history: appendTaskHistory(
             task,
             createTaskHistoryEntry({
-              title: "РЎС‚Р°С‚СѓСЃ Р·Р°РґР°С‡Рё РёР·РјРµРЅРµРЅ",
+              title: "Статус задачи изменен",
               meta: `${getTaskStatusMeta(task.status).label} -> ${getTaskStatusMeta(nextStatus).label}`,
               tone: getTaskStatusMeta(nextStatus).tone,
               moduleKey: "tasks",
@@ -4993,17 +4993,17 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (type === "view") {
       const views = [createDefaultView(moduleKey), ...(doc.builder.views || []).filter((view) => view.id !== "default" && view.id !== key)];
       Object.assign(ui[moduleKey], getDefaultFilters(moduleKey), { activeViewId: "default" });
-      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, views } }, "Р’РєР»Р°РґРєР° СѓРґР°Р»РµРЅР°.");
+      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, views } }, "Вкладка удалена.");
       return;
     }
     if (type === "field") {
       const fields = (doc.builder.fields || []).filter((field) => field.key !== key);
-      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, fields } }, "РџРѕР»Рµ СѓРґР°Р»РµРЅРѕ.");
+      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, fields } }, "Поле удалено.");
       return;
     }
     if (type === "formula") {
       const formulas = (doc.builder.formulas || []).filter((formula) => formula.key !== key);
-      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, formulas } }, "Р¤РѕСЂРјСѓР»Р° СѓРґР°Р»РµРЅР°.");
+      await saveDocument(moduleKey, { ...doc, builder: { ...doc.builder, formulas } }, "Формула удалена.");
     }
   }
 
@@ -5099,7 +5099,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       const [draftModuleKey, draftFormKey] = String(clearDraftButton.dataset.moduleDraftClear || "").split(":");
       if (draftModuleKey && draftFormKey) {
         clearDraft(draftModuleKey, draftFormKey);
-        setStatus("Р§РµСЂРЅРѕРІРёРє РѕС‡РёС‰РµРЅ.", "success");
+        setStatus("Черновик очищен.", "success");
         await rerenderCurrentModule();
         return true;
       }
@@ -5137,12 +5137,12 @@ function buildModeTabs(moduleKey, escapeFn) {
       }
       const deleteButton = event.target.closest("[data-directory-delete]");
       if (deleteButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ СЃРїСЂР°РІРѕС‡РЅРёРє С†РµР»РёРєРѕРј?")) return true;
+        if (!window.confirm("Удалить справочник целиком?")) return true;
         const listKey = sanitizeKey(deleteButton.dataset.directoryDelete);
         const lists = (doc.lists || []).filter((list) => list.key !== listKey && list.id !== listKey);
         ui.directories.activeListId = lists[0]?.key || "";
         persistUiState("directories");
-        await saveDocument("directories", { ...doc, lists }, "РЎРїСЂР°РІРѕС‡РЅРёРє СѓРґР°Р»С‘РЅ.");
+        await saveDocument("directories", { ...doc, lists }, "Справочник удалён.");
         await rerenderCurrentModule();
         return true;
       }
@@ -5160,7 +5160,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         };
         ui.directories.activeListId = lists[index].key;
         persistUiState("directories");
-        await saveDocument("directories", { ...doc, lists }, "Р—РЅР°С‡РµРЅРёРµ СѓРґР°Р»РµРЅРѕ РёР· СЃРїСЂР°РІРѕС‡РЅРёРєР°.");
+        await saveDocument("directories", { ...doc, lists }, "Значение удалено из справочника.");
         await rerenderCurrentModule();
         return true;
       }
@@ -5211,7 +5211,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        await saveDocument("crm", { ...doc, deals: [copy, ...(doc.deals || [])] }, "РљРѕРїРёСЏ СЃРґРµР»РєРё СЃРѕР·РґР°РЅР°.");
+        await saveDocument("crm", { ...doc, deals: [copy, ...(doc.deals || [])] }, "Копия сделки создана.");
         ui.crm.editId = copy.id;
         ui.crm.modal = "deal";
         persistUiState("crm");
@@ -5220,10 +5220,10 @@ function buildModeTabs(moduleKey, escapeFn) {
       }
       const deleteButton = event.target.closest("[data-crm-delete]");
       if (deleteButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ СЃРґРµР»РєСѓ?")) return true;
+        if (!window.confirm("Удалить сделку?")) return true;
         const deals = (doc.deals || []).filter((deal) => deal.id !== deleteButton.dataset.crmDelete);
         ui.crm.editId = ui.crm.editId === deleteButton.dataset.crmDelete ? null : ui.crm.editId;
-        await saveDocument("crm", { ...doc, deals }, "РЎРґРµР»РєР° СѓРґР°Р»РµРЅР°.");
+        await saveDocument("crm", { ...doc, deals }, "Сделка удалена.");
         await rerenderCurrentModule();
         return true;
       }
@@ -5335,7 +5335,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        await saveDocument("warehouse", { ...doc, items: [copy, ...(doc.items || [])] }, "РљРѕРїРёСЏ РїРѕР·РёС†РёРё СЃРѕР·РґР°РЅР°.");
+        await saveDocument("warehouse", { ...doc, items: [copy, ...(doc.items || [])] }, "Копия позиции создана.");
         ui.warehouse.itemEditId = copy.id;
         ui.warehouse.modal = "item";
         persistUiState("warehouse");
@@ -5352,64 +5352,64 @@ function buildModeTabs(moduleKey, escapeFn) {
       }
       const deleteItemButton = event.target.closest("[data-warehouse-item-delete]");
       if (deleteItemButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ РїРѕР·РёС†РёСЋ Рё СЃРІСЏР·Р°РЅРЅС‹Рµ РґРІРёР¶РµРЅРёСЏ?")) return true;
+        if (!window.confirm("Удалить позицию и связанные движения?")) return true;
         const itemId = deleteItemButton.dataset.warehouseItemDelete;
         const items = (doc.items || []).filter((item) => item.id !== itemId);
         const movements = (doc.movements || []).filter((movement) => movement.itemId !== itemId);
         if (ui.warehouse.itemEditId === itemId) ui.warehouse.itemEditId = null;
         if (ui.warehouse.movementItemId === itemId) ui.warehouse.movementItemId = "";
-        await saveDocument("warehouse", { ...doc, items, movements }, "РџРѕР·РёС†РёСЏ СЃРєР»Р°РґР° СѓРґР°Р»РµРЅР°.");
+        await saveDocument("warehouse", { ...doc, items, movements }, "Позиция склада удалена.");
         await rerenderCurrentModule();
         return true;
       }
       const deleteMovementButton = event.target.closest("[data-warehouse-movement-delete]");
       if (deleteMovementButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ РґРІРёР¶РµРЅРёРµ?")) return true;
+        if (!window.confirm("Удалить движение?")) return true;
         const movements = (doc.movements || []).filter((movement) => movement.id !== deleteMovementButton.dataset.warehouseMovementDelete);
-        await saveDocument("warehouse", { ...doc, movements }, "Р”РІРёР¶РµРЅРёРµ СѓРґР°Р»РµРЅРѕ.");
+        await saveDocument("warehouse", { ...doc, movements }, "Движение удалено.");
         await rerenderCurrentModule();
         return true;
       }
       const deleteProductButton = event.target.closest("[data-warehouse-product-delete]");
       if (deleteProductButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ С‚РѕРІР°СЂ?")) return true;
+        if (!window.confirm("Удалить товар?")) return true;
         const productId = deleteProductButton.dataset.warehouseProductDelete;
         const products = (doc.products || []).filter((item) => item.id !== productId);
         if (ui.warehouse.productEditId === productId) ui.warehouse.productEditId = null;
-        await saveDocument("warehouse", { ...doc, products }, "РўРѕРІР°СЂ СѓРґР°Р»РµРЅ.");
+        await saveDocument("warehouse", { ...doc, products }, "Товар удален.");
         await rerenderCurrentModule();
         return true;
       }
       const deletePurchaseButton = event.target.closest("[data-warehouse-purchase-delete]");
       if (deletePurchaseButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ Р·Р°РєСѓРїРєСѓ Рё СЃРІСЏР·Р°РЅРЅСѓСЋ РїСЂРёРµРјРєСѓ?")) return true;
+        if (!window.confirm("Удалить закупку и связанную приемку?")) return true;
         const purchaseId = deletePurchaseButton.dataset.warehousePurchaseDelete;
         const purchases = (doc.purchases || []).filter((item) => item.id !== purchaseId);
         const movements = (doc.movements || []).filter(
           (movement) => compactText(movement?.integration?.purchaseId) !== purchaseId
         );
         if (ui.warehouse.purchaseEditId === purchaseId) ui.warehouse.purchaseEditId = null;
-        await saveDocument("warehouse", { ...doc, purchases, movements }, "Р—Р°РєСѓРїРєР° СѓРґР°Р»РµРЅР°.");
+        await saveDocument("warehouse", { ...doc, purchases, movements }, "Закупка удалена.");
         await rerenderCurrentModule();
         return true;
       }
       const deleteFinanceButton = event.target.closest("[data-warehouse-finance-delete]");
       if (deleteFinanceButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ РґРµРЅРµР¶РЅСѓСЋ РѕРїРµСЂР°С†РёСЋ?")) return true;
+        if (!window.confirm("Удалить денежную операцию?")) return true;
         const financeId = deleteFinanceButton.dataset.warehouseFinanceDelete;
         const financeEntries = (doc.financeEntries || []).filter((entry) => entry.id !== financeId);
         if (ui.warehouse.financeEditId === financeId) ui.warehouse.financeEditId = null;
-        await saveDocument("warehouse", { ...doc, financeEntries }, "РћРїРµСЂР°С†РёСЏ СѓРґР°Р»РµРЅР°.");
+        await saveDocument("warehouse", { ...doc, financeEntries }, "Операция удалена.");
         await rerenderCurrentModule();
         return true;
       }
       const deleteProductionButton = event.target.closest("[data-warehouse-production-delete]");
       if (deleteProductionButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ РїСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРµ Р·Р°РґР°РЅРёРµ?")) return true;
+        if (!window.confirm("Удалить производственное задание?")) return true;
         const productionId = deleteProductionButton.dataset.warehouseProductionDelete;
         const productionJobs = (doc.productionJobs || []).filter((entry) => entry.id !== productionId);
         if (ui.warehouse.productionEditId === productionId) ui.warehouse.productionEditId = null;
-        await saveDocument("warehouse", { ...doc, productionJobs }, "РџСЂРѕРёР·РІРѕРґСЃС‚РІРµРЅРЅРѕРµ Р·Р°РґР°РЅРёРµ СѓРґР°Р»РµРЅРѕ.");
+        await saveDocument("warehouse", { ...doc, productionJobs }, "Производственное задание удалено.");
         await rerenderCurrentModule();
         return true;
       }
@@ -5424,13 +5424,13 @@ function buildModeTabs(moduleKey, escapeFn) {
       const taskSetStatusButton = event.target.closest("[data-task-set-status]");
       if (taskSetStatusButton) {
         const [taskId, nextStatus] = String(taskSetStatusButton.dataset.taskSetStatus || "").split(":");
-        const updatedTask = await updateTaskRecord(taskId, "РЎРѕСЃС‚РѕСЏРЅРёРµ Р·Р°РґР°С‡Рё РѕР±РЅРѕРІР»РµРЅРѕ.", (task) => ({
+        const updatedTask = await updateTaskRecord(taskId, "Состояние задачи обновлено.", (task) => ({
           ...task,
           status: compactText(nextStatus) || "todo",
           history: appendTaskHistory(
             task,
             createTaskHistoryEntry({
-              title: compactText(nextStatus) === "done" ? "Р—Р°РґР°С‡Р° РѕС‚РјРµС‡РµРЅР° РІС‹РїРѕР»РЅРµРЅРЅРѕР№" : "Р—Р°РґР°С‡Р° РІРѕР·РІСЂР°С‰РµРЅР° РІ СЂР°Р±РѕС‚Сѓ",
+              title: compactText(nextStatus) === "done" ? "Задача отмечена выполненной" : "Задача возвращена в работу",
               meta: `${getTaskStatusMeta(task.status).label} -> ${getTaskStatusMeta(compactText(nextStatus) || "todo").label}`,
               tone: compactText(nextStatus) === "done" ? "success" : "warning",
               moduleKey: "tasks",
@@ -5445,14 +5445,14 @@ function buildModeTabs(moduleKey, escapeFn) {
       }
       const taskToggleBlockedButton = event.target.closest("[data-task-toggle-blocked]");
       if (taskToggleBlockedButton) {
-        const updatedTask = await updateTaskRecord(taskToggleBlockedButton.dataset.taskToggleBlocked, "РЎРѕСЃС‚РѕСЏРЅРёРµ Р±Р»РѕРєРµСЂР° РѕР±РЅРѕРІР»РµРЅРѕ.", (task) => ({
+        const updatedTask = await updateTaskRecord(taskToggleBlockedButton.dataset.taskToggleBlocked, "Состояние блокера обновлено.", (task) => ({
           ...task,
           blocked: !task.blocked,
           history: appendTaskHistory(
             task,
             createTaskHistoryEntry({
-              title: !task.blocked ? "Р”Р»СЏ Р·Р°РґР°С‡Рё РѕС‚РјРµС‡РµРЅ Р±Р»РѕРєРµСЂ" : "Р‘Р»РѕРєРµСЂ РїРѕ Р·Р°РґР°С‡Рµ СЃРЅСЏС‚",
-              meta: !task.blocked ? "РќСѓР¶РЅР° РїРѕРјРѕС‰СЊ РёР»Рё СѓРїСЂР°РІР»РµРЅС‡РµСЃРєРѕРµ СЂРµС€РµРЅРёРµ." : "Р—Р°РґР°С‡Р° СЃРЅРѕРІР° РјРѕР¶РµС‚ РґРІРёРіР°С‚СЊСЃСЏ Р±РµР· РѕРіСЂР°РЅРёС‡РµРЅРёР№.",
+              title: !task.blocked ? "Для задачи отмечен блокер" : "Блокер по задаче снят",
+              meta: !task.blocked ? "Нужна помощь или управленческое решение." : "Задача снова может двигаться без ограничений.",
               tone: !task.blocked ? "danger" : "success",
               moduleKey: "tasks",
               entityId: task.id
@@ -5490,8 +5490,8 @@ function buildModeTabs(moduleKey, escapeFn) {
           title: duplicateTitle(source.title),
           history: [
             createTaskHistoryEntry({
-              title: "РЎРѕР·РґР°РЅР° РєРѕРїРёСЏ Р·Р°РґР°С‡Рё",
-              meta: `РСЃС‚РѕС‡РЅРёРє РєРѕРїРёРё: ${compactText(source.title || "Р—Р°РґР°С‡Р°")}`,
+              title: "Создана копия задачи",
+              meta: `сточник копии: ${compactText(source.title || "Задача")}`,
               tone: "info",
               moduleKey: "tasks",
               entityId: source.id
@@ -5500,7 +5500,7 @@ function buildModeTabs(moduleKey, escapeFn) {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString()
         };
-        await saveDocument("tasks", { ...doc, tasks: [copy, ...(doc.tasks || [])] }, "РљРѕРїРёСЏ Р·Р°РґР°С‡Рё СЃРѕР·РґР°РЅР°.");
+        await saveDocument("tasks", { ...doc, tasks: [copy, ...(doc.tasks || [])] }, "Копия задачи создана.");
         ui.tasks.taskEditId = copy.id;
         ui.tasks.modal = "task";
         persistUiState("tasks");
@@ -5509,10 +5509,10 @@ function buildModeTabs(moduleKey, escapeFn) {
       }
       const deleteTaskButton = event.target.closest("[data-task-delete]");
       if (deleteTaskButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ Р·Р°РґР°С‡Сѓ?")) return true;
+        if (!window.confirm("Удалить задачу?")) return true;
         const tasks = (doc.tasks || []).filter((task) => task.id !== deleteTaskButton.dataset.taskDelete);
         if (ui.tasks.taskEditId === deleteTaskButton.dataset.taskDelete) ui.tasks.taskEditId = null;
-        await saveDocument("tasks", { ...doc, tasks }, "Р—Р°РґР°С‡Р° СѓРґР°Р»РµРЅР°.");
+        await saveDocument("tasks", { ...doc, tasks }, "Задача удалена.");
         await rerenderCurrentModule();
         return true;
       }
@@ -5534,10 +5534,10 @@ function buildModeTabs(moduleKey, escapeFn) {
       }
       const deleteSprintButton = event.target.closest("[data-sprint-delete]");
       if (deleteSprintButton) {
-        if (!window.confirm("РЈРґР°Р»РёС‚СЊ РёС‚РµСЂР°С†РёСЋ? Р—Р°РґР°С‡Рё РѕСЃС‚Р°РЅСѓС‚СЃСЏ, РЅРѕ РѕС‚РІСЏР¶СѓС‚СЃСЏ РѕС‚ РЅРµРµ.")) return true;
+        if (!window.confirm("Удалить итерацию? Задачи останутся, но отвяжутся от нее.")) return true;
         const sprintId = deleteSprintButton.dataset.sprintDelete;
         const sprints = (doc.sprints || []).filter((sprint) => sprint.id !== sprintId);
-        const sprintTitle = compactText((doc.sprints || []).find((sprint) => sprint.id === sprintId)?.title || "РС‚РµСЂР°С†РёСЏ");
+        const sprintTitle = compactText((doc.sprints || []).find((sprint) => sprint.id === sprintId)?.title || "терация");
         const tasks = (doc.tasks || []).map((task) => (task.sprintId === sprintId
           ? {
               ...task,
@@ -5546,8 +5546,8 @@ function buildModeTabs(moduleKey, escapeFn) {
               history: appendTaskHistory(
                 task,
                 createTaskHistoryEntry({
-                  title: "РС‚РµСЂР°С†РёСЏ СѓРґР°Р»РµРЅР°",
-                  meta: `Р—Р°РґР°С‡Р° РѕС‚РІСЏР·Р°РЅР° РѕС‚ РёС‚РµСЂР°С†РёРё ${sprintTitle}.`,
+                  title: "терация удалена",
+                  meta: `Задача отвязана от итерации ${sprintTitle}.`,
                   tone: "warning",
                   moduleKey: "tasks",
                   entityId: task.id
@@ -5556,7 +5556,7 @@ function buildModeTabs(moduleKey, escapeFn) {
             }
           : task));
         if (ui.tasks.sprintEditId === sprintId) ui.tasks.sprintEditId = null;
-        await saveDocument("tasks", { ...doc, sprints, tasks }, "РС‚РµСЂР°С†РёСЏ СѓРґР°Р»РµРЅР°.");
+        await saveDocument("tasks", { ...doc, sprints, tasks }, "терация удалена.");
         await rerenderCurrentModule();
         return true;
       }
@@ -5570,40 +5570,40 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (!supports(canonicalModuleKey) || !moduleDoc) return "";
     if (moduleKey === "directories") {
       const lists = docs.directories.lists || [];
-      return `${lists.length} СЃРїСЂР°РІРѕС‡РЅРёРєРѕРІ вЂў ${formatNumber(sumBy(lists, (list) => (list.options || []).length))} Р·РЅР°С‡РµРЅРёР№`;
+      return `${lists.length} справочников • ${formatNumber(sumBy(lists, (list) => (list.options || []).length))} значений`;
     }
     if (moduleKey === "crm") {
       const deals = docs.crm.deals || [];
       const salesSnapshot = buildSalesSnapshot(externalDocs.sales);
-      return `${deals.length} СЃРґРµР»РѕРє вЂў ${formatMoney(sumBy(deals, (deal) => deal.amount || 0))}${salesSnapshot.orders.length ? ` вЂў ${salesSnapshot.unpaidInvoices.length} СЃС‡РµС‚РѕРІ Р±РµР· РѕРїР»Р°С‚С‹` : ""}`;
+      return `${deals.length} сделок • ${formatMoney(sumBy(deals, (deal) => deal.amount || 0))}${salesSnapshot.orders.length ? ` • ${salesSnapshot.unpaidInvoices.length} счетов без оплаты` : ""}`;
     }
     if (moduleKey === "warehouse") {
       const snapshot = buildWarehouseSnapshot(docs.warehouse);
       const calculatorSnapshot = buildCalculatorDemandSnapshot(externalDocs.myCalculator, externalDocs.partnerCalculators || []);
-      return `${snapshot.items.length} РїРѕР·РёС†РёР№ вЂў ${snapshot.products.length} С‚РѕРІР°СЂРѕРІ вЂў ${snapshot.purchases.length} Р·Р°РєСѓРїРѕРє${calculatorSnapshot.activeTabs ? ` вЂў ${calculatorSnapshot.activeTabs} РІРєР»Р°РґРѕРє СЃРїСЂРѕСЃР°` : ""}`;
+      return `${snapshot.items.length} позиций • ${snapshot.products.length} товаров • ${snapshot.purchases.length} закупок${calculatorSnapshot.activeTabs ? ` • ${calculatorSnapshot.activeTabs} вкладок спроса` : ""}`;
     }
     if (moduleKey === "products") {
       const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
-      return `${snapshot.products.length} С‚РѕРІР°СЂРѕРІ вЂў ${formatMoney(sumBy(snapshot.products, (item) => (item.salePrice || 0) - (item.purchasePrice || 0)))} РІР°Р»РѕРІР°СЏ РјР°СЂР¶Р°`;
+      return `${snapshot.products.length} товаров • ${formatMoney(sumBy(snapshot.products, (item) => (item.salePrice || 0) - (item.purchasePrice || 0)))} валовая маржа`;
     }
     if (moduleKey === "purchases") {
       const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
-      return `${snapshot.purchases.length} Р·Р°РєСѓРїРѕРє вЂў ${formatMoney(snapshot.purchasesTotal || 0)} РІ Р·Р°РєР°Р·Р°С…`;
+      return `${snapshot.purchases.length} закупок • ${formatMoney(snapshot.purchasesTotal || 0)} в заказах`;
     }
     if (moduleKey === "money") {
       const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
-      return `${formatMoney((snapshot.incomeTotal || 0) - (snapshot.expenseTotal || 0))} Р±Р°Р»Р°РЅСЃ вЂў ${formatMoney(snapshot.incomeTotal || 0)} РїСЂРёС…РѕРґ / ${formatMoney(snapshot.expenseTotal || 0)} СЂР°СЃС…РѕРґ`;
+      return `${formatMoney((snapshot.incomeTotal || 0) - (snapshot.expenseTotal || 0))} баланс • ${formatMoney(snapshot.incomeTotal || 0)} приход / ${formatMoney(snapshot.expenseTotal || 0)} расход`;
     }
     if (moduleKey === "production") {
       const snapshot = buildWarehouseSnapshot(docs.warehouse || createDefaultWarehouseDoc());
-      return `${formatNumber(snapshot.productionActive || 0)} Р°РєС‚РёРІРЅС‹С… вЂў ${formatNumber(snapshot.productionJobs.length)} РІСЃРµРіРѕ Р·Р°РґР°РЅРёР№`;
+      return `${formatNumber(snapshot.productionActive || 0)} активных • ${formatNumber(snapshot.productionJobs.length)} всего заданий`;
     }
     if (moduleKey === "tasks") {
       const tasks = docs.tasks.tasks || [];
       const openCount = tasks.filter((task) => task.status !== "done").length;
       const blockedCount = tasks.filter((task) => task.status !== "done" && task.blocked).length;
       const overdueCount = tasks.filter((task) => task.status !== "done" && normalizeDateInput(task.dueDate) && normalizeDateInput(task.dueDate) < todayString()).length;
-      return `${openCount} РѕС‚РєСЂС‹С‚С‹С… Р·Р°РґР°С‡${blockedCount ? ` вЂў ${blockedCount} СЃ Р±Р»РѕРєРµСЂРѕРј` : ""}${overdueCount ? ` вЂў ${overdueCount} РїСЂРѕСЃСЂРѕС‡РµРЅРѕ` : ""}`;
+      return `${openCount} открытых задач${blockedCount ? ` • ${blockedCount} с блокером` : ""}${overdueCount ? ` • ${overdueCount} просрочено` : ""}`;
     }
     return "";
   }
@@ -5767,7 +5767,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       return Boolean(match?.low);
     });
 
-    const contourClosedStatuses = new Set(["Взаиморасчет произведен", "Архив"].map((value) => compactText(value)));
+    const contourClosedStatuses = new Set([" ", ""].map((value) => compactText(value)));
     const contourOpenSettlements = (light2Settlements || []).filter((entry) => !contourClosedStatuses.has(repairMojibakeText(compactText(entry.status))));
     const contourSettlementsPayout = roundMoney(
       contourOpenSettlements.reduce((sum, entry) => {
@@ -5780,13 +5780,13 @@ function buildModeTabs(moduleKey, escapeFn) {
     );
     const contourCalendarIncoming = roundMoney(
       sumBy(
-        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("Приход")),
+        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("")),
         (entry) => entry.amount
       )
     );
     const contourCalendarOutgoing = roundMoney(
       sumBy(
-        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("Расход")),
+        (light2CalendarEntries || []).filter((entry) => repairMojibakeText(compactText(entry.operation_type)) === compactText("")),
         (entry) => entry.amount
       )
     );
@@ -5800,16 +5800,16 @@ function buildModeTabs(moduleKey, escapeFn) {
         ...salesSnapshot.orders.slice(0, 8).map((order) => ({
           id: `activity-sales-${order.sourceId || order.orderNumber || createId("sales")}`,
           date: order.paidDate || order.invoiceDate || order.createdAt || "",
-          title: order.title || `Р—Р°РєР°Р· ${order.orderNumber || "Р±РµР· РЅРѕРјРµСЂР°"}`,
-          meta: `${order.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ"} вЂў ${order.status || "РЎС‚Р°С‚СѓСЃ РЅРµ СѓРєР°Р·Р°РЅ"}`,
+          title: order.title || `Заказ ${order.orderNumber || "без номера"}`,
+          meta: `${order.client || "Клиент не указан"} • ${order.status || "Статус не указан"}`,
           tone: order.isPaid ? "success" : order.isInvoiced ? "accent" : "neutral",
           moduleKey: "sales"
         })),
         ...sortByDateDesc(deals, "updatedAt").slice(0, 8).map((deal) => ({
           id: `activity-crm-${deal.id}`,
           date: deal.updatedAt || deal.createdAt || "",
-          title: deal.title || deal.client || "РЎРґРµР»РєР°",
-          meta: `${getCrmStageMeta(deal.stage).label} вЂў ${deal.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ"}`,
+          title: deal.title || deal.client || "Сделка",
+          meta: `${getCrmStageMeta(deal.stage).label} • ${deal.owner || "Без ответственного"}`,
           tone: getCrmStageMeta(deal.stage).tone,
           moduleKey: "crm"
         })),
@@ -5818,8 +5818,8 @@ function buildModeTabs(moduleKey, escapeFn) {
           return {
             id: `activity-move-${movement.id}`,
             date: movement.date || movement.createdAt || "",
-            title: item?.name || movement.itemName || "РЎРєР»Р°РґСЃРєРѕРµ РґРІРёР¶РµРЅРёРµ",
-            meta: `${WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === compactText(movement.kind))?.label || movement.kind || "Р”РІРёР¶РµРЅРёРµ"} вЂў ${formatNumber(movement.qty || 0)}`,
+            title: item?.name || movement.itemName || "Складское движение",
+            meta: `${WAREHOUSE_MOVEMENT_TYPES.find((entry) => entry.key === compactText(movement.kind))?.label || movement.kind || "Движение"} • ${formatNumber(movement.qty || 0)}`,
             tone: compactText(movement.kind) === "in" ? "success" : compactText(movement.kind) === "out" ? "danger" : "info",
             moduleKey: "warehouse"
           };
@@ -5827,8 +5827,8 @@ function buildModeTabs(moduleKey, escapeFn) {
         ...sortByDateDesc(warehouseDoc?.financeEntries || [], "date").slice(0, 6).map((entry) => ({
           id: `activity-finance-${entry.id}`,
           date: entry.date || entry.createdAt || "",
-          title: entry.counterparty || entry.account || "Р”РµРЅРµР¶РЅР°СЏ РѕРїРµСЂР°С†РёСЏ",
-          meta: `${FINANCE_ENTRY_KINDS.find((item) => item.key === compactText(entry.kind))?.label || entry.kind || "РћРїРµСЂР°С†РёСЏ"} вЂў ${formatMoney(entry.amount || 0)}`,
+          title: entry.counterparty || entry.account || "Денежная операция",
+          meta: `${FINANCE_ENTRY_KINDS.find((item) => item.key === compactText(entry.kind))?.label || entry.kind || "Операция"} • ${formatMoney(entry.amount || 0)}`,
           tone: FINANCE_ENTRY_KINDS.find((item) => item.key === compactText(entry.kind))?.tone || "neutral",
           moduleKey: "money"
         })),
@@ -5836,8 +5836,8 @@ function buildModeTabs(moduleKey, escapeFn) {
           (Array.isArray(task?.history) ? task.history.map((entry) => normalizeTaskHistoryEntry(entry)).filter(Boolean).slice(0, 2) : []).map((entry) => ({
             id: entry.id || `activity-task-${task.id}`,
             date: entry.date || task.updatedAt || task.createdAt || "",
-            title: entry.title || task.title || "РЎРѕР±С‹С‚РёРµ Р·Р°РґР°С‡Рё",
-            meta: entry.meta || `${task.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ"} вЂў ${getTaskStatusMeta(task.status).label}`,
+            title: entry.title || task.title || "Событие задачи",
+            meta: entry.meta || `${task.owner || "Без ответственного"} • ${getTaskStatusMeta(task.status).label}`,
             tone: entry.tone || "info",
             moduleKey: entry.moduleKey || "tasks"
           }))
@@ -5851,33 +5851,33 @@ function buildModeTabs(moduleKey, escapeFn) {
         id: `sales-${order.sourceId}`,
         tone: "warning",
         moduleKey: "sales",
-        title: order.title || `Р—Р°РєР°Р· ${order.orderNumber || "Р±РµР· РЅРѕРјРµСЂР°"}`,
-        meta: `${formatMoney(order.amount || 0)} вЂў ${compactText(order.client || "РљР»РёРµРЅС‚ РЅРµ СѓРєР°Р·Р°РЅ")}`,
-        actionLabel: "РћС‚РєСЂС‹С‚СЊ РїСЂРѕРґР°Р¶Рё"
+        title: order.title || `Заказ ${order.orderNumber || "без номера"}`,
+        meta: `${formatMoney(order.amount || 0)} • ${compactText(order.client || "Клиент не указан")}`,
+        actionLabel: "Открыть продажи"
       })),
       ...warehouseSnapshot.lowItems.slice(0, 4).map((item) => ({
         id: `warehouse-${item.id}`,
         tone: "danger",
         moduleKey: "warehouse",
-        title: item.name || item.sku || "РЎРєР»Р°РґСЃРєР°СЏ РїРѕР·РёС†РёСЏ",
-        meta: `Р”РѕСЃС‚СѓРїРЅРѕ ${formatNumber(item.available)} вЂў РјРёРЅРёРјСѓРј ${formatNumber(item.minStock || 0)}`,
-        actionLabel: "РћС‚РєСЂС‹С‚СЊ СЃРєР»Р°Рґ"
+        title: item.name || item.sku || "Складская позиция",
+        meta: `Доступно ${formatNumber(item.available)} • минимум ${formatNumber(item.minStock || 0)}`,
+        actionLabel: "Открыть склад"
       })),
       ...overdueDeals.slice(0, 3).map((deal) => ({
         id: `crm-${deal.id}`,
         tone: "accent",
         moduleKey: "crm",
-        title: deal.title || deal.client || "CRM-СЃРґРµР»РєР°",
-        meta: `${getCrmStageMeta(deal.stage).label} вЂў СЃСЂРѕРє ${formatDate(deal.deadline)}`,
-        actionLabel: "РћС‚РєСЂС‹С‚СЊ CRM"
+        title: deal.title || deal.client || "CRM-сделка",
+        meta: `${getCrmStageMeta(deal.stage).label} • срок ${formatDate(deal.deadline)}`,
+        actionLabel: "Открыть CRM"
       })),
       ...overdueTasks.slice(0, 3).map((task) => ({
         id: `tasks-${task.id}`,
         tone: "info",
         moduleKey: "tasks",
-        title: task.title || "Р—Р°РґР°С‡Р°",
-        meta: `${task.owner || "Р‘РµР· РѕС‚РІРµС‚СЃС‚РІРµРЅРЅРѕРіРѕ"} вЂў СЃСЂРѕРє ${formatDate(task.dueDate)}`,
-        actionLabel: "РћС‚РєСЂС‹С‚СЊ Р·Р°РґР°С‡Рё"
+        title: task.title || "Задача",
+        meta: `${task.owner || "Без ответственного"} • срок ${formatDate(task.dueDate)}`,
+        actionLabel: "Открыть задачи"
       }))
     ].slice(0, 10);
 

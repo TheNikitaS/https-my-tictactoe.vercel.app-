@@ -51,6 +51,7 @@
 
   window.createSharedSupabaseSync = function createSharedSupabaseSync(options) {
     const appId = options.appId;
+    const readonly = Boolean(options.readonly);
     const clientId =
       options.clientId ||
       appId + "-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
@@ -82,6 +83,10 @@
     }
 
     async function writeRemote(reason) {
+      if (readonly) {
+        notify("saved");
+        return null;
+      }
       pendingSave = false;
       const state = cloneJson(options.getState());
       const stateHash = stringifyState(state);
@@ -195,7 +200,7 @@
         const row = await readRemote();
         if (row && row.payload) {
           applyRemote(row);
-        } else {
+        } else if (!readonly) {
           await writeRemote("seed");
         }
 
@@ -204,7 +209,7 @@
         notify("idle");
       },
       scheduleSave() {
-        if (applyingRemoteState) {
+        if (readonly || applyingRemoteState) {
           return;
         }
 
@@ -224,7 +229,7 @@
         }, options.saveDebounceMs || DEFAULT_SAVE_DEBOUNCE_MS);
       },
       async forceSave() {
-        if (applyingRemoteState) {
+        if (readonly || applyingRemoteState) {
           return null;
         }
 

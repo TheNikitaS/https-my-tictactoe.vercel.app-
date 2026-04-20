@@ -6,7 +6,7 @@
     <title>Партнерский калькулятор (ФИНАЛ)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-size: 0.86rem; }
+        body { background-color: #f4f6f9; font-size: 0.82rem; }
         .card-header { background-color: #1f2d3d; color: white; padding: 0.5rem 1rem; }
         .partner-card-header { background-color: #27ae60; }
         #tabs-container { display: flex; flex-wrap: wrap; padding: 0.5rem; background-color: #dce1e6; }
@@ -144,7 +144,7 @@
     </div>
 </div>
 
-<script src="../shared/supabase-sync.js?v=20260331-1200"></script>
+<script src="../shared/supabase-sync.js?v=20260420-catalog60"></script>
 <script>
 const db = [
     { category: 'Материалы', subcategory: 'Неон', id: '750621', name: 'Гибкий неон LP... (белый 6000K)', cost: 200.655, unit: 'м', power: 10 },
@@ -231,7 +231,10 @@ const partnerScope = partnerScopeRaw ? encodeURIComponent(partnerScopeRaw.toLowe
 const sessionKey = partnerScope ? `partnerCalculator_${partnerScope}` : 'partnerCalculator_vFinal_Corrected';
 const cloudAppId = partnerScope ? `part-calculator:${partnerScope}` : 'part-calculator';
 let syncManager = null;
+let catalogSyncManager = null;
 let suppressCloudSync = false;
+const SHARED_CATALOG_APP_ID = 'calculator-shared-catalog-v1';
+const DEFAULT_COEFFS = { goods: 1.862, design: 2, assembly: 3.369, montage: 1.539 };
 const ITEM_PRICING_OPTIONS = [
     { key: 'goods', label: 'Товары' },
     { key: 'design', label: 'Дизайн' },
@@ -242,6 +245,7 @@ const ITEM_PRICING_OPTIONS = [
 const CRITICAL_AUTO_IDS = new Set(['SUB01', 'WORK02', 'WORK03', 'WORK05', '750641', 'WORK06']);
 const BASE_CATALOG = db.map((item) => ({
     ...item,
+    article: item.article || item.id,
     hidden: false,
     deleted: false,
     custom: false,
@@ -261,11 +265,23 @@ function cloneCatalog(items = BASE_CATALOG) {
     return items.map((item) => ({ ...item }));
 }
 
+function normalizeCoeffs(rawCoeffs = {}) {
+    const normalized = {};
+    Object.entries(DEFAULT_COEFFS).forEach(([key, fallback]) => {
+        const source = rawCoeffs?.[key];
+        const parsed = typeof source === 'number'
+            ? source
+            : parseFloat(String(source ?? '').replace(',', '.'));
+        normalized[key] = Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+    });
+    return normalized;
+}
+
 function createTabData(rawData = {}) {
     return {
         quantities: { ...(rawData.quantities || {}) },
         params: { ...(rawData.params || {}) },
-        coeffs: { ...(rawData.coeffs || {}) },
+        coeffs: normalizeCoeffs(rawData.coeffs),
         notes: String(rawData.notes || ''),
         status: String(rawData.status || ''),
         done: Boolean(rawData.done),
@@ -281,6 +297,8 @@ function normalizeCatalog(rawCatalog) {
         return {
             ...item,
             ...saved,
+            article: String(saved.article || item.article || item.id),
+            name: String(saved.name || item.name || ''),
             cost: Number(saved.cost ?? item.cost) || 0,
             hidden: Boolean(saved.hidden),
             deleted: Boolean(saved.deleted),
@@ -294,6 +312,8 @@ function normalizeCatalog(rawCatalog) {
         .forEach((item) => {
             catalog.push({
                 ...item,
+                article: String(item.article || item.id || ''),
+                name: String(item.name || ''),
                 cost: Number(item.cost) || 0,
                 hidden: Boolean(item.hidden),
                 deleted: Boolean(item.deleted),
