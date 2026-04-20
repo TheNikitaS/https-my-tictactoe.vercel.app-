@@ -544,14 +544,148 @@ function escapeHtml(value) {
         .replace(/'/g, '&#39;');
 }
 
+function escapeAttr(value) {
+    return escapeHtml(value).replace(/`/g, '&#96;');
+}
+
+function scheduleCatalogShareSync() {
+    if (catalogSyncManager && !suppressCloudSync) {
+        catalogSyncManager.scheduleSave();
+    }
+}
+
+function applyCatalogMetaAcrossTabs(itemId, patch) {
+    state.tabs.forEach((tab) => {
+        const item = tab?.data?.catalog?.find((entry) => entry.id === itemId);
+        if (item) Object.assign(item, patch);
+    });
+}
+
+function insertCatalogItemByGroup(catalog, nextItem) {
+    const lastIndex = catalog.reduce((result, item, index) => {
+        if (item.category === nextItem.category && item.subcategory === nextItem.subcategory) {
+            return index;
+        }
+        return result;
+    }, -1);
+    if (lastIndex === -1) catalog.push(nextItem);
+    else catalog.splice(lastIndex + 1, 0, nextItem);
+}
+
+function createInlineCatalogItem(category, subcategory) {
+    return {
+        id: `CUSTOM_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+        article: '',
+        name: '',
+        category,
+        subcategory,
+        unit: 'шт',
+        cost: 0,
+        hidden: false,
+        deleted: false,
+        custom: true,
+        pricingKind: inferPricingKind({ category, subcategory })
+    };
+}
+
+function buildSharedCatalogPayload() {
+    const catalogMap = new Map();
+    state.tabs.forEach((tab) => {
+        (tab?.data?.catalog || []).forEach((item) => {
+            if (!item?.id || item.deleted) return;
+            const normalized = {
+                id: String(item.id),
+                article: String(item.article || item.id || ''),
+                name: String(item.name || ''),
+                category: String(item.category || ''),
+                subcategory: String(item.subcategory || ''),
+                unit: String(item.unit || 'шт'),
+                pricingKind: item.pricingKind || inferPricingKind(item),
+                custom: Boolean(item.custom)
+            };
+            if (!normalized.name.trim()) return;
+            catalogMap.set(normalized.id, normalized);
+        });
+    });
+    return { items: Array.from(catalogMap.values()), updatedAt: Date.now() };
+}
+
+function mergeSharedCatalogIntoState(sharedItems) {
+    const safeItems = Array.isArray(sharedItems) ? sharedItems : [];
+    if (!safeItems.length) return false;
+    const sharedMap = new Map(safeItems.filter((item) => item?.id).map((item) => [item.id, item]));
+    let changed = false;
+
+    state.tabs.forEach((tab) => {
+        if (!tab?.data) tab.data = createTabData();
+        if (!Array.isArray(tab.data.catalog)) tab.data.catalog = cloneCatalog();
+        const existingIds = new Set(tab.data.catalog.map((item) => item.id));
+
+        tab.data.catalog.forEach((item) => {
+            const shared = sharedMap.get(item.id);
+            if (!shared) return;
+            const nextPatch = {
+                article: String(shared.article || item.article || item.id),
+                name: String(shared.name || item.name || ''),
+                category: String(shared.category || item.category || ''),
+                subcategory: String(shared.subcategory || item.subcategory || ''),
+                unit: String(shared.unit || item.unit || 'шт'),
+                pricingKind: shared.pricingKind || item.pricingKind || inferPricingKind(item)
+            };
+            if (
+                item.article !== nextPatch.article ||
+                item.name !== nextPatch.name ||
+                item.category !== nextPatch.category ||
+                item.subcategory !== nextPatch.subcategory ||
+                item.unit !== nextPatch.unit ||
+                item.pricingKind !== nextPatch.pricingKind
+            ) {
+                Object.assign(item, nextPatch);
+                changed = true;
+            }
+        });
+
+        safeItems.forEach((shared) => {
+            if (existingIds.has(shared.id) || !shared.custom) return;
+            insertCatalogItemByGroup(tab.data.catalog, {
+                id: String(shared.id),
+                article: String(shared.article || shared.id || ''),
+                name: String(shared.name || ''),
+                category: String(shared.category || 'Материалы'),
+                subcategory: String(shared.subcategory || 'Прочее'),
+                unit: String(shared.unit || 'шт'),
+                cost: 0,
+                hidden: false,
+                deleted: false,
+                custom: true,
+                pricingKind: shared.pricingKind || inferPricingKind(shared)
+            });
+            changed = true;
+        });
+    });
+
+    return changed;
+}
+
 function syncCatalogFromDom(activeTab) {
     if (!activeTab?.data?.catalog) return;
     const catalogById = new Map(activeTab.data.catalog.map((item) => [item.id, item]));
+    let metaChanged = false;
     document.querySelectorAll('.item-row[data-item-id]').forEach((row) => {
-        const item = catalogById.get(row.dataset.itemId);
+        const itemId = row.dataset.itemId;
+        const item = catalogById.get(itemId);
         if (!item) return;
+        const articleInput = row.querySelector('.article-input');
+        const nameInput = row.querySelector('.name-input');
+        const nextArticle = String(articleInput?.value || '').trim() || item.id;
+        const nextName = String(nameInput?.value || '').trim() || item.name || item.id;
+        if (item.article !== nextArticle || item.name !== nextName) {
+            applyCatalogMetaAcrossTabs(itemId, { article: nextArticle, name: nextName });
+            metaChanged = true;
+        }
         item.cost = Number(row.querySelector('.cost-input')?.value) || 0;
     });
+    if (metaChanged) scheduleCatalogShareSync();
 }
 
 function cloneState(value) {
@@ -673,6 +807,39 @@ async function setupCloudSync() {
     }
 }
 
+async function setupCatalogSync() {
+    if (!window.createSharedSupabaseSync) return;
+    catalogSyncManager = window.createSharedSupabaseSync({
+        appId: SHARED_CATALOG_APP_ID,
+        getState: () => buildSharedCatalogPayload(),
+        applyState: (payload) => {
+            suppressCloudSync = true;
+            try {
+                if (!mergeSharedCatalogIntoState(payload?.items)) return;
+                persistLocalState(state);
+                renderTabs();
+                renderCalculator();
+                loadActiveTabData();
+                attachGlobalListeners();
+            } finally {
+                suppressCloudSync = false;
+            }
+        },
+        persistLocal: () => {},
+        pollMs: 3500,
+        saveDebounceMs: 900,
+        onStatus: (status, detail) => {
+            if (status === 'error') console.error('Catalog sync error:', detail);
+        }
+    });
+
+    try {
+        await catalogSyncManager.init();
+    } catch (error) {
+        console.warn('Shared catalog sync unavailable:', error);
+    }
+}
+
 async function init() {
     installMojibakeRepairObserver();
     scheduleMojibakeRepair(document.body);
@@ -684,6 +851,7 @@ async function init() {
     loadActiveTabData();
     attachGlobalListeners();
     await setupCloudSync();
+    await setupCatalogSync();
     scheduleMojibakeRepair(document.body);
 }
 
@@ -1019,9 +1187,6 @@ function renderCalculator() {
     const catalog = getActiveCatalog();
     container.innerHTML = `
         <div class="catalog-toolbar">
-            <div>
-                <button type="button" class="btn btn-sm btn-outline-dark" id="catalog-add-item">+ Добавить товар</button>
-            </div>
             <div class="toolbar-field">
                 <label class="form-label mb-1">Скрытые товары</label>
                 <div class="d-flex gap-2">
@@ -1032,27 +1197,33 @@ function renderCalculator() {
                     <button type="button" class="btn btn-sm btn-outline-primary" id="catalog-show-item">Показать</button>
                 </div>
             </div>
-            <div class="toolbar-note">Новые товары, цены и логика расчета теперь сохраняются в каждой вкладке отдельно.</div>
+            <div class="toolbar-note">Артикулы и названия товаров сохраняются, а товары синхронизируются с вашим калькулятором без закупочных цен.</div>
         </div>
     `;
     let currentCategory = '', currentSubcategory = '';
-    const header = `<div class="item-row item-row-header" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px 70px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span><span class="text-end">Действия</span></div>`;
+    const header = `<div class="item-row item-row-header" style="grid-template-columns: 110px 1fr 90px 40px 80px 110px 70px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span><span class="text-end">Действия</span></div>`;
 
     catalog.filter((item) => !item.hidden && !item.deleted).forEach(item => {
         if (item.category !== currentCategory) { currentCategory = item.category; container.innerHTML += `<h4 class="mt-4">${currentCategory}</h4>`; }
         if (item.subcategory !== currentSubcategory) {
             currentSubcategory = item.subcategory;
-            let subHeader = `<div class="category-header">${currentSubcategory}`;
-            if (item.subcategory === 'Блок питания') subHeader += ` (Требуемая мощность: <span id="required-power-display">0</span>W)`;
-            subHeader += `</div>`;
+            let subLabel = `${currentSubcategory}`;
+            if (item.subcategory === 'Блок питания') subLabel += ` (Требуемая мощность: <span id="required-power-display">0</span>W)`;
+            const subHeader = `
+                <div class="category-header">
+                    <span>${subLabel}</span>
+                    <button type="button" class="btn btn-sm btn-outline-primary category-add-btn" data-category-add="1" data-category-name="${escapeAttr(item.category)}" data-subcategory-name="${escapeAttr(item.subcategory)}">
+                        Добавить товар
+                    </button>
+                </div>`;
             container.innerHTML += subHeader;
             container.innerHTML += header;
         }
         
         container.innerHTML += `
-            <div class="item-row" id="row-${item.id}" data-item-id="${item.id}" style="grid-template-columns: 80px 1fr 90px 40px 80px 110px 70px;">
-                <span class="small text-muted">${item.id}</span>
-                <span class="small">${item.name}</span>
+            <div class="item-row" id="row-${item.id}" data-item-id="${item.id}" style="grid-template-columns: 110px 1fr 90px 40px 80px 110px 70px;">
+                <input type="text" class="form-control form-control-sm article-input" value="${escapeAttr(item.article || item.id)}">
+                <input type="text" class="form-control form-control-sm name-input" value="${escapeAttr(item.name)}">
                 <input type="number" step="0.01" class="form-control form-control-sm cost-input" value="${item.cost}">
                 <span class="small text-center">${item.unit}</span>
                 <input type="number" step="0.01" class="form-control form-control-sm quantity-input ${item.auto ? 'read-only' : ''}" data-id="${item.id}">
@@ -1067,10 +1238,16 @@ function renderCalculator() {
 }
 
 function attachGlobalListeners() {
-    const inputs = document.querySelectorAll('.cost-input, .quantity-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage');
+    const inputs = document.querySelectorAll('.cost-input, .quantity-input, .article-input, .name-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage');
     inputs.forEach(el => {
-        el.addEventListener('input', calculate);
-        el.addEventListener('change', calculate);
+        const shouldRecalculate = !el.classList.contains('article-input') && !el.classList.contains('name-input');
+        if (shouldRecalculate) {
+            el.addEventListener('input', calculate);
+            el.addEventListener('change', calculate);
+        } else {
+            el.addEventListener('input', saveState);
+            el.addEventListener('change', saveState);
+        }
         el.addEventListener('blur', saveState);
     });
     const textareas = document.querySelectorAll('#notes');
@@ -1082,10 +1259,11 @@ function attachGlobalListeners() {
             renderTabs();
         });
     }
-    const addItemBtn = document.getElementById('catalog-add-item');
-    if (addItemBtn) addItemBtn.addEventListener('click', addCatalogItem);
     const showItemBtn = document.getElementById('catalog-show-item');
     if (showItemBtn) showItemBtn.addEventListener('click', showSelectedHiddenItem);
+    document.querySelectorAll('[data-category-add]').forEach((button) => {
+        button.addEventListener('click', () => addCatalogItemInline(button.dataset.categoryName, button.dataset.subcategoryName));
+    });
     document.querySelectorAll('[data-item-hide]').forEach((button) => {
         button.addEventListener('click', () => hideCatalogItem(button.dataset.itemHide));
     });
@@ -1127,39 +1305,24 @@ async function deleteCatalogItem(itemId) {
 }
 
 async function addCatalogItem() {
-    const activeTab = getActiveTab();
-    if (!activeTab) return;
-    const values = await openActionDialog({
-        title: 'Новый товар',
-        message: 'Добавьте товар и выберите, по какой логике он участвует в расчёте.',
-        confirmText: 'Добавить',
-        fields: [
-            { name: 'name', label: 'Название товара', value: '', placeholder: 'Например: Крепёж', required: true },
-            { name: 'category', label: 'Категория', value: 'Материалы', required: true },
-            { name: 'subcategory', label: 'Подкатегория', value: 'Прочее', required: true },
-            { name: 'unit', label: 'Единица измерения', value: 'шт', required: true },
-            { name: 'cost', label: 'Закупочная цена', type: 'number', value: 0, min: 0, step: '0.01', required: true },
-            { name: 'pricingKind', label: 'Логика расчёта', type: 'select', value: inferPricingKind({ category: 'Материалы', subcategory: 'Прочее' }), options: ITEM_PRICING_OPTIONS.map((item) => ({ value: item.key, label: item.label })) }
-        ]
-    });
-    if (!values) return;
-    const safePricingKind = ITEM_PRICING_OPTIONS.some((item) => item.key === values.pricingKind) ? values.pricingKind : 'goods';
-    activeTab.data.catalog.push({
-        id: `CUSTOM_${Date.now()}`,
-        name: values.name.trim(),
-        category: values.category.trim(),
-        subcategory: values.subcategory.trim(),
-        unit: values.unit.trim(),
-        cost: Number(values.cost) || 0,
-        hidden: false,
-        deleted: false,
-        custom: true,
-        pricingKind: safePricingKind
+    addCatalogItemInline('Материалы', 'Прочее');
+}
+
+function addCatalogItemInline(category, subcategory) {
+    const newItem = createInlineCatalogItem(category, subcategory);
+    state.tabs.forEach((tab) => {
+        if (!tab?.data) tab.data = createTabData();
+        if (!Array.isArray(tab.data.catalog)) tab.data.catalog = cloneCatalog();
+        insertCatalogItemByGroup(tab.data.catalog, { ...newItem });
     });
     persistStateSnapshot();
+    scheduleCatalogShareSync();
     renderCalculator();
     loadActiveTabData();
     attachGlobalListeners();
+    requestAnimationFrame(() => {
+        document.querySelector(`.item-row[data-item-id="${newItem.id}"] .name-input`)?.focus();
+    });
 }
 
 function hideCatalogItem(itemId) {
