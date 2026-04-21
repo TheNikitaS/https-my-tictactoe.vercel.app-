@@ -14,16 +14,6 @@
     node.className = "status-box" + (tone ? " " + tone : "");
   }
 
-  function buildSessionHash(payload) {
-    const params = new URLSearchParams();
-    if (payload.access_token) params.set("access_token", payload.access_token);
-    if (payload.refresh_token) params.set("refresh_token", payload.refresh_token);
-    if (payload.expires_in) params.set("expires_in", String(payload.expires_in));
-    if (payload.expires_at) params.set("expires_at", String(payload.expires_at));
-    if (payload.token_type) params.set("token_type", String(payload.token_type));
-    return `#${params.toString()}`;
-  }
-
   async function signInViaRest(email, password) {
     const response = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`, {
       method: "POST",
@@ -62,8 +52,12 @@
         setAuthStatus("Сессия не получена. Попробуйте ещё раз.", "error");
         return;
       }
+      await supabase.auth.setSession({
+        access_token: payload.access_token,
+        refresh_token: payload.refresh_token
+      });
       setAuthStatus("Вход выполнен. Открываю платформу...", "success");
-      window.location.assign(`${REDIRECT_URL}${buildSessionHash(payload)}`);
+      window.location.assign(REDIRECT_URL);
     } catch (error) {
       setAuthStatus(error.message || "Не удалось выполнить вход.", "error");
     }
@@ -76,6 +70,10 @@
     window.__domNeonaBridgeBound = true;
     form.addEventListener("submit", handleSignIn, true);
     const submitButton = form.querySelector('button[type="submit"]');
+    submitButton?.addEventListener("click", (event) => {
+      event.preventDefault();
+      form.requestSubmit();
+    }, true);
     submitButton?.addEventListener("click", () => {
       setTimeout(() => {
         if ($("authStatus")?.textContent?.includes("Готово к запуску")) {
