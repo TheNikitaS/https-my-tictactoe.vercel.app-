@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260420-platform-suite64";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260420-platform-suite64";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260421-platform-suite65";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260421-platform-suite65";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260420-platform-suite64";
+const PLATFORM_BUILD = "20260421-platform-suite65";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -3430,6 +3430,7 @@ async function refreshCurrentView() {
 }
 
 function bindAuthEvents() {
+  window.__domNeonaAuthBound = true;
   DOM.authTabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-auth-pane]");
     if (!button) return;
@@ -3954,7 +3955,12 @@ async function init() {
   installMojibakeRepairObserver();
   scheduleMojibakeRepair(document.body);
   bindAuthEvents();
-  bindAppEvents();
+  try {
+    bindAppEvents();
+  } catch (error) {
+    console.error("bindAppEvents failed", error);
+    setAuthStatus("Вход доступен, но часть интерфейса платформы не загрузилась. После входа покажу точную ошибку.", "error");
+  }
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
