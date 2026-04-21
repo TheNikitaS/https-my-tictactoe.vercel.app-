@@ -1,7 +1,8 @@
 (function () {
   const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
   const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-  const REDIRECT_URL = window.location.href.split("#")[0];
+const REDIRECT_URL = window.location.href.split("#")[0];
+const PLATFORM_BUILD = "20260421-platform-suite68";
 
   function $(id) {
     return document.getElementById(id);
@@ -57,7 +58,7 @@
         refresh_token: payload.refresh_token
       });
       setAuthStatus("Вход выполнен. Открываю платформу...", "success");
-      window.location.assign(REDIRECT_URL);
+      window.location.assign(`${REDIRECT_URL}?v=${PLATFORM_BUILD}`);
     } catch (error) {
       setAuthStatus(error.message || "Не удалось выполнить вход.", "error");
     }
