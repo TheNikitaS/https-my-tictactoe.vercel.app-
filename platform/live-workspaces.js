@@ -246,8 +246,74 @@ const LIVE_DRAFT_STORAGE_PREFIX = "dom-neona:live-draft";
 const EXTERNAL_SHARED_APPS = {
   sales: "sales-tracker",
   myCalculator: "moy-calculator",
-  partnerCalculatorsPattern: "part-calculator%"
+  partnerCalculatorsPattern: "part-calculator%",
+  light2Metrics: "platform_light2_metrics_v1"
 };
+
+const LIGHT2_METRIC_SUMMARY_META = {
+  revenue: { aggregate: "sum" },
+  cost: { aggregate: "sum" },
+  gross_profit: { aggregate: "sum" },
+  operating_expenses: { aggregate: "sum" },
+  operating_profit: { aggregate: "sum" },
+  taxes: { aggregate: "sum" },
+  net_profit: { aggregate: "sum" },
+  average_check: { aggregate: "last" },
+  sales: { aggregate: "sum" },
+  warehouse: { aggregate: "last" },
+  tbu_money: { aggregate: "last" },
+  margin: { aggregate: "last" },
+  product_profitability: { aggregate: "last" },
+  business_profitability: { aggregate: "last" },
+  custom_money: { aggregate: "sum" },
+  custom_number: { aggregate: "sum" },
+  custom_percent: { aggregate: "last" }
+};
+
+function normalizeLight2MetricMonthKey(value) {
+  const source = compactText(value);
+  if (/^\d{4}-\d{2}$/.test(source)) return source;
+  return "";
+}
+
+function normalizeLight2MetricsDoc(payload) {
+  const entries = Array.isArray(payload?.entries) ? payload.entries : [];
+  return entries
+    .map((entry, index) => ({
+      id: compactText(entry?.id) || `metric-${index + 1}`,
+      monthKey: normalizeLight2MetricMonthKey(entry?.monthKey),
+      category: compactText(entry?.category) || "revenue",
+      label: String(entry?.label || "").trim(),
+      amount: toNumber(entry?.amount),
+      updatedAt: compactText(entry?.updatedAt)
+    }))
+    .filter((entry) => entry.monthKey && entry.label);
+}
+
+function buildLight2MetricsSummary(payload) {
+  const entries = normalizeLight2MetricsDoc(payload);
+  const months = Array.from(new Set(entries.map((entry) => entry.monthKey))).sort();
+  const latestMonthKey = months.at(-1) || "";
+  const latestEntries = latestMonthKey ? entries.filter((entry) => entry.monthKey === latestMonthKey) : [];
+  const totals = {};
+
+  Object.keys(LIGHT2_METRIC_SUMMARY_META).forEach((key) => {
+    const rows = latestEntries.filter((entry) => entry.category === key);
+    if (!rows.length) {
+      totals[key] = 0;
+      return;
+    }
+    const aggregate = LIGHT2_METRIC_SUMMARY_META[key]?.aggregate || "sum";
+    totals[key] = aggregate === "last" ? toNumber(rows.at(-1)?.amount) : roundMoney(sumBy(rows, (entry) => entry.amount));
+  });
+
+  return {
+    entriesCount: entries.length,
+    monthCount: months.length,
+    latestMonthKey,
+    totals
+  };
+}
 
 const DEFAULT_DIRECTORY_LISTS = [
   {
@@ -1051,7 +1117,8 @@ export function createLiveWorkspaceController({
   const externalDocs = {
     sales: null,
     myCalculator: null,
-    partnerCalculators: null
+    partnerCalculators: null,
+    light2Metrics: null
   };
 
   function getModuleUiKey(moduleKey) {
@@ -1323,6 +1390,10 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (key === "partnerCalculators") {
       externalDocs.partnerCalculators = await fetchSharedPayloadsByLike(EXTERNAL_SHARED_APPS.partnerCalculatorsPattern);
       return externalDocs.partnerCalculators;
+    }
+    if (key === "light2Metrics") {
+      externalDocs.light2Metrics = await fetchSharedPayload(EXTERNAL_SHARED_APPS.light2Metrics);
+      return externalDocs.light2Metrics;
     }
     return null;
   }
@@ -5479,6 +5550,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       salesRecord,
       myCalculatorDoc,
       partnerCalculatorDocs,
+      light2MetricsDoc,
       light2Settlements,
       light2BalanceEntries,
       light2CalendarEntries,
@@ -5493,6 +5565,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       ensureExternalDoc("sales", true),
       ensureExternalDoc("myCalculator", true),
       ensureExternalDoc("partnerCalculators", true),
+      ensureExternalDoc("light2Metrics", true),
       loadLight2Rows("light2_partner_settlements"),
       loadLight2Rows("light2_balance_entries"),
       loadLight2Rows("light2_payment_calendar_entries"),
@@ -5504,6 +5577,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     const salesSnapshot = buildSalesSnapshot(salesRecord);
     const warehouseSnapshot = buildWarehouseSnapshot(warehouseDoc);
     const calculatorSnapshot = buildCalculatorDemandSnapshot(myCalculatorDoc, partnerCalculatorDocs || []);
+    const light2MetricsSummary = buildLight2MetricsSummary(light2MetricsDoc?.payload);
     const taskSignals = await buildTaskSignalSnapshot(tasksDoc);
 
     const today = todayString();
@@ -5713,6 +5787,7 @@ function buildModeTabs(moduleKey, escapeFn) {
         purchasesCount: (light2Purchases || []).length,
         suppliersCount: contourSuppliers.size
       },
+      light2Metrics: light2MetricsSummary,
       tasks: {
         totalCount: tasks.length,
         openCount: openTasks.length,

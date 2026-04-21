@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260420-light2-safe64";
+const LIGHT2_BUILD = "20260421-light2-metrics71";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
   activeSection: "dom-neona:light2:activeSection",
@@ -11,6 +11,31 @@ const LIGHT2_UI_KEYS = {
   sectionBuilders: "dom-neona:light2:sectionBuilders",
   restoreStamp: "dom-neona:light2:restoreStamp"
 };
+const LIGHT2_METRICS_APP_ID = "platform_light2_metrics_v1";
+
+const LIGHT2_METRIC_CATEGORIES = [
+  { key: "revenue", label: "Выручка", format: "money", aggregate: "sum" },
+  { key: "cost", label: "Себестоимость", format: "money", aggregate: "sum" },
+  { key: "gross_profit", label: "Валовая прибыль", format: "money", aggregate: "sum" },
+  { key: "operating_expenses", label: "Операционные расходы", format: "money", aggregate: "sum" },
+  { key: "operating_profit", label: "Операционная прибыль", format: "money", aggregate: "sum" },
+  { key: "taxes", label: "Налоги и сборы", format: "money", aggregate: "sum" },
+  { key: "net_profit", label: "Чистая прибыль", format: "money", aggregate: "sum" },
+  { key: "average_check", label: "Средний чек", format: "money", aggregate: "last" },
+  { key: "sales", label: "Продажи", format: "number", aggregate: "sum" },
+  { key: "warehouse", label: "Склад", format: "money", aggregate: "last" },
+  { key: "tbu_money", label: "ТБУ в деньгах", format: "money", aggregate: "last" },
+  { key: "margin", label: "Маржа", format: "percent", aggregate: "last" },
+  { key: "product_profitability", label: "Rпр — рентабельность продукции", format: "percent", aggregate: "last" },
+  { key: "business_profitability", label: "Рентабельность бизнеса", format: "percent", aggregate: "last" },
+  { key: "custom_money", label: "Своя статья (деньги)", format: "money", aggregate: "sum" },
+  { key: "custom_number", label: "Своя статья (число)", format: "number", aggregate: "sum" },
+  { key: "custom_percent", label: "Своя статья (проценты)", format: "percent", aggregate: "last" }
+];
+
+const LIGHT2_METRIC_CATEGORY_MAP = Object.fromEntries(
+  LIGHT2_METRIC_CATEGORIES.map((item) => [item.key, item])
+);
 
 const WORKBOOK_IMPORT_SHEETS = [
   "Баланс",
@@ -576,6 +601,13 @@ const STATE = {
   assets: [],
   assetPayments: [],
   purchaseCatalog: [],
+  metricsDoc: { entries: [], updatedAt: "" },
+  metricsReady: false,
+  metricsError: "",
+  metricsFilters: {
+    month: "",
+    search: ""
+  },
   workbookSnapshot: null,
   workbookReady: false,
   workbookError: "",
@@ -596,6 +628,7 @@ const STATE = {
   editingAssetId: null,
   editingAssetPaymentId: null,
   editingPurchaseId: null,
+  editingMetricEntryId: null,
   eventsBound: false,
   builderEventsBound: false,
   sectionBuilders: readStoredJson(LIGHT2_UI_KEYS.sectionBuilders, {}),
@@ -870,11 +903,18 @@ function getOverviewSectionFootnote(key) {
     return `${activeBlocks.length} каналов • ${parsed.latestMonthLabel || "без среза"}`;
   }
 
-  if (sheet && key === "metrics") {
-    const parsed = parseMetricsSnapshot(sheet);
-    const latest = parsed.series.at(-1);
-    if (latest) {
-      return `${latest.monthLabel} ${latest.yearLabel} • ${formatMoney(latest.revenue)} ₽`;
+  if (key === "metrics") {
+    const docSummary = summarizeMetricEntries(getMetricsEntries());
+    if (docSummary.latestMonthKey) {
+      return `${docSummary.latestMonthLabel} • ${formatMetricValue(docSummary.totals.revenue, "revenue")}`;
+    }
+
+    if (sheet) {
+      const parsed = parseMetricsSnapshot(sheet);
+      const latest = parsed.series.at(-1);
+      if (latest) {
+        return `${latest.monthLabel} ${latest.yearLabel} • ${formatMoney(latest.revenue)} ₽`;
+      }
     }
   }
 
@@ -2410,6 +2450,18 @@ function getPurchasesDom() {
   };
 }
 
+function getMetricsDom() {
+  return {
+    form: document.getElementById("metricsEntryForm"),
+    resetButton: document.getElementById("metricsResetButton"),
+    monthFilter: document.getElementById("metricsMonthFilter"),
+    search: document.getElementById("metricsSearch"),
+    summary: document.getElementById("metricsSummary"),
+    tableBody: document.getElementById("metricsTableBody"),
+    metricsStatus: document.getElementById("metricsDocStatus")
+  };
+}
+
 function getColumnLabel(index) {
   let value = Number(index || 0);
   let label = "";
@@ -2597,6 +2649,198 @@ function formatPlainNumber(value, digits = 0) {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits
   }).format(value);
+}
+
+function createMetricId() {
+  return `metric-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function getMetricCategoryMeta(categoryKey, fallbackLabel = "") {
+  return (
+    LIGHT2_METRIC_CATEGORY_MAP[String(categoryKey || "").trim()] || {
+      key: String(categoryKey || "").trim() || "custom_number",
+      label: fallbackLabel || "Своя метрика",
+      format: "number",
+      aggregate: "sum"
+    }
+  );
+}
+
+function createDefaultMetricsDoc() {
+  return {
+    updatedAt: "",
+    entries: []
+  };
+}
+
+function normalizeMetricMonthKey(value) {
+  const source = String(value || "").trim();
+  if (!source) return "";
+  const match = source.match(/^(\d{4})-(\d{2})/);
+  if (!match) return "";
+  return `${match[1]}-${match[2]}`;
+}
+
+function getMetricMonthLabel(monthKey) {
+  const normalized = normalizeMetricMonthKey(monthKey);
+  if (!normalized) return "—";
+  const [year, month] = normalized.split("-");
+  const index = Number(month) - 1;
+  return `${MONTH_NAMES[index] || month} ${year}`;
+}
+
+function getMetricInputValue(entry) {
+  const meta = getMetricCategoryMeta(entry?.category, entry?.label);
+  if (meta.format === "percent") {
+    return formatPlainNumber(toNumber(entry?.amount) * 100, 2);
+  }
+  return formatPlainNumber(toNumber(entry?.amount), 2);
+}
+
+function normalizeMetricInputAmount(value, categoryKey, fallbackLabel = "") {
+  const meta = getMetricCategoryMeta(categoryKey, fallbackLabel);
+  const amount = roundMoney(value);
+  if (meta.format === "percent") {
+    return amount / 100;
+  }
+  return amount;
+}
+
+function normalizeMetricsEntry(entry, index = 0) {
+  const category = String(entry?.category || "custom_number").trim() || "custom_number";
+  const meta = getMetricCategoryMeta(category, entry?.label);
+  const monthKey = normalizeMetricMonthKey(entry?.monthKey || entry?.month_key || "");
+  const label = String(entry?.label || meta.label || "Своя метрика").trim() || meta.label || "Своя метрика";
+  const rawAmount = entry?.amount;
+  const amount = Number.isFinite(Number(rawAmount)) ? Number(rawAmount) : 0;
+
+  return {
+    id: String(entry?.id || createMetricId()),
+    monthKey,
+    category,
+    label,
+    amount,
+    note: String(entry?.note || "").trim(),
+    sortOrder: Number.isFinite(Number(entry?.sortOrder)) ? Number(entry.sortOrder) : index,
+    updatedAt: String(entry?.updatedAt || entry?.updated_at || "")
+  };
+}
+
+function normalizeMetricsDoc(payload) {
+  const fallback = createDefaultMetricsDoc();
+  if (!payload || typeof payload !== "object") return fallback;
+
+  const entries = Array.isArray(payload.entries)
+    ? payload.entries.map((entry, index) => normalizeMetricsEntry(entry, index)).filter((entry) => entry.monthKey)
+    : [];
+
+  entries.sort((left, right) => {
+    if (left.monthKey !== right.monthKey) return right.monthKey.localeCompare(left.monthKey);
+    if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
+    return left.label.localeCompare(right.label, "ru");
+  });
+
+  return {
+    updatedAt: String(payload.updatedAt || payload.updated_at || ""),
+    entries
+  };
+}
+
+function getMetricsEntries(doc = STATE.metricsDoc) {
+  return normalizeMetricsDoc(doc).entries.slice();
+}
+
+function summarizeMetricEntries(entries = []) {
+  const latestMonthKey = entries.map((entry) => entry.monthKey).sort().at(-1) || "";
+  const latestEntries = latestMonthKey ? entries.filter((entry) => entry.monthKey === latestMonthKey) : [];
+  const totals = {};
+  const latestByCategory = {};
+
+  latestEntries.forEach((entry) => {
+    const meta = getMetricCategoryMeta(entry.category, entry.label);
+    if (meta.aggregate === "sum") {
+      totals[entry.category] = roundMoney((totals[entry.category] || 0) + toNumber(entry.amount));
+    } else {
+      totals[entry.category] = toNumber(entry.amount);
+    }
+    latestByCategory[entry.category] = entry;
+  });
+
+  return {
+    latestMonthKey,
+    latestMonthLabel: latestMonthKey ? getMetricMonthLabel(latestMonthKey) : "",
+    latestEntries,
+    totals,
+    latestByCategory,
+    monthCount: new Set(entries.map((entry) => entry.monthKey).filter(Boolean)).size,
+    entriesCount: entries.length
+  };
+}
+
+function formatMetricValue(value, categoryKey, fallbackLabel = "") {
+  const meta = getMetricCategoryMeta(categoryKey, fallbackLabel);
+  const amount = toNumber(value);
+  if (meta.format === "money") return `${formatMoney(amount)} ₽`;
+  if (meta.format === "percent") return formatPercentFromDecimal(amount);
+  return formatPlainNumber(amount, Number.isInteger(amount) ? 0 : 2);
+}
+
+async function loadMetricsDoc(force = false) {
+  if (STATE.metricsReady && !force) return STATE.metricsDoc;
+  const fallback = createDefaultMetricsDoc();
+
+  try {
+    const { data, error } = await withTimeout(
+      supabase.from("shared_app_states").select("app_id, payload, updated_at").eq("app_id", LIGHT2_METRICS_APP_ID).maybeSingle(),
+      5000,
+      "Не удалось вовремя загрузить живые метрики."
+    );
+    if (error && error.code !== "PGRST116") throw error;
+    STATE.metricsDoc = normalizeMetricsDoc(data?.payload || fallback);
+    STATE.metricsDoc.updatedAt = String(data?.updated_at || STATE.metricsDoc.updatedAt || "");
+    STATE.metricsReady = true;
+    STATE.metricsError = "";
+  } catch (error) {
+    STATE.metricsDoc = fallback;
+    STATE.metricsReady = false;
+    STATE.metricsError = error.message || "Не удалось загрузить живые метрики.";
+  }
+
+  renderOverview();
+  if (STATE.activeSection === "metrics") {
+    renderWorkbookSnapshotSection("metrics");
+  }
+  return STATE.metricsDoc;
+}
+
+async function saveMetricsDoc(nextDoc, successMessage = "") {
+  const payload = normalizeMetricsDoc(nextDoc);
+  payload.updatedAt = new Date().toISOString();
+
+  const { data, error } = await supabase.from("shared_app_states").select("app_id").eq("app_id", LIGHT2_METRICS_APP_ID).maybeSingle();
+  if (error && error.code !== "PGRST116") throw error;
+
+  if (data?.app_id) {
+    const { error: updateError } = await supabase
+      .from("shared_app_states")
+      .update({ payload })
+      .eq("app_id", LIGHT2_METRICS_APP_ID);
+    if (updateError) throw updateError;
+  } else {
+    const { error: insertError } = await supabase
+      .from("shared_app_states")
+      .insert({ app_id: LIGHT2_METRICS_APP_ID, payload });
+    if (insertError) throw insertError;
+  }
+
+  STATE.metricsDoc = payload;
+  STATE.metricsReady = true;
+  STATE.metricsError = "";
+  if (successMessage) setStatus(successMessage, "success");
+  renderOverview();
+  renderWorkbookSnapshotSection("metrics");
+  syncModuleStatus();
+  return payload;
 }
 
 function getMetricRowByLabels(rowMap, labels = []) {
@@ -3599,6 +3843,378 @@ function renderTemplateSections() {
   });
 }
 
+function getVisibleMetricEntries() {
+  const dom = getMetricsDom();
+  const monthFilter = normalizeMetricMonthKey(STATE.metricsFilters.month || dom.monthFilter?.value || "");
+  const search = String(STATE.metricsFilters.search || dom.search?.value || "").trim().toLowerCase();
+
+  return getMetricsEntries().filter((entry) => {
+    if (monthFilter && entry.monthKey !== monthFilter) return false;
+    if (!search) return true;
+    const haystack = [entry.label, getMetricCategoryMeta(entry.category, entry.label).label, entry.note, getMetricMonthLabel(entry.monthKey)]
+      .filter(Boolean)
+      .join(" ")
+      .toLowerCase();
+    return haystack.includes(search);
+  });
+}
+
+function resetMetricsForm() {
+  STATE.editingMetricEntryId = null;
+  const dom = getMetricsDom();
+  const form = dom.form;
+  if (!form) return;
+  form.reset();
+  form.elements.month_key.value = getTodayIso().slice(0, 7);
+  form.elements.category.value = "revenue";
+  form.elements.label.value = getMetricCategoryMeta("revenue").label;
+  form.elements.amount.value = "";
+  form.elements.note.value = "";
+  const submitButton = form.querySelector('[type="submit"]');
+  if (submitButton) {
+    submitButton.textContent = "Сохранить строку";
+  }
+}
+
+function fillMetricsForm(entry) {
+  const dom = getMetricsDom();
+  const form = dom.form;
+  if (!form || !entry) return;
+  STATE.editingMetricEntryId = entry.id;
+  form.elements.month_key.value = normalizeMetricMonthKey(entry.monthKey) || getTodayIso().slice(0, 7);
+  form.elements.category.value = entry.category;
+  form.elements.label.value = entry.label || getMetricCategoryMeta(entry.category).label;
+  form.elements.amount.value = getMetricInputValue(entry);
+  form.elements.note.value = entry.note || "";
+  const submitButton = form.querySelector('[type="submit"]');
+  if (submitButton) {
+    submitButton.textContent = "Обновить строку";
+  }
+}
+
+async function saveMetricEntry() {
+  const dom = getMetricsDom();
+  const form = dom.form;
+  if (!form) return;
+
+  const formData = new FormData(form);
+  const category = String(formData.get("category") || "revenue").trim() || "revenue";
+  const meta = getMetricCategoryMeta(category);
+  const monthKey = normalizeMetricMonthKey(formData.get("month_key"));
+  const label = String(formData.get("label") || meta.label || "").trim() || meta.label;
+  const amount = normalizeMetricInputAmount(formData.get("amount"), category, label);
+  const note = String(formData.get("note") || "").trim();
+
+  if (!monthKey) {
+    throw new Error("Укажите месяц строки.");
+  }
+  if (!label) {
+    throw new Error("Укажите название строки.");
+  }
+
+  const entries = getMetricsEntries();
+  const sortOrder = STATE.editingMetricEntryId
+    ? entries.find((entry) => entry.id === STATE.editingMetricEntryId)?.sortOrder ?? entries.length
+    : entries.filter((entry) => entry.monthKey === monthKey).length;
+
+  const nextEntry = normalizeMetricsEntry(
+    {
+      id: STATE.editingMetricEntryId || createMetricId(),
+      monthKey,
+      category,
+      label,
+      amount,
+      note,
+      sortOrder,
+      updatedAt: new Date().toISOString()
+    },
+    sortOrder
+  );
+
+  const nextEntries = STATE.editingMetricEntryId
+    ? entries.map((entry) => (entry.id === STATE.editingMetricEntryId ? nextEntry : entry))
+    : [...entries, nextEntry];
+
+  await saveMetricsDoc(
+    {
+      ...STATE.metricsDoc,
+      entries: nextEntries
+    },
+    STATE.editingMetricEntryId ? "Строка метрик обновлена." : "Строка метрик добавлена."
+  );
+  resetMetricsForm();
+}
+
+async function deleteMetricEntry(id) {
+  const nextEntries = getMetricsEntries().filter((entry) => entry.id !== id);
+  await saveMetricsDoc(
+    {
+      ...STATE.metricsDoc,
+      entries: nextEntries
+    },
+    "Строка метрик удалена."
+  );
+  if (STATE.editingMetricEntryId === id) {
+    resetMetricsForm();
+  }
+}
+
+function renderMetricsWorkspace(sheet) {
+  const entries = getMetricsEntries();
+  const summary = summarizeMetricEntries(entries);
+  const visibleEntries = getVisibleMetricEntries();
+  const latest = summary.totals;
+  const lastUpdatedLabel = STATE.metricsDoc?.updatedAt ? formatDateTime(STATE.metricsDoc.updatedAt) : "—";
+  const metricsCards = [
+    { label: "Выручка", key: "revenue" },
+    { label: "Чистая прибыль", key: "net_profit" },
+    { label: "Продажи", key: "sales" },
+    { label: "Средний чек", key: "average_check" },
+    { label: "Маржа", key: "margin" },
+    { label: "Склад", key: "warehouse" }
+  ]
+    .map(
+      (item) => `
+        <article class="summary-card">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(formatMetricValue(latest[item.key], item.key, item.label))}</strong>
+        </article>
+      `
+    )
+    .join("");
+
+  const platformLinkCards = [
+    { label: "Баланс платформы", value: `${formatMoney(getCurrentBalanceTotals().total)} ₽` },
+    { label: "К выплате", value: `${formatMoney(getOpenSettlementRows().reduce((sum, row) => sum + Math.max(roundMoney(toNumber(row.salary_amount) - toNumber(row.purchase_amount)), 0), 0))} ₽` },
+    { label: "Закупок", value: formatPlainNumber(STATE.purchaseCatalog.length) },
+    { label: "Активов", value: formatPlainNumber(STATE.assets.length) }
+  ]
+    .map(
+      (item) => `
+        <div class="dashboard-mini dashboard-mini--neutral">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.value)}</strong>
+        </div>
+      `
+    )
+    .join("");
+
+  const categoryOptions = LIGHT2_METRIC_CATEGORIES.map(
+    (item) => `<option value="${escapeHtml(item.key)}">${escapeHtml(item.label)}</option>`
+  ).join("");
+
+  const analyticsHtml = sheet ? renderMetricsAnalytics(sheet) : "";
+  const snapshotBlock = sheet && sheetHasVisibleData(sheet)
+    ? (() => {
+        const rows = buildSnapshotRows(sheet, "metrics");
+        const headerRow = sheet.rows.find((row) => row.index <= 3) || sheet.rows[0];
+        const columns = Array.from({ length: sheet.maxCol || 1 }, (_, idx) => idx + 1);
+        return `
+          <div class="snapshot-toolbar">
+            <div class="summary-row">
+              <article class="summary-card">
+                <span>Лист</span>
+                <strong>${escapeHtml(repairMojibakeText(sheet.name || ""))}</strong>
+              </article>
+              <article class="summary-card">
+                <span>Непустых ячеек</span>
+                <strong>${escapeHtml(String(sheet.nonEmpty || 0))}</strong>
+              </article>
+              <article class="summary-card">
+                <span>Формул</span>
+                <strong>${escapeHtml(String(sheet.formulas || 0))}</strong>
+              </article>
+              <article class="summary-card">
+                <span>Строк в выборке</span>
+                <strong>${escapeHtml(String(rows.length))}</strong>
+              </article>
+            </div>
+            <div class="toolbar-grid mt-3">
+              <div>
+                <label class="form-label">Поиск по листу</label>
+                <input
+                  class="form-control"
+                  type="text"
+                  value="${escapeHtml(STATE.snapshotSearches.metrics || "")}"
+                  data-snapshot-search="metrics"
+                  placeholder="Значение, формула или подпись"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="snapshot-hint">
+            Исходный лист сохранён ниже для сверки. Живой слой платформы редактируется выше и может питать главную страницу.
+          </div>
+          <div class="table-shell mt-3">
+            <table class="table table-sm align-middle snapshot-table">
+              <thead>
+                <tr>
+                  <th class="snapshot-row-head">#</th>
+                  ${columns.map((col) => `<th>${escapeHtml(getColumnLabel(col))}</th>`).join("")}
+                </tr>
+              </thead>
+              <tbody>
+                ${
+                  rows.length
+                    ? rows
+                        .map((row) => {
+                          const cells = row.cells || {};
+                          return `
+                            <tr>
+                              <th class="snapshot-row-head">${escapeHtml(String(row.index))}</th>
+                              ${columns
+                                .map((col) => {
+                                  const cell = cells[String(col)];
+                                  if (!cell) return `<td></td>`;
+                                  const formula = cell.formula ? ` title="${escapeHtml(repairMojibakeText(cell.formula))}"` : "";
+                                  const tone = cell.kind ? ` cell-${escapeHtml(cell.kind)}` : "";
+                                  const marker = cell.formula ? `<span class="formula-dot"></span>` : "";
+                                  return `<td class="snapshot-cell${tone}"${formula}>${marker}<span>${escapeHtml(repairMojibakeText(cell.display || cell.raw || ""))}</span></td>`;
+                                })
+                                .join("")}
+                            </tr>
+                          `;
+                        })
+                        .join("")
+                    : `<tr><td colspan="${columns.length + 1}" class="muted">По текущему поиску строки не найдены.</td></tr>`
+                }
+              </tbody>
+            </table>
+          </div>
+        `;
+      })()
+    : `
+        <div class="workspace-empty workspace-empty--sheet">
+          <strong>Сверочный лист метрик пока пустой</strong>
+          <div class="mt-2">Живой слой платформы уже доступен, а workbook можно подтянуть позже для сверки.</div>
+        </div>
+      `;
+
+  return `
+    ${analyticsHtml}
+    <div class="scope-note">
+      Здесь вы ведёте живые управленческие строки по месяцам. Главная страница и карточка «Метрики компании» могут брать значения отсюда в первую очередь.
+    </div>
+    <div class="summary-row mb-3">${metricsCards}</div>
+    <div class="subsection-grid analytics-grid mb-3">
+      <article class="subsection-card analytics-panel">
+        <div class="panel-kicker">Живой слой платформы</div>
+        <h3>Управленческие строки</h3>
+        <div class="analytics-footnote" id="metricsDocStatus">
+          ${entries.length ? `Последнее обновление: ${escapeHtml(lastUpdatedLabel)}` : "Строки пока не заведены. Начните с выручки, себестоимости и чистой прибыли."}
+        </div>
+        <form class="record-form" id="metricsEntryForm">
+          <div class="form-grid">
+            <div>
+              <label class="form-label">Месяц</label>
+              <input class="form-control" type="month" name="month_key" value="${escapeHtml(getTodayIso().slice(0, 7))}" required />
+            </div>
+            <div>
+              <label class="form-label">Категория</label>
+              <select class="form-select" name="category" data-metrics-category>
+                ${categoryOptions}
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Название строки</label>
+              <input class="form-control" type="text" name="label" value="Выручка" required />
+            </div>
+            <div>
+              <label class="form-label">Значение</label>
+              <input class="form-control" type="number" step="0.01" name="amount" placeholder="Например: 125000 или 18.5" required />
+            </div>
+          </div>
+          <div class="mt-3">
+            <label class="form-label">Комментарий</label>
+            <textarea class="form-control" name="note" rows="2" placeholder="Источник, статья или пояснение к строке"></textarea>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-dark" type="submit">Сохранить строку</button>
+            <button class="btn btn-outline-secondary" type="button" id="metricsResetButton" data-metrics-reset>Очистить форму</button>
+          </div>
+        </form>
+      </article>
+      <article class="subsection-card analytics-panel">
+        <div class="panel-kicker">Связи с платформой</div>
+        <h3>Операционный контур сейчас</h3>
+        <div class="dashboard-mini-grid">${platformLinkCards}</div>
+        <div class="analytics-footnote">Это живые цифры из баланса, взаиморасчётов, активов и закупок. Выше вы можете свести управленческий слой по месяцам.</div>
+      </article>
+    </div>
+    <div class="toolbar-grid">
+      <div>
+        <label class="form-label">Фильтр по месяцу</label>
+        <input class="form-control" type="month" id="metricsMonthFilter" value="${escapeHtml(STATE.metricsFilters.month || summary.latestMonthKey || "")}" data-metrics-filter="month" />
+      </div>
+      <div>
+        <label class="form-label">Поиск по строкам</label>
+        <input class="form-control" type="text" id="metricsSearch" value="${escapeHtml(STATE.metricsFilters.search || "")}" data-metrics-filter="search" placeholder="Название строки или комментарий" />
+      </div>
+    </div>
+    <div class="summary-row mt-3" id="metricsSummary">
+      <article class="summary-card">
+        <span>Заполнено строк</span>
+        <strong>${escapeHtml(formatPlainNumber(summary.entriesCount))}</strong>
+      </article>
+      <article class="summary-card">
+        <span>Месяцев в базе</span>
+        <strong>${escapeHtml(formatPlainNumber(summary.monthCount))}</strong>
+      </article>
+      <article class="summary-card">
+        <span>Последний месяц</span>
+        <strong>${escapeHtml(summary.latestMonthLabel || "—")}</strong>
+      </article>
+      <article class="summary-card">
+        <span>Чистая прибыль месяца</span>
+        <strong>${escapeHtml(formatMetricValue(summary.totals.net_profit, "net_profit"))}</strong>
+      </article>
+    </div>
+    <div class="table-shell mt-3">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Месяц</th>
+            <th>Категория</th>
+            <th>Строка</th>
+            <th class="text-end">Значение</th>
+            <th>Комментарий</th>
+            <th>Обновлено</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody id="metricsTableBody">
+          ${
+            visibleEntries.length
+              ? visibleEntries
+                  .map((entry) => {
+                    const meta = getMetricCategoryMeta(entry.category, entry.label);
+                    return `
+                      <tr>
+                        <td>${escapeHtml(getMetricMonthLabel(entry.monthKey))}</td>
+                        <td>${escapeHtml(meta.label)}</td>
+                        <td>${escapeHtml(entry.label)}</td>
+                        <td class="text-end"><strong>${escapeHtml(formatMetricValue(entry.amount, entry.category, entry.label))}</strong></td>
+                        <td>${escapeHtml(entry.note || "—")}</td>
+                        <td>${escapeHtml(formatDateTime(entry.updatedAt || STATE.metricsDoc.updatedAt))}</td>
+                        <td>
+                          <div class="d-flex gap-2">
+                            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-metric-entry="${escapeHtml(entry.id)}">Изменить</button>
+                            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-metric-entry="${escapeHtml(entry.id)}">Удалить</button>
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  })
+                  .join("")
+              : `<tr><td colspan="7" class="muted">По текущему фильтру строки не найдены.</td></tr>`
+          }
+        </tbody>
+      </table>
+    </div>
+    ${snapshotBlock}
+  `;
+}
+
 function renderWorkbookSnapshotSection(sectionKey) {
   const host = getSnapshotHost(sectionKey);
   if (!host) return;
@@ -3613,11 +4229,21 @@ function renderWorkbookSnapshotSection(sectionKey) {
   }
 
   if (!STATE.workbookReady) {
+    if (sectionKey === "metrics") {
+      host.innerHTML = renderMetricsWorkspace(null);
+      scheduleDomRepair(host);
+      return;
+    }
     host.innerHTML = `<div class="scope-note">Загружаю сверочный лист ${escapeHtml(sheetName)} из исходного файла...</div>`;
     return;
   }
 
   const sheet = getSnapshotSheet(sectionKey);
+  if (sectionKey === "metrics") {
+    host.innerHTML = renderMetricsWorkspace(sheet || null);
+    scheduleDomRepair(host);
+    return;
+  }
   if (!sheet) {
     host.innerHTML = `<div class="scope-note">Лист ${escapeHtml(sheetName)} не найден в snapshot-файле.</div>`;
     return;
@@ -5365,7 +5991,8 @@ async function loadContourBlocks() {
   const loaders = [
     ["Взаиморасчеты", loadSettlements],
     ["Финансы", loadFinanceData],
-    ["Активы и закупки", loadOperationsData]
+    ["Активы и закупки", loadOperationsData],
+    ["Метрики", loadMetricsDoc]
   ];
 
   const results = await Promise.allSettled(
@@ -5768,6 +6395,7 @@ function bindEvents() {
   const calendarDom = getCalendarDom();
   const assetsDom = getAssetsDom();
   const purchasesDom = getPurchasesDom();
+  const metricsDom = getMetricsDom();
 
   bindDomEvent(DOM.sectionTabs, "click", (event) => {
     const button = event.target.closest("[data-section]");
@@ -5834,6 +6462,31 @@ function bindEvents() {
     renderWorkbookSnapshotSection(input.dataset.snapshotSearch);
   });
 
+  bindDomEvent(document.body, "input", (event) => {
+    const input = event.target.closest("[data-metrics-filter]");
+    if (!input) return;
+    STATE.metricsFilters[input.dataset.metricsFilter] = input.value || "";
+    renderWorkbookSnapshotSection("metrics");
+  });
+
+  bindDomEvent(document.body, "change", (event) => {
+    const categorySelect = event.target.closest("[data-metrics-category]");
+    if (!categorySelect) return;
+    const form = categorySelect.form;
+    if (!form) return;
+    const labelField = form.elements.label;
+    if (!labelField) return;
+    const nextMeta = getMetricCategoryMeta(categorySelect.value);
+    const editingEntry = STATE.editingMetricEntryId
+      ? getMetricsEntries().find((entry) => entry.id === STATE.editingMetricEntryId)
+      : null;
+    const previousMeta = getMetricCategoryMeta(editingEntry?.category || "revenue");
+    const currentValue = String(labelField.value || "").trim();
+    if (!currentValue || currentValue === previousMeta.label) {
+      labelField.value = nextMeta.label;
+    }
+  });
+
   bindDomEvent(settlementDom.form, "input", updateSettlementPreview);
   bindDomEvent(balanceDom.form, "input", updateBalancePreview);
   bindDomEvent(calendarDom.form, "input", updateCalendarPreview);
@@ -5892,6 +6545,15 @@ function bindEvents() {
     }
   });
 
+  bindDomEvent(metricsDom.form, "submit", async (event) => {
+    event.preventDefault();
+    try {
+      await saveMetricEntry();
+    } catch (error) {
+      setStatus(error.message || "Не удалось сохранить строку метрик.", "error");
+    }
+  });
+
   bindDomEvent(settlementDom.resetButton, "click", () => {
     resetSettlementForm();
     renderSettlementSection();
@@ -5922,6 +6584,11 @@ function bindEvents() {
     renderPurchases();
   });
 
+  bindDomEvent(metricsDom.resetButton, "click", () => {
+    resetMetricsForm();
+    renderWorkbookSnapshotSection("metrics");
+  });
+
   bindDomEvents([settlementDom.partnerFilter, settlementDom.statusFilter, settlementDom.search], ["input", "change"], renderSettlementSection);
   bindDomEvents([balanceDom.accountFilter, balanceDom.monthFilter, balanceDom.search], ["input", "change"], renderBalanceSection);
   bindDomEvents(
@@ -5931,6 +6598,7 @@ function bindEvents() {
   );
   bindDomEvents([assetsDom.search, assetsDom.paymentFilter, assetsDom.paymentSearch], ["input", "change"], renderAssets);
   bindDomEvents([purchasesDom.supplierFilter, purchasesDom.categoryFilter, purchasesDom.search], ["input", "change"], renderPurchases);
+  bindDomEvents([metricsDom.monthFilter, metricsDom.search], ["input", "change"], () => renderWorkbookSnapshotSection("metrics"));
 
   bindDomEvent(settlementDom.refreshButton, "click", async () => {
     try {
@@ -6106,6 +6774,28 @@ function bindEvents() {
       await deletePurchase(deleteButton.dataset.deletePurchase);
     } catch (error) {
       setStatus(error.message || "Не удалось удалить позицию закупки.", "error");
+    }
+  });
+
+  bindDomEvent(document.body, "click", async (event) => {
+    const editMetricButton = event.target.closest("[data-edit-metric-entry]");
+    if (editMetricButton) {
+      const entry = getMetricsEntries().find((item) => item.id === editMetricButton.dataset.editMetricEntry);
+      if (entry) {
+        fillMetricsForm(entry);
+        getMetricsDom().form?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+      return;
+    }
+
+    const deleteMetricButton = event.target.closest("[data-delete-metric-entry]");
+    if (!deleteMetricButton) return;
+    if (!window.confirm("Удалить строку метрик?")) return;
+
+    try {
+      await deleteMetricEntry(deleteMetricButton.dataset.deleteMetricEntry);
+    } catch (error) {
+      setStatus(error.message || "Не удалось удалить строку метрик.", "error");
     }
   });
 }

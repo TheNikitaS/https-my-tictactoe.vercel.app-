@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260413-platform-suite49";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-suite49";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260421-platform-suite71";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260421-platform-suite71";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260413-platform-suite49";
+const PLATFORM_BUILD = "20260421-platform-suite71";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -179,8 +179,8 @@ const MODULES = {
     }
   },
   light2: {
-    title: "ДОМ НЕОНА",
-    subtitle: "Финансовый и операционный контур компании внутри платформы.",
+    title: "Метрики",
+    subtitle: "Финансовые, операционные и управленческие метрики компании внутри платформы.",
     type: "embed",
     src: () => `./light2/index.html?v=${PLATFORM_BUILD}`
   },
@@ -645,7 +645,7 @@ function getModuleShortLabel(key) {
     production: "Произв.",
     my_calculator: "Мой",
     partner_calculator: "Парт.",
-    light2: "Контур",
+    light2: "Метрики",
     board: "Доска",
     messenger: "Чаты",
     admin: "Админ",
@@ -1505,7 +1505,7 @@ function getModuleStageLabel(moduleKey) {
     production: "Живой рабочий модуль",
     my_calculator: "Рабочий модуль",
     partner_calculator: "Рабочий модуль",
-    light2: "Активно развивается",
+    light2: "Живой рабочий модуль",
     board: "Совместная доска",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",
@@ -1751,6 +1751,7 @@ async function renderDashboard() {
 
   if (requestId !== STATE.dashboardRequestId) return;
   STATE.dashboardSnapshot = snapshot;
+  const metricsSummary = snapshot?.light2Metrics?.entriesCount ? snapshot.light2Metrics : null;
 
   const summaryLookup = snapshot
     ? {
@@ -1761,7 +1762,9 @@ async function renderDashboard() {
         warehouse: `${formatDashboardNumber(snapshot.warehouse.itemsCount)} позиций • ${formatDashboardNumber(snapshot.warehouse.lowCount)} в дефиците`,
         money: `${formatDashboardMoney(snapshot.warehouse.netMoney || 0)} баланс • ${formatDashboardMoney(snapshot.warehouse.incomeTotal || 0)} / ${formatDashboardMoney(snapshot.warehouse.expenseTotal || 0)}`,
         production: `${formatDashboardNumber(snapshot.warehouse.productionActive || 0)} в работе • ${formatDashboardNumber(snapshot.warehouse.productionTotal || 0)} всего`,
-        light2: `${formatDashboardMoney(snapshot.light2.balanceTotal || 0)} баланс • ${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате`,
+        light2: metricsSummary
+          ? `${formatDashboardMoney(metricsSummary.totals.revenue || 0)} выручка • ${formatDashboardMoney(metricsSummary.totals.net_profit || 0)} прибыль`
+          : `${formatDashboardMoney(snapshot.light2.balanceTotal || 0)} баланс • ${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате`,
         tasks: `${formatDashboardNumber(snapshot.tasks.openCount)} задач • ${formatDashboardNumber(snapshot.tasks.blockedCount)} с блокером`,
         directories: `${formatDashboardNumber(snapshot.directories.listsCount)} справочников • ${formatDashboardNumber(snapshot.directories.valuesCount)} значений`
       }
@@ -1824,9 +1827,11 @@ async function renderDashboard() {
       tone: "info"
     },
     {
-      label: "Контур компании",
-      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
-      meta: `${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате • ${formatDashboardNumber(snapshot.light2.openSettlementsCount || 0)} открытых взаиморасчетов`,
+      label: "Метрики компании",
+      value: formatDashboardMoney(metricsSummary?.totals.revenue || snapshot.light2.balanceTotal || 0),
+      meta: metricsSummary
+        ? `${formatDashboardMoney(metricsSummary.totals.net_profit || 0)} чистая прибыль • ${formatDashboardNumber(metricsSummary.totals.sales || 0)} продаж`
+        : `${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате • ${formatDashboardNumber(snapshot.light2.openSettlementsCount || 0)} открытых взаиморасчетов`,
       tone: "accent"
     },
     {
@@ -1917,7 +1922,40 @@ async function renderDashboard() {
     )
     .join("");
 
-  const contourCards = [
+  const contourCards = metricsSummary
+    ? [
+        {
+          label: "Выручка",
+          value: formatDashboardMoney(metricsSummary.totals.revenue || 0),
+          tone: "accent"
+        },
+        {
+          label: "Чистая прибыль",
+          value: formatDashboardMoney(metricsSummary.totals.net_profit || 0),
+          tone: "success"
+        },
+        {
+          label: "Продажи",
+          value: formatDashboardNumber(metricsSummary.totals.sales || 0),
+          tone: "info"
+        },
+        {
+          label: "Средний чек",
+          value: formatDashboardMoney(metricsSummary.totals.average_check || 0),
+          tone: "neutral"
+        },
+        {
+          label: "К выплате",
+          value: formatDashboardMoney(snapshot.light2.settlementsPayout || 0),
+          tone: "warning"
+        },
+        {
+          label: "Поставщики",
+          value: formatDashboardNumber(snapshot.light2.suppliersCount || 0),
+          tone: "neutral"
+        }
+      ]
+    : [
     {
       label: "Баланс",
       value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
@@ -2152,12 +2190,12 @@ async function renderDashboard() {
         <article class="dashboard-panel">
           <div class="panel-heading">
             <div>
-              <h3>Контур компании</h3>
-              <div class="compact-help">Связка по балансу, платежам, активам, закупкам и взаиморасчетам из ДОМ НЕОНА.</div>
+              <h3>Метрики компании</h3>
+              <div class="compact-help">Живые управленческие метрики месяца плюс связка по балансу, платежам, активам и закупкам.</div>
             </div>
-            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть контур</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть метрики</button>
           </div>
-          <div class="dashboard-mini-grid">${contourCards || '<div class="workspace-empty workspace-empty--tight">Контур ещё не наполнился данными.</div>'}</div>
+          <div class="dashboard-mini-grid">${contourCards || '<div class="workspace-empty workspace-empty--tight">Метрики ещё не наполнились данными.</div>'}</div>
         </article>
 
         <article class="dashboard-panel">
