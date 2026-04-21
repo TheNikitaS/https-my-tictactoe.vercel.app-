@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260421-platform-suite70";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260421-platform-suite70";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260413-platform-suite49";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-suite49";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260421-platform-suite70";
+const PLATFORM_BUILD = "20260413-platform-suite49";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -121,99 +121,6 @@ const STATE = {
   }
 };
 
-let mojibakeRepairQueued = false;
-let mojibakeRepairObserver = null;
-
-function repairMojibakeText(value) {
-  if (typeof value !== "string" || !value) return value;
-  if (!/[ÐÑРСЃЃв]/.test(value)) return value;
-  try {
-    let repaired = decodeURIComponent(escape(value));
-    if (/[ÐÑРСЃЃв]/.test(repaired) && repaired !== value) {
-      try {
-        const repairedTwice = decodeURIComponent(escape(repaired));
-        if (/[А-Яа-яЁё₽]/.test(repairedTwice)) repaired = repairedTwice;
-      } catch {
-        // Ignore second-pass failures.
-      }
-    }
-    repaired = repaired.replace(/в‚Ѕ/g, "₽").replace(/вЂ”/g, "—").replace(/вЂў/g, "•");
-    return /[А-Яа-яЁё₽]/.test(repaired) ? repaired : value;
-  } catch {
-    return value;
-  }
-}
-
-function repairMojibakeDom(root = document.body) {
-  if (!root) return;
-  const container = root.nodeType === Node.ELEMENT_NODE ? root : document.body;
-  if (!container) return;
-
-  const textWalker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, {
-    acceptNode(node) {
-      const parentTag = node.parentElement?.tagName;
-      if (!node.nodeValue?.trim()) return NodeFilter.FILTER_REJECT;
-      if (parentTag && ["SCRIPT", "STYLE", "NOSCRIPT", "TEXTAREA"].includes(parentTag)) {
-        return NodeFilter.FILTER_REJECT;
-      }
-      return NodeFilter.FILTER_ACCEPT;
-    }
-  });
-
-  const textNodes = [];
-  while (textWalker.nextNode()) {
-    textNodes.push(textWalker.currentNode);
-  }
-  textNodes.forEach((node) => {
-    const repaired = repairMojibakeText(node.nodeValue);
-    if (repaired && repaired !== node.nodeValue) {
-      node.nodeValue = repaired;
-    }
-  });
-
-  const attrTargets = container.querySelectorAll?.("[placeholder],[title],[aria-label],[value]") || [];
-  attrTargets.forEach((element) => {
-    ["placeholder", "title", "aria-label"].forEach((attr) => {
-      if (!element.hasAttribute(attr)) return;
-      const current = element.getAttribute(attr);
-      const repaired = repairMojibakeText(current);
-      if (repaired && repaired !== current) {
-        element.setAttribute(attr, repaired);
-      }
-    });
-    if (["INPUT", "BUTTON", "OPTION"].includes(element.tagName) && element.hasAttribute("value")) {
-      const currentValue = element.getAttribute("value");
-      const repairedValue = repairMojibakeText(currentValue);
-      if (repairedValue && repairedValue !== currentValue) {
-        element.setAttribute("value", repairedValue);
-      }
-    }
-  });
-}
-
-function scheduleMojibakeRepair(root = document.body) {
-  if (mojibakeRepairQueued) return;
-  mojibakeRepairQueued = true;
-  window.requestAnimationFrame(() => {
-    mojibakeRepairQueued = false;
-    repairMojibakeDom(root);
-  });
-}
-
-function installMojibakeRepairObserver() {
-  if (mojibakeRepairObserver || !document.body) return;
-  mojibakeRepairObserver = new MutationObserver(() => {
-    scheduleMojibakeRepair(document.body);
-  });
-  mojibakeRepairObserver.observe(document.body, {
-    childList: true,
-    subtree: true,
-    characterData: true,
-    attributes: true,
-    attributeFilter: ["placeholder", "title", "aria-label", "value"]
-  });
-}
-
 const MODULES = {
   dashboard: {
     title: "Показатели",
@@ -260,7 +167,7 @@ const MODULES = {
     title: "Мой калькулятор",
     subtitle: "Личный расчет вывесок и связанные вкладки.",
     type: "embed",
-    src: () => `../moy/index.html?v=${PLATFORM_BUILD}`
+    src: () => "../moy/index.html"
   },
   partner_calculator: {
     title: "Партнерский калькулятор",
@@ -268,14 +175,12 @@ const MODULES = {
     type: "embed",
     src: () => {
       const slug = getCurrentPartnerSlug();
-      return slug
-        ? `../part/index.html?v=${PLATFORM_BUILD}&partner=${encodeURIComponent(slug)}`
-        : `../part/index.html?v=${PLATFORM_BUILD}`;
+      return slug ? `../part/index.html?partner=${encodeURIComponent(slug)}` : "../part/index.html";
     }
   },
   light2: {
-    title: "Метрики",
-    subtitle: "Ключевые метрики, финансы и операционные показатели компании.",
+    title: "ДОМ НЕОНА",
+    subtitle: "Финансовый и операционный контур компании внутри платформы.",
     type: "embed",
     src: () => `./light2/index.html?v=${PLATFORM_BUILD}`
   },
@@ -319,46 +224,15 @@ const MODULE_PERMISSION_ALIASES = {
   production: "warehouse"
 };
 
-function createDomovoyFallback(error) {
-  console.error("Domovoy bootstrap failed", error);
-  return {
-    async ensureReady() {},
-    async loadHistory() {
-      return { history: [], loaded: false };
-    },
-    async clearHistory() {
-      return { ok: false };
-    },
-    async ask(question) {
-      return {
-        answer:
-          "Домовой Неоник временно недоступен: модуль ИИ не загрузился при старте платформы.",
-        sources: [],
-        needsKnowledgeGap: false,
-        mode: "fallback",
-        question
-      };
-    },
-    highlightText(text) {
-      return text;
-    }
-  };
-}
-
-let domovoyNeonik;
-try {
-  domovoyNeonik = createDomovoyNeonik({
-    build: PLATFORM_BUILD,
-    getApiBaseUrl: () => getDomovoyApiBaseUrl(),
-    getAccessToken: async () => {
-      if (STATE.session?.access_token) return STATE.session.access_token;
-      const { data } = await supabase.auth.getSession();
-      return data?.session?.access_token || "";
-    }
-  });
-} catch (error) {
-  domovoyNeonik = createDomovoyFallback(error);
-}
+const domovoyNeonik = createDomovoyNeonik({
+  build: PLATFORM_BUILD,
+  getApiBaseUrl: () => getDomovoyApiBaseUrl(),
+  getAccessToken: async () => {
+    if (STATE.session?.access_token) return STATE.session.access_token;
+    const { data } = await supabase.auth.getSession();
+    return data?.session?.access_token || "";
+  }
+});
 
 const MODULE_GROUPS = [
   "dashboard",
@@ -661,61 +535,28 @@ const PLACEHOLDER_BLUEPRINTS = {
   }
 };
 
-function createLiveWorkspaceFallback(error) {
-  console.error("Live workspace bootstrap failed", error);
-  return {
-    supports() {
-      return false;
-    },
-    async render() {
-      return "";
-    },
-    afterRender() {},
-    async refresh() {},
-    focusEntity() {},
-    handleInput() {},
-    async handleClick() {},
-    async handleChange() {},
-    async handleSubmit() {},
-    getDocument() {
-      return null;
-    },
-    getDashboardSummary() {
-      return "";
-    },
-    async getDashboardSnapshot() {
-      return null;
+const liveWorkspaceController = createLiveWorkspaceController({
+  supabase,
+  setStatus: setShellStatus,
+  escapeHtml,
+  hasModulePermission,
+  hasModuleAccess,
+  getPermissionBadgeLabel,
+  getModuleStageLabel,
+  modules: MODULES,
+  rerenderCurrentModule: async () => {
+    if (!liveWorkspaceController.supports(STATE.activeModule)) return;
+    DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
+    liveWorkspaceController.afterRender(STATE.activeModule, DOM.placeholderCard);
+    DOM.placeholderView.classList.remove("d-none");
+  },
+  rerenderDashboard: () => {
+    if (STATE.activeModule === "dashboard") {
+      void renderDashboard();
     }
-  };
-}
-
-let liveWorkspaceController;
-try {
-  liveWorkspaceController = createLiveWorkspaceController({
-    supabase,
-    setStatus: setShellStatus,
-    escapeHtml,
-    hasModulePermission,
-    hasModuleAccess,
-    getPermissionBadgeLabel,
-    getModuleStageLabel,
-    modules: MODULES,
-    rerenderCurrentModule: async () => {
-      if (!liveWorkspaceController.supports(STATE.activeModule)) return;
-      DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
-      liveWorkspaceController.afterRender(STATE.activeModule, DOM.placeholderCard);
-      DOM.placeholderView.classList.remove("d-none");
-    },
-    rerenderDashboard: () => {
-      if (STATE.activeModule === "dashboard") {
-        void renderDashboard();
-      }
-    },
-    schemaReadyProvider: () => STATE.schemaReady
-  });
-} catch (error) {
-  liveWorkspaceController = createLiveWorkspaceFallback(error);
-}
+  },
+  schemaReadyProvider: () => STATE.schemaReady
+});
 
 function setAuthStatus(message, tone = "") {
   DOM.authStatus.textContent = message;
@@ -804,7 +645,7 @@ function getModuleShortLabel(key) {
     production: "Произв.",
     my_calculator: "Мой",
     partner_calculator: "Парт.",
-    light2: "Метрики",
+    light2: "Контур",
     board: "Доска",
     messenger: "Чаты",
     admin: "Админ",
@@ -1664,7 +1505,7 @@ function getModuleStageLabel(moduleKey) {
     production: "Живой рабочий модуль",
     my_calculator: "Рабочий модуль",
     partner_calculator: "Рабочий модуль",
-      light2: "Метрики компании",
+    light2: "Активно развивается",
     board: "Совместная доска",
     messenger: "Базовая версия",
     admin: "Управляющий модуль",
@@ -1983,9 +1824,9 @@ async function renderDashboard() {
       tone: "info"
     },
     {
-      label: "Метрики компании",
-      value: formatDashboardMoney(snapshot.light2.latestRevenue || snapshot.light2.balanceTotal || 0),
-      meta: `${formatDashboardMoney(snapshot.light2.latestNetProfit || 0)} чистая прибыль • ${formatDashboardNumber(snapshot.light2.latestSales || 0)} продаж${snapshot.light2.metricsMonthLabel ? ` • ${snapshot.light2.metricsMonthLabel}` : ""}`,
+      label: "Контур компании",
+      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
+      meta: `${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате • ${formatDashboardNumber(snapshot.light2.openSettlementsCount || 0)} открытых взаиморасчетов`,
       tone: "accent"
     },
     {
@@ -2078,28 +1919,28 @@ async function renderDashboard() {
 
   const contourCards = [
     {
-      label: "Выручка",
-      value: formatDashboardMoney(snapshot.light2.latestRevenue || snapshot.light2.balanceTotal || 0),
+      label: "Баланс",
+      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
       tone: "neutral"
-    },
-    {
-      label: "Чистая прибыль",
-      value: formatDashboardMoney(snapshot.light2.latestNetProfit || 0),
-      tone: "warning"
-    },
-    {
-      label: "Продажи",
-      value: formatDashboardNumber(snapshot.light2.latestSales || 0),
-      tone: "info"
-    },
-    {
-      label: "Средний чек",
-      value: formatDashboardMoney(snapshot.light2.latestAverageCheck || 0),
-      tone: "success"
     },
     {
       label: "К выплате",
       value: formatDashboardMoney(snapshot.light2.settlementsPayout || 0),
+      tone: "warning"
+    },
+    {
+      label: "Платежи",
+      value: formatDashboardNumber(snapshot.light2.calendarEntriesCount || 0),
+      tone: "info"
+    },
+    {
+      label: "Активы",
+      value: formatDashboardMoney(snapshot.light2.assetsRemaining || 0),
+      tone: "success"
+    },
+    {
+      label: "Закупки",
+      value: formatDashboardNumber(snapshot.light2.purchasesCount || 0),
       tone: "accent"
     },
     {
@@ -2311,10 +2152,10 @@ async function renderDashboard() {
         <article class="dashboard-panel">
           <div class="panel-heading">
             <div>
-                <h3>Метрики компании</h3>
+              <h3>Контур компании</h3>
               <div class="compact-help">Связка по балансу, платежам, активам, закупкам и взаиморасчетам из ДОМ НЕОНА.</div>
             </div>
-              <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть метрики</button>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть контур</button>
           </div>
           <div class="dashboard-mini-grid">${contourCards || '<div class="workspace-empty workspace-empty--tight">Контур ещё не наполнился данными.</div>'}</div>
         </article>
@@ -2794,8 +2635,6 @@ async function bootstrapApp(session) {
   let didResetData = false;
   STATE.session = session;
   STATE.user = session.user;
-  showAppShell();
-  setShellStatus("Вход выполнен. Загружаю платформу...", "");
   if (previousUserId && previousUserId !== session.user?.id) {
     STATE.ai.history = [];
     STATE.ai.loadedSignature = "";
@@ -3494,7 +3333,6 @@ async function refreshCurrentView() {
 }
 
 function bindAuthEvents() {
-  window.__domNeonaAuthBound = true;
   DOM.authTabs.addEventListener("click", (event) => {
     const button = event.target.closest("[data-auth-pane]");
     if (!button) return;
@@ -4016,15 +3854,8 @@ function bindAppEvents() {
 }
 
 async function init() {
-  installMojibakeRepairObserver();
-  scheduleMojibakeRepair(document.body);
   bindAuthEvents();
-  try {
-    bindAppEvents();
-  } catch (error) {
-    console.error("bindAppEvents failed", error);
-    setAuthStatus("Вход доступен, но часть интерфейса платформы не загрузилась. После входа покажу точную ошибку.", "error");
-  }
+  bindAppEvents();
 
   supabase.auth.onAuthStateChange((event, session) => {
     if (event === "PASSWORD_RECOVERY") {
