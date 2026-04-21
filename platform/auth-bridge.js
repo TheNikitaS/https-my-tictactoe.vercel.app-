@@ -1,8 +1,7 @@
 (function () {
   const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
   const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260421-platform-suite68";
+  const PLATFORM_BUILD = "20260421-platform-suite71";
 
   function $(id) {
     return document.getElementById(id);
@@ -13,6 +12,21 @@ const PLATFORM_BUILD = "20260421-platform-suite68";
     if (!node) return;
     node.textContent = message;
     node.className = "status-box" + (tone ? " " + tone : "");
+  }
+
+  function buildRedirectUrl(session) {
+    const url = new URL(window.location.href);
+    url.searchParams.set("v", PLATFORM_BUILD);
+    url.hash = "";
+    const hash = new URLSearchParams({
+      access_token: session.access_token || "",
+      refresh_token: session.refresh_token || "",
+      expires_in: String(session.expires_in || 3600),
+      expires_at: String(session.expires_at || ""),
+      token_type: session.token_type || "bearer",
+      type: "signin"
+    });
+    return `${url.toString()}#${hash.toString()}`;
   }
 
   async function signInViaRest(email, password) {
@@ -53,41 +67,36 @@ const PLATFORM_BUILD = "20260421-platform-suite68";
         setAuthStatus("Сессия не получена. Попробуйте ещё раз.", "error");
         return;
       }
-      await supabase.auth.setSession({
-        access_token: payload.access_token,
-        refresh_token: payload.refresh_token
-      });
       setAuthStatus("Вход выполнен. Открываю платформу...", "success");
-      window.location.assign(`${REDIRECT_URL}?v=${PLATFORM_BUILD}`);
+      window.location.replace(buildRedirectUrl(payload));
     } catch (error) {
       setAuthStatus(error.message || "Не удалось выполнить вход.", "error");
     }
   }
 
-  function bind() {
-    if (window.__domNeonaBridgeBound) return;
+  function bindFallback() {
+    if (window.__domNeonaAuthBridgeBound) return;
     const form = $("signInForm");
     if (!form) return;
-    window.__domNeonaBridgeBound = true;
+    window.__domNeonaAuthBridgeBound = true;
     form.addEventListener("submit", handleSignIn, true);
     const submitButton = form.querySelector('button[type="submit"]');
-    submitButton?.addEventListener("click", (event) => {
-      event.preventDefault();
-      form.requestSubmit();
-    }, true);
-    submitButton?.addEventListener("click", () => {
-      setTimeout(() => {
-        if ($("authStatus")?.textContent?.includes("Готово к запуску")) {
-          setAuthStatus("Готов к входу. Нажмите «Войти» ещё раз, если браузер прервал отправку.");
-        }
-      }, 400);
-    });
+    if (submitButton) {
+      submitButton.addEventListener(
+        "click",
+        function (event) {
+          event.preventDefault();
+          form.requestSubmit();
+        },
+        true
+      );
+    }
   }
 
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", bind, { once: true });
+    document.addEventListener("DOMContentLoaded", bindFallback, { once: true });
   } else {
-    bind();
+    bindFallback();
   }
-  window.addEventListener("load", bind, { once: true });
+  window.addEventListener("load", bindFallback, { once: true });
 })();
