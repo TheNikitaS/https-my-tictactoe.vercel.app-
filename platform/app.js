@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260421-platform-suite69";
-import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260421-platform-suite69";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260421-platform-suite70";
+import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260421-platform-suite70";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260421-platform-suite69";
+const PLATFORM_BUILD = "20260421-platform-suite70";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -319,15 +319,46 @@ const MODULE_PERMISSION_ALIASES = {
   production: "warehouse"
 };
 
-const domovoyNeonik = createDomovoyNeonik({
-  build: PLATFORM_BUILD,
-  getApiBaseUrl: () => getDomovoyApiBaseUrl(),
-  getAccessToken: async () => {
-    if (STATE.session?.access_token) return STATE.session.access_token;
-    const { data } = await supabase.auth.getSession();
-    return data?.session?.access_token || "";
-  }
-});
+function createDomovoyFallback(error) {
+  console.error("Domovoy bootstrap failed", error);
+  return {
+    async ensureReady() {},
+    async loadHistory() {
+      return { history: [], loaded: false };
+    },
+    async clearHistory() {
+      return { ok: false };
+    },
+    async ask(question) {
+      return {
+        answer:
+          "Домовой Неоник временно недоступен: модуль ИИ не загрузился при старте платформы.",
+        sources: [],
+        needsKnowledgeGap: false,
+        mode: "fallback",
+        question
+      };
+    },
+    highlightText(text) {
+      return text;
+    }
+  };
+}
+
+let domovoyNeonik;
+try {
+  domovoyNeonik = createDomovoyNeonik({
+    build: PLATFORM_BUILD,
+    getApiBaseUrl: () => getDomovoyApiBaseUrl(),
+    getAccessToken: async () => {
+      if (STATE.session?.access_token) return STATE.session.access_token;
+      const { data } = await supabase.auth.getSession();
+      return data?.session?.access_token || "";
+    }
+  });
+} catch (error) {
+  domovoyNeonik = createDomovoyFallback(error);
+}
 
 const MODULE_GROUPS = [
   "dashboard",
@@ -630,28 +661,61 @@ const PLACEHOLDER_BLUEPRINTS = {
   }
 };
 
-const liveWorkspaceController = createLiveWorkspaceController({
-  supabase,
-  setStatus: setShellStatus,
-  escapeHtml,
-  hasModulePermission,
-  hasModuleAccess,
-  getPermissionBadgeLabel,
-  getModuleStageLabel,
-  modules: MODULES,
-  rerenderCurrentModule: async () => {
-    if (!liveWorkspaceController.supports(STATE.activeModule)) return;
-    DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
-    liveWorkspaceController.afterRender(STATE.activeModule, DOM.placeholderCard);
-    DOM.placeholderView.classList.remove("d-none");
-  },
-  rerenderDashboard: () => {
-    if (STATE.activeModule === "dashboard") {
-      void renderDashboard();
+function createLiveWorkspaceFallback(error) {
+  console.error("Live workspace bootstrap failed", error);
+  return {
+    supports() {
+      return false;
+    },
+    async render() {
+      return "";
+    },
+    afterRender() {},
+    async refresh() {},
+    focusEntity() {},
+    handleInput() {},
+    async handleClick() {},
+    async handleChange() {},
+    async handleSubmit() {},
+    getDocument() {
+      return null;
+    },
+    getDashboardSummary() {
+      return "";
+    },
+    async getDashboardSnapshot() {
+      return null;
     }
-  },
-  schemaReadyProvider: () => STATE.schemaReady
-});
+  };
+}
+
+let liveWorkspaceController;
+try {
+  liveWorkspaceController = createLiveWorkspaceController({
+    supabase,
+    setStatus: setShellStatus,
+    escapeHtml,
+    hasModulePermission,
+    hasModuleAccess,
+    getPermissionBadgeLabel,
+    getModuleStageLabel,
+    modules: MODULES,
+    rerenderCurrentModule: async () => {
+      if (!liveWorkspaceController.supports(STATE.activeModule)) return;
+      DOM.placeholderCard.innerHTML = await liveWorkspaceController.render(STATE.activeModule);
+      liveWorkspaceController.afterRender(STATE.activeModule, DOM.placeholderCard);
+      DOM.placeholderView.classList.remove("d-none");
+    },
+    rerenderDashboard: () => {
+      if (STATE.activeModule === "dashboard") {
+        void renderDashboard();
+      }
+    },
+    schemaReadyProvider: () => STATE.schemaReady
+  });
+} catch (error) {
+  liveWorkspaceController = createLiveWorkspaceFallback(error);
+}
 
 function setAuthStatus(message, tone = "") {
   DOM.authStatus.textContent = message;
