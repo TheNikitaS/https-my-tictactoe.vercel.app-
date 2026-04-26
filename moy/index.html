@@ -7,10 +7,10 @@
     <title>Калькулятор неоновых вывесок (ФИНАЛ)</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-size: 0.82rem; }
+        body { background-color: #f4f6f9; font-size: 0.78rem; }
         .card-header { background-color: #1f2d3d; color: white; padding: 0.5rem 1rem; }
         #tabs-container { display: flex; flex-wrap: wrap; padding: 0.5rem; background-color: #dce1e6; }
-        .tab { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer; position: relative; margin-right: 5px; border-radius: 5px 5px 0 0; }
+        .tab { display: inline-flex; align-items: center; gap: 7px; padding: 6px 10px; border: 1px solid #ccc; background-color: #f0f0f0; cursor: pointer; position: relative; margin-right: 5px; border-radius: 5px 5px 0 0; }
         .tab.active { background-color: #fff; border-bottom-color: #fff; font-weight: bold; }
         .tab.tab-done { background-color: #dcfce7; border-color: #86efac; }
         .tab.active.tab-done { background-color: #bbf7d0; }
@@ -31,16 +31,20 @@
         .hidden-tabs-label { color: #6c757d; font-size: 0.85rem; }
         .hidden-tabs-select { min-width: 220px; max-width: 360px; }
         .summary-card { background-color: #e3f2fd; }
-        .summary-item { display: flex; justify-content: space-between; padding: 0.2rem 0.5rem; font-size: 1rem;}
-        .summary-item strong { font-size: 1.1rem; }
+        .summary-item { display: flex; justify-content: space-between; padding: 0.15rem 0.45rem; font-size: 0.9rem;}
+        .summary-item strong { font-size: 1rem; }
         .param-card { background-color: #e8f5e9; }
         .catalog-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 1rem; }
         .catalog-toolbar .toolbar-field { min-width: 240px; flex: 1 1 240px; }
         .category-header { font-weight: bold; padding: 0.5rem; margin-top: 1rem; border-bottom: 2px solid #ddd; display: flex; justify-content: space-between; align-items: center;}
-        .item-row { display: grid; grid-template-columns: 80px 1fr 90px 40px 80px 110px 70px; gap: 8px; align-items: center; padding: 0.4rem 0.5rem; border-bottom: 1px solid #eee; }
+        .item-row { display: grid; grid-template-columns: 92px 1fr 82px 82px 38px 70px 92px 64px; gap: 6px; align-items: center; padding: 0.28rem 0.4rem; border-bottom: 1px solid #eee; }
         .item-row:hover { background-color: #fdfde7; }
         .item-row-header { font-weight: bold; color: #6c757d; font-size: 0.8rem; }
-        .item-row input { text-align: center; padding: 0.25rem; font-size: 0.9rem; }
+        .item-row input { text-align: center; padding: 0.18rem 0.25rem; font-size: 0.78rem; }
+        .group-picker { display: grid; grid-template-columns: minmax(240px, 1fr) auto auto; gap: 8px; padding: 8px; background: #f8fafc; border-bottom: 1px solid #e5e7eb; }
+        .group-picker .form-select, .group-picker .btn { font-size: 0.78rem; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .order-tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 8px 0; padding: 10px; background: #f8fafc; border: 1px solid #dbe5ef; border-radius: 12px; }
+        .order-tools label { margin: 0; display: inline-flex; gap: 6px; align-items: center; }
         .item-actions { display: flex; gap: 6px; justify-content: flex-end; }
         .item-action { border: 0; background: transparent; color: #6c757d; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; }
         .item-action:hover { background: #eef2f6; color: #212529; }
@@ -72,7 +76,7 @@
 <body>
 <div class="container-fluid p-3">
     <div id="tabs-container">
-        <button class="btn btn-sm btn-primary" id="btn-add-tab" onclick="addTab()">+ Новая вывеска</button>
+        <button class="btn btn-sm btn-primary" id="btn-add-tab" onclick="openAddTabMenu()">+ Новый расчет</button>
     </div>
     <div id="hidden-tabs-wrap"></div>
     <div id="sync-status" class="sync-status">Онлайн: подключение...</div>
@@ -93,11 +97,25 @@
                     <div class="col"><label>Резка(м)</label><input type="number" id="param-cutting" class="form-control"></div>
                     <div class="col"><label>Выборка(м)</label><input type="number" id="param-milling" class="form-control"></div>
                     <div class="col"><label>Пайка(шт)</label><input type="number" id="param-soldering" class="form-control"></div>
+                    <div class="col"><label>Контур(м)</label><input type="number" id="param-contour-length" class="form-control"></div>
                     <div class="col"><label>Х(Товары)</label><input type="number" step="0.1" id="coeff-goods" class="form-control" value="2.2"></div>
                     <div class="col"><label>Х(Дизайн)</label><input type="number" step="0.1" id="coeff-design" class="form-control" value="4.5"></div>
                     <div class="col"><label>Х(Сборка)</label><input type="number" step="0.1" id="coeff-assembly" class="form-control" value="4.2"></div>
                     <div class="col"><label>Х(Монтаж)</label><input type="number" step="0.1" id="coeff-montage" class="form-control" value="2.0"></div>
                 </div>
+            </div>
+            <div class="order-tools">
+                <label><input type="checkbox" id="include-in-combined-offer"> Включить вкладку в общий расчет</label>
+                <button type="button" class="btn btn-sm btn-outline-dark" onclick="buildCombinedOffer()">Собрать общее КП</button>
+                <span class="text-muted">Можно объединить несколько вывесок и контуров в один шаблон для клиента.</span>
+            </div>
+            <div class="order-tools">
+                <strong>Партнерские коэффициенты:</strong>
+                <label>Товары <input type="number" step="0.001" id="partner-coeff-goods" class="form-control form-control-sm" style="width:80px"></label>
+                <label>Дизайн <input type="number" step="0.001" id="partner-coeff-design" class="form-control form-control-sm" style="width:80px"></label>
+                <label>Сборка <input type="number" step="0.001" id="partner-coeff-assembly" class="form-control form-control-sm" style="width:80px"></label>
+                <label>Монтаж <input type="number" step="0.001" id="partner-coeff-montage" class="form-control form-control-sm" style="width:80px"></label>
+                <span class="text-muted">Синхронизируются во все партнерские калькуляторы.</span>
             </div>
 
             <div class="card"><div class="card-body" id="calculator-container"></div></div>
@@ -311,13 +329,33 @@ function normalizeCoeffs(rawCoeffs = {}) {
 
 function createTabData(rawData = {}) {
     return {
+        type: rawData.type === 'contour' ? 'contour' : 'sign',
         quantities: { ...(rawData.quantities || {}) },
+        selectedItems: Array.isArray(rawData.selectedItems) ? [...rawData.selectedItems] : [],
         params: { ...(rawData.params || {}) },
         coeffs: normalizeCoeffs(rawData.coeffs),
+        partnerCoeffs: normalizePartnerCoeffs(rawData.partnerCoeffs),
+        includeInCombinedOffer: Boolean(rawData.includeInCombinedOffer),
         notes: String(rawData.notes || ''),
         done: Boolean(rawData.done),
         catalog: normalizeCatalog(rawData.catalog)
     };
+}
+
+function normalizePartnerCoeffs(rawCoeffs = {}) {
+    const fallback = { goods: 1.862, design: 2, assembly: 3.369, montage: 1.539 };
+    const normalized = {};
+    Object.entries(fallback).forEach(([key, value]) => {
+        const source = rawCoeffs?.[key];
+        const parsed = typeof source === 'number' ? source : parseFloat(String(source ?? '').replace(',', '.'));
+        normalized[key] = Number.isFinite(parsed) && parsed > 0 ? parsed : value;
+    });
+    return normalized;
+}
+
+function getDefaultPartnerCost(item) {
+    if (item.partnerCost != null || item.partnerPrice != null) return Number(item.partnerCost ?? item.partnerPrice) || 0;
+    return Math.round((Number(item.cost) || 0) * 1.3 * 100) / 100;
 }
 
 function normalizeCatalog(rawCatalog) {
@@ -339,6 +377,7 @@ function normalizeCatalog(rawCatalog) {
                 article: String(saved.article || base.article || saved.id),
                 name: String(saved.name || base.name || ''),
                 cost: Number(saved.cost ?? base.cost) || 0,
+                partnerCost: getDefaultPartnerCost({ ...base, ...saved }),
                 hidden: Boolean(saved.hidden),
                 deleted: Boolean(saved.deleted),
                 custom: !baseMap.has(saved.id) || Boolean(saved.custom),
@@ -348,7 +387,7 @@ function normalizeCatalog(rawCatalog) {
 
     BASE_CATALOG.forEach((item) => {
         if (seenIds.has(item.id)) return;
-        catalog.push({ ...item });
+        catalog.push({ ...item, partnerCost: getDefaultPartnerCost(item) });
     });
 
     return catalog;
@@ -667,6 +706,7 @@ function buildSharedCatalogPayload() {
                 category: String(item.category || ''),
                 subcategory: String(item.subcategory || ''),
                 unit: String(item.unit || 'шт'),
+                partnerCost: getDefaultPartnerCost(item),
                 pricingKind: item.pricingKind || inferPricingKind(item),
                 custom: Boolean(item.custom)
             };
@@ -674,7 +714,8 @@ function buildSharedCatalogPayload() {
             catalogMap.set(normalized.id, normalized);
         });
     });
-    return { items: Array.from(catalogMap.values()), updatedAt: Date.now() };
+    const activePartnerCoeffs = getActiveTab()?.data?.partnerCoeffs || {};
+    return { items: Array.from(catalogMap.values()), partnerCoeffs: normalizePartnerCoeffs(activePartnerCoeffs), updatedAt: Date.now() };
 }
 
 function mergeSharedCatalogIntoState(sharedItems) {
@@ -697,6 +738,7 @@ function mergeSharedCatalogIntoState(sharedItems) {
                 category: String(shared.category || item.category || ''),
                 subcategory: String(shared.subcategory || item.subcategory || ''),
                 unit: String(shared.unit || item.unit || 'шт'),
+                partnerCost: getDefaultPartnerCost({ ...item, ...shared }),
                 pricingKind: shared.pricingKind || item.pricingKind || inferPricingKind(item)
             };
             if (
@@ -722,6 +764,7 @@ function mergeSharedCatalogIntoState(sharedItems) {
                 subcategory: String(shared.subcategory || 'Прочее'),
                 unit: String(shared.unit || 'шт'),
                 cost: 0,
+                partnerCost: getDefaultPartnerCost(shared),
                 hidden: false,
                 deleted: false,
                 custom: true,
@@ -743,6 +786,7 @@ function syncCatalogFromDom(activeTab) {
         const item = catalogById.get(itemId);
         if (!item) return;
         const costInput = row.querySelector('.cost-input');
+        const partnerCostInput = row.querySelector('.partner-cost-input');
         const articleInput = row.querySelector('.article-input');
         const nameInput = row.querySelector('.name-input');
         const nextArticle = String(articleInput?.value || '').trim() || item.id;
@@ -752,6 +796,7 @@ function syncCatalogFromDom(activeTab) {
             metaChanged = true;
         }
         item.cost = Number(costInput?.value) || 0;
+        item.partnerCost = Number(partnerCostInput?.value) || getDefaultPartnerCost(item);
     });
     if (metaChanged) scheduleCatalogShareSync();
 }
@@ -1241,10 +1286,32 @@ function commitEditingTabRename() {
     return true;
 }
 
-function addTab() {
+async function openAddTabMenu() {
+    const result = await openActionDialog({
+        title: 'Новый расчет',
+        message: 'Выберите тип расчета для новой вкладки.',
+        fields: [{
+            name: 'type',
+            label: 'Тип расчета',
+            type: 'select',
+            value: 'sign',
+            options: [
+                { value: 'sign', label: 'Вывеска' },
+                { value: 'contour', label: 'Контур' },
+            ],
+        }],
+        confirmText: 'Создать'
+    });
+    if (!result) return;
+    addTab(result.type);
+}
+
+function addTab(type = 'sign') {
     saveActiveTabData();
+    const tabType = type === 'contour' ? 'contour' : 'sign';
+    const title = tabType === 'contour' ? 'Контур' : 'Вывеска';
     const newTabId = `tab${state.nextTabNum++}`;
-    state.tabs.push({ id: newTabId, name: `Вывеска ${state.tabs.length + 1}`, data: createTabData(), hidden: false });
+    state.tabs.push({ id: newTabId, name: `${title} ${state.tabs.length + 1}`, data: createTabData({ type: tabType }), hidden: false });
     state.activeTabId = newTabId;
     persistStateSnapshot();
     renderTabs();
@@ -1363,6 +1430,7 @@ function saveActiveTabData() {
         cutting: document.getElementById('param-cutting').value,
         milling: document.getElementById('param-milling').value,
         soldering: document.getElementById('param-soldering').value,
+        contourLength: document.getElementById('param-contour-length')?.value || '',
     };
     activeTab.data.coeffs = {
         ...normalizeCoeffs({
@@ -1372,6 +1440,13 @@ function saveActiveTabData() {
             montage: document.getElementById('coeff-montage').value,
         })
     };
+    activeTab.data.partnerCoeffs = normalizePartnerCoeffs({
+        goods: document.getElementById('partner-coeff-goods')?.value,
+        design: document.getElementById('partner-coeff-design')?.value,
+        assembly: document.getElementById('partner-coeff-assembly')?.value,
+        montage: document.getElementById('partner-coeff-montage')?.value,
+    });
+    activeTab.data.includeInCombinedOffer = Boolean(document.getElementById('include-in-combined-offer')?.checked);
     activeTab.data.notes = document.getElementById('notes').value;
 }
 
@@ -1392,13 +1467,43 @@ function loadActiveTabData() {
     document.getElementById('param-cutting').value = params.cutting || '';
     document.getElementById('param-milling').value = params.milling || '';
     document.getElementById('param-soldering').value = params.soldering || '';
+    document.getElementById('param-contour-length').value = params.contourLength || '';
     const coeffs = normalizeCoeffs(data.coeffs);
     document.getElementById('coeff-goods').value = coeffs.goods;
     document.getElementById('coeff-design').value = coeffs.design;
     document.getElementById('coeff-assembly').value = coeffs.assembly;
     document.getElementById('coeff-montage').value = coeffs.montage;
+    const partnerCoeffs = normalizePartnerCoeffs(data.partnerCoeffs);
+    document.getElementById('partner-coeff-goods').value = partnerCoeffs.goods;
+    document.getElementById('partner-coeff-design').value = partnerCoeffs.design;
+    document.getElementById('partner-coeff-assembly').value = partnerCoeffs.assembly;
+    document.getElementById('partner-coeff-montage').value = partnerCoeffs.montage;
+    document.getElementById('include-in-combined-offer').checked = Boolean(data.includeInCombinedOffer);
     document.getElementById('notes').value = data.notes || '';
     calculate();
+}
+
+function isAutoVisibleItem(item) {
+    return Boolean(item?.auto) || CRITICAL_AUTO_IDS.has(item?.id);
+}
+
+function isItemSelectedForActiveTab(item) {
+    const activeTab = getActiveTab();
+    if (!activeTab) return false;
+    const selected = new Set(activeTab.data?.selectedItems || []);
+    const quantity = Number(activeTab.data?.quantities?.[item.id] || 0);
+    return isAutoVisibleItem(item) || selected.has(item.id) || quantity > 0;
+}
+
+function selectCatalogItem(itemId) {
+    const activeTab = getActiveTab();
+    if (!activeTab || !itemId) return;
+    activeTab.data = createTabData(activeTab.data);
+    if (!activeTab.data.selectedItems.includes(itemId)) activeTab.data.selectedItems.push(itemId);
+    persistStateSnapshot();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
 }
 
 function renderCalculator() {
@@ -1420,7 +1525,8 @@ function renderCalculator() {
         </div>
     `;
     let currentCategory = '', currentSubcategory = '';
-    const header = `<div class="item-row item-row-header" style="grid-template-columns: 110px 1fr 90px 40px 80px 110px 70px;"><span>Артикул</span><span>Название</span><span>Цена (закуп)</span><span>Ед.</span><span>Кол-во</span><span>Розница</span><span class="text-end">Действия</span></div>`;
+    const header = `<div class="item-row item-row-header"><span>Артикул</span><span>Название</span><span>Закуп</span><span>Партнер</span><span>Ед.</span><span>Кол-во</span><span>Розница</span><span class="text-end">Действия</span></div>`;
+    const visibleCatalog = catalog.filter((item) => !item.hidden && !item.deleted && isItemSelectedForActiveTab(item));
 
     catalog.filter((item) => !item.hidden && !item.deleted).forEach(item => {
         if (item.category !== currentCategory) {
@@ -1430,6 +1536,7 @@ function renderCalculator() {
         }
         if (item.subcategory !== currentSubcategory) {
             currentSubcategory = item.subcategory;
+            const groupItems = catalog.filter((entry) => !entry.hidden && !entry.deleted && entry.category === item.category && entry.subcategory === item.subcategory && !isItemSelectedForActiveTab(entry));
             let subLabel = `${currentSubcategory}`;
             if (item.subcategory === 'Блок питания') subLabel += ` (Требуемая мощность: <span id="required-power-display">0</span>W)`;
             const encodedCategory = escapeAttr(item.category);
@@ -1441,16 +1548,27 @@ function renderCalculator() {
                         Добавить товар
                     </button>
                 </div>
+                <div class="group-picker">
+                    <select class="form-select form-select-sm" data-group-select="${encodedCategory}||${encodedSubcategory}">
+                        <option value="">Выберите товар / услугу из группы</option>
+                        ${groupItems.map((entry) => `<option value="${entry.id}">${escapeHtml(entry.article || entry.id)} • ${escapeHtml(entry.name)}</option>`).join('')}
+                    </select>
+                    <button type="button" class="btn btn-sm btn-outline-dark" data-group-pick="${encodedCategory}||${encodedSubcategory}">Добавить выбранное</button>
+                    <span class="text-muted small">${groupItems.length ? `Скрыто в списке: ${groupItems.length}` : 'Все позиции группы уже в расчете'}</span>
+                </div>
             `;
             container.innerHTML += subHeader;
             container.innerHTML += header;
         }
+
+        if (!visibleCatalog.some((entry) => entry.id === item.id)) return;
         
         container.innerHTML += `
-            <div class="item-row" id="row-${item.id}" data-item-id="${item.id}" style="grid-template-columns: 110px 1fr 90px 40px 80px 110px 70px;">
+            <div class="item-row" id="row-${item.id}" data-item-id="${item.id}">
                 <input type="text" class="form-control form-control-sm article-input" value="${escapeAttr(item.article || item.id)}">
                 <input type="text" class="form-control form-control-sm name-input" value="${escapeAttr(item.name)}">
                 <input type="number" step="0.01" class="form-control form-control-sm cost-input" value="${item.cost}">
+                <input type="number" step="0.01" class="form-control form-control-sm partner-cost-input" value="${getDefaultPartnerCost(item)}">
                 <span class="small text-center">${item.unit}</span>
                 <input type="number" step="0.01" class="form-control form-control-sm quantity-input ${item.auto ? 'read-only' : ''}" data-id="${item.id}">
                 <input type="text" class="form-control form-control-sm retail-price" readonly>
@@ -1464,9 +1582,9 @@ function renderCalculator() {
 }
 
 function attachGlobalListeners() {
-    const inputs = document.querySelectorAll('.cost-input, .quantity-input, .article-input, .name-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage');
+    const inputs = document.querySelectorAll('.cost-input, .partner-cost-input, .quantity-input, .article-input, .name-input, #param-width, #param-height, #param-cutting, #param-milling, #param-soldering, #param-contour-length, #coeff-goods, #coeff-assembly, #coeff-design, #coeff-montage, #partner-coeff-goods, #partner-coeff-design, #partner-coeff-assembly, #partner-coeff-montage, #include-in-combined-offer');
     inputs.forEach(el => {
-        const shouldRecalculate = !el.classList.contains('article-input') && !el.classList.contains('name-input');
+        const shouldRecalculate = !el.classList.contains('article-input') && !el.classList.contains('name-input') && !el.classList.contains('partner-cost-input') && !String(el.id || '').startsWith('partner-coeff-');
         if (shouldRecalculate) {
             el.addEventListener('input', calculate);
             el.addEventListener('change', calculate);
@@ -1475,6 +1593,9 @@ function attachGlobalListeners() {
             el.addEventListener('change', saveState);
         }
         el.addEventListener('blur', saveState);
+        if (el.classList.contains('partner-cost-input') || String(el.id || '').startsWith('partner-coeff-')) {
+            el.addEventListener('change', () => { saveState(); scheduleCatalogShareSync(); });
+        }
     });
     const textareas = document.querySelectorAll('#notes');
     textareas.forEach(el => el.addEventListener('input', saveState));
@@ -1484,6 +1605,12 @@ function attachGlobalListeners() {
     }
     document.querySelectorAll('[data-category-add]').forEach((button) => {
         button.addEventListener('click', () => addCatalogItemInline(button.dataset.categoryName, button.dataset.subcategoryName));
+    });
+    document.querySelectorAll('[data-group-pick]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const select = Array.from(document.querySelectorAll('[data-group-select]')).find((item) => item.dataset.groupSelect === button.dataset.groupPick);
+            if (select?.value) selectCatalogItem(select.value);
+        });
     });
     document.querySelectorAll('[data-item-hide]').forEach((button) => {
         button.addEventListener('click', () => hideCatalogItem(button.dataset.itemHide));
@@ -1522,6 +1649,7 @@ async function deleteCatalogItem(itemId) {
     item.deleted = true;
     item.hidden = true;
     delete activeTab.data.quantities[itemId];
+    activeTab.data.selectedItems = (activeTab.data.selectedItems || []).filter((id) => id !== itemId);
     persistStateSnapshot();
     renderCalculator();
     loadActiveTabData();
@@ -1539,7 +1667,10 @@ function addCatalogItemInline(category, subcategory) {
         if (!tab?.data) tab.data = createTabData();
         if (!Array.isArray(tab.data.catalog)) tab.data.catalog = cloneCatalog();
         insertCatalogItemByGroup(tab.data.catalog, { ...newItem });
+        if (!Array.isArray(tab.data.selectedItems)) tab.data.selectedItems = [];
     });
+    const activeTab = getActiveTab();
+    if (activeTab && !activeTab.data.selectedItems.includes(newItem.id)) activeTab.data.selectedItems.push(newItem.id);
     persistStateSnapshot();
     scheduleCatalogShareSync();
     renderCalculator();
@@ -1557,6 +1688,7 @@ function hideCatalogItem(itemId) {
     if (!item) return;
     item.hidden = true;
     activeTab.data.quantities[itemId] = 0;
+    activeTab.data.selectedItems = (activeTab.data.selectedItems || []).filter((id) => id !== itemId);
     persistStateSnapshot();
     renderCalculator();
     loadActiveTabData();
@@ -1612,6 +1744,83 @@ function legacyAddCatalogItem() {
     attachGlobalListeners();
 }
 
+function getPricingBucket(item) {
+    if (item.pricingKind) return item.pricingKind;
+    if (item.category === 'Материалы') return item.subcategory === 'Производство подложки' ? 'assembly-material' : 'goods';
+    if (item.subcategory === 'Дизайн макета') return 'design';
+    if (item.subcategory === 'Сборка') return 'assembly';
+    if (item.subcategory === 'Монтаж') return 'montage';
+    return 'goods';
+}
+
+function computeTabSummary(tab) {
+    const data = createTabData(tab?.data || {});
+    const coeffs = normalizeCoeffs(data.coeffs);
+    const catalog = normalizeCatalog(data.catalog || DEFAULT_CATALOG).filter((item) => !item.hidden && !item.deleted);
+    const quantities = data.quantities || {};
+    const params = data.params || {};
+    const solderingCount = parseFloat(params.soldering) || 0;
+    const autoQuantities = {
+        SUB01: ((parseFloat(params.width) || 0) / 100 * (parseFloat(params.height) || 0) / 100),
+        WORK02: parseFloat(params.cutting) || 0,
+        WORK03: parseFloat(params.milling) || 0,
+        WORK05: solderingCount,
+        '750641': solderingCount * 0.15,
+    };
+    let summary = { goods: 0, design: 0, assembly: 0, mounting: 0, total: 0, signCost: 0, contourLength: parseFloat(params.contourLength) || 0 };
+    catalog.forEach((item) => {
+        const quantity = Number(quantities[item.id] ?? autoQuantities[item.id] ?? 0) || 0;
+        if (quantity <= 0) return;
+        if (item.power) summary.contourLength += quantity;
+        const costPrice = (Number(item.cost) || 0) * quantity;
+        const bucket = getPricingBucket(item);
+        if (bucket === 'design') summary.design += costPrice * coeffs.design;
+        else if (bucket === 'assembly' || bucket === 'assembly-material') summary.assembly += costPrice * coeffs.assembly;
+        else if (bucket === 'montage') summary.mounting += costPrice * (item.coeff === 1 ? 1 : coeffs.montage);
+        else if (bucket === 'pass') summary.goods += costPrice;
+        else summary.goods += costPrice * coeffs.goods;
+    });
+    summary.signCost = summary.goods + summary.design + summary.assembly;
+    summary.total = summary.signCost + summary.mounting;
+    return summary;
+}
+
+function buildCombinedOffer() {
+    saveActiveTabData();
+    const selectedTabs = state.tabs.filter((tab) => tab.data?.includeInCombinedOffer);
+    const tabs = selectedTabs.length ? selectedTabs : state.tabs.filter((tab) => tab.id === state.activeTabId);
+    const lines = [];
+    let mountingTotal = 0;
+    let total = 0;
+    tabs.forEach((tab, index) => {
+        const summary = computeTabSummary(tab);
+        const data = createTabData(tab.data || {});
+        const params = data.params || {};
+        const name = tab.name || (data.type === 'contour' ? 'Контур' : 'Вывеска');
+        if (data.type === 'contour') {
+            const length = summary.contourLength ? `${summary.contourLength.toFixed(2).replace('.', ',')} метров` : 'длина не указана';
+            lines.push(`${index + 1}. Контурный неон ${name}\nДлина: ${length}\nСтоимость: ${Math.round(summary.signCost)} р.`);
+        } else {
+            const size = `${params.width || 0}х${params.height || 0} см`;
+            lines.push(`${index + 1}. Вывеска ${name}\nРазмер: ${size} (ширина х высота)\nСтоимость вывески: ${Math.round(summary.signCost)} р.`);
+        }
+        mountingTotal += summary.mounting;
+        total += summary.total;
+    });
+    if (mountingTotal > 0) lines.push(`${lines.length + 1}. Монтаж ${Math.round(mountingTotal)} руб`);
+    lines.push(`Итого: ${Math.round(total)} р.`);
+    lines.push('');
+    lines.push('Срок производства вывески 1-3 рабочих дня с момента оплаты.');
+    lines.push('');
+    lines.push('Способы оплаты:');
+    lines.push('- по счету для юр. лиц.');
+    lines.push('- СБП по QR коду');
+    lines.push('');
+    lines.push('Для оформления заказа, выберите способ оплаты. Если остались вопросы, задавайте.');
+    document.getElementById('client-offer').value = lines.join('\n\n');
+    saveState();
+}
+
 function calculate() {
     let summary = { goods: 0, design: 0, assembly: 0, mounting: 0, total: 0, payMaster: 0, payInstaller: 0, payDesigner: 0 };
     const coeffs = {
@@ -1636,7 +1845,10 @@ function calculate() {
         if (input) input.value = value;
     });
     
+    const activeTab = state.tabs.find(t => t.id === state.activeTabId);
+    const contourLength = parseFloat(document.getElementById('param-contour-length')?.value) || 0;
     let totalNeonLength = catalog.filter(i => i.power).reduce((sum, neon) => sum + (parseFloat(document.querySelector(`.quantity-input[data-id="${neon.id}"]`)?.value) || 0), 0);
+    if (activeTab?.data?.type === 'contour' && contourLength > 0) totalNeonLength = contourLength;
     const work06Input = document.querySelector('.quantity-input[data-id="WORK06"]');
     if (work06Input) work06Input.value = totalNeonLength.toFixed(2);
     
