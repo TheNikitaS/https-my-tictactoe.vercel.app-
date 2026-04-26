@@ -92,8 +92,8 @@
 
             <div class="card mb-3 param-card">
                 <div class="card-body row align-items-end">
-                    <div class="col"><label>Ширина(см)</label><input type="number" id="param-width" class="form-control"></div>
-                    <div class="col"><label>Высота(см)</label><input type="number" id="param-height" class="form-control"></div>
+                    <div class="col sign-param"><label>Ширина(см)</label><input type="number" id="param-width" class="form-control"></div>
+                    <div class="col sign-param"><label>Высота(см)</label><input type="number" id="param-height" class="form-control"></div>
                     <div class="col"><label>Резка(м)</label><input type="number" id="param-cutting" class="form-control"></div>
                     <div class="col"><label>Выборка(м)</label><input type="number" id="param-milling" class="form-control"></div>
                     <div class="col"><label>Пайка(шт)</label><input type="number" id="param-soldering" class="form-control"></div>
@@ -401,6 +401,17 @@ function getActiveCatalog() {
     return getActiveTab()?.data?.catalog || cloneCatalog();
 }
 
+function getTabCalcType(tab) {
+    return tab?.data?.type === 'contour' ? 'contour' : 'sign';
+}
+
+function updateParamVisibility() {
+    const isContour = getTabCalcType(getActiveTab()) === 'contour';
+    document.querySelectorAll('.sign-param').forEach((element) => {
+        element.style.display = isContour ? 'none' : '';
+    });
+}
+
 function iconMarkup(type) {
     if (type === 'hide') {
         return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"/><circle cx="12" cy="12" r="3.2"/></svg>';
@@ -697,10 +708,12 @@ function createInlineCatalogItem(category, subcategory) {
 function buildSharedCatalogPayload() {
     const catalogMap = new Map();
     state.tabs.forEach((tab) => {
+        const calcType = getTabCalcType(tab);
         (tab?.data?.catalog || []).forEach((item) => {
             if (!item?.id || item.deleted) return;
             const normalized = {
                 id: String(item.id),
+                calcType,
                 article: String(item.article || item.id || ''),
                 name: String(item.name || ''),
                 category: String(item.category || ''),
@@ -711,22 +724,36 @@ function buildSharedCatalogPayload() {
                 custom: Boolean(item.custom)
             };
             if (!normalized.name.trim()) return;
-            catalogMap.set(normalized.id, normalized);
+            catalogMap.set(`${calcType}:${normalized.id}`, normalized);
         });
     });
     const activePartnerCoeffs = getActiveTab()?.data?.partnerCoeffs || {};
-    return { items: Array.from(catalogMap.values()), partnerCoeffs: normalizePartnerCoeffs(activePartnerCoeffs), updatedAt: Date.now() };
+    const partnerCoeffsByType = {};
+    state.tabs.forEach((tab) => {
+        const calcType = getTabCalcType(tab);
+        if (!partnerCoeffsByType[calcType]) partnerCoeffsByType[calcType] = normalizePartnerCoeffs(tab?.data?.partnerCoeffs || {});
+    });
+    const activeType = getTabCalcType(getActiveTab());
+    partnerCoeffsByType[activeType] = normalizePartnerCoeffs(activePartnerCoeffs);
+    return {
+        items: Array.from(catalogMap.values()),
+        partnerCoeffs: normalizePartnerCoeffs(activePartnerCoeffs),
+        partnerCoeffsByType,
+        updatedAt: Date.now()
+    };
 }
 
 function mergeSharedCatalogIntoState(sharedItems) {
     const safeItems = Array.isArray(sharedItems) ? sharedItems : [];
     if (!safeItems.length) return false;
-    const sharedMap = new Map(safeItems.filter((item) => item?.id).map((item) => [item.id, item]));
     let changed = false;
 
     state.tabs.forEach((tab) => {
         if (!tab?.data) tab.data = createTabData();
         if (!Array.isArray(tab.data.catalog)) tab.data.catalog = cloneCatalog();
+        const calcType = getTabCalcType(tab);
+        const typedSharedItems = safeItems.filter((item) => (item?.calcType || 'sign') === calcType);
+        const sharedMap = new Map(typedSharedItems.filter((item) => item?.id).map((item) => [item.id, item]));
         const existingIds = new Set(tab.data.catalog.map((item) => item.id));
 
         tab.data.catalog.forEach((item) => {
@@ -754,7 +781,7 @@ function mergeSharedCatalogIntoState(sharedItems) {
             }
         });
 
-        safeItems.forEach((shared) => {
+        typedSharedItems.forEach((shared) => {
             if (existingIds.has(shared.id) || !shared.custom) return;
             insertCatalogItemByGroup(tab.data.catalog, {
                 id: String(shared.id),
@@ -1315,6 +1342,7 @@ function addTab(type = 'sign') {
     state.activeTabId = newTabId;
     persistStateSnapshot();
     renderTabs();
+    renderCalculator();
     loadActiveTabData();
 }
 
@@ -1346,6 +1374,7 @@ function copyTab(tabId) {
     state.activeTabId = newTabId;
     persistStateSnapshot();
     renderTabs();
+    renderCalculator();
     loadActiveTabData();
 }
 
@@ -1365,6 +1394,7 @@ function hideTab(tabId) {
     }
     persistStateSnapshot();
     renderTabs();
+    renderCalculator();
     loadActiveTabData();
 }
 
@@ -1385,6 +1415,7 @@ function showTab(tabId) {
     state.activeTabId = tab.id;
     persistStateSnapshot();
     renderTabs();
+    renderCalculator();
     loadActiveTabData();
 }
 
@@ -1411,6 +1442,7 @@ function switchTab(tabId) {
     state.activeTabId = tabId;
     persistStateSnapshot();
     renderTabs();
+    renderCalculator();
     loadActiveTabData();
 }
 
@@ -1479,6 +1511,7 @@ function loadActiveTabData() {
     document.getElementById('partner-coeff-assembly').value = partnerCoeffs.assembly;
     document.getElementById('partner-coeff-montage').value = partnerCoeffs.montage;
     document.getElementById('include-in-combined-offer').checked = Boolean(data.includeInCombinedOffer);
+    updateParamVisibility();
     document.getElementById('notes').value = data.notes || '';
     calculate();
 }
@@ -1833,8 +1866,11 @@ function calculate() {
     // Auto-set params
     const catalog = getActiveCatalog().filter((item) => !item.hidden && !item.deleted);
     const solderingCount = parseFloat(document.getElementById('param-soldering').value) || 0;
+    const activeTab = state.tabs.find(t => t.id === state.activeTabId);
+    const isContour = activeTab?.data?.type === 'contour';
+    const contourLength = parseFloat(document.getElementById('param-contour-length')?.value) || 0;
     const autoMap = {
-        SUB01: ((parseFloat(document.getElementById('param-width').value) || 0) / 100 * (parseFloat(document.getElementById('param-height').value) || 0) / 100).toFixed(3),
+        SUB01: isContour ? 0 : ((parseFloat(document.getElementById('param-width').value) || 0) / 100 * (parseFloat(document.getElementById('param-height').value) || 0) / 100).toFixed(3),
         WORK02: parseFloat(document.getElementById('param-cutting').value) || 0,
         WORK03: parseFloat(document.getElementById('param-milling').value) || 0,
         WORK05: solderingCount,
@@ -1845,10 +1881,8 @@ function calculate() {
         if (input) input.value = value;
     });
     
-    const activeTab = state.tabs.find(t => t.id === state.activeTabId);
-    const contourLength = parseFloat(document.getElementById('param-contour-length')?.value) || 0;
     let totalNeonLength = catalog.filter(i => i.power).reduce((sum, neon) => sum + (parseFloat(document.querySelector(`.quantity-input[data-id="${neon.id}"]`)?.value) || 0), 0);
-    if (activeTab?.data?.type === 'contour' && contourLength > 0) totalNeonLength = contourLength;
+    if (isContour && contourLength > 0) totalNeonLength = contourLength;
     const work06Input = document.querySelector('.quantity-input[data-id="WORK06"]');
     if (work06Input) work06Input.value = totalNeonLength.toFixed(2);
     
@@ -1906,8 +1940,15 @@ function calculate() {
     
     const width = document.getElementById('param-width').value;
     const height = document.getElementById('param-height').value;
-    let offerText = `Размер: ${width}х${height} см (ширина х высота)\n`;
-    offerText += `Стоимость вывески: ${Math.round(signCost)} р.\n`;
+    let offerText = '';
+    if (isContour) {
+        const lengthText = contourLength ? `${String(contourLength).replace('.', ',')} м` : 'не указана';
+        offerText += `Контурный неон\nДлина: ${lengthText}\n`;
+        offerText += `Стоимость: ${Math.round(signCost)} р.\n`;
+    } else {
+        offerText += `Размер: ${width}х${height} см (ширина х высота)\n`;
+        offerText += `Стоимость вывески: ${Math.round(signCost)} р.\n`;
+    }
     if (summary.mounting > 0) offerText += `Стоимость монтажа: ${Math.round(summary.mounting)} р.\n\n`;
     offerText += `Итого: ${Math.round(summary.total)} р.\n\n`;
     offerText += `Срок производства вывески 1-3 рабочих дня с момента оплаты.\n\n`;
