@@ -229,6 +229,8 @@ let state = {};
 const partnerScopeRaw = (new URLSearchParams(window.location.search).get('partner') || '').trim();
 const partnerScope = partnerScopeRaw ? encodeURIComponent(partnerScopeRaw.toLowerCase()) : '';
 const sessionKey = partnerScope ? `partnerCalculator_${partnerScope}` : 'partnerCalculator_vFinal_Corrected';
+const backupSessionKey = `${sessionKey}_backup`;
+const emergencyBackupSessionKey = `${sessionKey}_emergency_backup`;
 const cloudAppId = partnerScope ? `part-calculator:${partnerScope}` : 'part-calculator';
 let syncManager = null;
 let catalogSyncManager = null;
@@ -711,7 +713,46 @@ function cloneState(value) {
     return JSON.parse(JSON.stringify(value));
 }
 
+function getStateScore(candidate) {
+    if (!candidate || !Array.isArray(candidate.tabs)) return 0;
+    const tabScore = candidate.tabs.length * 1000;
+    const hiddenScore = candidate.tabs.filter((tab) => tab?.hidden).length * 100;
+    const filledScore = candidate.tabs.reduce((sum, tab) => {
+        const quantities = tab?.data?.quantities || {};
+        const params = tab?.data?.params || {};
+        const notes = String(tab?.data?.notes || '');
+        return sum + Object.keys(quantities).length + Object.values(params).filter(Boolean).length + (notes ? 1 : 0);
+    }, 0);
+    return tabScore + hiddenScore + filledScore;
+}
+
+function readStoredState(key) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (!raw) return null;
+        return normalizeState(JSON.parse(raw));
+    } catch (error) {
+        console.warn('Failed to read calculator state from', key, error);
+        return null;
+    }
+}
+
+function findBestStoredState() {
+    const candidates = [readStoredState(sessionKey), readStoredState(backupSessionKey), readStoredState(emergencyBackupSessionKey)];
+    for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key || !/calculator|partner/i.test(key)) continue;
+        candidates.push(readStoredState(key));
+    }
+    return candidates.filter(Boolean).sort((a, b) => getStateScore(b) - getStateScore(a))[0] || null;
+}
+
 function persistLocalState(nextState = state) {
+    const current = readStoredState(sessionKey);
+    if (current && getStateScore(current) > getStateScore(nextState)) {
+        localStorage.setItem(backupSessionKey, JSON.stringify(current));
+        localStorage.setItem(emergencyBackupSessionKey, JSON.stringify(current));
+    }
     localStorage.setItem(sessionKey, JSON.stringify(nextState));
 }
 
@@ -771,6 +812,13 @@ function persistStateSnapshot(nextState = state) {
 
 function applyRemoteState(nextState) {
     const incomingState = normalizeState(nextState);
+    if (getStateScore(state) > getStateScore(incomingState) + 500) {
+        console.warn('Rejected poorer remote calculator state to protect existing tabs.');
+        if (syncManager && !suppressCloudSync) {
+            syncManager.scheduleSave();
+        }
+        return;
+    }
     if ((incomingState.lastEditedAt || 0) < (state?.lastEditedAt || 0)) {
         if (syncManager && !suppressCloudSync) {
             syncManager.scheduleSave();
@@ -862,8 +910,8 @@ async function setupCatalogSync() {
 async function init() {
     installMojibakeRepairObserver();
     scheduleMojibakeRepair(document.body);
-    const savedState = localStorage.getItem(sessionKey);
-    state = normalizeState(savedState ? JSON.parse(savedState) : createDefaultState());
+    state = findBestStoredState() || createDefaultState();
+    persistLocalState(state);
     renderPartnerScope();
     renderTabs();
     renderCalculator();
