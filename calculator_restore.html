@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Восстановление расчетов калькулятора</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; background: #edf4fa; color: #0f2537; }
+    main { max-width: 980px; margin: 32px auto; padding: 24px; background: #fff; border-radius: 22px; box-shadow: 0 18px 50px rgba(15,37,55,.12); }
+    h1 { margin: 0 0 10px; font-size: 28px; }
+    p { color: #52697c; line-height: 1.5; }
+    .state { border: 1px solid #cddce8; border-radius: 16px; padding: 16px; margin: 12px 0; background: #f9fcff; }
+    .state strong { display: block; margin-bottom: 8px; }
+    .names { color: #52697c; font-size: 14px; margin: 8px 0 14px; }
+    button { border: 0; border-radius: 12px; background: #10263a; color: #fff; padding: 12px 16px; font-size: 15px; cursor: pointer; }
+    button:hover { background: #17476f; }
+    .ok { color: #0f7a3d; font-weight: 700; }
+    .bad { color: #b42318; font-weight: 700; }
+    .hint { padding: 14px 16px; border-radius: 14px; background: #fff8e8; border: 1px solid #ead7b8; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Восстановление расчетов калькулятора</h1>
+    <p class="hint">Эта страница не трогает файлы. Она записывает выбранный найденный снимок в память браузера для моего калькулятора и ставит ему свежее время, чтобы облачная пустая версия не перетерла его обратно.</p>
+    <div id="status">Загружаю найденные снимки...</div>
+    <div id="list"></div>
+  </main>
+  <script>
+    const SESSION_KEY = 'calculatorSession_Final_Corrected';
+    const BACKUP_KEY = `${SESSION_KEY}_backup`;
+    const EMERGENCY_KEY = `${SESSION_KEY}_emergency_backup`;
+
+    function clone(value) {
+      return JSON.parse(JSON.stringify(value));
+    }
+
+    function prepareState(entry) {
+      const state = clone(entry.data);
+      state.lastEditedAt = Date.now();
+      state.restoredFrom = {
+        hash: entry.hash,
+        sourceLabel: entry.sourceLabel,
+        restoredAt: new Date().toISOString()
+      };
+      return state;
+    }
+
+    function restore(entry) {
+      try {
+        const current = localStorage.getItem(SESSION_KEY);
+        if (current) {
+          localStorage.setItem(`${SESSION_KEY}_before_manual_restore_${Date.now()}`, current);
+        }
+        const state = prepareState(entry);
+        const raw = JSON.stringify(state);
+        localStorage.setItem(SESSION_KEY, raw);
+        localStorage.setItem(BACKUP_KEY, raw);
+        localStorage.setItem(EMERGENCY_KEY, raw);
+        document.getElementById('status').innerHTML = `<span class="ok">Восстановлено:</span> ${entry.sourceLabel}. Теперь откройте мой калькулятор и обновите страницу.`;
+      } catch (error) {
+        document.getElementById('status').innerHTML = `<span class="bad">Ошибка восстановления:</span> ${error.message}`;
+      }
+    }
+
+    function render(rows) {
+      const list = document.getElementById('list');
+      list.innerHTML = '';
+      rows.forEach((entry, index) => {
+        const box = document.createElement('div');
+        box.className = 'state';
+        const names = (entry.names || []).slice(0, 12).join(' | ');
+        box.innerHTML = `
+          <strong>${index + 1}. ${entry.sourceLabel}</strong>
+          <div class="names">${names}</div>
+          <button type="button">Восстановить этот снимок</button>
+        `;
+        box.querySelector('button').onclick = () => restore(entry);
+        list.appendChild(box);
+      });
+    }
+
+    fetch('calculator_recovery_states.json?v=20260426-restore-page-1', { cache: 'no-store' })
+      .then((response) => {
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return response.json();
+      })
+      .then((rows) => {
+        document.getElementById('status').textContent = `Найдено снимков: ${rows.length}. Самый полный обычно первый.`;
+        render(rows);
+      })
+      .catch((error) => {
+        document.getElementById('status').innerHTML = `<span class="bad">Не удалось загрузить снимки:</span> ${error.message}`;
+      });
+  </script>
+</body>
+</html>
