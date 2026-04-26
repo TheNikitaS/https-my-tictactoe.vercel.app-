@@ -784,13 +784,50 @@ function readStoredState(key) {
 }
 
 function findBestStoredState() {
-    const candidates = [readStoredState(sessionKey), readStoredState(backupSessionKey), readStoredState(emergencyBackupSessionKey)];
+    return readStoredState(sessionKey) || readStoredState(backupSessionKey) || readStoredState(emergencyBackupSessionKey);
+}
+
+function getRecoveryCandidates() {
+    const candidates = [];
+    const seen = new Set();
     for (let index = 0; index < localStorage.length; index += 1) {
         const key = localStorage.key(index);
         if (!key || !/calculator|partner/i.test(key)) continue;
-        candidates.push(readStoredState(key));
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const value = readStoredState(key);
+        if (!value?.tabs?.length) continue;
+        candidates.push({
+            key,
+            state: value,
+            score: getStateScore(value),
+            tabCount: value.tabs.length,
+            hiddenCount: value.tabs.filter((tab) => tab?.hidden).length,
+            updatedAt: Number(value.lastEditedAt) || 0
+        });
     }
-    return candidates.filter(Boolean).sort((a, b) => getStateScore(b) - getStateScore(a))[0] || null;
+    return candidates.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0) || b.score - a.score);
+}
+
+function formatRecoveryCandidate(candidate, index) {
+    const date = candidate.updatedAt ? new Date(candidate.updatedAt).toLocaleString('ru-RU') : 'без даты';
+    const names = candidate.state.tabs.slice(0, 3).map((tab) => tab.name).join(', ');
+    return `${index + 1}. ${date} • вкладок: ${candidate.tabCount}, скрытых: ${candidate.hiddenCount} • ${names}`;
+}
+
+function restoreCalculatorState(storageKey) {
+    const candidate = readStoredState(storageKey);
+    if (!candidate) return;
+    const ok = window.confirm(`Восстановить расчеты из сохранения "${storageKey}"? Текущее состояние будет заменено.`);
+    if (!ok) return;
+    state = normalizeState(candidate);
+    persistLocalState(state);
+    if (syncManager && !suppressCloudSync) syncManager.scheduleSave();
+    renderTabs();
+    renderCalculator();
+    loadActiveTabData();
+    attachGlobalListeners();
+    setSyncStatus('Восстановлено из локального сохранения');
 }
 
 function persistLocalState(nextState = state) {
@@ -1058,9 +1095,10 @@ function renderTabs() {
     container.appendChild(addButton);
 
     const hiddenTabs = state.tabs.filter(tab => tab.hidden);
+    const recoveryCandidates = getRecoveryCandidates();
     hiddenWrap.innerHTML = '';
-    hiddenWrap.style.display = hiddenTabs.length ? 'flex' : 'none';
-    if (!hiddenTabs.length) return;
+    hiddenWrap.style.display = (hiddenTabs.length || recoveryCandidates.length > 1) ? 'flex' : 'none';
+    if (!hiddenTabs.length && recoveryCandidates.length <= 1) return;
 
     const label = document.createElement('div');
     label.className = 'hidden-tabs-label';
@@ -1096,8 +1134,28 @@ function renderTabs() {
         showBtn.disabled = !select.value;
     };
 
-    hiddenWrap.appendChild(select);
-    hiddenWrap.appendChild(showBtn);
+    if (hiddenTabs.length) {
+        hiddenWrap.appendChild(select);
+        hiddenWrap.appendChild(showBtn);
+    }
+
+    if (recoveryCandidates.length > 1) {
+        const restoreSelect = document.createElement('select');
+        restoreSelect.className = 'form-select form-select-sm hidden-tabs-select';
+        recoveryCandidates.forEach((candidate, index) => {
+            const option = document.createElement('option');
+            option.value = candidate.key;
+            option.textContent = formatRecoveryCandidate(candidate, index);
+            restoreSelect.appendChild(option);
+        });
+        const restoreBtn = document.createElement('button');
+        restoreBtn.type = 'button';
+        restoreBtn.className = 'btn btn-sm btn-outline-danger';
+        restoreBtn.textContent = 'Восстановить расчеты';
+        restoreBtn.onclick = () => restoreCalculatorState(restoreSelect.value);
+        hiddenWrap.appendChild(restoreSelect);
+        hiddenWrap.appendChild(restoreBtn);
+    }
     scheduleMojibakeRepair(hiddenWrap);
     return;
 
