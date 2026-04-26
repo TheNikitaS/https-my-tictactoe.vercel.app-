@@ -205,6 +205,7 @@ const SHARED_CATALOG_APP_ID = 'calculator-shared-catalog-v1';
 let syncManager = null;
 let catalogSyncManager = null;
 let suppressCloudSync = false;
+let externalRecoveryStates = [];
 const DEFAULT_COEFFS = { goods: 2.2, design: 4.5, assembly: 4.2, montage: 2.0 };
 const ITEM_PRICING_OPTIONS = [
     { key: 'goods', label: 'Товары' },
@@ -787,6 +788,18 @@ function findBestStoredState() {
     return readStoredState(sessionKey) || readStoredState(backupSessionKey) || readStoredState(emergencyBackupSessionKey);
 }
 
+async function loadExternalRecoveryStates() {
+    try {
+        const response = await fetch('../calculator_recovery_states.json?v=20260426-restore-1', { cache: 'no-store' });
+        if (!response.ok) return;
+        const rows = await response.json();
+        externalRecoveryStates = Array.isArray(rows) ? rows : [];
+    } catch (error) {
+        console.warn('External calculator recovery states unavailable:', error);
+        externalRecoveryStates = [];
+    }
+}
+
 function getRecoveryCandidates() {
     const candidates = [];
     const seen = new Set();
@@ -806,6 +819,23 @@ function getRecoveryCandidates() {
             updatedAt: Number(value.lastEditedAt) || 0
         });
     }
+    externalRecoveryStates.forEach((entry) => {
+        const value = normalizeState(entry.data);
+        if (!value?.tabs?.length) return;
+        const key = `external-recovery:${entry.hash}`;
+        if (seen.has(key)) return;
+        seen.add(key);
+        candidates.push({
+            key,
+            external: true,
+            sourceLabel: entry.sourceLabel,
+            state: value,
+            score: Math.max(getStateScore(value), Number(entry.filled || 0) + value.tabs.length * 1000),
+            tabCount: value.tabs.length,
+            hiddenCount: value.tabs.filter((tab) => tab?.hidden).length,
+            updatedAt: Number(value.lastEditedAt || entry.lastEditedAt) || 0
+        });
+    });
     return candidates.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0) || b.score - a.score);
 }
 
@@ -816,7 +846,8 @@ function formatRecoveryCandidate(candidate, index) {
 }
 
 function restoreCalculatorState(storageKey) {
-    const candidate = readStoredState(storageKey);
+    const external = externalRecoveryStates.find((entry) => `external-recovery:${entry.hash}` === storageKey);
+    const candidate = external ? normalizeState(external.data) : readStoredState(storageKey);
     if (!candidate) return;
     const ok = window.confirm(`Восстановить расчеты из сохранения "${storageKey}"? Текущее состояние будет заменено.`);
     if (!ok) return;
@@ -994,6 +1025,7 @@ async function setupCatalogSync() {
 async function init() {
     installMojibakeRepairObserver();
     scheduleMojibakeRepair(document.body);
+    await loadExternalRecoveryStates();
     state = findBestStoredState() || createDefaultState();
     persistLocalState(state);
     renderTabs();
