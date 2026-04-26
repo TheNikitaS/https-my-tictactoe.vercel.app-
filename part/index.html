@@ -291,36 +291,34 @@ function createTabData(rawData = {}) {
 
 function normalizeCatalog(rawCatalog) {
     const savedItems = Array.isArray(rawCatalog) ? rawCatalog : [];
-    const savedMap = new Map(savedItems.filter((item) => item?.id).map((item) => [item.id, item]));
-    const catalog = BASE_CATALOG.map((item) => {
-        const saved = savedMap.get(item.id) || {};
-        return {
-            ...item,
-            ...saved,
-            article: String(saved.article || item.article || item.id),
-            name: String(saved.name || item.name || ''),
-            cost: Number(saved.cost ?? item.cost) || 0,
-            hidden: Boolean(saved.hidden),
-            deleted: Boolean(saved.deleted),
-            custom: false,
-            pricingKind: saved.pricingKind || item.pricingKind || inferPricingKind(item)
-        };
-    });
+    if (!savedItems.length) return cloneCatalog();
+
+    const baseMap = new Map(BASE_CATALOG.map((item) => [item.id, item]));
+    const seenIds = new Set();
+    const catalog = [];
 
     savedItems
-        .filter((item) => item?.id && !BASE_CATALOG.some((base) => base.id === item.id))
-        .forEach((item) => {
+        .filter((item) => item?.id)
+        .forEach((saved) => {
+            const base = baseMap.get(saved.id) || {};
+            const merged = { ...base, ...saved };
+            seenIds.add(saved.id);
             catalog.push({
-                ...item,
-                article: String(item.article || item.id || ''),
-                name: String(item.name || ''),
-                cost: Number(item.cost) || 0,
-                hidden: Boolean(item.hidden),
-                deleted: Boolean(item.deleted),
-                custom: true,
-                pricingKind: item.pricingKind || 'goods'
+                ...merged,
+                article: String(saved.article || base.article || saved.id),
+                name: String(saved.name || base.name || ''),
+                cost: Number(saved.cost ?? base.cost) || 0,
+                hidden: Boolean(saved.hidden),
+                deleted: Boolean(saved.deleted),
+                custom: !baseMap.has(saved.id) || Boolean(saved.custom),
+                pricingKind: saved.pricingKind || base.pricingKind || inferPricingKind(merged)
             });
         });
+
+    BASE_CATALOG.forEach((item) => {
+        if (seenIds.has(item.id)) return;
+        catalog.push({ ...item });
+    });
 
     return catalog;
 }
@@ -1180,10 +1178,12 @@ function saveActiveTabData() {
         soldering: document.getElementById('param-soldering').value,
     };
     activeTab.data.coeffs = {
-        goods: document.getElementById('coeff-goods').value,
-        design: document.getElementById('coeff-design').value,
-        assembly: document.getElementById('coeff-assembly').value,
-        montage: document.getElementById('coeff-montage').value,
+        ...normalizeCoeffs({
+            goods: document.getElementById('coeff-goods').value,
+            design: document.getElementById('coeff-design').value,
+            assembly: document.getElementById('coeff-assembly').value,
+            montage: document.getElementById('coeff-montage').value,
+        })
     };
     activeTab.data.notes = document.getElementById('notes').value;
     activeTab.data.status = document.getElementById('tab-billing-status').value || '';
@@ -1206,7 +1206,7 @@ function loadActiveTabData() {
     document.getElementById('param-cutting').value = params.cutting || '';
     document.getElementById('param-milling').value = params.milling || '';
     document.getElementById('param-soldering').value = params.soldering || '';
-    const coeffs = data.coeffs || { goods: 1.862, design: 2, assembly: 3.369, montage: 1.539 };
+    const coeffs = normalizeCoeffs(data.coeffs);
     document.getElementById('coeff-goods').value = coeffs.goods;
     document.getElementById('coeff-design').value = coeffs.design;
     document.getElementById('coeff-assembly').value = coeffs.assembly;
@@ -1464,20 +1464,21 @@ function calculate() {
         let partnerItemCost = 0;
         
         if (quantity > 0) {
-            if (item.pricingKind === 'goods') {
-                retailPrice = costPrice * coeffs.goods;
+            if (item.category === 'Материалы') {
+                const coeff = item.subcategory === 'Производство подложки' ? coeffs.assembly : coeffs.goods;
+                retailPrice = costPrice * coeff;
                 summary.goods += retailPrice;
                 partnerItemCost = costPrice * 1.3;
-            } else if (item.pricingKind === 'design') {
+            } else if (item.subcategory === 'Дизайн макета' || item.pricingKind === 'design') {
                 retailPrice = costPrice * coeffs.design;
                 summary.design += retailPrice;
                 partnerItemCost = costPrice * 1.3;
-            } else if (item.pricingKind === 'assembly') {
+            } else if (item.subcategory === 'Сборка' || item.pricingKind === 'assembly') {
                 retailPrice = costPrice * coeffs.assembly;
                 summary.assembly += retailPrice;
                 summary.payMaster += costPrice;
                 partnerItemCost = 0;
-            } else if (item.pricingKind === 'montage') {
+            } else if (item.subcategory === 'Монтаж' || item.pricingKind === 'montage') {
                 const coeff = item.coeff === 1 ? 1 : coeffs.montage;
                 retailPrice = costPrice * coeff;
                 summary.mounting += retailPrice;
