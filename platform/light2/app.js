@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260427-light2-metrics-workspace";
+const LIGHT2_BUILD = "20260427-light2-compact-matrix";
 const LIGHT2_SALES_APP_ID = "sales-tracker";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
@@ -76,11 +76,33 @@ const METRICS_EXPENSE_LABELS = [
 const METRICS_IMPORT_LABEL_MAP = {
   "Выручка": "revenue",
   "Себестоимость": "cost",
+  "Валовая прибыль": "gross_profit",
+  "Операционные расходы": "operating_expenses",
+  "Операционная прибыль": "operating_profit",
   "Налоги и сборы": "taxes",
+  "Чистая прибыль": "net_profit",
+  "Rпр — рентабельность продукции": "product_profitability",
+  "Рентабильность бизнеса": "business_profitability",
+  "Маржа": "margin",
+  "Средний чек": "average_check",
   "Продажи": "sales",
   "Склад": "warehouse",
+  "ТБУ в деньгах": "tbu_money",
   "Постоянные расходы": "custom_money"
 };
+
+const METRICS_NUMBER_LABELS = new Set([
+  "ТБУ в заказах",
+  "Цикл сделки",
+  "Скорость ответа менеджера",
+  "Денег на каждом этапе"
+]);
+
+const METRICS_PERCENT_LABELS = new Set([
+  "EBITDA margin",
+  "темп роста год к году + EBITDA margin",
+  "EV/Sales (Enterprise Value to Sales)"
+]);
 
 const WORKBOOK_IMPORT_SHEETS = [
   "Баланс",
@@ -2928,9 +2950,8 @@ function metricMonthKeyFromLabels(monthLabel, yearLabel) {
   return `${year}-${String(monthIndex + 1).padStart(2, "0")}`;
 }
 
-function buildMetricsEntriesFromSnapshot(sheet) {
+function getMetricsSnapshotMonthColumns(sheet) {
   if (!sheet?.rows?.length) return [];
-
   const yearGroups = Object.keys(getSheetRow(sheet, 1)?.cells || {})
     .map(Number)
     .sort((a, b) => a - b)
@@ -2942,14 +2963,69 @@ function buildMetricsEntriesFromSnapshot(sheet) {
     }));
   const getYearForColumn = (columnIndex) =>
     yearGroups.find((group) => columnIndex >= group.start && columnIndex <= group.end)?.yearLabel || "";
-  const monthColumns = Array.from({ length: sheet.maxCol || 0 }, (_, idx) => idx + 1)
+
+  return Array.from({ length: sheet.maxCol || 0 }, (_, idx) => idx + 1)
     .filter((columnIndex) => isMonthLabel(getSheetDisplay(sheet, 2, columnIndex)))
     .filter((columnIndex) => String(getSheetDisplay(sheet, 3, columnIndex)).startsWith("Сумма"))
     .map((columnIndex) => ({
       columnIndex,
+      monthLabel: getSheetDisplay(sheet, 2, columnIndex),
+      yearLabel: getYearForColumn(columnIndex),
       monthKey: metricMonthKeyFromLabels(getSheetDisplay(sheet, 2, columnIndex), getYearForColumn(columnIndex))
     }))
     .filter((item) => item.monthKey);
+}
+
+function inferMetricSnapshotCategory(label, cell = null) {
+  const normalizedLabel = String(label || "").trim();
+  if (METRICS_IMPORT_LABEL_MAP[normalizedLabel]) return METRICS_IMPORT_LABEL_MAP[normalizedLabel];
+  if (METRICS_EXPENSE_LABELS.includes(normalizedLabel)) return "operating_expenses";
+  if (METRICS_PERCENT_LABELS.has(normalizedLabel) || cell?.kind === "percent") return "custom_percent";
+  if (METRICS_NUMBER_LABELS.has(normalizedLabel)) return "custom_number";
+  return "custom_money";
+}
+
+function getMetricFormatByCategory(category, label = "") {
+  const meta = getMetricCategoryMeta(category, label);
+  return meta.format || "money";
+}
+
+function buildMetricsSnapshotMatrix(sheet) {
+  const monthColumns = getMetricsSnapshotMonthColumns(sheet);
+  if (!sheet?.rows?.length || !monthColumns.length) return { monthColumns: [], rows: [] };
+  const rows = sheet.rows
+    .filter((row) => row.index >= 4)
+    .map((row) => {
+      const label = getRowDisplay(row, 1);
+      if (!label) return null;
+      const values = monthColumns.map((month) => {
+        const cell = getRowCell(row, month.columnIndex);
+        const category = inferMetricSnapshotCategory(label, cell);
+        return {
+          ...month,
+          category,
+          value: hasSnapshotValue(cell) ? getSnapshotCellNumber(cell) : null,
+          display: hasSnapshotValue(cell)
+            ? formatMetricsWorkspaceValue(getSnapshotCellNumber(cell), getMetricFormatByCategory(category, label))
+            : "—"
+        };
+      });
+      if (!values.some((item) => item.value !== null)) return null;
+      return {
+        index: row.index,
+        label,
+        values
+      };
+    })
+    .filter(Boolean);
+
+  return { monthColumns, rows };
+}
+
+function buildMetricsEntriesFromSnapshot(sheet) {
+  if (!sheet?.rows?.length) return [];
+
+  const monthColumns = getMetricsSnapshotMonthColumns(sheet);
 
   const rows = sheet.rows
     .filter((row) => row.index >= 4)
@@ -2963,14 +3039,11 @@ function buildMetricsEntriesFromSnapshot(sheet) {
   const entries = [];
 
   rows.forEach(({ row, label }) => {
-    const category = METRICS_IMPORT_LABEL_MAP[label] || (METRICS_EXPENSE_LABELS.includes(label) ? "operating_expenses" : "");
-    if (!category) return;
-
     monthColumns.forEach(({ columnIndex, monthKey }) => {
       const cell = getRowCell(row, columnIndex);
       if (!hasSnapshotValue(cell)) return;
+      const category = inferMetricSnapshotCategory(label, cell);
       const amount = roundMoney(getSnapshotCellNumber(cell));
-      if (!amount && !["revenue", "cost", "sales", "warehouse"].includes(category)) return;
       entries.push(
         normalizeMetricsEntry(
           {
@@ -2992,21 +3065,25 @@ function buildMetricsEntriesFromSnapshot(sheet) {
   return entries;
 }
 
-async function seedMetricsDocFromSnapshotIfEmpty() {
-  if (!STATE.metricsReady || getMetricsEntries().length) return false;
+async function syncMetricsDocFromSnapshot() {
+  if (!STATE.metricsReady) return false;
   const sheet = getSnapshotSheet("metrics");
-  const entries = buildMetricsEntriesFromSnapshot(sheet);
-  if (!entries.length) return false;
+  const snapshotEntries = buildMetricsEntriesFromSnapshot(sheet);
+  if (!snapshotEntries.length) return false;
+  const currentEntries = getMetricsEntries();
+  const existingIds = new Set(currentEntries.map((entry) => entry.id));
+  const missingEntries = snapshotEntries.filter((entry) => !existingIds.has(entry.id));
+  if (!missingEntries.length) return false;
   const payload = normalizeMetricsDoc({
     ...STATE.metricsDoc,
-    entries
+    entries: [...currentEntries, ...missingEntries]
   });
   payload.updatedAt = new Date().toISOString();
   STATE.metricsDoc = payload;
   STATE.metricsReady = true;
   renderWorkbookSnapshotSection("metrics");
   renderOverview();
-  await saveMetricsDoc(payload, `Метрики подтянуты из ЛАЙТ 2: ${entries.length} строк.`);
+  await saveMetricsDoc(payload, `Метрики дополнены из ЛАЙТ 2: ${missingEntries.length} строк.`);
   return true;
 }
 
@@ -3084,7 +3161,7 @@ async function loadMetricsDoc(force = false) {
     STATE.metricsError = "";
     if (STATE.workbookReady && !STATE.metricsDoc.entries.length) {
       try {
-        await seedMetricsDocFromSnapshotIfEmpty();
+        await syncMetricsDocFromSnapshot();
       } catch (seedError) {
         console.warn("light2 metrics snapshot seed failed", seedError);
         setStatus(seedError.message || "Не удалось сохранить импорт метрик из ЛАЙТ 2.", "warning");
@@ -4311,7 +4388,49 @@ function renderMetricsWorkspace(sheet) {
   ).join("");
   const quickExpenseOptions = METRICS_EXPENSE_LABELS.map((label) => `<option value="${escapeHtml(label)}">${escapeHtml(label)}</option>`).join("");
 
-  const analyticsHtml = sheet ? renderMetricsAnalytics(sheet) : "";
+  const snapshotMatrix = buildMetricsSnapshotMatrix(sheet);
+  const matrixRows = snapshotMatrix.rows.filter((row) => {
+    if (!search) return true;
+    return row.label.toLowerCase().includes(search);
+  });
+  const matrixHtml = snapshotMatrix.monthColumns.length
+    ? `
+      <div class="metrics-matrix-wrap">
+        <table class="metrics-matrix-table">
+          <thead>
+            <tr>
+              <th class="metrics-matrix-sticky">Показатель</th>
+              ${snapshotMatrix.monthColumns.map((month) => `<th>${escapeHtml(`${month.monthLabel} ${month.yearLabel}`.trim())}</th>`).join("")}
+            </tr>
+          </thead>
+          <tbody>
+            ${
+              matrixRows.length
+                ? matrixRows
+                    .map(
+                      (row) => `
+                        <tr>
+                          <th class="metrics-matrix-sticky">
+                            <span>${escapeHtml(row.label)}</span>
+                            <small>строка ${escapeHtml(String(row.index))}</small>
+                          </th>
+                          ${row.values
+                            .map((item) => {
+                              const tone = item.value === null ? "" : item.value < 0 ? "is-negative" : item.value > 0 ? "is-positive" : "";
+                              return `<td class="${tone}">${escapeHtml(item.display)}</td>`;
+                            })
+                            .join("")}
+                        </tr>
+                      `
+                    )
+                    .join("")
+                : `<tr><td colspan="${snapshotMatrix.monthColumns.length + 1}" class="muted">По поиску показатели не найдены.</td></tr>`
+            }
+          </tbody>
+        </table>
+      </div>
+    `
+    : `<div class="workspace-empty workspace-empty--tight">Матрица ЛАЙТ 2 пока не загрузилась.</div>`;
   const monthOptions = [...new Set([activeModel.monthKey, ...history.map((item) => item.monthKey), getTodayIso().slice(0, 7)].filter(Boolean))]
     .sort()
     .reverse()
@@ -4478,187 +4597,144 @@ function renderMetricsWorkspace(sheet) {
         <button class="btn btn-outline-light btn-sm" type="button" data-metric-quick-add="warehouse">Склад</button>
       </div>
     </div>
-    ${analyticsHtml}
-    <div class="scope-note">
-      ${escapeHtml(METRICS_DATA_PRESERVATION_RULE)}
+    <div class="metrics-control-bar">
+      <div>
+        <label class="form-label">Месяц управления</label>
+        <select class="form-select form-select-sm" data-metrics-filter="month">${monthOptions}</select>
+      </div>
+      <div>
+        <label class="form-label">Поиск</label>
+        <input class="form-control form-control-sm" type="text" id="metricsSearch" value="${escapeHtml(STATE.metricsFilters.search || "")}" data-metrics-filter="search" placeholder="Показатель, строка или комментарий" />
+      </div>
+      <div>
+        <label class="form-label">Быстрый расход</label>
+        <select class="form-select form-select-sm" data-metrics-expense-preset>
+          <option value="">Выбрать статью</option>
+          ${quickExpenseOptions}
+        </select>
+      </div>
     </div>
-    <div class="summary-row mb-3">${metricsCards}</div>
-    <div class="subsection-grid analytics-grid mb-3">
-      <article class="subsection-card analytics-panel">
-        <div class="panel-kicker">Рабочий месяц</div>
-        <h3>${escapeHtml(activeModel.monthLabel)}</h3>
-        <div class="toolbar-grid mb-3">
+    <div class="summary-row metrics-kpi-strip mb-3">${metricsCards}</div>
+    <div class="metrics-work-grid">
+      <article class="metrics-main-panel">
+        <div class="metrics-panel-head">
           <div>
-            <label class="form-label">Месяц управления</label>
-            <select class="form-select" data-metrics-filter="month">${monthOptions}</select>
+            <div class="panel-kicker">ЛАЙТ 2</div>
+            <h3>Все показатели по месяцам</h3>
           </div>
-          <div>
-            <label class="form-label">Быстрый расход</label>
-            <select class="form-select" data-metrics-expense-preset>
-              <option value="">Выбрать статью</option>
-              ${quickExpenseOptions}
-            </select>
-          </div>
+          <span>${escapeHtml(formatPlainNumber(snapshotMatrix.rows.length))} строк</span>
         </div>
-        <div class="analytics-footnote" id="metricsDocStatus">
-          ${entries.length ? `Последнее обновление: ${escapeHtml(lastUpdatedLabel)}` : "Строки пока не заведены. Начните с выручки, себестоимости, расходов и налогов."}
-        </div>
-        <form class="record-form" id="metricsEntryForm">
-          <div class="form-grid">
-            <div>
-              <label class="form-label">Месяц</label>
-              <input class="form-control" type="month" name="month_key" value="${escapeHtml(activeModel.monthKey)}" required />
-            </div>
-            <div>
-              <label class="form-label">Категория</label>
-              <select class="form-select" name="category" data-metrics-category>
-                ${categoryOptions}
-              </select>
-            </div>
-            <div>
-              <label class="form-label">Название строки</label>
-              <input class="form-control" type="text" name="label" value="Выручка" required />
-            </div>
-            <div>
-              <label class="form-label">Значение</label>
-              <input class="form-control" type="number" step="0.01" name="amount" placeholder="Например: 125000 или 18.5" required />
-            </div>
-          </div>
-          <div class="mt-3">
-            <label class="form-label">Комментарий</label>
-            <textarea class="form-control" name="note" rows="2" placeholder="Источник, статья или пояснение к строке"></textarea>
-          </div>
-          <div class="form-actions">
-            <button class="btn btn-dark" type="submit">Сохранить строку</button>
-            <button class="btn btn-outline-secondary" type="button" id="metricsResetButton" data-metrics-reset>Очистить форму</button>
-          </div>
-        </form>
+        ${matrixHtml}
       </article>
-      <article class="subsection-card analytics-panel">
-        <div class="panel-kicker">Связи с платформой</div>
-        <h3>Синхронизация разделов</h3>
+      <aside class="metrics-side-panel">
+        <div class="metrics-panel-head">
+          <div>
+            <div class="panel-kicker">Платформа</div>
+            <h3>Синхронизация</h3>
+          </div>
+        </div>
         <div class="dashboard-mini-grid">${platformLinkCards}</div>
-        <div class="analytics-footnote">Продажи дают выручку, сделки и средний чек; склад и закупки дают себестоимость и остатки; деньги дают налоги, расходы и платежи; задачи фиксируют ответственных по отклонениям.</div>
-      </article>
+        <details class="metrics-details mt-3">
+          <summary>Добавить или изменить строку</summary>
+          <form class="record-form" id="metricsEntryForm">
+            <div class="form-grid metrics-form-grid">
+              <div>
+                <label class="form-label">Месяц</label>
+                <input class="form-control form-control-sm" type="month" name="month_key" value="${escapeHtml(activeModel.monthKey)}" required />
+              </div>
+              <div>
+                <label class="form-label">Категория</label>
+                <select class="form-select form-select-sm" name="category" data-metrics-category>
+                  ${categoryOptions}
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Строка</label>
+                <input class="form-control form-control-sm" type="text" name="label" value="Выручка" required />
+              </div>
+              <div>
+                <label class="form-label">Значение</label>
+                <input class="form-control form-control-sm" type="number" step="0.01" name="amount" required />
+              </div>
+            </div>
+            <textarea class="form-control form-control-sm mt-2" name="note" rows="2" placeholder="Комментарий"></textarea>
+            <div class="form-actions metrics-form-actions">
+              <button class="btn btn-dark btn-sm" type="submit">Сохранить</button>
+              <button class="btn btn-outline-secondary btn-sm" type="button" id="metricsResetButton" data-metrics-reset>Очистить</button>
+            </div>
+          </form>
+        </details>
+      </aside>
     </div>
-    <div class="table-shell mt-3">
-      <table class="table table-sm align-middle metrics-board-table">
-        <thead>
-          <tr>
-            <th>Показатель</th>
-            <th>Тип</th>
-            <th class="text-end">Факт</th>
-            <th class="text-end">К прошлому месяцу</th>
-            <th class="text-end">Действие</th>
-          </tr>
-        </thead>
-        <tbody>${formulaRowsHtml}</tbody>
-      </table>
+    <details class="metrics-details mt-3">
+      <summary>Формулы активного месяца и рабочие строки</summary>
+      <div class="table-shell mt-3">
+        <table class="table table-sm align-middle metrics-board-table">
+          <thead>
+            <tr>
+              <th>Показатель</th>
+              <th>Тип</th>
+              <th class="text-end">Факт</th>
+              <th class="text-end">К прошлому месяцу</th>
+              <th class="text-end">Действие</th>
+            </tr>
+          </thead>
+          <tbody>${formulaRowsHtml}</tbody>
+        </table>
+      </div>
+    </details>
+    <div class="metrics-meta-row">
+      <span>${escapeHtml(METRICS_DATA_PRESERVATION_RULE)}</span>
+      <span id="metricsDocStatus">${entries.length ? `Обновлено: ${escapeHtml(lastUpdatedLabel)}` : "Ожидаю данные"}</span>
     </div>
-    <div class="summary-row mt-3 mb-3" id="metricsSummary">
-      <article class="summary-card">
-        <span>Заполнено строк</span>
-        <strong>${escapeHtml(formatPlainNumber(summary.entriesCount))}</strong>
-      </article>
-      <article class="summary-card">
-        <span>Месяцев в базе</span>
-        <strong>${escapeHtml(formatPlainNumber(summary.monthCount))}</strong>
-      </article>
-      <article class="summary-card">
-        <span>Активный месяц</span>
-        <strong>${escapeHtml(activeModel.monthLabel || "—")}</strong>
-      </article>
-      <article class="summary-card">
-        <span>Формула чистой прибыли</span>
-        <strong>${escapeHtml(formatMetricsWorkspaceValue(activeModel.values.net_profit, "money"))}</strong>
-      </article>
-    </div>
-    <div class="subsection-grid analytics-grid mb-3">
-      <article class="subsection-card analytics-panel analytics-panel-wide">
-        <div class="panel-kicker">История</div>
-        <h3>Помесячная динамика</h3>
-        <div class="table-shell mt-2">
+    <details class="metrics-details mt-3">
+      <summary>История, сверка и рабочие строки</summary>
+      <div class="metrics-detail-grid mt-3">
+        <div class="table-shell">
           <table class="table table-sm align-middle analytics-mini-table">
-            <thead>
-              <tr>
-                <th>Месяц</th>
-                <th class="text-end">Выручка</th>
-                <th class="text-end">Чистая прибыль</th>
-                <th class="text-end">Продажи</th>
-                <th class="text-end">Средний чек</th>
-                <th class="text-end">Маржа</th>
-              </tr>
-            </thead>
-            <tbody>${historyRowsHtml || '<tr><td colspan="6" class="muted">История появится после первой сохраненной строки.</td></tr>'}</tbody>
+            <thead><tr><th>Месяц</th><th class="text-end">Выручка</th><th class="text-end">Чистая прибыль</th><th class="text-end">Продажи</th><th class="text-end">Маржа</th></tr></thead>
+            <tbody>${historyRowsHtml || '<tr><td colspan="5" class="muted">История появится после первой сохраненной строки.</td></tr>'}</tbody>
           </table>
         </div>
-      </article>
-      <article class="subsection-card analytics-panel analytics-panel-wide">
-        <div class="panel-kicker">Сверка</div>
-        <h3>${snapshotModel ? `Живой месяц против исходника: ${escapeHtml(snapshotModel.label)}` : "Исходник пока не загружен"}</h3>
-        <div class="table-shell mt-2">
+        <div class="table-shell">
           <table class="table table-sm align-middle analytics-mini-table">
-            <thead>
-              <tr>
-                <th>Показатель</th>
-                <th class="text-end">Платформа</th>
-                <th class="text-end">ЛАЙТ 2</th>
-                <th class="text-end">Разница</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Показатель</th><th class="text-end">Платформа</th><th class="text-end">ЛАЙТ 2</th><th class="text-end">Разница</th></tr></thead>
             <tbody>${snapshotCompareHtml || '<tr><td colspan="4" class="muted">Сверочные данные появятся после загрузки snapshot.</td></tr>'}</tbody>
           </table>
         </div>
-      </article>
-    </div>
-    <div class="toolbar-grid">
-      <div>
-        <label class="form-label">Поиск по рабочим строкам</label>
-        <input class="form-control" type="text" id="metricsSearch" value="${escapeHtml(STATE.metricsFilters.search || "")}" data-metrics-filter="search" placeholder="Название строки или комментарий" />
       </div>
-    </div>
-    <div class="table-shell mt-3">
-      <table class="table table-sm align-middle">
-        <thead>
-          <tr>
-            <th>Месяц</th>
-            <th>Категория</th>
-            <th>Строка</th>
-            <th class="text-end">Значение</th>
-            <th>Комментарий</th>
-            <th>Обновлено</th>
-            <th>Действия</th>
-          </tr>
-        </thead>
-        <tbody id="metricsTableBody">
-          ${
-            visibleEntries.length
-              ? visibleEntries
-                  .map((entry) => {
-                    const meta = getMetricCategoryMeta(entry.category, entry.label);
-                    return `
-                      <tr>
-                        <td>${escapeHtml(getMetricMonthLabel(entry.monthKey))}</td>
-                        <td>${escapeHtml(meta.label)}</td>
-                        <td>${escapeHtml(entry.label)}</td>
-                        <td class="text-end"><strong>${escapeHtml(formatMetricValue(entry.amount, entry.category, entry.label))}</strong></td>
-                        <td>${escapeHtml(entry.note || "—")}</td>
-                        <td>${escapeHtml(formatDateTime(entry.updatedAt || STATE.metricsDoc.updatedAt))}</td>
-                        <td>
-                          <div class="d-flex gap-2">
-                            <button class="btn btn-outline-dark btn-sm" type="button" data-edit-metric-entry="${escapeHtml(entry.id)}">Изменить</button>
-                            <button class="btn btn-outline-danger btn-sm" type="button" data-delete-metric-entry="${escapeHtml(entry.id)}">Удалить</button>
-                          </div>
-                        </td>
-                      </tr>
-                    `;
-                  })
-                  .join("")
-              : `<tr><td colspan="7" class="muted">По текущему фильтру строки не найдены.</td></tr>`
-          }
-        </tbody>
-      </table>
-    </div>
+      <div class="table-shell mt-3">
+        <table class="table table-sm align-middle">
+          <thead><tr><th>Месяц</th><th>Категория</th><th>Строка</th><th class="text-end">Значение</th><th>Комментарий</th><th>Действия</th></tr></thead>
+          <tbody id="metricsTableBody">
+            ${
+              visibleEntries.length
+                ? visibleEntries
+                    .map((entry) => {
+                      const meta = getMetricCategoryMeta(entry.category, entry.label);
+                      return `
+                        <tr>
+                          <td>${escapeHtml(getMetricMonthLabel(entry.monthKey))}</td>
+                          <td>${escapeHtml(meta.label)}</td>
+                          <td>${escapeHtml(entry.label)}</td>
+                          <td class="text-end"><strong>${escapeHtml(formatMetricValue(entry.amount, entry.category, entry.label))}</strong></td>
+                          <td>${escapeHtml(entry.note || "—")}</td>
+                          <td>
+                            <div class="d-flex gap-2">
+                              <button class="btn btn-outline-dark btn-sm" type="button" data-edit-metric-entry="${escapeHtml(entry.id)}">Изменить</button>
+                              <button class="btn btn-outline-danger btn-sm" type="button" data-delete-metric-entry="${escapeHtml(entry.id)}">Удалить</button>
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    })
+                    .join("")
+                : `<tr><td colspan="6" class="muted">По текущему фильтру строки не найдены.</td></tr>`
+            }
+          </tbody>
+        </table>
+      </div>
+    </details>
     <details class="snapshot-source-panel mt-3">
       <summary>Сверочный лист ЛАЙТ 2</summary>
       ${snapshotBlock}
@@ -4832,7 +4908,7 @@ async function loadWorkbookSnapshot() {
     STATE.workbookReady = true;
     STATE.workbookError = "";
     try {
-      await seedMetricsDocFromSnapshotIfEmpty();
+      await syncMetricsDocFromSnapshot();
     } catch (seedError) {
       console.warn("light2 metrics snapshot seed failed", seedError);
       setStatus(seedError.message || "Не удалось сохранить импорт метрик из ЛАЙТ 2.", "warning");

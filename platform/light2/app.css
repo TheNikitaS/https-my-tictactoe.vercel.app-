@@ -787,6 +787,14 @@ body.compact-tables .summary-card strong {
   color: #fff;
 }
 
+#section-metrics .section-card {
+  padding: 16px;
+}
+
+#section-metrics .section-head {
+  display: none;
+}
+
 .metrics-work-header__title {
   font-size: 1.15rem;
   font-weight: 800;
@@ -824,6 +832,193 @@ body.compact-tables .summary-card strong {
 
 .dot.saved {
   background: #20c997;
+}
+
+.metrics-control-bar {
+  display: grid;
+  grid-template-columns: 180px minmax(220px, 1fr) 220px;
+  gap: 10px;
+  align-items: end;
+  padding: 12px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.metrics-control-bar .form-label {
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.metrics-kpi-strip {
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.metrics-kpi-strip .summary-card {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.metrics-kpi-strip .summary-card span {
+  font-size: 0.78rem;
+}
+
+.metrics-kpi-strip .summary-card strong {
+  font-size: 1rem;
+}
+
+.metrics-work-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 12px;
+  align-items: start;
+}
+
+.metrics-main-panel,
+.metrics-side-panel {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.metrics-panel-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  margin-bottom: 10px;
+}
+
+.metrics-panel-head h3 {
+  margin: 2px 0 0;
+  font-size: 1rem;
+}
+
+.metrics-panel-head > span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.metrics-matrix-wrap {
+  max-height: 58vh;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.metrics-matrix-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 1280px;
+  width: max-content;
+  font-size: 0.78rem;
+}
+
+.metrics-matrix-table th,
+.metrics-matrix-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #e6edf2;
+  border-right: 1px solid #edf2f5;
+  text-align: right;
+  white-space: nowrap;
+  background: #fff;
+}
+
+.metrics-matrix-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  background: #eef3f7;
+  color: #24384a;
+  font-weight: 800;
+}
+
+.metrics-matrix-table .metrics-matrix-sticky {
+  position: sticky;
+  left: 0;
+  z-index: 5;
+  width: 260px;
+  min-width: 260px;
+  max-width: 260px;
+  text-align: left;
+  box-shadow: 1px 0 0 #dbe5ec;
+}
+
+.metrics-matrix-table tbody .metrics-matrix-sticky {
+  background: #fff;
+}
+
+.metrics-matrix-table tbody tr:hover td,
+.metrics-matrix-table tbody tr:hover th {
+  background: #f6fafc;
+}
+
+.metrics-matrix-sticky span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.metrics-matrix-sticky small {
+  display: block;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.metrics-matrix-table td.is-positive {
+  color: #145f42;
+}
+
+.metrics-matrix-table td.is-negative {
+  color: #9b2f35;
+}
+
+.metrics-details {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.metrics-details > summary {
+  cursor: pointer;
+  padding: 11px 13px;
+  font-weight: 800;
+}
+
+.metrics-details > *:not(summary) {
+  margin: 0 12px 12px;
+}
+
+.metrics-form-grid {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.metrics-form-actions {
+  margin-top: 10px;
+}
+
+.metrics-meta-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 10px 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.metrics-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
 }
 
 .workspace-table__sub {
@@ -876,6 +1071,36 @@ body.compact-tables .summary-card strong {
   border: 1px solid var(--line);
   border-radius: 14px;
   background: #fff;
+}
+
+@media (max-width: 1180px) {
+  .metrics-work-grid,
+  .metrics-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-side-panel {
+    order: -1;
+  }
+
+  .metrics-kpi-strip {
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .metrics-control-bar,
+  .metrics-kpi-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .metrics-work-header {
+    padding: 14px;
+  }
+
+  .metrics-matrix-wrap {
+    max-height: 62vh;
+  }
 }
 
 .light2-builder-strip {
