@@ -3,7 +3,7 @@ import { evaluateSafeFormula } from "../shared/safe-formula.js";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
-const LIGHT2_BUILD = "20260427-light2-compact-matrix";
+const LIGHT2_BUILD = "20260427-light2-metrics-months";
 const LIGHT2_SALES_APP_ID = "sales-tracker";
 const LIGHT2_UI_KEYS = {
   compactTables: "dom-neona:light2:compactTables",
@@ -103,6 +103,8 @@ const METRICS_PERCENT_LABELS = new Set([
   "темп роста год к году + EBITDA margin",
   "EV/Sales (Enterprise Value to Sales)"
 ]);
+
+const HIDDEN_LIGHT2_SECTIONS = new Set(["balance", "calendar"]);
 
 const WORKBOOK_IMPORT_SHEETS = [
   "Баланс",
@@ -2167,6 +2169,7 @@ function isAdmin() {
 }
 
 function isSectionAllowed(sectionKey) {
+  if (HIDDEN_LIGHT2_SECTIONS.has(sectionKey)) return false;
   return isAdmin() || sectionKey === "overview" || sectionKey === "settlements";
 }
 
@@ -2757,6 +2760,18 @@ function getMetricMonthLabel(monthKey) {
   return `${MONTH_NAMES[index] || month} ${year}`;
 }
 
+function shiftMetricMonthKey(monthKey, delta = 1) {
+  const normalized = normalizeMetricMonthKey(monthKey) || getTodayIso().slice(0, 7);
+  const [year, month] = normalized.split("-").map(Number);
+  const date = new Date(year, month - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+}
+
+function getNextMetricMonthKey(entries = getMetricsEntries()) {
+  const latest = entries.map((entry) => entry.monthKey).filter(Boolean).sort().at(-1) || getTodayIso().slice(0, 7);
+  return shiftMetricMonthKey(latest, 1);
+}
+
 function getMetricInputValue(entry) {
   const meta = getMetricCategoryMeta(entry?.category, entry?.label);
   const amount = toNumber(entry?.amount);
@@ -2805,7 +2820,10 @@ function normalizeMetricsDoc(payload) {
 
   entries.sort((left, right) => {
     if (left.monthKey !== right.monthKey) return right.monthKey.localeCompare(left.monthKey);
-    if (left.sortOrder !== right.sortOrder) return left.sortOrder - right.sortOrder;
+    const leftUpdated = Date.parse(left.updatedAt || "") || 0;
+    const rightUpdated = Date.parse(right.updatedAt || "") || 0;
+    if (leftUpdated !== rightUpdated) return rightUpdated - leftUpdated;
+    if (left.sortOrder !== right.sortOrder) return right.sortOrder - left.sortOrder;
     return left.label.localeCompare(right.label, "ru");
   });
 
@@ -2973,7 +2991,8 @@ function getMetricsSnapshotMonthColumns(sheet) {
       yearLabel: getYearForColumn(columnIndex),
       monthKey: metricMonthKeyFromLabels(getSheetDisplay(sheet, 2, columnIndex), getYearForColumn(columnIndex))
     }))
-    .filter((item) => item.monthKey);
+    .filter((item) => item.monthKey)
+    .sort((left, right) => right.monthKey.localeCompare(left.monthKey));
 }
 
 function inferMetricSnapshotCategory(label, cell = null) {
@@ -4342,6 +4361,11 @@ function renderMetricsWorkspace(sheet) {
       .join(" ")
       .toLowerCase();
     return haystack.includes(search);
+  }).sort((left, right) => {
+    const leftUpdated = Date.parse(left.updatedAt || "") || 0;
+    const rightUpdated = Date.parse(right.updatedAt || "") || 0;
+    if (leftUpdated !== rightUpdated) return rightUpdated - leftUpdated;
+    return right.sortOrder - left.sortOrder;
   });
   const latest = activeModel.values;
   const lastUpdatedLabel = STATE.metricsDoc?.updatedAt ? formatDateTime(STATE.metricsDoc.updatedAt) : "—";
@@ -4431,7 +4455,8 @@ function renderMetricsWorkspace(sheet) {
       </div>
     `
     : `<div class="workspace-empty workspace-empty--tight">Матрица ЛАЙТ 2 пока не загрузилась.</div>`;
-  const monthOptions = [...new Set([activeModel.monthKey, ...history.map((item) => item.monthKey), getTodayIso().slice(0, 7)].filter(Boolean))]
+  const nextMonthKey = getNextMetricMonthKey(entries);
+  const monthOptions = [...new Set([nextMonthKey, activeModel.monthKey, ...history.map((item) => item.monthKey), getTodayIso().slice(0, 7)].filter(Boolean))]
     .sort()
     .reverse()
     .map((monthKey) => `<option value="${escapeHtml(monthKey)}" ${monthKey === activeModel.monthKey ? "selected" : ""}>${escapeHtml(getMetricMonthLabel(monthKey))}</option>`)
@@ -4592,6 +4617,7 @@ function renderMetricsWorkspace(sheet) {
         </div>
       </div>
       <div class="metrics-work-header__actions">
+        <button class="btn btn-light btn-sm" type="button" data-metrics-new-month>+ Новый месяц</button>
         <button class="btn btn-light btn-sm" type="button" data-metric-quick-add="revenue">+ Выручка</button>
         <button class="btn btn-light btn-sm" type="button" data-metric-quick-add="cost">+ Себестоимость</button>
         <button class="btn btn-outline-light btn-sm" type="button" data-metric-quick-add="warehouse">Склад</button>
@@ -7016,6 +7042,7 @@ function bindEvents() {
       const form = getMetricsDom().form;
       if (form) {
         STATE.editingMetricEntryId = null;
+        form.closest("details")?.setAttribute("open", "");
         form.elements.month_key.value = normalizeMetricMonthKey(STATE.metricsFilters.month) || getTodayIso().slice(0, 7);
         form.elements.category.value = "operating_expenses";
         form.elements.label.value = expensePreset.value;
@@ -7333,6 +7360,26 @@ function bindEvents() {
   });
 
   bindDomEvent(document.body, "click", async (event) => {
+    const newMonthButton = event.target.closest("[data-metrics-new-month]");
+    if (newMonthButton) {
+      const nextMonth = getNextMetricMonthKey();
+      STATE.metricsFilters.month = nextMonth;
+      renderWorkbookSnapshotSection("metrics");
+      const form = getMetricsDom().form;
+      if (form) {
+        STATE.editingMetricEntryId = null;
+        form.closest("details")?.setAttribute("open", "");
+        form.elements.month_key.value = nextMonth;
+        form.elements.category.value = "revenue";
+        form.elements.label.value = "Выручка";
+        form.elements.amount.value = "";
+        form.elements.note.value = "Новый месяц";
+        form.elements.amount.focus();
+        form.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      return;
+    }
+
     const quickMetricButton = event.target.closest("[data-metric-quick-add]");
     if (quickMetricButton) {
       const rowKey = quickMetricButton.dataset.metricQuickAdd;
@@ -7340,6 +7387,7 @@ function bindEvents() {
       const form = getMetricsDom().form;
       if (row && form) {
         STATE.editingMetricEntryId = null;
+        form.closest("details")?.setAttribute("open", "");
         form.elements.month_key.value = normalizeMetricMonthKey(STATE.metricsFilters.month) || getTodayIso().slice(0, 7);
         form.elements.category.value = inferMetricsCategoryFromRowKey(rowKey);
         form.elements.label.value = row.label;

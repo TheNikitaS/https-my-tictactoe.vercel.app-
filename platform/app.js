@@ -5,7 +5,7 @@ import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-sui
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260427-platform-metrics-compact";
+const PLATFORM_BUILD = "20260427-platform-metrics-months";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
