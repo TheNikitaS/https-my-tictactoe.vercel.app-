@@ -40,6 +40,7 @@
         .partner-summary-card { background-color: #fffbe3; border: 1px solid #f1c40f; }
         .summary-item { display: flex; justify-content: space-between; padding: 0.15rem 0.45rem; font-size: 0.9rem;}
         .summary-item strong { font-size: 1rem; }
+        .substrate-summary-row { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 6px; border-top: 1px solid rgba(15, 23, 42, 0.08); margin-top: 6px; padding-top: 6px; }
         .partner-earning { color: #27ae60; font-size: 1.3rem !important; }
         .param-card { background-color: #e8f5e9; }
         .catalog-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-bottom: 1rem; }
@@ -347,6 +348,20 @@ function getActiveTab() {
 
 function getActiveCatalog() {
     return getActiveTab()?.data?.catalog || cloneCatalog();
+}
+
+function ensureSubstrateSummary() {
+    if (document.getElementById('summary-substrate')) return;
+    const summaryBody = document.querySelector('.summary-card .card-body');
+    if (!summaryBody) return;
+    const col = document.createElement('div');
+    col.className = 'col-md-12 substrate-summary-row';
+    col.innerHTML = `
+        <div class="summary-item"><span>Подложка:</span> <strong id="summary-substrate">0 ₽</strong></div>
+        <div class="summary-item"><span>Подложка закуп:</span> <strong id="summary-substrate-cost">0 ₽</strong></div>
+        <div class="summary-item"><span>Подложка партнерская:</span> <strong id="summary-substrate-partner">0 ₽</strong></div>
+    `;
+    summaryBody.appendChild(col);
 }
 
 function getTabCalcType(tab) {
@@ -1108,7 +1123,7 @@ function renderTabs() {
             saveState();
         };
         tabName.onkeydown = (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); finishTabRename(tab, tabName, true); }
+            if (e.key === 'Enter') { e.preventDefault(); tabName.blur(); }
             if (e.key === 'Escape') { e.preventDefault(); tabName.textContent = tab.name; finishTabRename(tab, tabName, false); }
         };
         tabEl.appendChild(tabName);
@@ -1262,6 +1277,7 @@ function finishTabRename(tab, tabName, shouldSave) {
     tab.name = nextName;
     delete tabName.dataset.originalName;
     if (shouldSave) {
+        saveActiveTabData();
         persistStateSnapshot();
         renderTabs();
     }
@@ -1723,6 +1739,11 @@ function getPricingBucket(item) {
     return 'goods';
 }
 
+function isSubstrateCostItem(item) {
+    const id = String(item?.id || '');
+    return ['SUB01', 'WORK02', 'WORK03', 'WORK04'].includes(id);
+}
+
 function computeTabSummary(tab) {
     const data = createTabData(tab?.data || {});
     const coeffs = normalizeCoeffs(data.coeffs);
@@ -1792,7 +1813,8 @@ function buildCombinedOffer() {
 }
 
 function calculate() {
-    let summary = { goods: 0, design: 0, assembly: 0, mounting: 0, total: 0, payMaster: 0, payInstaller: 0, partnerCost: 0 };
+    ensureSubstrateSummary();
+    let summary = { goods: 0, design: 0, assembly: 0, mounting: 0, total: 0, payMaster: 0, payInstaller: 0, partnerCost: 0, substrate: 0, substrateCost: 0, substratePartner: 0 };
     const coeffs = {
         goods: parseFloat(document.getElementById('coeff-goods').value) || 0,
         design: parseFloat(document.getElementById('coeff-design').value) || 0,
@@ -1862,6 +1884,11 @@ function calculate() {
             }
         }
         summary.partnerCost += partnerItemCost;
+        if (quantity > 0 && isSubstrateCostItem(item)) {
+            summary.substrate += retailPrice;
+            summary.substrateCost += costPrice;
+            summary.substratePartner += partnerItemCost || costPrice;
+        }
         row.querySelector('.retail-price').value = quantity ? Math.round(retailPrice) + ' ₽' : '';
     });
 
@@ -1877,6 +1904,9 @@ function calculate() {
     document.getElementById('summary-assembly').textContent = `${Math.round(summary.assembly)} ₽`;
     document.getElementById('summary-pay-master').textContent = `${Math.round(summary.payMaster)} ₽`;
     document.getElementById('summary-pay-installer').textContent = `${Math.round(summary.payInstaller)} ₽`;
+    document.getElementById('summary-substrate').textContent = `${Math.round(summary.substrate)} ₽`;
+    document.getElementById('summary-substrate-cost').textContent = `${Math.round(summary.substrateCost)} ₽`;
+    document.getElementById('summary-substrate-partner').textContent = `${Math.round(summary.substratePartner)} ₽`;
     
     document.getElementById('partner-cost').textContent = `${Math.round(summary.partnerCost)} ₽`;
     document.getElementById('partner-retail').textContent = `${Math.round(summary.total)} ₽`;

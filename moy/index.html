@@ -59,6 +59,12 @@
         .action-modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); display: none; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
         .action-modal-backdrop.show { display: flex; }
         .action-modal-card { width: min(520px, 100%); max-height: calc(100vh - 40px); overflow: auto; background: #fff; border-radius: 18px; box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22); border: 1px solid rgba(148, 163, 184, 0.3); }
+        .action-modal-card:has(.pricing-table) { width: min(1180px, 100%); }
+        .pricing-modal-grid { display: grid; grid-template-columns: repeat(4, minmax(120px, 1fr)); gap: 8px; margin-bottom: 12px; }
+        .pricing-table-wrap { max-height: 60vh; overflow: auto; border: 1px solid #e5e7eb; border-radius: 12px; }
+        .pricing-table { margin: 0; font-size: 0.78rem; }
+        .pricing-table th { position: sticky; top: 0; background: #f8fafc; z-index: 1; }
+        .substrate-summary-row { display: grid; grid-template-columns: repeat(3, minmax(160px, 1fr)); gap: 6px; border-top: 1px solid rgba(15, 23, 42, 0.08); margin-top: 6px; padding-top: 6px; }
         .action-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 20px 10px; border-bottom: 1px solid #e5e7eb; }
         .action-modal-title { margin: 0; font-size: 1.1rem; font-weight: 700; color: #1f2937; }
         .action-modal-close { border: 0; background: transparent; color: #6b7280; font-size: 1.5rem; line-height: 1; cursor: pointer; }
@@ -79,6 +85,9 @@
         <button class="btn btn-sm btn-primary" id="btn-add-tab" onclick="openAddTabMenu()">+ Новый расчет</button>
     </div>
     <div id="hidden-tabs-wrap"></div>
+    <div class="d-flex justify-content-end mb-2">
+        <button type="button" class="btn btn-sm btn-dark" id="pricing-settings-btn">Ценообразование</button>
+    </div>
     <div id="sync-status" class="sync-status">Онлайн: подключение...</div>
     <div class="row mt-2">
         <div class="col-lg-8">
@@ -399,6 +408,29 @@ function getActiveTab() {
 
 function getActiveCatalog() {
     return getActiveTab()?.data?.catalog || cloneCatalog();
+}
+
+function getPricingCatalog() {
+    return normalizeCatalog(state?.pricingCatalog || getActiveCatalog() || BASE_CATALOG);
+}
+
+function updatePricingCatalogFromActiveTab() {
+    if (!state) return;
+    state.pricingCatalog = normalizeCatalog(getActiveCatalog()).map((item) => ({ ...item }));
+}
+
+function ensureSubstrateSummary() {
+    if (document.getElementById('summary-substrate')) return;
+    const summaryBody = document.querySelector('.summary-card .card-body');
+    if (!summaryBody) return;
+    const col = document.createElement('div');
+    col.className = 'col-md-12 substrate-summary-row';
+    col.innerHTML = `
+        <div class="summary-item"><span>Подложка:</span> <strong id="summary-substrate">0 ₽</strong></div>
+        <div class="summary-item"><span>Подложка закуп:</span> <strong id="summary-substrate-cost">0 ₽</strong></div>
+        <div class="summary-item"><span>Подложка партнерская:</span> <strong id="summary-substrate-partner">0 ₽</strong></div>
+    `;
+    summaryBody.appendChild(col);
 }
 
 function getTabCalcType(tab) {
@@ -951,7 +983,7 @@ function setSyncStatus(text, isError = false) {
 
 function createDefaultState() {
     const defaultTab = { id: 'tab1', name: 'Вывеска 1', data: createTabData(), hidden: false };
-    return { activeTabId: 'tab1', tabs: [defaultTab], nextTabNum: 2, lastEditedAt: 0 };
+    return { activeTabId: 'tab1', tabs: [defaultTab], nextTabNum: 2, lastEditedAt: 0, pricingCatalog: cloneCatalog(), pricingCoeffs: normalizeCoeffs() };
 }
 
 function normalizeState(rawState) {
@@ -979,7 +1011,9 @@ function normalizeState(rawState) {
         activeTabId,
         tabs,
         nextTabNum: Math.max(Number(base.nextTabNum) || 2, tabs.length + 1),
-        lastEditedAt: Number(base.lastEditedAt) || 0
+        lastEditedAt: Number(base.lastEditedAt) || 0,
+        pricingCatalog: normalizeCatalog(base.pricingCatalog || tabs[0]?.data?.catalog || BASE_CATALOG),
+        pricingCoeffs: normalizeCoeffs(base.pricingCoeffs || tabs[0]?.data?.coeffs || DEFAULT_COEFFS)
     };
 }
 
@@ -1143,7 +1177,7 @@ function renderTabs() {
         tabName.onkeydown = (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                finishTabRename(tab, tabName, true);
+                tabName.blur();
             }
             if (e.key === 'Escape') {
                 e.preventDefault();
@@ -1298,6 +1332,7 @@ function finishTabRename(tab, tabName, shouldSave) {
     tab.name = nextName;
     delete tabName.dataset.originalName;
     if (shouldSave) {
+        saveActiveTabData();
         persistStateSnapshot();
         renderTabs();
     }
@@ -1338,7 +1373,7 @@ function addTab(type = 'sign') {
     const tabType = type === 'contour' ? 'contour' : 'sign';
     const title = tabType === 'contour' ? 'Контур' : 'Вывеска';
     const newTabId = `tab${state.nextTabNum++}`;
-    state.tabs.push({ id: newTabId, name: `${title} ${state.tabs.length + 1}`, data: createTabData({ type: tabType }), hidden: false });
+    state.tabs.push({ id: newTabId, name: `${title} ${state.tabs.length + 1}`, data: createTabData({ type: tabType, catalog: getPricingCatalog(), coeffs: state.pricingCoeffs || DEFAULT_COEFFS }), hidden: false });
     state.activeTabId = newTabId;
     persistStateSnapshot();
     renderTabs();
@@ -1636,6 +1671,8 @@ function attachGlobalListeners() {
     if (showItemBtn) {
         showItemBtn.addEventListener('click', showSelectedHiddenItem);
     }
+    const pricingBtn = document.getElementById('pricing-settings-btn');
+    if (pricingBtn) pricingBtn.addEventListener('click', openPricingSettings);
     document.querySelectorAll('[data-category-add]').forEach((button) => {
         button.addEventListener('click', () => addCatalogItemInline(button.dataset.categoryName, button.dataset.subcategoryName));
     });
@@ -1670,6 +1707,90 @@ function showSelectedHiddenItem() {
     renderCalculator();
     loadActiveTabData();
     attachGlobalListeners();
+}
+
+function openPricingSettings() {
+    saveActiveTabData();
+    if (!state.pricingCatalog?.length) updatePricingCatalogFromActiveTab();
+    const backdrop = ensureActionModal();
+    const titleEl = backdrop.querySelector('#action-modal-title');
+    const messageEl = backdrop.querySelector('#action-modal-message');
+    const formEl = backdrop.querySelector('#action-modal-form');
+    const confirmBtn = backdrop.querySelector('[data-dialog-confirm]');
+    const cancelBtn = backdrop.querySelector('[data-dialog-cancel]');
+    const closeBtn = backdrop.querySelector('[data-dialog-close]');
+    titleEl.textContent = 'Ценообразование';
+    messageEl.textContent = 'Цены и коэффициенты здесь становятся базой для новых вкладок. Уже созданные расчеты не меняются.';
+    messageEl.style.display = 'block';
+    confirmBtn.textContent = 'Сохранить цены';
+    confirmBtn.className = 'btn btn-dark';
+    cancelBtn.textContent = 'Отмена';
+    cancelBtn.style.display = '';
+
+    const catalog = getPricingCatalog();
+    formEl.innerHTML = `
+        <div class="pricing-modal-grid">
+            <label>Товары <input class="form-control form-control-sm" type="number" step="0.001" data-pricing-coeff="goods" value="${state.pricingCoeffs?.goods || DEFAULT_COEFFS.goods}"></label>
+            <label>Дизайн <input class="form-control form-control-sm" type="number" step="0.001" data-pricing-coeff="design" value="${state.pricingCoeffs?.design || DEFAULT_COEFFS.design}"></label>
+            <label>Сборка <input class="form-control form-control-sm" type="number" step="0.001" data-pricing-coeff="assembly" value="${state.pricingCoeffs?.assembly || DEFAULT_COEFFS.assembly}"></label>
+            <label>Монтаж <input class="form-control form-control-sm" type="number" step="0.001" data-pricing-coeff="montage" value="${state.pricingCoeffs?.montage || DEFAULT_COEFFS.montage}"></label>
+        </div>
+        <div class="pricing-table-wrap">
+            <table class="table table-sm align-middle pricing-table">
+                <thead><tr><th>Группа</th><th>Артикул</th><th>Название</th><th>Закуп</th><th>Партнер</th><th>Логика</th></tr></thead>
+                <tbody>
+                    ${catalog.map((item) => `
+                        <tr data-pricing-item="${escapeAttr(item.id)}">
+                            <td>${escapeHtml(item.subcategory || item.category)}</td>
+                            <td><input class="form-control form-control-sm" data-price-field="article" value="${escapeAttr(item.article || item.id)}"></td>
+                            <td><input class="form-control form-control-sm" data-price-field="name" value="${escapeAttr(item.name)}"></td>
+                            <td><input class="form-control form-control-sm" type="number" step="0.01" data-price-field="cost" value="${Number(item.cost) || 0}"></td>
+                            <td><input class="form-control form-control-sm" type="number" step="0.01" data-price-field="partnerCost" value="${getDefaultPartnerCost(item)}"></td>
+                            <td>
+                                <select class="form-select form-select-sm" data-price-field="pricingKind">
+                                    ${ITEM_PRICING_OPTIONS.map((option) => `<option value="${option.key}" ${getPricingBucket(item) === option.key ? 'selected' : ''}>${escapeHtml(option.label)}</option>`).join('')}
+                                </select>
+                            </td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    `;
+    repairMojibakeDom(backdrop);
+    backdrop.classList.add('show');
+
+    const close = () => {
+        backdrop.classList.remove('show');
+        confirmBtn.onclick = null;
+        cancelBtn.onclick = null;
+        closeBtn.onclick = null;
+        backdrop.onclick = null;
+    };
+    confirmBtn.onclick = () => {
+        const byId = new Map(catalog.map((item) => [String(item.id), { ...item }]));
+        formEl.querySelectorAll('[data-pricing-item]').forEach((row) => {
+            const item = byId.get(row.dataset.pricingItem);
+            if (!item) return;
+            row.querySelectorAll('[data-price-field]').forEach((input) => {
+                const field = input.dataset.priceField;
+                item[field] = field === 'cost' || field === 'partnerCost' ? Number(input.value) || 0 : input.value;
+            });
+        });
+        state.pricingCatalog = Array.from(byId.values());
+        state.pricingCoeffs = normalizeCoeffs(Object.fromEntries(
+            Array.from(formEl.querySelectorAll('[data-pricing-coeff]')).map((input) => [input.dataset.pricingCoeff, input.value])
+        ));
+        persistStateSnapshot();
+        scheduleCatalogShareSync();
+        close();
+        void showAlertDialog('Ценообразование сохранено', 'Новые вкладки будут создаваться с обновленными ценами.');
+    };
+    cancelBtn.onclick = close;
+    closeBtn.onclick = close;
+    backdrop.onclick = (event) => {
+        if (event.target === backdrop) close();
+    };
 }
 
 async function deleteCatalogItem(itemId) {
@@ -1786,6 +1907,11 @@ function getPricingBucket(item) {
     return 'goods';
 }
 
+function isSubstrateCostItem(item) {
+    const id = String(item?.id || '');
+    return ['SUB01', 'WORK02', 'WORK03', 'WORK04'].includes(id);
+}
+
 function computeTabSummary(tab) {
     const data = createTabData(tab?.data || {});
     const coeffs = normalizeCoeffs(data.coeffs);
@@ -1855,7 +1981,8 @@ function buildCombinedOffer() {
 }
 
 function calculate() {
-    let summary = { goods: 0, design: 0, assembly: 0, mounting: 0, total: 0, payMaster: 0, payInstaller: 0, payDesigner: 0 };
+    ensureSubstrateSummary();
+    let summary = { goods: 0, design: 0, assembly: 0, mounting: 0, total: 0, payMaster: 0, payInstaller: 0, payDesigner: 0, substrate: 0, substrateCost: 0, substratePartner: 0 };
     const coeffs = {
         goods: parseFloat(document.getElementById('coeff-goods').value) || 0,
         design: parseFloat(document.getElementById('coeff-design').value) || 0,
@@ -1895,6 +2022,7 @@ function calculate() {
         if (!row) return;
         const quantity = parseFloat(row.querySelector('.quantity-input').value) || 0;
         const currentCost = parseFloat(row.querySelector('.cost-input').value) || 0;
+        const currentPartnerCost = parseFloat(row.querySelector('.partner-cost-input')?.value) || getDefaultPartnerCost(item);
         const costPrice = currentCost * quantity;
         
         let retailPrice = 0;
@@ -1921,6 +2049,11 @@ function calculate() {
                 retailPrice = costPrice;
                 summary.goods += retailPrice;
             }
+            if (isSubstrateCostItem(item)) {
+                summary.substrate += retailPrice;
+                summary.substrateCost += costPrice;
+                summary.substratePartner += currentPartnerCost * quantity;
+            }
         }
         row.querySelector('.retail-price').value = quantity ? Math.round(retailPrice) + ' ₽' : '';
     });
@@ -1937,6 +2070,9 @@ function calculate() {
     document.getElementById('summary-pay-master').textContent = `${Math.round(summary.payMaster)} ₽`;
     document.getElementById('summary-pay-installer').textContent = `${Math.round(summary.payInstaller)} ₽`;
     document.getElementById('summary-pay-designer').textContent = `${Math.round(summary.payDesigner)} ₽`;
+    document.getElementById('summary-substrate').textContent = `${Math.round(summary.substrate)} ₽`;
+    document.getElementById('summary-substrate-cost').textContent = `${Math.round(summary.substrateCost)} ₽`;
+    document.getElementById('summary-substrate-partner').textContent = `${Math.round(summary.substratePartner)} ₽`;
     
     const width = document.getElementById('param-width').value;
     const height = document.getElementById('param-height').value;

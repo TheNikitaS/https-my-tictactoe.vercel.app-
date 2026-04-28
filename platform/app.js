@@ -179,8 +179,8 @@ const MODULES = {
     }
   },
   light2: {
-    title: "Метрики",
-    subtitle: "Финансовые, операционные и управленческие метрики компании внутри платформы.",
+    title: "Финансы",
+    subtitle: "Баланс, платежный календарь и управленческие финансовые показатели компании.",
     type: "embed",
     src: () => `./light2/index.html?v=${PLATFORM_BUILD}`
   },
@@ -236,22 +236,11 @@ const domovoyNeonik = createDomovoyNeonik({
 
 const MODULE_GROUPS = [
   "dashboard",
-  "purchases",
   "sales",
-  "products",
-  "crm",
-  "warehouse",
-  "money",
-  "production",
   "my_calculator",
   "partner_calculator",
   "light2",
-  "board",
-  "directories",
-  "tasks",
-  "messenger",
   "admin",
-  "ai"
 ];
 
 const PERMISSION_FLAGS = [
@@ -645,7 +634,7 @@ function getModuleShortLabel(key) {
     production: "Произв.",
     my_calculator: "Мой",
     partner_calculator: "Парт.",
-    light2: "Метрики",
+    light2: "Финансы",
     board: "Доска",
     messenger: "Чаты",
     admin: "Админ",
@@ -1771,14 +1760,36 @@ async function renderDashboard() {
     : {};
 
   if (!snapshot) {
-    DOM.dashboardGrid.innerHTML = `
-      <div class="dashboard-shell">
-        <section class="dashboard-fallback">
-          <div class="workspace-empty">Показатели временно недоступны. Обновите страницу или откройте нужный модуль из шапки.</div>
-        </section>
-      </div>
-    `;
-    return;
+    snapshot = {
+      sales: {
+        ordersCount: 0,
+        monthOrdersCount: 0,
+        monthRevenue: 0,
+        unpaidInvoicesCount: 0,
+        unpaidInvoicesAmount: 0,
+        channels: [],
+        series: [],
+        seriesByPeriod: { week: [], month: [], year: [] }
+      },
+      light2: {
+        balanceTotal: 0,
+        settlementsPayout: 0,
+        calendarEntriesCount: 0,
+        calendarIncoming: 0,
+        calendarOutgoing: 0,
+        assetsRemaining: 0,
+        purchasesCount: 0,
+        suppliersCount: 0
+      },
+      light2Metrics: null,
+      crm: { stageTotals: [] },
+      warehouse: { topDemand: [], ordersCount: 0 },
+      tasks: { statusTotals: [] },
+      calculators: { activeTabs: 0, invoiceIssuedTabs: 0, invoicePaidTabs: 0 },
+      alerts: [],
+      activity: []
+    };
+    STATE.dashboardSnapshot = snapshot;
   }
 
   const periodLabels = {
@@ -1821,30 +1832,18 @@ async function renderDashboard() {
       tone: "warning"
     },
     {
-      label: "CRM в работе",
-      value: formatDashboardNumber(snapshot.crm.openDealsCount),
-      meta: `${formatDashboardMoney(snapshot.crm.pipelineAmount)} в активной воронке`,
+      label: "Баланс",
+      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
+      meta: `${formatDashboardMoney(snapshot.light2.calendarIncoming || 0)} приход • ${formatDashboardMoney(snapshot.light2.calendarOutgoing || 0)} расход`,
       tone: "info"
     },
     {
-      label: "Метрики компании",
+      label: "Финансы",
       value: formatDashboardMoney(metricsSummary?.totals.revenue || snapshot.light2.balanceTotal || 0),
       meta: metricsSummary
         ? `${formatDashboardMoney(metricsSummary.totals.net_profit || 0)} чистая прибыль • ${formatDashboardNumber(metricsSummary.totals.sales || 0)} продаж`
         : `${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате • ${formatDashboardNumber(snapshot.light2.openSettlementsCount || 0)} открытых взаиморасчетов`,
       tone: "accent"
-    },
-    {
-      label: "Задачи в работе",
-      value: formatDashboardNumber(snapshot.tasks.openCount),
-      meta: `${formatDashboardNumber(snapshot.tasks.blockedCount)} блокеров • ${formatDashboardNumber(snapshot.tasks.overdueCount)} просрочено`,
-      tone: "neutral"
-    },
-    {
-      label: "Дефицит склада",
-      value: formatDashboardNumber(snapshot.warehouse.lowCount),
-      meta: `${formatDashboardNumber(snapshot.warehouse.missingDemandCount)} SKU ещё не заведены`,
-      tone: "danger"
     },
     {
       label: "Активные калькуляции",
@@ -1999,6 +1998,7 @@ async function renderDashboard() {
 
   const recentActivityRows = (snapshot.activity || [])
     .filter((entry) => {
+      if (!hasModuleAccess(entry?.moduleKey || "dashboard")) return false;
       const timestamp = new Date(entry?.date || entry?.updated_at || entry?.created_at || 0).getTime();
       if (!Number.isFinite(timestamp)) return false;
       const ageMs = Date.now() - timestamp;
@@ -2153,14 +2153,12 @@ async function renderDashboard() {
         <article class="dashboard-alerts-card">
           <div class="panel-heading">
             <div>
-              <h3>Операционные сигналы</h3>
-              <div class="compact-help">Первые проблемы и точки внимания по продажам, CRM, складу и задачам.</div>
+              <h3>Баланс</h3>
+              <div class="compact-help">Деньги и ближайшие платежи из раздела Финансы.</div>
             </div>
-            <div class="workspace-note">Сигналов: ${escapeHtml(formatDashboardNumber(snapshot.alerts.length))}</div>
+            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть финансы</button>
           </div>
-          <div class="dashboard-alerts">
-            ${alerts || '<div class="workspace-empty workspace-empty--tight">Критичных сигналов сейчас нет.</div>'}
-          </div>
+          <div class="dashboard-mini-grid">${contourCards || '<div class="workspace-empty workspace-empty--tight">Финансовые строки появятся после заполнения Баланса и Платежного календаря.</div>'}</div>
         </article>
       </section>
 
@@ -2174,58 +2172,6 @@ async function renderDashboard() {
             <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="sales">Открыть продажи</button>
           </div>
           <div class="dashboard-mini-grid">${salesChannels || '<div class="workspace-empty workspace-empty--tight">Каналы появятся после заполнения заказов.</div>'}</div>
-        </article>
-
-        <article class="dashboard-panel">
-          <div class="panel-heading">
-            <div>
-              <h3>CRM и этапы</h3>
-              <div class="compact-help">Куда распределена активная воронка и где нужны действия менеджеров.</div>
-            </div>
-            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="crm">Открыть CRM</button>
-          </div>
-          <div class="dashboard-mini-grid">${stageCards || '<div class="workspace-empty workspace-empty--tight">Сделки пока не заведены.</div>'}</div>
-        </article>
-
-        <article class="dashboard-panel">
-          <div class="panel-heading">
-            <div>
-              <h3>Метрики компании</h3>
-              <div class="compact-help">Живые управленческие метрики месяца плюс связка по балансу, платежам, активам и закупкам.</div>
-            </div>
-            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть метрики</button>
-          </div>
-          <div class="dashboard-mini-grid">${contourCards || '<div class="workspace-empty workspace-empty--tight">Метрики ещё не наполнились данными.</div>'}</div>
-        </article>
-
-        <article class="dashboard-panel">
-          <div class="panel-heading">
-            <div>
-              <h3>Склад и спрос</h3>
-              <div class="compact-help">Топ позиций по спросу из калькуляторов и зоны дефицита.</div>
-            </div>
-            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="warehouse">Открыть склад</button>
-          </div>
-          <div class="dashboard-stack">
-            <div class="dashboard-mini-grid">
-              <div class="dashboard-mini dashboard-mini--neutral"><span>На руках</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.onHandTotal))}</strong></div>
-              <div class="dashboard-mini dashboard-mini--accent"><span>Доступно</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.availableTotal))}</strong></div>
-              <div class="dashboard-mini dashboard-mini--warning"><span>В резерве</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.reservedTotal))}</strong></div>
-              <div class="dashboard-mini dashboard-mini--danger"><span>Критичный спрос</span><strong>${escapeHtml(formatDashboardNumber(snapshot.warehouse.criticalDemandCount))}</strong></div>
-            </div>
-            ${demandCards || '<div class="workspace-empty workspace-empty--tight">Спрос из калькуляторов ещё не сформирован.</div>'}
-          </div>
-        </article>
-
-        <article class="dashboard-panel">
-          <div class="panel-heading">
-            <div>
-              <h3>Задачи и исполнение</h3>
-              <div class="compact-help">Срез по статусам задач и по тому, где процесс тормозит.</div>
-            </div>
-            <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="tasks">Открыть задачи</button>
-          </div>
-          <div class="dashboard-mini-grid">${taskCards || '<div class="workspace-empty workspace-empty--tight">Задачи пока не заведены.</div>'}</div>
         </article>
 
         <article class="dashboard-panel">

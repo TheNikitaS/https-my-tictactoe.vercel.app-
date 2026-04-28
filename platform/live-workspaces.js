@@ -5615,6 +5615,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     });
 
     const contourClosedStatuses = new Set(["Взаиморасчет произведен", "Архив"].map((value) => compactText(value)));
+    ["Взаиморасчет произведен", "Архив"].forEach((value) => contourClosedStatuses.add(compactText(value)));
     const contourOpenSettlements = (light2Settlements || []).filter((entry) => !contourClosedStatuses.has(compactText(entry.status)));
     const contourSettlementsPayout = roundMoney(
       contourOpenSettlements.reduce((sum, entry) => {

@@ -104,7 +104,7 @@ const METRICS_PERCENT_LABELS = new Set([
   "EV/Sales (Enterprise Value to Sales)"
 ]);
 
-const HIDDEN_LIGHT2_SECTIONS = new Set(["balance", "calendar"]);
+const HIDDEN_LIGHT2_SECTIONS = new Set([]);
 
 const WORKBOOK_IMPORT_SHEETS = [
   "Баланс",
