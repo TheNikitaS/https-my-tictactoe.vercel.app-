@@ -1792,3 +1792,98 @@ body.compact-tables .table-shell {
     top: auto;
   }
 }
+
+/* Final compact finance workspace layer */
+body {
+  font-size: 12.5px;
+}
+
+.light2-shell {
+  padding: 6px 10px 14px;
+  gap: 8px;
+}
+
+.section-tabs {
+  top: 6px;
+  gap: 6px;
+  padding: 6px;
+  border-radius: 14px;
+}
+
+.section-tab {
+  padding: 6px 10px;
+  font-size: 0.78rem;
+  line-height: 1.15;
+}
+
+.section-card {
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+.section-head {
+  margin-bottom: 10px;
+}
+
+.section-head h2 {
+  font-size: 1.05rem;
+}
+
+.summary-row,
+.subsection-grid,
+.overview-grid,
+.template-grid,
+.light2-builder-grid {
+  gap: 10px;
+}
+
+.summary-card,
+.subsection-card,
+.overview-card,
+.template-card,
+.builder-card,
+.record-form,
+.settlement-form,
+.toolbar-grid > div {
+  padding: 11px 12px;
+  border-radius: 14px;
+}
+
+.summary-card h3,
+.subsection-card h3,
+.overview-card h3,
+.template-card h3 {
+  font-size: 0.88rem;
+}
+
+.table-shell {
+  max-height: min(70vh, 760px);
+  border-radius: 14px;
+}
+
+.table-shell th,
+.table-shell td,
+.metrics-matrix-table th,
+.metrics-matrix-table td {
+  font-size: 0.76rem;
+  padding: 0.34rem 0.46rem;
+}
+
+.section-card .btn,
+.workspace-toolbar .btn,
+.template-host .btn {
+  min-height: 30px;
+  padding: 0.32rem 0.58rem;
+  font-size: 0.76rem;
+  border-radius: 10px;
+}
+
+.template-host .form-control,
+.template-host .form-select,
+.section-card .form-control,
+.section-card .form-select {
+  min-height: 32px;
+  font-size: 0.78rem;
+  padding: 0.32rem 0.54rem;
+  border-radius: 10px;
+}
