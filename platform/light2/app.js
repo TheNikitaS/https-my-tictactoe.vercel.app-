@@ -5,12 +5,21 @@ const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const FINANCE_APP_ID = "platform_finance_v1";
 const STORAGE_KEY = "dom-neona:finance:v1";
 const ACTIVE_VIEW_KEY = "dom-neona:finance:activeView";
+const SNAPSHOT_VERSION = "20260429-finance-rebuild";
+
 const TARGET_SHEETS = {
   balance: "Баланс",
   calendar: "Платежный календарь",
   metrics: "Метрики"
 };
+
 const VALID_VIEWS = new Set(["overview", ...Object.keys(TARGET_SHEETS)]);
+
+const BALANCE_SECTION_CONFIG = [
+  { key: "cash", title: "Наличные / карта", startCol: 1, incomeCol: 2, expenseCol: 3, balanceCol: 4, commentCol: 5 },
+  { key: "ooo", title: "Счёт ООО", startCol: 7, incomeCol: 8, expenseCol: 9, balanceCol: 10, commentCol: 11 },
+  { key: "ip", title: "Счёт ИП", startCol: 13, incomeCol: 14, expenseCol: 15, balanceCol: 16, commentCol: 17 }
+];
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { autoRefreshToken: true, persistSession: true, detectSessionInUrl: true }
@@ -48,15 +57,18 @@ const STATE = {
   loaded: false
 };
 
-boot();
+boot().catch((error) => {
+  console.error("finance boot failed", error);
+  setStatus(error.message || "Не удалось открыть Финансы.", "error");
+});
 
 async function boot() {
   bindEvents();
-  setStatus("Загружаю заполненный файл ЛАЙТ 2...", "ok");
+  setStatus("Загружаю заполненный исходник ЛАЙТ 2...", "ok");
 
   const [{ data: userData }, snapshot, saved] = await Promise.all([
     supabase.auth.getUser().catch(() => ({ data: null })),
-    fetch("./workbook_snapshot.json?v=20260429-finance-polish").then((response) => response.json()),
+    fetch(`./workbook_snapshot.json?v=${SNAPSHOT_VERSION}`, { cache: "no-store" }).then((response) => response.json()),
     loadSavedState()
   ]);
 
@@ -66,14 +78,15 @@ async function boot() {
   STATE.baseSheets = buildBaseSheets(snapshot);
   STATE.dictionaries = saved?.dictionaries || buildDictionaries(snapshot);
   STATE.sheets = mergeSheets(STATE.baseSheets, saved?.sheets || {});
+
   if (!VALID_VIEWS.has(STATE.activeView)) {
     STATE.activeView = "overview";
     window.localStorage.setItem(ACTIVE_VIEW_KEY, STATE.activeView);
   }
-  STATE.loaded = true;
 
+  STATE.loaded = true;
   setSaveLabel(saved?.updatedAt ? `Сохранено: ${formatDateTime(saved.updatedAt)}` : "Исходник загружен");
-  setStatus("Финансы собраны из ЛАЙТ 2. Баланс, платежный календарь, метрики и справочники доступны для работы.", "ok");
+  setStatus("Финансы готовы к работе.", "ok");
   render();
 }
 
@@ -126,7 +139,7 @@ function bindEvents() {
 function buildBaseSheets(snapshot) {
   const result = {};
   Object.entries(TARGET_SHEETS).forEach(([key, name]) => {
-    const source = snapshot.sheets.find((sheet) => sheet.name === name);
+    const source = (snapshot.sheets || []).find((sheet) => cleanText(sheet.name) === name);
     if (!source) return;
     result[key] = normalizeSheet(source);
   });
@@ -139,7 +152,7 @@ function normalizeSheet(source) {
     maxCol: source.maxCol || 1,
     sourceNonEmpty: source.nonEmpty || 0,
     sourceFormulas: source.formulas || 0,
-    rows: source.rows.map((row) => ({
+    rows: (source.rows || []).map((row) => ({
       index: row.index,
       cells: Object.fromEntries(
         Object.entries(row.cells || {}).map(([column, cell]) => [
@@ -166,7 +179,7 @@ function mergeSheets(baseSheets, savedSheets) {
 }
 
 function buildDictionaries(snapshot) {
-  const dataSheet = snapshot.sheets.find((sheet) => sheet.name === "Данные");
+  const dataSheet = (snapshot.sheets || []).find((sheet) => cleanText(sheet.name) === "Данные");
   if (!dataSheet) return {};
 
   const matrix = rowsToMatrix(normalizeSheet(dataSheet));
@@ -188,9 +201,9 @@ function buildDictionaries(snapshot) {
 
 function rowsToMatrix(sheet) {
   const matrix = [];
-  sheet.rows.forEach((row) => {
+  (sheet?.rows || []).forEach((row) => {
     matrix[row.index] ||= [];
-    Object.entries(row.cells).forEach(([column, cell]) => {
+    Object.entries(row.cells || {}).forEach(([column, cell]) => {
       matrix[row.index][Number(column)] = cell.display || String(cell.raw ?? "");
     });
   });
@@ -208,42 +221,130 @@ function render() {
   DOM.sheetTools.hidden = isOverview;
   DOM.sheetView.hidden = isOverview;
 
-  if (isOverview) {
-    renderOverview();
-  } else {
-    renderActiveSheet();
-  }
+  if (isOverview) renderOverview();
+  else renderActiveSheet();
 }
 
 function renderOverview() {
-  const balance = STATE.sheets.balance;
-  const calendar = STATE.sheets.calendar;
-  const metrics = STATE.sheets.metrics;
-  const balanceMatrix = rowsToMatrix(balance);
-  const metricRows = extractMetricRows(metrics);
-  const revenue = metricRows.find((row) => row.label === "Выручка");
-  const cost = metricRows.find((row) => row.label === "Себестоимость");
-  const profit = metricRows.find((row) => row.label === "Валовая прибыль");
-  const calendarItems = (calendar?.rows || []).filter((row) => row.index >= 6).length;
+  const balanceSheet = STATE.sheets.balance;
+  const calendarSheet = STATE.sheets.calendar;
+  const metricsSheet = STATE.sheets.metrics;
+
+  const balanceSections = buildBalanceSectionsSummary(balanceSheet);
+  const calendarSummary = buildCalendarSummary(calendarSheet);
+  const metricRows = extractMetricRows(metricsSheet);
+  const metricIndex = Object.fromEntries(metricRows.map((row) => [row.label, row]));
+
+  const revenueRow = metricIndex["Выручка"];
+  const costRow = metricIndex["Себестоимость"];
+  const grossRow = metricIndex["Валовая прибыль"];
+  const netRow = metricIndex["Чистая прибыль"];
+  const salesRow = metricIndex["Продажи"];
 
   DOM.overviewView.innerHTML = `
-    ${overviewCard("Баланс всего", formatMoney(parseNumber(balanceMatrix[1]?.[2])), "Из листа «Баланс», ячейка верхнего итога")}
-    ${overviewCard("Наличные / карта", formatMoney(parseNumber(balanceMatrix[1]?.[4])), "Текущий остаток")}
-    ${overviewCard("Счёт ООО", formatMoney(parseNumber(balanceMatrix[1]?.[6])), "Текущий остаток")}
-    ${overviewCard("Счёт ИП", formatMoney(parseNumber(balanceMatrix[1]?.[8])), "Текущий остаток")}
-    ${overviewCard("Выручка", formatMoney(lastMetricValue(revenue)), "Последнее заполненное значение")}
-    ${overviewCard("Себестоимость", formatMoney(lastMetricValue(cost)), "Последнее заполненное значение")}
-    ${overviewCard("Валовая прибыль", formatMoney(lastMetricValue(profit)), "Последнее заполненное значение")}
-    ${overviewCard("Платежей в календаре", String(calendarItems), "Заполненные операции")}
+    ${overviewCard("Баланс всего", formatMoney(balanceSections.total), "Сумма по наличным, ООО и ИП")}
+    ${overviewCard("Наличные / карта", formatMoney(balanceSections.cash.current), `${formatMoney(balanceSections.cash.income)} приход • ${formatMoney(balanceSections.cash.expense)} расход`)}
+    ${overviewCard("Счёт ООО", formatMoney(balanceSections.ooo.current), `${formatMoney(balanceSections.ooo.income)} приход • ${formatMoney(balanceSections.ooo.expense)} расход`)}
+    ${overviewCard("Счёт ИП", formatMoney(balanceSections.ip.current), `${formatMoney(balanceSections.ip.income)} приход • ${formatMoney(balanceSections.ip.expense)} расход`)}
+    ${overviewCard("Выручка", formatMoney(lastMetricValue(revenueRow)), "Последнее значение из блока Метрики")}
+    ${overviewCard("Себестоимость", formatMoney(lastMetricValue(costRow)), "Последнее значение из блока Метрики")}
+    ${overviewCard("Валовая прибыль", formatMoney(lastMetricValue(grossRow)), "Последнее значение из блока Метрики")}
+    ${overviewCard("Чистая прибыль", formatMoney(lastMetricValue(netRow)), "Последнее значение из блока Метрики")}
+    ${overviewCard("Продажи", formatNumber(lastMetricValue(salesRow)), "Последнее значение из блока Метрики")}
+    ${overviewCard("Платежей в календаре", formatNumber(calendarSummary.entriesCount), `${formatMoney(calendarSummary.incoming)} приход • ${formatMoney(calendarSummary.outgoing)} расход`)}
     <article class="overview-card chart">
       <span>Динамика выручки</span>
-      ${renderRevenueChart(revenue)}
+      ${renderRevenueChart(revenueRow)}
     </article>
     <article class="overview-card chart">
-      <span>Что связано</span>
-      <strong style="font-size:16px;line-height:1.45">Баланс показывает деньги по счетам. Платежный календарь хранит операции. Метрики собирают управленческие статьи по месяцам. Все значения редактируются в таблицах ниже и сохраняются поверх исходника.</strong>
+      <span>Ближайшие операции</span>
+      <div class="overview-feed">
+        ${
+          calendarSummary.items.length
+            ? calendarSummary.items
+                .slice(0, 6)
+                .map(
+                  (item) => `
+                    <div class="overview-feed__item">
+                      <div>
+                        <strong>${escapeHtml(item.counterparty || item.article || "Платёж")}</strong>
+                        <small>${escapeHtml(item.date || "Без даты")} • ${escapeHtml(item.kind || "Операция")}</small>
+                      </div>
+                      <span class="${item.kind === "Расход" ? "tone-expense" : "tone-income"}">${escapeHtml(formatMoney(item.amount))}</span>
+                    </div>
+                  `
+                )
+                .join("")
+            : '<div class="workspace-empty workspace-empty--tight">Платежный календарь пока пуст.</div>'
+        }
+      </div>
     </article>
   `;
+}
+
+function buildBalanceSectionsSummary(sheet) {
+  const result = {
+    total: 0,
+    cash: { title: "Наличные / карта", current: 0, income: 0, expense: 0 },
+    ooo: { title: "Счёт ООО", current: 0, income: 0, expense: 0 },
+    ip: { title: "Счёт ИП", current: 0, income: 0, expense: 0 }
+  };
+
+  const computed = buildComputedSheet(sheet);
+
+  BALANCE_SECTION_CONFIG.forEach((section) => {
+    const key = section.key;
+    const rows = (sheet?.rows || []).filter((row) => Number(row.index) >= 4);
+    const incoming = roundMoney(
+      rows.reduce((sum, row) => sum + getComputedNumeric(computed, row.index, section.incomeCol), 0)
+    );
+    const expense = roundMoney(
+      rows.reduce((sum, row) => sum + getComputedNumeric(computed, row.index, section.expenseCol), 0)
+    );
+    result[key] = {
+      title: section.title,
+      current: roundMoney(getComputedNumeric(computed, 1, section.balanceCol)),
+      income: roundMoney(incoming),
+      expense: roundMoney(expense)
+    };
+  });
+
+  result.total = roundMoney(result.cash.current + result.ooo.current + result.ip.current);
+  return result;
+}
+
+function buildCalendarSummary(sheet) {
+  const layout = getSheetLayout(sheet, "calendar");
+  const computed = buildComputedSheet(sheet);
+  const rows = filterRows(sheet)
+    .filter((row) => !layout.hiddenRows.has(row.index))
+    .sort((a, b) => a.index - b.index);
+
+  const items = rows
+    .map((row) => {
+      const date = getComputedDisplay(computed, row.index, 1);
+      const counterparty = getComputedDisplay(computed, row.index, 2);
+      const amount = getComputedNumeric(computed, row.index, 3);
+      const kind = getComputedDisplay(computed, row.index, 4);
+      const article = getComputedDisplay(computed, row.index, 5);
+      const account = getComputedDisplay(computed, row.index, 6);
+      const status = getComputedDisplay(computed, row.index, 7);
+      const comment = getComputedDisplay(computed, row.index, 8);
+      if (!date && !counterparty && !amount && !article && !comment) return null;
+      return { date, counterparty, amount, kind, article, account, status, comment };
+    })
+    .filter(Boolean);
+
+  return {
+    entriesCount: items.length,
+    incoming: roundMoney(
+      items.filter((item) => cleanText(item.kind).toLowerCase() === "приход").reduce((sum, item) => sum + item.amount, 0)
+    ),
+    outgoing: roundMoney(
+      items.filter((item) => cleanText(item.kind).toLowerCase() === "расход").reduce((sum, item) => sum + item.amount, 0)
+    ),
+    items
+  };
 }
 
 function overviewCard(title, value, hint) {
@@ -253,45 +354,60 @@ function overviewCard(title, value, hint) {
 function renderRevenueChart(row) {
   const values = (row?.values || []).filter((item) => Number.isFinite(item.value)).slice(-12);
   if (!values.length) return "<strong>Нет данных</strong>";
+
   const width = 520;
   const height = 140;
   const max = Math.max(...values.map((item) => item.value), 1);
   const min = Math.min(...values.map((item) => item.value), 0);
   const span = Math.max(max - min, 1);
+
   const points = values.map((item, index) => {
     const x = values.length === 1 ? width / 2 : (index / (values.length - 1)) * width;
     const y = height - ((item.value - min) / span) * height;
     return { x, y, ...item };
   });
+
   const path = points.map((point, index) => `${index ? "L" : "M"} ${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ");
   return `
     <svg viewBox="0 0 ${width} ${height + 28}" role="img">
       <path class="chart-line" d="${path}"></path>
-      ${points.map((point) => `
-        <circle class="chart-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4">
-          <title>${escapeHtml(point.period)}: ${formatMoney(point.value)}</title>
-        </circle>
-      `).join("")}
+      ${points
+        .map(
+          (point) => `
+            <circle class="chart-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4">
+              <title>${escapeHtml(point.period)}: ${formatMoney(point.value)}</title>
+            </circle>
+          `
+        )
+        .join("")}
     </svg>
   `;
 }
 
 function extractMetricRows(sheet) {
-  const matrix = rowsToMatrix(sheet);
+  const computed = buildComputedSheet(sheet);
+  const matrix = rowsToComputedMatrix(sheet, computed);
   const rows = [];
+
   for (let row = 4; row < matrix.length; row += 1) {
     const label = cleanText(matrix[row]?.[1]);
     if (!label) continue;
+
     const values = [];
-    for (let column = 2; column <= sheet.maxCol; column += 1) {
+    for (let column = 2; column <= (sheet?.maxCol || 1); column += 1) {
       const metricKind = cleanText(matrix[3]?.[column]).toLowerCase();
       if (metricKind && metricKind !== "сумма") continue;
       const value = parseNumber(matrix[row]?.[column]);
       if (!Number.isFinite(value)) continue;
-      values.push({ period: cleanText(matrix[2]?.[column]) || columnLabel(column), value });
+      values.push({
+        period: cleanText(matrix[2]?.[column]) || columnLabel(column),
+        value
+      });
     }
+
     rows.push({ label, values });
   }
+
   return rows;
 }
 
@@ -299,6 +415,7 @@ function renderActiveSheet() {
   const sheet = getActiveSheet();
   if (!sheet) return;
 
+  const computed = buildComputedSheet(sheet);
   const layout = getSheetLayout(sheet, STATE.activeView);
   const rows = filterRows(sheet).filter((row) => !layout.hiddenRows.has(row.index));
   const limit = STATE.rowLimit === "all" ? rows.length : Number(STATE.rowLimit);
@@ -326,7 +443,7 @@ function renderActiveSheet() {
     tr.innerHTML = `
       <td class="row-number">${row.index}</td>
       <td class="row-select"><input type="checkbox" ${STATE.selectedRows.has(row.index) ? "checked" : ""} data-row-check="${row.index}"></td>
-      ${columns.map((column) => renderCell(sheet, row, column)).join("")}
+      ${columns.map((column) => renderCell(sheet, computed, row, column)).join("")}
     `;
     body.append(tr);
   });
@@ -342,26 +459,30 @@ function renderActiveSheet() {
   });
 
   DOM.tableWrap.querySelectorAll("[data-cell]").forEach((input) => {
+    if (input.hasAttribute("readonly")) return;
     input.addEventListener("input", () => {
       const [rowIndex, column] = input.dataset.cell.split(":").map(Number);
       setCell(sheet, rowIndex, column, input.value);
       scheduleSave();
+      renderActiveSheet();
     });
   });
 }
 
-function renderCell(sheet, row, column) {
+function renderCell(sheet, computed, row, column) {
   const cell = row.cells[String(column)] || { display: "", kind: "text", formula: "" };
+  const displayValue = getComputedDisplay(computed, row.index, column);
   const header = getColumnHeader(sheet, column);
   const dictKey = Object.keys(STATE.dictionaries).find((key) => sameText(key, header));
   const list = dictKey ? ` list="dict-${slug(dictKey)}"` : "";
   const typeClass = ["number", "percent"].includes(cell.kind) ? cell.kind : "";
-  const emptyClass = cleanText(cell.display || cell.raw) ? "" : " cell-empty";
+  const emptyClass = cleanText(displayValue) ? "" : " cell-empty";
   const formulaClass = cell.formula ? " formula-cell" : "";
   const title = cell.formula ? ` title="${escapeHtml(cell.formula)}"` : "";
+  const readonly = cell.formula ? " readonly" : "";
   return `
     <td class="${formulaClass}"${title}>
-      <input class="cell-input ${typeClass}${emptyClass}" data-cell="${row.index}:${column}" value="${escapeHtml(cell.display || "")}"${list}>
+      <input class="cell-input ${typeClass}${emptyClass}" data-cell="${row.index}:${column}" value="${escapeHtml(displayValue)}"${list}${readonly}>
     </td>
   `;
 }
@@ -377,9 +498,10 @@ function getSheetLayout(sheet, viewKey) {
     calendar: new Set([1, 2, 3, 4, 5]),
     metrics: new Set([1, 2, 3])
   };
+
   const headerRowIndex = headerRowByView[viewKey] || 1;
   const hiddenRows = hiddenRowsByView[viewKey] || new Set([headerRowIndex]);
-  const headerRow = sheet.rows.find((row) => row.index === headerRowIndex);
+  const headerRow = (sheet.rows || []).find((row) => row.index === headerRowIndex);
   const maxColumn = Math.max(sheet.maxCol, maxUsedColumn(sheet));
   const columns = [];
   const headers = {};
@@ -390,7 +512,7 @@ function getSheetLayout(sheet, viewKey) {
     if (!header && !hasData) continue;
     columns.push(column);
     if (viewKey === "metrics") {
-      const month = cleanText(sheet.rows.find((row) => row.index === 2)?.cells?.[String(column)]?.display);
+      const month = cleanText((sheet.rows || []).find((row) => row.index === 2)?.cells?.[String(column)]?.display);
       headers[column] = [month, header].filter(Boolean).join(" / ") || columnLabel(column);
     } else {
       headers[column] = header || columnLabel(column);
@@ -418,12 +540,14 @@ function renderDatalists(sheet) {
 
 function renderDictionaries() {
   DOM.dictionariesGrid.innerHTML = Object.entries(STATE.dictionaries)
-    .map(([key, values]) => `
-      <article class="dictionary-card">
-        <h3>${escapeHtml(key)}</h3>
-        <textarea data-dict="${escapeHtml(key)}">${escapeHtml(values.join("\n"))}</textarea>
-      </article>
-    `)
+    .map(
+      ([key, values]) => `
+        <article class="dictionary-card">
+          <h3>${escapeHtml(key)}</h3>
+          <textarea data-dict="${escapeHtml(key)}">${escapeHtml(values.join("\n"))}</textarea>
+        </article>
+      `
+    )
     .join("");
 
   DOM.dictionariesGrid.querySelectorAll("[data-dict]").forEach((textarea) => {
@@ -438,7 +562,12 @@ function renderDictionaries() {
 function filterRows(sheet) {
   if (!STATE.search) return [...sheet.rows].sort((a, b) => a.index - b.index);
   return sheet.rows
-    .filter((row) => Object.values(row.cells).some((cell) => String(cell.display || "").toLowerCase().includes(STATE.search)))
+    .filter((row) =>
+      Object.values(row.cells || {}).some((cell) => {
+        const blob = `${cell.display || ""} ${cell.raw || ""}`.toLowerCase();
+        return blob.includes(STATE.search);
+      })
+    )
     .sort((a, b) => a.index - b.index);
 }
 
@@ -447,7 +576,7 @@ function getActiveSheet() {
 }
 
 function getColumnHeader(sheet, column) {
-  const candidates = sheet.rows
+  const candidates = (sheet.rows || [])
     .filter((row) => row.index <= 6)
     .map((row) => cleanText(row.cells[String(column)]?.display))
     .filter(Boolean);
@@ -507,7 +636,7 @@ async function loadSavedState() {
     if (error) throw error;
     if (data?.payload) return { ...data.payload, updatedAt: data.updated_at || data.payload.updatedAt };
   } catch {
-    // Local fallback ниже.
+    // Fallback to local storage below.
   }
 
   try {
@@ -515,6 +644,127 @@ async function loadSavedState() {
   } catch {
     return null;
   }
+}
+
+function buildComputedSheet(sheet) {
+  const rowMap = new Map((sheet?.rows || []).map((row) => [Number(row.index), row]));
+  const numericCache = new Map();
+  const displayCache = new Map();
+  const stack = new Set();
+
+  function getCell(rowIndex, column) {
+    return rowMap.get(Number(rowIndex))?.cells?.[String(column)] || null;
+  }
+
+  function cacheKey(rowIndex, column) {
+    return `${Number(rowIndex)}:${Number(column)}`;
+  }
+
+  function evaluateNumeric(rowIndex, column) {
+    const key = cacheKey(rowIndex, column);
+    if (numericCache.has(key)) return numericCache.get(key);
+    if (stack.has(key)) return 0;
+    stack.add(key);
+
+    const cell = getCell(rowIndex, column);
+    let value = 0;
+
+    if (cell?.formula) {
+      value = evaluateFormula(cell.formula, (ref) => {
+        const point = parseCellReference(ref);
+        if (!point) return 0;
+        return evaluateNumeric(point.row, point.column);
+      });
+    } else {
+      value = parseNumber(cell?.display ?? cell?.raw);
+      if (!Number.isFinite(value)) value = 0;
+    }
+
+    stack.delete(key);
+    value = roundMoney(value);
+    numericCache.set(key, value);
+    return value;
+  }
+
+  function evaluateDisplay(rowIndex, column) {
+    const key = cacheKey(rowIndex, column);
+    if (displayCache.has(key)) return displayCache.get(key);
+
+    const cell = getCell(rowIndex, column);
+    let display = cleanText(cell?.display ?? cell?.raw);
+    if (cell?.formula) {
+      display = formatFormulaResult(evaluateNumeric(rowIndex, column), cell);
+    }
+    displayCache.set(key, display);
+    return display;
+  }
+
+  return {
+    getNumeric: evaluateNumeric,
+    getDisplay: evaluateDisplay
+  };
+}
+
+function evaluateFormula(formula, resolveRef) {
+  const source = String(formula || "").trim();
+  if (!source.startsWith("=")) return parseNumber(source);
+  let expression = source.slice(1);
+  expression = expression.replace(/\$/g, "");
+  expression = expression.replace(/([A-Z]+[0-9]+)/g, (match) => String(resolveRef(match)).replace(",", "."));
+  if (!/^[0-9+\-*/().,\s]+$/.test(expression)) return 0;
+  expression = expression.replace(/,/g, ".");
+  try {
+    const value = Function(`"use strict"; return (${expression});`)();
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+function parseCellReference(reference) {
+  const match = String(reference || "").match(/^([A-Z]+)(\d+)$/);
+  if (!match) return null;
+  return {
+    column: columnNumber(match[1]),
+    row: Number(match[2])
+  };
+}
+
+function columnNumber(label) {
+  return String(label)
+    .split("")
+    .reduce((sum, char) => sum * 26 + (char.charCodeAt(0) - 64), 0);
+}
+
+function formatFormulaResult(value, cell) {
+  if (!Number.isFinite(value)) return "";
+  const source = String(cell?.display ?? cell?.raw ?? "");
+  const decimalsMatch = source.match(/[,.](\d+)/);
+  const decimals = decimalsMatch ? Math.min(decimalsMatch[1].length, 4) : Math.abs(value % 1) > 0 ? 2 : 0;
+  const formatted = new Intl.NumberFormat("ru-RU", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
+  }).format(value);
+  return cell?.kind === "percent" ? `${formatted}%` : formatted;
+}
+
+function getComputedNumeric(computed, rowIndex, column) {
+  return Number.isFinite(computed?.getNumeric?.(rowIndex, column)) ? computed.getNumeric(rowIndex, column) : 0;
+}
+
+function getComputedDisplay(computed, rowIndex, column) {
+  return computed?.getDisplay?.(rowIndex, column) || "";
+}
+
+function rowsToComputedMatrix(sheet, computed) {
+  const matrix = [];
+  (sheet?.rows || []).forEach((row) => {
+    matrix[row.index] ||= [];
+    Object.keys(row.cells || {}).forEach((column) => {
+      matrix[row.index][Number(column)] = getComputedDisplay(computed, row.index, Number(column));
+    });
+  });
+  return matrix;
 }
 
 function setStatus(message, tone = "") {
@@ -527,10 +777,7 @@ function setSaveLabel(message) {
 }
 
 function maxUsedColumn(sheet) {
-  return Math.max(
-    sheet.maxCol || 1,
-    ...sheet.rows.flatMap((row) => Object.keys(row.cells).map(Number))
-  );
+  return Math.max(sheet.maxCol || 1, ...(sheet.rows || []).flatMap((row) => Object.keys(row.cells || {}).map(Number)));
 }
 
 function firstText(values) {
@@ -566,8 +813,17 @@ function lastMetricValue(row) {
   return row.values.at(-1).value || 0;
 }
 
+function roundMoney(value) {
+  const number = Number(value || 0);
+  return Number.isFinite(number) ? Math.round(number * 100) / 100 : 0;
+}
+
 function formatMoney(value) {
-  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Number.isFinite(value) ? value : 0) + " ₽";
+  return `${new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Number.isFinite(value) ? value : 0)} ₽`;
+}
+
+function formatNumber(value) {
+  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Number.isFinite(value) ? value : 0);
 }
 
 function formatDateTime(value) {
@@ -589,9 +845,11 @@ function columnLabel(column) {
 
 function slug(value) {
   let hash = 0;
-  String(value).split("").forEach((char) => {
-    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  });
+  String(value)
+    .split("")
+    .forEach((char) => {
+      hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+    });
   return hash.toString(36);
 }
 

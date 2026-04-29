@@ -426,6 +426,53 @@ body.platform-wide .view-section {
   display: none !important;
 }
 
+#aiAssistantWidget,
+.placeholder-hero,
+#appShell .workspace-hero {
+  display: none !important;
+}
+
+body.app-booting {
+  overflow: hidden;
+}
+
+body.app-booting .auth-screen,
+body.app-booting .app-shell {
+  visibility: hidden;
+}
+
+body.auth-mode {
+  overflow: hidden;
+}
+
+.auth-card--compact {
+  width: min(980px, 100%);
+  grid-template-columns: minmax(260px, 0.85fr) minmax(360px, 1fr);
+}
+
+.auth-card--compact .auth-brand {
+  background: linear-gradient(180deg, #173e70, #244f86);
+  color: #fff;
+}
+
+.auth-card--compact .auth-brand p,
+.auth-card--compact .auth-eyebrow {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.auth-card--compact .auth-points {
+  display: none !important;
+}
+
+.auth-forgot-link {
+  padding-left: 0 !important;
+  text-decoration: none;
+}
+
+.auth-forgot-link:hover {
+  text-decoration: underline;
+}
+
 .admin-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;

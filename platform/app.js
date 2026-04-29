@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260429-finance-polish";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260429-finance-fix-3";
 import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-suite49";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260429-finance-polish";
+const PLATFORM_BUILD = "20260429-finance-fix-3";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -784,13 +784,6 @@ function getRoleTemplate(roleKey) {
 
 function getProfilePermissionMap(profile = STATE.profile) {
   const roleKey = profile?.role || "user";
-  if (roleKey === "owner" || roleKey === "admin") {
-    return MODULE_GROUPS.reduce((acc, key) => {
-      acc[key] = { view: true, edit: true, manage: true };
-      return acc;
-    }, {});
-  }
-
   const template = getRoleTemplate(roleKey);
   const templatePermissions = normalizeModulePermissions(
     template?.module_permissions,
@@ -1379,15 +1372,26 @@ function showAuthPane(key) {
   document.querySelectorAll(".auth-pane").forEach((pane) => {
     pane.classList.toggle("active", pane.id === `pane-${key}`);
   });
+
+  const resetRequestForm = document.getElementById("resetRequestForm");
+  const updatePasswordForm = document.getElementById("updatePasswordForm");
+  if (resetRequestForm && updatePasswordForm) {
+    resetRequestForm.classList.remove("d-none");
+    updatePasswordForm.classList.add("d-none");
+  }
 }
 
 function showAuthScreen() {
+  document.body.classList.remove("app-booting");
+  document.body.classList.add("auth-mode");
   DOM.authScreen.classList.remove("d-none");
   DOM.appShell.classList.add("d-none");
   clearShellStatus();
 }
 
 function showAppShell() {
+  document.body.classList.remove("app-booting");
+  document.body.classList.remove("auth-mode");
   DOM.authScreen.classList.add("d-none");
   DOM.appShell.classList.remove("d-none");
   applyShellMode();
@@ -1753,7 +1757,7 @@ async function renderDashboard() {
         production: `${formatDashboardNumber(snapshot.warehouse.productionActive || 0)} в работе • ${formatDashboardNumber(snapshot.warehouse.productionTotal || 0)} всего`,
         light2: metricsSummary
           ? `${formatDashboardMoney(metricsSummary.totals.revenue || 0)} выручка • ${formatDashboardMoney(metricsSummary.totals.net_profit || 0)} прибыль`
-          : `${formatDashboardMoney(snapshot.light2.balanceTotal || 0)} баланс • ${formatDashboardMoney(snapshot.light2.settlementsPayout || 0)} к выплате`,
+          : `${formatDashboardMoney(snapshot.light2.calendarIncoming || 0)} приход • ${formatDashboardMoney(snapshot.light2.calendarOutgoing || 0)} расход`,
         tasks: `${formatDashboardNumber(snapshot.tasks.openCount)} задач • ${formatDashboardNumber(snapshot.tasks.blockedCount)} с блокером`,
         directories: `${formatDashboardNumber(snapshot.directories.listsCount)} справочников • ${formatDashboardNumber(snapshot.directories.valuesCount)} значений`
       }
@@ -1834,12 +1838,6 @@ async function renderDashboard() {
       value: formatDashboardNumber(snapshot.sales.unpaidInvoicesCount),
       meta: `${formatDashboardMoney(snapshot.sales.unpaidInvoicesAmount)} ждёт оплаты`,
       tone: "warning"
-    },
-    {
-      label: "Баланс",
-      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
-      meta: `${formatDashboardMoney(snapshot.light2.calendarIncoming || 0)} приход • ${formatDashboardMoney(snapshot.light2.calendarOutgoing || 0)} расход`,
-      tone: "info"
     },
     {
       label: "Финансы",
@@ -1948,6 +1946,21 @@ async function renderDashboard() {
           tone: "neutral"
         },
         {
+          label: "Наличные / карта",
+          value: formatDashboardMoney(snapshot.light2.cashBalance || 0),
+          tone: "neutral"
+        },
+        {
+          label: "Счёт ООО",
+          value: formatDashboardMoney(snapshot.light2.oooBalance || 0),
+          tone: "info"
+        },
+        {
+          label: "Счёт ИП",
+          value: formatDashboardMoney(snapshot.light2.ipBalance || 0),
+          tone: "accent"
+        },
+        {
           label: "К выплате",
           value: formatDashboardMoney(snapshot.light2.settlementsPayout || 0),
           tone: "warning"
@@ -1960,14 +1973,24 @@ async function renderDashboard() {
       ]
     : [
     {
-      label: "Баланс",
-      value: formatDashboardMoney(snapshot.light2.balanceTotal || 0),
-      tone: "neutral"
-    },
-    {
       label: "К выплате",
       value: formatDashboardMoney(snapshot.light2.settlementsPayout || 0),
       tone: "warning"
+    },
+    {
+      label: "Наличные / карта",
+      value: formatDashboardMoney(snapshot.light2.cashBalance || 0),
+      tone: "neutral"
+    },
+    {
+      label: "Счёт ООО",
+      value: formatDashboardMoney(snapshot.light2.oooBalance || 0),
+      tone: "info"
+    },
+    {
+      label: "Счёт ИП",
+      value: formatDashboardMoney(snapshot.light2.ipBalance || 0),
+      tone: "accent"
     },
     {
       label: "Платежи",
@@ -2157,8 +2180,8 @@ async function renderDashboard() {
         <article class="dashboard-alerts-card">
           <div class="panel-heading">
             <div>
-              <h3>Баланс</h3>
-              <div class="compact-help">Деньги и ближайшие платежи из раздела Финансы.</div>
+              <h3>Финансы</h3>
+              <div class="compact-help">Счета, календарь и управленческие показатели из раздела Финансы.</div>
             </div>
             <button class="btn btn-outline-dark btn-sm" type="button" data-dashboard-open="light2">Открыть финансы</button>
           </div>
@@ -2297,14 +2320,37 @@ async function ensureProfile(user) {
     throw error;
   }
 
-  if (data) return data;
+  const displayName =
+    user.user_metadata?.full_name ||
+    user.user_metadata?.display_name ||
+    user.email ||
+    "Пользователь";
+  const shouldBePending = Boolean(user.user_metadata?.pending_approval);
 
-  const displayName = user.user_metadata?.display_name || user.email || "Пользователь";
+  if (data) {
+    const payload = {};
+    if (!data.full_name && displayName) payload.full_name = displayName;
+    if (!data.display_name && displayName) payload.display_name = displayName;
+    if (shouldBePending && data.role !== "owner" && data.is_active !== false) {
+      payload.is_active = false;
+    }
+    if (!Object.keys(payload).length) return data;
+    const { data: updated, error: updateError } = await supabase
+      .from("app_profiles")
+      .update(payload)
+      .eq("id", user.id)
+      .select("*")
+      .single();
+    if (updateError) throw updateError;
+    return updated;
+  }
+
   const insertPayload = {
     id: user.id,
     email: user.email,
     full_name: displayName,
-    display_name: displayName
+    display_name: displayName,
+    is_active: shouldBePending ? false : true
   };
 
   const { data: inserted, error: insertError } = await supabase
@@ -2657,6 +2703,12 @@ async function bootstrapApp(session) {
     }
   }
 
+  if (STATE.profile && STATE.profile.is_active === false && STATE.profile.role !== "owner") {
+    showAuthScreen();
+    setAuthStatus("Заявка зарегистрирована и ожидает одобрения администратора.", "success");
+    return;
+  }
+
   showAppShell();
   renderSchemaWarning();
   try {
@@ -2766,6 +2818,7 @@ function renderUserTable() {
       const accessSummary = summarizeModuleAccess(user) || "Нет";
       const roleTemplate = getRoleTemplate(user.role);
       const roleLabel = roleTemplate?.display_name || user.role || "user";
+      const activeLabel = user.is_active ? "Да" : "Ожидает";
 
       return `
         <tr data-user-id="${escapeHtml(user.id)}" class="${STATE.selectedUserId === user.id ? "table-active" : ""}">
@@ -2774,7 +2827,7 @@ function renderUserTable() {
           <td>${escapeHtml(roleLabel)}</td>
           <td>${escapeHtml(user.partner_slug || "—")}</td>
           <td class="small">${escapeHtml(accessSummary)}</td>
-          <td>${user.is_active ? "Да" : "Нет"}</td>
+          <td>${escapeHtml(activeLabel)}</td>
           <td><button class="btn btn-sm btn-outline-dark" type="button" data-select-user="${escapeHtml(user.id)}">Настроить</button></td>
         </tr>
       `;
@@ -2865,7 +2918,7 @@ function renderUserAccessEditor() {
     <form id="userAccessForm" data-user-id="${escapeHtml(user.id)}" class="row g-3">
       <div class="col-12">
         <div class="access-user-title">${escapeHtml(user.email || "Пользователь")}</div>
-        <div class="compact-help">Изменения сохраняются отдельно для выбранного пользователя.</div>
+        <div class="compact-help">${user.is_active ? "Изменения сохраняются отдельно для выбранного пользователя." : "Заявка ожидает одобрения администратора."}</div>
       </div>
       <div class="col-md-6">
         <label class="form-label">Имя</label>
@@ -2895,6 +2948,8 @@ function renderUserAccessEditor() {
       </div>
       <div class="col-12">
         <div class="d-flex flex-wrap gap-2 mb-2">
+          <button class="btn btn-sm btn-dark" type="button" data-approve-user>Одобрить</button>
+          <button class="btn btn-sm btn-outline-danger" type="button" data-reject-user>Отклонить</button>
           <button class="btn btn-sm btn-outline-dark" type="button" data-apply-role-template>Применить права роли</button>
         </div>
         <div class="form-label mb-2">Доступы по модулям</div>
@@ -3365,13 +3420,16 @@ function bindAuthEvents() {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     setAuthStatus("Создаю учетную запись...");
-    const { error } = await supabase.auth.signUp({
+    const fullName = String(formData.get("fullName") || "").trim();
+    const { data, error } = await supabase.auth.signUp({
       email: String(formData.get("email") || "").trim(),
       password: String(formData.get("password") || ""),
       options: {
         emailRedirectTo: REDIRECT_URL,
         data: {
-          display_name: String(formData.get("displayName") || "").trim()
+          full_name: fullName,
+          display_name: fullName,
+          pending_approval: true
         }
       }
     });
@@ -3379,7 +3437,17 @@ function bindAuthEvents() {
       setAuthStatus(error.message, "error");
       return;
     }
-    setAuthStatus("Аккаунт создан. Проверьте почту для подтверждения и входа.", "success");
+    if (data?.session?.user?.id) {
+      await supabase.from("app_profiles").upsert({
+        id: data.session.user.id,
+        email: data.session.user.email,
+        full_name: fullName,
+        display_name: fullName,
+        role: "user",
+        is_active: false
+      });
+    }
+    setAuthStatus("Заявка создана. После одобрения в админке вы сможете войти на платформу.", "success");
   });
 
   document.getElementById("otpRequestForm").addEventListener("submit", async (event) => {
@@ -3674,8 +3742,27 @@ function bindAppEvents() {
 
   DOM.userAccessEditor.addEventListener("click", (event) => {
     const applyButton = event.target.closest("[data-apply-role-template]");
-    if (!applyButton) return;
-    applyRoleTemplateToSelectedUser();
+    if (applyButton) {
+      applyRoleTemplateToSelectedUser();
+      return;
+    }
+    const form = document.getElementById("userAccessForm");
+    if (!form) return;
+    const approveButton = event.target.closest("[data-approve-user]");
+    if (approveButton) {
+      form.elements.is_active.checked = true;
+      void saveUserProfile(form.dataset.userId).catch((error) => {
+        setAuthStatus(error.message || "Не удалось одобрить пользователя.", "error");
+      });
+      return;
+    }
+    const rejectButton = event.target.closest("[data-reject-user]");
+    if (rejectButton) {
+      form.elements.is_active.checked = false;
+      void saveUserProfile(form.dataset.userId).catch((error) => {
+        setAuthStatus(error.message || "Не удалось отклонить заявку.", "error");
+      });
+    }
   });
 
   DOM.userAccessEditor.addEventListener("click", (event) => {
@@ -3849,6 +3936,8 @@ async function init() {
     if (event === "PASSWORD_RECOVERY") {
       showAuthScreen();
       showAuthPane("reset");
+      document.getElementById("resetRequestForm")?.classList.add("d-none");
+      document.getElementById("updatePasswordForm")?.classList.remove("d-none");
       setAuthStatus("Можно задать новый пароль.", "success");
       return;
     }

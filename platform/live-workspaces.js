@@ -294,6 +294,7 @@ function buildLight2MetricsSummary(payload) {
   if (payload?.sheets?.metrics) {
     const metricsSheet = payload.sheets.metrics;
     const rows = Array.isArray(metricsSheet.rows) ? metricsSheet.rows : [];
+    const rowByIndex = new Map(rows.map((entry) => [Number(entry.index), entry]));
     const getCellText = (row, column) => String(row?.cells?.[String(column)]?.display || row?.cells?.[String(column)]?.raw || "").trim();
     const parseMoney = (value) => {
       const number = Number(String(value || "").replace(/\s/g, "").replace("%", "").replace(",", "."));
@@ -314,11 +315,11 @@ function buildLight2MetricsSummary(payload) {
       .map(([column, cell]) => {
         const columnIndex = Number(column);
         if (columnIndex <= 1) return null;
-        const kind = getCellText(rows.find((entry) => Number(entry.index) === 3), columnIndex).toLowerCase();
+        const kind = getCellText(rowByIndex.get(3), columnIndex).toLowerCase();
         if (kind && kind !== "сумма") return null;
         const revenue = parseMoney(cell.display || cell.raw);
         if (!Number.isFinite(revenue) || revenue === 0) return null;
-        const label = getCellText(rows.find((entry) => Number(entry.index) === 2), columnIndex) || `Период ${columnIndex}`;
+        const label = getCellText(rowByIndex.get(2), columnIndex) || `Период ${columnIndex}`;
         return {
           label,
           fullLabel: label,
@@ -335,7 +336,8 @@ function buildLight2MetricsSummary(payload) {
       gross_profit: latestByLabel("Валовая прибыль"),
       operating_expenses: latestByLabel("Операционные расходы"),
       net_profit: latestByLabel("Чистая прибыль"),
-      sales: latestByLabel("Продаж")
+      sales: latestByLabel("Продажи"),
+      average_check: latestByLabel("Чек")
     };
     return {
       entriesCount: rows.length,
@@ -387,26 +389,104 @@ function buildFinanceWorkbookSummary(snapshot) {
   const balanceSheet = findSheet("Баланс");
   const calendarSheet = findSheet("Платежный календарь");
   const metricsSheet = findSheet("Метрики");
-  const getCellText = (sheet, rowIndex, column) => {
-    const row = (sheet?.rows || []).find((entry) => Number(entry.index) === Number(rowIndex));
-    const cell = row?.cells?.[String(column)];
-    return compactText(cell?.display || cell?.raw || "");
-  };
   const parseFinanceNumber = (value) => {
     const number = Number(String(value || "").replace(/\s/g, "").replace("%", "").replace(",", "."));
     return Number.isFinite(number) ? number : 0;
   };
-  const balanceTotal = parseFinanceNumber(getCellText(balanceSheet, 1, 2));
+
+  const buildComputedSheet = (sheet) => {
+    const rowMap = new Map((sheet?.rows || []).map((row) => [Number(row.index), row]));
+    const memo = new Map();
+    const visiting = new Set();
+
+    const resolveNumber = (rowIndex, columnIndex) => {
+      const key = `${rowIndex}:${columnIndex}`;
+      if (memo.has(key)) return memo.get(key);
+      if (visiting.has(key)) return 0;
+      visiting.add(key);
+
+      const row = rowMap.get(Number(rowIndex));
+      const cell = row?.cells?.[String(columnIndex)];
+      if (!cell) {
+        visiting.delete(key);
+        memo.set(key, 0);
+        return 0;
+      }
+
+      let value = parseFinanceNumber(cell.display || cell.raw);
+      const formula = compactText(cell.formula || "");
+      if (formula.startsWith("=")) {
+        const variables = {};
+        const references = Array.from(new Set(formula.match(/[A-Z]+[0-9]+/g) || []));
+        references.forEach((reference) => {
+          const match = reference.match(/^([A-Z]+)(\d+)$/);
+          if (!match) return;
+          const [, letters, rowPart] = match;
+          let col = 0;
+          for (const char of letters) {
+            col = col * 26 + (char.charCodeAt(0) - 64);
+          }
+          variables[reference] = resolveNumber(Number(rowPart), col);
+        });
+        try {
+          const result = evaluateSafeFormula(formula.slice(1), { variables });
+          value = Number.isFinite(Number(result)) ? Number(result) : value;
+        } catch {
+          value = parseFinanceNumber(cell.display || cell.raw);
+        }
+      }
+
+      value = roundMoney(value);
+      memo.set(key, value);
+      visiting.delete(key);
+      return value;
+    };
+
+    return {
+      getText(rowIndex, columnIndex) {
+        const row = rowMap.get(Number(rowIndex));
+        const cell = row?.cells?.[String(columnIndex)];
+        return compactText(cell?.display || cell?.raw || "");
+      },
+      getNumber: resolveNumber
+    };
+  };
+
+  const balanceComputed = buildComputedSheet(balanceSheet);
+  const calendarComputed = buildComputedSheet(calendarSheet);
+  const balanceSections = [
+    { key: "cash", currentCol: 4, incomeCol: 2, expenseCol: 3 },
+    { key: "ooo", currentCol: 10, incomeCol: 8, expenseCol: 9 },
+    { key: "ip", currentCol: 16, incomeCol: 14, expenseCol: 15 }
+  ];
+
+  const balanceRows = (balanceSheet?.rows || []).filter((row) => Number(row.index) >= 4);
+  const sectionTotals = Object.fromEntries(
+    balanceSections.map((section) => [
+      section.key,
+      {
+        current: roundMoney(balanceComputed.getNumber(1, section.currentCol)),
+        income: roundMoney(sumBy(balanceRows, (row) => balanceComputed.getNumber(row.index, section.incomeCol))),
+        expense: roundMoney(sumBy(balanceRows, (row) => balanceComputed.getNumber(row.index, section.expenseCol)))
+      }
+    ])
+  );
+  const balanceTotal = roundMoney(
+    (sectionTotals.cash?.current || 0) +
+      (sectionTotals.ooo?.current || 0) +
+      (sectionTotals.ip?.current || 0)
+  );
+
   const calendarRows = (calendarSheet?.rows || []).filter((row) => Number(row.index) >= 6);
   const calendarIncoming = roundMoney(
     calendarRows
-      .filter((row) => compactText(row.cells?.["4"]?.display || row.cells?.["4"]?.raw).toLowerCase() === "приход")
-      .reduce((sum, row) => sum + parseFinanceNumber(row.cells?.["3"]?.display || row.cells?.["3"]?.raw), 0)
+      .filter((row) => compactText(calendarComputed.getText(row.index, 4)).toLowerCase() === "приход")
+      .reduce((sum, row) => sum + calendarComputed.getNumber(row.index, 3), 0)
   );
   const calendarOutgoing = roundMoney(
     calendarRows
-      .filter((row) => compactText(row.cells?.["4"]?.display || row.cells?.["4"]?.raw).toLowerCase() === "расход")
-      .reduce((sum, row) => sum + parseFinanceNumber(row.cells?.["3"]?.display || row.cells?.["3"]?.raw), 0)
+      .filter((row) => compactText(calendarComputed.getText(row.index, 4)).toLowerCase() === "расход")
+      .reduce((sum, row) => sum + calendarComputed.getNumber(row.index, 3), 0)
   );
   const metricsSummary = buildLight2MetricsSummary({
     sheets: {
@@ -423,6 +503,9 @@ function buildFinanceWorkbookSummary(snapshot) {
   return {
     light2: {
       balanceTotal,
+      cashBalance: sectionTotals.cash?.current || 0,
+      oooBalance: sectionTotals.ooo?.current || 0,
+      ipBalance: sectionTotals.ip?.current || 0,
       calendarEntriesCount: calendarRows.length,
       calendarIncoming,
       calendarOutgoing
@@ -5899,6 +5982,9 @@ function buildModeTabs(moduleKey, escapeFn) {
         settlementsPayout: contourSettlementsPayout,
         balanceEntriesCount: (light2BalanceEntries || []).length,
         balanceTotal: contourBalanceTotal || financeLight2.balanceTotal || 0,
+        cashBalance: financeLight2.cashBalance || 0,
+        oooBalance: financeLight2.oooBalance || 0,
+        ipBalance: financeLight2.ipBalance || 0,
         calendarEntriesCount: (light2CalendarEntries || []).length || financeLight2.calendarEntriesCount || 0,
         calendarIncoming: contourCalendarIncoming || financeLight2.calendarIncoming || 0,
         calendarOutgoing: contourCalendarOutgoing || financeLight2.calendarOutgoing || 0,

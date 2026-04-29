@@ -11,34 +11,16 @@
   <link rel="preconnect" href="https://cdn.jsdelivr.net" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
-  <link href="./app.css?v=20260427-platform-metrics-months" rel="stylesheet" />
+  <link href="./app.css?v=20260429-platform-auth-finance-3" rel="stylesheet" />
 </head>
-<body>
+<body class="app-booting auth-mode">
   <section class="auth-screen" id="authScreen">
-    <div class="auth-card">
+    <div class="auth-card auth-card--compact">
       <div class="auth-brand">
-        <img class="auth-logo" src="../shared/assets/dom-neon-logo.png" alt="Дом Неон" />
+        <img class="auth-logo" src="../shared/assets/dom-neon-logo.png" alt="Дом неона" />
         <div class="auth-eyebrow">Единая платформа</div>
         <h1>ДОМ НЕОНА</h1>
-        <p>
-          Личный кабинет команды, доступ к калькуляторам, продажам, партнерам,
-          внутреннему мессенджеру и будущим модулям CRM, склада, задач и базы знаний.
-        </p>
-
-        <div class="auth-points">
-          <div class="auth-point">
-            <strong>Безопасный переход</strong>
-            Существующие инструменты остаются рабочими и подключаются внутрь платформы поэтапно.
-          </div>
-          <div class="auth-point">
-            <strong>Роли и доступы</strong>
-            Админ управляет тем, какие разделы видит каждый пользователь.
-          </div>
-          <div class="auth-point">
-            <strong>Почта и восстановление</strong>
-            Поддержаны вход по паролю, код на почту и восстановление пароля.
-          </div>
-        </div>
+        <p>Вход в рабочую платформу компании.</p>
       </div>
 
       <div class="auth-forms">
@@ -62,7 +44,7 @@
                 <label class="form-label">Пароль</label>
                 <input class="form-control" type="password" name="password" required autocomplete="current-password" />
               </div>
-              <div class="col-12 d-flex gap-2">
+              <div class="col-12 d-flex gap-2 align-items-center">
                 <button class="btn btn-dark" type="submit">Войти</button>
                 <button class="btn btn-link auth-forgot-link" type="button" data-auth-pane-trigger="reset">Забыл пароль</button>
               </div>
@@ -72,12 +54,12 @@
 
         <div class="auth-pane" id="pane-register">
           <div class="section-card">
-            <h2>Создать учетную запись</h2>
-            <p>После регистрации первый администратор сможет выдать роли и доступы.</p>
+            <h2>Заявка на доступ</h2>
+            <p>После регистрации администратор одобрит пользователя, назначит роль и права.</p>
             <form id="registerForm" class="row g-3">
               <div class="col-12">
-                <label class="form-label">Имя</label>
-                <input class="form-control" type="text" name="displayName" required autocomplete="name" />
+                <label class="form-label">ФИО</label>
+                <input class="form-control" type="text" name="fullName" required autocomplete="name" />
               </div>
               <div class="col-12">
                 <label class="form-label">Почта</label>
@@ -88,7 +70,7 @@
                 <input class="form-control" type="password" name="password" minlength="6" required autocomplete="new-password" />
               </div>
               <div class="col-12">
-                <button class="btn btn-dark" type="submit">Зарегистрироваться</button>
+                <button class="btn btn-dark" type="submit">Отправить заявку</button>
               </div>
             </form>
           </div>
@@ -96,8 +78,8 @@
 
         <div class="auth-pane" id="pane-otp">
           <div class="section-card">
-            <h2>Вход по коду на почту</h2>
-            <p>Сначала запросите код, затем введите его ниже.</p>
+            <h2>Вход по коду</h2>
+            <p>Система отправит код на вашу рабочую почту.</p>
             <form id="otpRequestForm" class="row g-3">
               <div class="col-12">
                 <label class="form-label">Почта</label>
@@ -109,16 +91,16 @@
             </form>
             <hr />
             <form id="otpVerifyForm" class="row g-3">
-              <div class="col-md-7">
+              <div class="col-12">
                 <label class="form-label">Почта</label>
                 <input class="form-control" type="email" name="email" required autocomplete="email" autocapitalize="off" spellcheck="false" />
               </div>
-              <div class="col-md-5">
+              <div class="col-12">
                 <label class="form-label">Код</label>
-                <input class="form-control" type="text" name="token" inputmode="numeric" required autocomplete="one-time-code" maxlength="8" />
+                <input class="form-control" type="text" name="token" required inputmode="numeric" />
               </div>
               <div class="col-12">
-                <button class="btn btn-outline-dark" type="submit">Подтвердить код</button>
+                <button class="btn btn-dark" type="submit">Войти по коду</button>
               </div>
             </form>
           </div>
@@ -126,327 +108,228 @@
 
         <div class="auth-pane" id="pane-reset">
           <div class="section-card">
-            <h2>Восстановить пароль</h2>
-            <p>На почту придет письмо для восстановления. После перехода по ссылке вы сможете задать новый пароль.</p>
+            <h2>Сброс пароля</h2>
+            <p>Ссылка для создания нового пароля придёт на почту.</p>
             <form id="resetRequestForm" class="row g-3">
               <div class="col-12">
                 <label class="form-label">Почта</label>
                 <input class="form-control" type="email" name="email" required autocomplete="email" autocapitalize="off" spellcheck="false" />
               </div>
               <div class="col-12">
-                <button class="btn btn-dark" type="submit">Отправить письмо</button>
+                <button class="btn btn-dark" type="submit">Отправить ссылку</button>
               </div>
             </form>
-            <hr />
-            <form id="updatePasswordForm" class="row g-3">
+            <form id="updatePasswordForm" class="row g-3 d-none mt-3">
               <div class="col-12">
                 <label class="form-label">Новый пароль</label>
-                <input class="form-control" type="password" name="password" minlength="6" required autocomplete="new-password" />
+                <input class="form-control" type="password" name="password" minlength="6" autocomplete="new-password" />
               </div>
               <div class="col-12">
-                <button class="btn btn-outline-dark" type="submit">Сохранить новый пароль</button>
+                <button class="btn btn-dark" type="submit">Сохранить новый пароль</button>
               </div>
             </form>
           </div>
         </div>
 
-        <div class="status-box" id="authStatus">
-          Готово к запуску. Если таблицы платформы еще не созданы, система подскажет это после входа.
-        </div>
+        <div class="status-box" id="authStatus">Готово к запуску.</div>
       </div>
     </div>
   </section>
 
   <section class="app-shell d-none" id="appShell">
-    <header class="platform-header">
-      <div class="platform-header__brand">
-        <div class="brand-row">
-          <img src="../shared/assets/dom-neon-logo.png" alt="Дом Неон" />
-          <div>
-            <strong>ДОМ НЕОНА</strong>
-            <span>Единая операционная платформа</span>
-          </div>
+    <header class="shell-header">
+      <div class="brand-block">
+        <img class="brand-block__logo" src="../shared/assets/dom-neon-logo.png" alt="Дом неона" />
+        <div class="brand-block__copy">
+          <strong>ДОМ НЕОНА</strong>
+          <span>Единая операционная платформа</span>
         </div>
       </div>
 
-      <div class="platform-header__nav">
-        <nav class="module-nav" id="moduleNav"></nav>
-      </div>
+      <nav class="top-nav" id="moduleNav"></nav>
 
-      <div class="platform-header__utility">
-        <div class="profile-card" id="profileCard"></div>
+      <div class="shell-actions">
+        <button class="btn btn-outline-dark btn-sm" id="sidebarToggleButton" type="button">Меню</button>
+        <button class="btn btn-outline-dark btn-sm" id="wideModeButton" type="button">Ширина</button>
+        <button class="btn btn-outline-dark btn-sm" id="refreshButton" type="button">Обновить</button>
+        <button class="btn btn-dark btn-sm" id="signOutButton" type="button">Выйти</button>
       </div>
     </header>
 
-    <main class="content-shell">
-      <div class="topbar" aria-hidden="true">
-        <div class="topbar__copy">
-          <h2 id="viewTitle">Панель управления</h2>
-          <p id="viewSubtitle">Общая точка входа в экосистему Дом Неон.</p>
-        </div>
-        <div class="topbar__badge">
-          <span>Единая точка входа в модули, данные и операции.</span>
-        </div>
-      </div>
+    <section class="platform-status d-none" id="platformStatusSection">
+      <div class="status-box" id="platformStatus"></div>
+    </section>
 
-      <section class="view-section" id="schemaWarningSection"></section>
-      <section class="view-section d-none" id="platformStatusSection">
-        <div class="status-box" id="platformStatus"></div>
-      </section>
+    <section class="content-shell">
+      <aside class="sidebar">
+        <div class="section-card" id="profileCard"></div>
+      </aside>
 
-      <section class="view-section" id="dashboardView">
-        <div class="dashboard-grid" id="dashboardGrid"></div>
-      </section>
+      <main class="workspace-main">
+        <section class="workspace-hero d-none" aria-hidden="true">
+          <h1 id="viewTitle"></h1>
+          <p id="viewSubtitle"></p>
+        </section>
 
-      <section class="view-section d-none" id="embedView">
-        <div class="module-frame-wrap">
-          <iframe class="module-frame" id="moduleFrame" title="Модуль платформы" referrerpolicy="strict-origin-when-cross-origin" sandbox="allow-same-origin allow-scripts allow-forms allow-downloads"></iframe>
-        </div>
-      </section>
+        <section class="schema-warning d-none" id="schemaWarningSection"></section>
 
-      <section class="view-section d-none" id="adminView">
-        <div class="admin-grid">
-          <div class="admin-stack">
-            <div class="section-card">
-              <div class="card-toolbar">
-                <div>
-                  <h2>Пользователи</h2>
-                  <div class="compact-help">Быстрый список аккаунтов. Для точной настройки выберите пользователя справа.</div>
-                </div>
-                <button class="btn btn-sm btn-outline-dark" type="button" id="reloadUsersButton">Обновить список</button>
+        <section class="view-shell d-none" id="dashboardView">
+          <div id="dashboardGrid"></div>
+        </section>
+
+        <section class="view-shell d-none" id="embedView">
+          <iframe id="moduleFrame" title="Модуль платформы"></iframe>
+        </section>
+
+        <section class="view-shell d-none" id="adminView">
+          <div class="admin-grid">
+            <section class="admin-panel">
+              <div class="panel-heading">
+                <h3>Пользователи</h3>
+                <button class="btn btn-outline-dark btn-sm" id="reloadUsersButton" type="button">Обновить</button>
               </div>
               <div class="table-shell">
                 <table class="table table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>Почта</th>
-                      <th>Имя</th>
-                      <th>Роль</th>
-                      <th>Партнер</th>
-                      <th>Доступ</th>
-                      <th>Активен</th>
-                      <th></th>
-                    </tr>
-                  </thead>
                   <tbody id="adminUsersBody"></tbody>
                 </table>
               </div>
-            </div>
+            </section>
 
-            <div class="section-card">
-              <div class="card-toolbar">
-                <div>
-                  <h2>Роли</h2>
-                  <div class="compact-help">Создавайте свои роли и задавайте для них гибкие права по модулям.</div>
+            <section class="admin-panel" id="userAccessEditor"></section>
+
+            <section class="admin-panel">
+              <div class="panel-heading">
+                <h3>Роли</h3>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-outline-dark btn-sm" id="newRoleButton" type="button">Новая роль</button>
+                  <button class="btn btn-outline-secondary btn-sm" id="resetRoleFormButton" type="button">Сброс</button>
+                  <button class="btn btn-outline-danger btn-sm" id="deleteRoleTemplateButton" type="button">Удалить</button>
                 </div>
-                <button class="btn btn-sm btn-outline-dark" type="button" id="newRoleButton">Новая роль</button>
               </div>
-
               <div class="table-shell mb-3">
                 <table class="table table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>Ключ</th>
-                      <th>Название</th>
-                      <th>Системная</th>
-                      <th></th>
-                    </tr>
-                  </thead>
                   <tbody id="roleTemplatesBody"></tbody>
                 </table>
               </div>
-
               <form id="roleTemplateForm" class="row g-3">
                 <div class="col-md-4">
                   <label class="form-label">Ключ роли</label>
-                  <input class="form-control" type="text" name="role_key" placeholder="например: sales_editor" required />
+                  <input class="form-control" name="role_key" type="text" />
                 </div>
-                <div class="col-md-8">
-                  <label class="form-label">Название роли</label>
-                  <input class="form-control" type="text" name="display_name" placeholder="Например: Редактор продаж" required />
+                <div class="col-md-4">
+                  <label class="form-label">Название</label>
+                  <input class="form-control" name="display_name" type="text" />
                 </div>
-                <div class="col-12">
+                <div class="col-md-4">
                   <label class="form-label">Описание</label>
-                  <textarea class="form-control" name="description" rows="2" placeholder="Что видит и что может делать эта роль"></textarea>
+                  <input class="form-control" name="description" type="text" />
                 </div>
                 <div class="col-12">
-                  <div class="form-label mb-2">Права роли</div>
-                  <div class="permission-grid" id="rolePermissionsGrid"></div>
+                  <div id="rolePermissionsGrid"></div>
                 </div>
-                <div class="col-12 d-flex flex-wrap gap-2">
+                <div class="col-12">
                   <button class="btn btn-dark" type="submit">Сохранить роль</button>
-                  <button class="btn btn-outline-secondary" type="button" id="resetRoleFormButton">Очистить</button>
-                  <button class="btn btn-outline-danger d-none" type="button" id="deleteRoleTemplateButton">Удалить роль</button>
                 </div>
               </form>
-            </div>
-          </div>
+            </section>
 
-          <div class="admin-stack">
-            <div class="section-card">
-              <div class="card-toolbar">
-                <div>
-                  <h2>Доступы пользователя</h2>
-                  <div class="compact-help">Гибкая настройка: видит модуль, может редактировать, может управлять.</div>
-                </div>
+            <section class="admin-panel">
+              <div class="panel-heading">
+                <h3>Партнёры</h3>
               </div>
-              <div id="userAccessEditor" class="compact-help">Выберите пользователя из таблицы слева.</div>
-            </div>
-
-            <div class="section-card">
-              <div class="card-toolbar">
-                <div>
-                  <h2>Партнеры</h2>
-                  <div class="compact-help">Имя партнера и ссылка на его персональный калькулятор.</div>
+              <form id="partnerForm" class="row g-2 mb-3">
+                <div class="col-md-4">
+                  <input class="form-control form-control-sm" type="text" name="display_name" placeholder="Имя партнёра" />
                 </div>
-              </div>
-              <form class="row g-3 mb-3" id="partnerForm">
-                <div class="col-12">
-                  <label class="form-label">Имя партнера</label>
-                  <input class="form-control" type="text" name="displayName" required />
+                <div class="col-md-4">
+                  <input class="form-control form-control-sm" type="text" name="partner_slug" placeholder="partner-slug" />
                 </div>
-                <div class="col-12">
-                  <label class="form-label">Slug / ID для ссылки</label>
-                  <input class="form-control" type="text" name="slug" placeholder="например: mira" required />
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Почта владельца</label>
-                  <input class="form-control" type="email" name="email" placeholder="необязательно" />
-                </div>
-                <div class="col-12">
-                  <label class="form-label">Комментарий</label>
-                  <textarea class="form-control" name="notes" rows="2"></textarea>
-                </div>
-                <div class="col-12">
-                  <button class="btn btn-dark" type="submit">Добавить партнера</button>
+                <div class="col-md-4">
+                  <button class="btn btn-dark btn-sm w-100" type="submit">Добавить партнёра</button>
                 </div>
               </form>
-
               <div class="table-shell">
                 <table class="table table-sm align-middle">
-                  <thead>
-                    <tr>
-                      <th>Партнер</th>
-                      <th>Slug</th>
-                      <th>Почта</th>
-                      <th>Владелец</th>
-                      <th>Ссылка</th>
-                    </tr>
-                  </thead>
                   <tbody id="partnerDirectoryBody"></tbody>
                 </table>
               </div>
-            </div>
+            </section>
+          </div>
+        </section>
 
-            <div class="section-card">
-              <div class="card-toolbar">
-                <div>
-                  <h2>Домовой Неоник</h2>
-                  <div class="compact-help">Подключение серверного ИИ из папки Ai bot Olesia и синхронизация знаний по 24lite.ru и domneon.ru.</div>
+        <section class="view-shell d-none" id="messengerView">
+          <div class="messenger-layout">
+            <aside class="messenger-sidebar">
+              <div class="section-card mb-3">
+                <div class="panel-heading">
+                  <h3>Чаты</h3>
+                  <button class="btn btn-outline-dark btn-sm" id="reloadThreadsButton" type="button">Обновить</button>
                 </div>
+                <form id="threadCreateForm" class="row g-2 mt-2">
+                  <div class="col-12">
+                    <input class="form-control form-control-sm" type="text" name="title" placeholder="Название чата" />
+                  </div>
+                  <div class="col-12">
+                    <select class="form-select form-select-sm" name="thread_type">
+                      <option value="group">Группа</option>
+                      <option value="direct">Личный</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <button class="btn btn-dark btn-sm w-100" type="submit">Создать чат</button>
+                  </div>
+                </form>
               </div>
-              <form class="row g-3" id="domovoyConfigForm">
-                <div class="col-12">
-                  <label class="form-label">Адрес API</label>
-                  <input class="form-control" type="url" name="domovoyApiBaseUrl" placeholder="Например: https://ai.domneon.ru или http://127.0.0.1:8000" />
-                  <div class="compact-help mt-2">Ключ модели остаётся только на сервере. Если платформа открыта по HTTPS, для сотрудников нужен публичный HTTPS-адрес бота. Локальный http://127.0.0.1:8000 подходит только для локальной проверки.</div>
-                </div>
-                <div class="col-12 d-flex flex-wrap gap-2">
-                  <button class="btn btn-dark" type="submit">Сохранить API</button>
-                  <button class="btn btn-outline-dark" type="button" id="domovoyHealthButton">Проверить API</button>
-                  <button class="btn btn-outline-dark" type="button" id="domovoySyncButton">Синхронизировать сайты</button>
+              <div id="threadList"></div>
+            </aside>
+            <div class="messenger-thread">
+              <div class="section-card">
+                <h3 id="messageThreadTitle">Выберите чат</h3>
+                <div class="compact-help" id="messageThreadMeta">После создания новый чат появится слева.</div>
+              </div>
+              <div class="section-card">
+                <div id="messagesList"></div>
+              </div>
+              <form id="messageForm" class="section-card mt-3">
+                <input type="hidden" name="thread_id" value="" />
+                <textarea class="form-control form-control-sm" name="body" rows="3" placeholder="Сообщение"></textarea>
+                <div class="mt-2">
+                  <button class="btn btn-dark btn-sm" type="submit">Отправить</button>
                 </div>
               </form>
-              <div class="compact-help mt-3" id="domovoyConfigStatus">API пока не указан.</div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <section class="view-section d-none" id="messengerView">
-        <div class="messenger-shell">
-          <div class="section-card">
-            <div class="card-toolbar">
-              <div>
-                <h2>Мессенджер</h2>
-                <div class="compact-help">Личные и групповые переписки внутри платформы.</div>
-              </div>
-              <button class="btn btn-sm btn-outline-dark" type="button" id="reloadThreadsButton">Обновить</button>
-            </div>
-
-            <form id="threadCreateForm" class="row g-3 mb-3">
-              <div class="col-md-4">
-                <label class="form-label">Тип</label>
-                <select class="form-select" name="threadType">
-                  <option value="direct">Личный</option>
-                  <option value="group">Группа</option>
-                </select>
-              </div>
-              <div class="col-md-8">
-                <label class="form-label">Название / тема</label>
-                <input class="form-control" type="text" name="title" placeholder="Для группы оставьте понятное название" />
-              </div>
-              <div class="col-12">
-                <label class="form-label">Почты участников</label>
-                <input class="form-control" type="text" name="emails" placeholder="через запятую, например: user1@mail.ru, user2@mail.ru" />
-              </div>
-              <div class="col-12">
-                <button class="btn btn-dark" type="submit">Создать чат</button>
-              </div>
-            </form>
-
-            <div class="thread-list" id="threadList"></div>
-          </div>
-
-          <div class="section-card messages-panel">
-            <div class="card-toolbar">
-              <div>
-                <h2 id="messageThreadTitle">Выберите чат</h2>
-                <div class="compact-help" id="messageThreadMeta">Сообщения обновляются вручную и при действиях внутри модуля.</div>
-              </div>
-            </div>
-
-            <div class="messages-list" id="messagesList">
-              <div class="compact-help">Пока чат не выбран.</div>
-            </div>
-
-            <form class="row g-3 mt-2" id="messageForm">
-              <div class="col-12">
-                <textarea class="form-control" name="body" rows="3" placeholder="Введите сообщение"></textarea>
-              </div>
-              <div class="col-12">
-                <button class="btn btn-dark" type="submit">Отправить</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      <section class="view-section d-none" id="placeholderView">
-        <div class="placeholder-card" id="placeholderCard"></div>
-      </section>
-    </main>
+        <section class="view-shell d-none" id="placeholderView">
+          <div id="placeholderCard"></div>
+        </section>
+      </main>
+    </section>
   </section>
 
-  <div class="ai-widget is-hidden" id="aiWidget">
-    <button class="ai-widget__toggle" type="button" id="aiWidgetToggle">
-      <span class="ai-widget__icon"><i class="bi bi-stars"></i></span>
-      <span class="ai-widget__label">Домовой Неоник</span>
-    </button>
-    <div class="ai-widget__panel d-none" id="aiWidgetPanel">
+  <form id="domovoyConfigForm" class="d-none">
+    <input type="url" name="domovoyApiBaseUrl" />
+    <button type="submit">save</button>
+  </form>
+  <button id="domovoyHealthButton" type="button" class="d-none">health</button>
+  <button id="domovoySyncButton" type="button" class="d-none">sync</button>
+
+  <div class="ai-widget is-hidden" id="aiAssistantWidget">
+    <button class="ai-widget__toggle" id="aiWidgetToggle" type="button">Домовой Неоник</button>
+    <section class="ai-widget__panel d-none" id="aiWidgetPanel">
       <div class="ai-widget__head">
         <strong>Домовой Неоник</strong>
-        <button class="btn-close" type="button" id="aiWidgetClose" aria-label="Закрыть"></button>
+        <button class="btn btn-sm btn-outline-secondary" type="button" id="aiWidgetClose">Закрыть</button>
       </div>
-      <p>Быстрый вход в внутренний ИИ, подсказки по сделкам, складу, задачам и регламентам.</p>
-      <div class="ai-widget__actions">
-        <button class="btn btn-dark btn-sm" type="button" data-ai-open="ai">Открыть ИИ</button>
-        <button class="btn btn-outline-dark btn-sm" type="button" data-ai-open="crm">Сделки</button>
-        <button class="btn btn-outline-dark btn-sm" type="button" data-ai-open="warehouse">Склад</button>
-      </div>
-    </div>
+      <div class="ai-widget__messages" id="aiWidgetMessages"></div>
+      <form class="ai-widget__form" id="aiWidgetForm">
+        <textarea id="aiWidgetInput" class="form-control" rows="3" placeholder="Напишите вопрос"></textarea>
+        <button class="btn btn-dark btn-sm mt-2" type="submit">Спросить</button>
+      </form>
+    </section>
   </div>
 
-  <script type="module" src="./app.js?v=20260427-platform-metrics-months"></script>
+  <script type="module" src="./app.js?v=20260429-platform-auth-finance-3"></script>
 </body>
 </html>
