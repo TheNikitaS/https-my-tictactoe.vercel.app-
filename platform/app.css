@@ -404,6 +404,28 @@ body.platform-wide .view-section {
   background: #fff;
 }
 
+#appShell .topbar {
+  display: none !important;
+}
+
+#appShell .content-shell {
+  padding-top: 12px;
+}
+
+#appShell .module-frame-wrap {
+  border-radius: 18px;
+  min-height: calc(100vh - 88px);
+}
+
+#appShell .module-frame {
+  min-height: calc(100vh - 88px);
+}
+
+#appShell .ai-widget.is-hidden,
+#appShell .ai-widget {
+  display: none !important;
+}
+
 .admin-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
@@ -5663,4 +5685,17 @@ body {
 .admin-panel {
   padding: 16px !important;
   border-radius: 18px !important;
+}
+
+/* Global cleanup: module titles are already visible in the top navigation. */
+#appShell .topbar {
+  display: none !important;
+}
+
+#appShell .content-shell {
+  padding-top: 10px !important;
+}
+
+#appShell .ai-widget {
+  display: none !important;
 }

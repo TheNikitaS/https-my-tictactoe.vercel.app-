@@ -43,6 +43,14 @@
     .paid { background: #d1e7dd !important; }        /* green */
     .payment-ok { background: #d1e7dd !important; }
     .payment-debt { background: #f8d7da !important; color: #842029 !important; font-weight: 700; }
+    .payment-pill {
+      display: block;
+      min-width: 100px;
+      min-height: 35px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      line-height: 1.2;
+    }
     .row-cancel { background: #f8d7da !important; }  /* red-ish */
     .status-pill { font-weight: 700; border-radius: 10px; padding: 3px 6px; text-align:center; }
     .status-select { padding-top: 3px; padding-bottom: 3px; }
@@ -1184,9 +1192,9 @@
     function appendDebtCell(tr, order) {
       const info = getPaymentInfo(order);
       const td = document.createElement("td");
-      td.className = `p-1 ${info.debt > 0 ? "payment-debt" : "payment-ok"}`;
+      td.className = "p-1";
       td.dataset.debtCell = "1";
-      td.textContent = info.debt > 0 ? formatMoney(info.debt) : "0";
+      td.innerHTML = `<span class="payment-pill ${info.debt > 0 ? "payment-debt" : "payment-ok"}">${info.debt > 0 ? formatMoney(info.debt) : "0"}</span>`;
       tr.appendChild(td);
     }
 
@@ -1198,8 +1206,8 @@
       }
       const debtCell = row.querySelector('[data-debt-cell="1"]');
       if (debtCell) {
-        debtCell.className = `p-1 ${info.debt > 0 ? "payment-debt" : "payment-ok"}`;
-        debtCell.textContent = info.debt > 0 ? formatMoney(info.debt) : "0";
+        debtCell.className = "p-1";
+        debtCell.innerHTML = `<span class="payment-pill ${info.debt > 0 ? "payment-debt" : "payment-ok"}">${info.debt > 0 ? formatMoney(info.debt) : "0"}</span>`;
       }
     }
 

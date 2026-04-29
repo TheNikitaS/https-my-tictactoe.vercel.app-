@@ -56,7 +56,7 @@ async function boot() {
 
   const [{ data: userData }, snapshot, saved] = await Promise.all([
     supabase.auth.getUser().catch(() => ({ data: null })),
-    fetch("./workbook_snapshot.json?v=20260428-finance-rebuild").then((response) => response.json()),
+    fetch("./workbook_snapshot.json?v=20260429-finance-polish").then((response) => response.json()),
     loadSavedState()
   ]);
 
@@ -267,7 +267,11 @@ function renderRevenueChart(row) {
   return `
     <svg viewBox="0 0 ${width} ${height + 28}" role="img">
       <path class="chart-line" d="${path}"></path>
-      ${points.map((point) => `<circle class="chart-dot"><title>${escapeHtml(point.period)}: ${formatMoney(point.value)}</title></circle>`.replace("<circle", `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4"`)).join("")}
+      ${points.map((point) => `
+        <circle class="chart-dot" cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4">
+          <title>${escapeHtml(point.period)}: ${formatMoney(point.value)}</title>
+        </circle>
+      `).join("")}
     </svg>
   `;
 }
@@ -280,9 +284,11 @@ function extractMetricRows(sheet) {
     if (!label) continue;
     const values = [];
     for (let column = 2; column <= sheet.maxCol; column += 1) {
+      const metricKind = cleanText(matrix[3]?.[column]).toLowerCase();
+      if (metricKind && metricKind !== "сумма") continue;
       const value = parseNumber(matrix[row]?.[column]);
       if (!Number.isFinite(value)) continue;
-      values.push({ period: columnLabel(column), value });
+      values.push({ period: cleanText(matrix[2]?.[column]) || columnLabel(column), value });
     }
     rows.push({ label, values });
   }
@@ -293,10 +299,11 @@ function renderActiveSheet() {
   const sheet = getActiveSheet();
   if (!sheet) return;
 
-  const rows = filterRows(sheet);
+  const layout = getSheetLayout(sheet, STATE.activeView);
+  const rows = filterRows(sheet).filter((row) => !layout.hiddenRows.has(row.index));
   const limit = STATE.rowLimit === "all" ? rows.length : Number(STATE.rowLimit);
   const visibleRows = rows.slice(0, limit);
-  const columns = Math.max(sheet.maxCol, maxUsedColumn(sheet));
+  const columns = layout.columns;
 
   DOM.sheetMeta.textContent = `${sheet.name}: ${rows.length} строк, формул в исходнике: ${sheet.sourceFormulas || 0}`;
 
@@ -305,9 +312,9 @@ function renderActiveSheet() {
   table.innerHTML = `
     <thead>
       <tr>
-        <th class="row-head">#</th>
+        <th class="row-head">№</th>
         <th class="select-head">✓</th>
-        ${Array.from({ length: columns }, (_, index) => `<th>${columnLabel(index + 1)}</th>`).join("")}
+        ${columns.map((column) => `<th>${escapeHtml(layout.headers[column] || columnLabel(column))}</th>`).join("")}
       </tr>
     </thead>
     <tbody></tbody>
@@ -319,7 +326,7 @@ function renderActiveSheet() {
     tr.innerHTML = `
       <td class="row-number">${row.index}</td>
       <td class="row-select"><input type="checkbox" ${STATE.selectedRows.has(row.index) ? "checked" : ""} data-row-check="${row.index}"></td>
-      ${Array.from({ length: columns }, (_, index) => renderCell(sheet, row, index + 1)).join("")}
+      ${columns.map((column) => renderCell(sheet, row, column)).join("")}
     `;
     body.append(tr);
   });
@@ -349,13 +356,48 @@ function renderCell(sheet, row, column) {
   const dictKey = Object.keys(STATE.dictionaries).find((key) => sameText(key, header));
   const list = dictKey ? ` list="dict-${slug(dictKey)}"` : "";
   const typeClass = ["number", "percent"].includes(cell.kind) ? cell.kind : "";
+  const emptyClass = cleanText(cell.display || cell.raw) ? "" : " cell-empty";
   const formulaClass = cell.formula ? " formula-cell" : "";
   const title = cell.formula ? ` title="${escapeHtml(cell.formula)}"` : "";
   return `
     <td class="${formulaClass}"${title}>
-      <input class="cell-input ${typeClass}" data-cell="${row.index}:${column}" value="${escapeHtml(cell.display || "")}"${list}>
+      <input class="cell-input ${typeClass}${emptyClass}" data-cell="${row.index}:${column}" value="${escapeHtml(cell.display || "")}"${list}>
     </td>
   `;
+}
+
+function getSheetLayout(sheet, viewKey) {
+  const headerRowByView = {
+    balance: 3,
+    calendar: 1,
+    metrics: 3
+  };
+  const hiddenRowsByView = {
+    balance: new Set([1, 2, 3]),
+    calendar: new Set([1, 2, 3, 4, 5]),
+    metrics: new Set([1, 2, 3])
+  };
+  const headerRowIndex = headerRowByView[viewKey] || 1;
+  const hiddenRows = hiddenRowsByView[viewKey] || new Set([headerRowIndex]);
+  const headerRow = sheet.rows.find((row) => row.index === headerRowIndex);
+  const maxColumn = Math.max(sheet.maxCol, maxUsedColumn(sheet));
+  const columns = [];
+  const headers = {};
+
+  for (let column = 1; column <= maxColumn; column += 1) {
+    const header = cleanText(headerRow?.cells?.[String(column)]?.display);
+    const hasData = sheet.rows.some((row) => !hiddenRows.has(row.index) && cleanText(row.cells?.[String(column)]?.display || row.cells?.[String(column)]?.raw));
+    if (!header && !hasData) continue;
+    columns.push(column);
+    if (viewKey === "metrics") {
+      const month = cleanText(sheet.rows.find((row) => row.index === 2)?.cells?.[String(column)]?.display);
+      headers[column] = [month, header].filter(Boolean).join(" / ") || columnLabel(column);
+    } else {
+      headers[column] = header || columnLabel(column);
+    }
+  }
+
+  return { columns, headers, hiddenRows };
 }
 
 function renderDatalists(sheet) {
@@ -504,12 +546,13 @@ function sameText(left, right) {
 }
 
 function parseNumber(value) {
+  if (cleanText(value) === "") return Number.NaN;
   const normalized = String(value ?? "")
     .replace(/\s/g, "")
     .replace("%", "")
     .replace(",", ".");
   const number = Number(normalized);
-  return Number.isFinite(number) ? number : 0;
+  return Number.isFinite(number) ? number : Number.NaN;
 }
 
 function inferKind(value) {
@@ -524,7 +567,7 @@ function lastMetricValue(row) {
 }
 
 function formatMoney(value) {
-  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(value || 0) + " ₽";
+  return new Intl.NumberFormat("ru-RU", { maximumFractionDigits: 2 }).format(Number.isFinite(value) ? value : 0) + " ₽";
 }
 
 function formatDateTime(value) {

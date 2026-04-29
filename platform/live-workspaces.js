@@ -308,6 +308,27 @@ function buildLight2MetricsSummary(payload) {
         .filter((value) => Number.isFinite(value) && value !== 0);
       return values.at(-1) || 0;
     };
+    const findRow = (label) => rows.find((entry) => getCellText(entry, 1).toLowerCase() === label.toLowerCase());
+    const revenueRow = findRow("Выручка");
+    const series = Object.entries(revenueRow?.cells || {})
+      .map(([column, cell]) => {
+        const columnIndex = Number(column);
+        if (columnIndex <= 1) return null;
+        const kind = getCellText(rows.find((entry) => Number(entry.index) === 3), columnIndex).toLowerCase();
+        if (kind && kind !== "сумма") return null;
+        const revenue = parseMoney(cell.display || cell.raw);
+        if (!Number.isFinite(revenue) || revenue === 0) return null;
+        const label = getCellText(rows.find((entry) => Number(entry.index) === 2), columnIndex) || `Период ${columnIndex}`;
+        return {
+          label,
+          fullLabel: label,
+          revenue,
+          orders: 0,
+          invoices: 0
+        };
+      })
+      .filter(Boolean)
+      .slice(-12);
     const totals = {
       revenue: latestByLabel("Выручка"),
       cost: latestByLabel("Себестоимость"),
@@ -320,7 +341,8 @@ function buildLight2MetricsSummary(payload) {
       entriesCount: rows.length,
       monthCount: Math.max(0, metricsSheet.maxCol || 0),
       latestMonthKey: "",
-      totals
+      totals,
+      series
     };
   }
 

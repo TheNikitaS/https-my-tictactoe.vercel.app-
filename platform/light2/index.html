@@ -5,28 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ДОМ НЕОНА | Финансы</title>
   <link rel="icon" type="image/png" href="../../shared/assets/dom-neon-logo.png" />
-  <link href="./app.css?v=20260428-finance-rebuild" rel="stylesheet" />
+  <link href="./app.css?v=20260429-finance-polish" rel="stylesheet" />
 </head>
 <body>
   <main class="finance-shell">
-    <header class="finance-hero">
+    <section class="finance-app-header">
       <div>
-        <div class="eyebrow">ДОМ НЕОНА / Финансовый контур</div>
-        <h1>Финансы</h1>
-        <p>Баланс, платежный календарь и метрики перенесены из файла ЛАЙТ 2 с заполненными данными, формулами и рабочими справочниками.</p>
-      </div>
-      <div class="hero-panel">
-        <span id="userLabel">Проверяю пользователя...</span>
-        <strong id="saveLabel">Загрузка...</strong>
-      </div>
-    </header>
-
-    <section class="finance-toolbar">
-      <div class="tabs" id="tabs">
-        <button class="tab active" type="button" data-view="overview">Обзор</button>
-        <button class="tab" type="button" data-view="balance">Баланс</button>
-        <button class="tab" type="button" data-view="calendar">Платежный календарь</button>
-        <button class="tab" type="button" data-view="metrics">Метрики</button>
+        <h1>Финансы ЛАЙТ</h1>
+        <p id="userLabel">Загружаю пользователя...</p>
+        <span class="save-indicator" id="saveLabel">Загрузка...</span>
       </div>
       <div class="actions">
         <button type="button" id="dictionariesButton">Справочники (выпадашки)</button>
@@ -35,6 +22,13 @@
         <button type="button" id="saveButton" class="primary">Сохранить</button>
       </div>
     </section>
+
+    <nav class="finance-tabs" id="tabs">
+      <button class="tab active" type="button" data-view="overview">Обзор</button>
+      <button class="tab" type="button" data-view="balance">Баланс</button>
+      <button class="tab" type="button" data-view="calendar">Платежный календарь</button>
+      <button class="tab" type="button" data-view="metrics">Метрики</button>
+    </nav>
 
     <section class="notice" id="statusBox">Загружаю данные из ЛАЙТ 2...</section>
 
@@ -75,6 +69,6 @@
     </form>
   </dialog>
 
-  <script type="module" src="./app.js?v=20260428-finance-rebuild"></script>
+  <script type="module" src="./app.js?v=20260429-finance-polish"></script>
 </body>
 </html>

@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260413-platform-suite49";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260429-finance-polish";
 import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-suite49";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260428-finance-rebuild";
+const PLATFORM_BUILD = "20260429-finance-polish";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -1798,7 +1798,11 @@ async function renderDashboard() {
     year: "Год"
   };
   const activePeriod = ["week", "month", "year"].includes(STATE.ui.dashboardPeriod) ? STATE.ui.dashboardPeriod : "week";
-  const activeSeries = snapshot.sales.seriesByPeriod?.[activePeriod] || snapshot.sales.series || [];
+  let activeSeries = snapshot.sales.seriesByPeriod?.[activePeriod] || snapshot.sales.series || [];
+  const seriesIsEmpty = !activeSeries.length || activeSeries.every((point) => !Number(point.revenue) && !Number(point.orders));
+  if (seriesIsEmpty && Array.isArray(metricsSummary?.series) && metricsSummary.series.length) {
+    activeSeries = metricsSummary.series;
+  }
   const periodRevenue = activeSeries.reduce((sum, point) => sum + (Number(point.revenue) || 0), 0);
   const periodOrders = activeSeries.reduce((sum, point) => sum + (Number(point.orders) || 0), 0);
   const periodInvoices = activeSeries.reduce((sum, point) => sum + (Number(point.invoices) || 0), 0);

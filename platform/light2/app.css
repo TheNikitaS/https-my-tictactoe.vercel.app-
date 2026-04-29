@@ -19,8 +19,8 @@
 body {
   margin: 0;
   color: var(--ink);
-  background: linear-gradient(135deg, #eaf2f7, #f8f3ea);
-  font-size: 13px;
+  background: #fff;
+  font-size: 12.5px;
 }
 
 button,
@@ -56,23 +56,30 @@ button.primary,
   padding: 14px;
 }
 
-.finance-hero,
-.finance-toolbar,
+.finance-app-header,
+.finance-tabs,
 .notice,
 .sheet-tools,
 .sheet-card,
 .overview-card {
   border: 1px solid var(--line);
-  border-radius: 18px;
+  border-radius: 12px;
   background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 28px rgba(13, 34, 53, 0.06);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .finance-hero {
+  display: none;
+}
+
+.finance-app-header {
   display: flex;
   justify-content: space-between;
-  gap: 20px;
-  padding: 20px 22px;
+  align-items: center;
+  gap: 18px;
+  padding: 14px 18px;
+  background: #1f2d3d;
+  color: #fff;
 }
 
 .eyebrow {
@@ -89,17 +96,14 @@ p {
 }
 
 h1 {
-  margin-top: 8px;
-  font-size: clamp(28px, 4vw, 44px);
-  letter-spacing: -0.04em;
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: -0.02em;
 }
 
-.finance-hero p {
-  max-width: 820px;
-  margin-top: 8px;
-  color: var(--muted);
-  font-size: 15px;
-  line-height: 1.45;
+.finance-app-header p {
+  margin-top: 4px;
+  color: rgba(255, 255, 255, 0.66);
 }
 
 .hero-panel {
@@ -125,12 +129,16 @@ h1 {
   font-size: 16px;
 }
 
-.finance-toolbar {
+.finance-tabs {
   display: flex;
-  justify-content: space-between;
-  gap: 14px;
-  margin-top: 12px;
-  padding: 10px;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .tabs,
@@ -144,6 +152,7 @@ h1 {
 .tab {
   min-width: 92px;
   font-weight: 700;
+  border-radius: 8px 8px 0 0;
 }
 
 .notice {
@@ -164,20 +173,20 @@ h1 {
 
 .overview-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(180px, 1fr));
+  grid-template-columns: repeat(4, minmax(160px, 1fr));
   gap: 12px;
   margin-top: 12px;
 }
 
 .overview-card {
-  min-height: 126px;
-  padding: 16px;
+  min-height: 86px;
+  padding: 12px 14px;
 }
 
 .overview-card strong {
   display: block;
-  margin-top: 10px;
-  font-size: 24px;
+  margin-top: 7px;
+  font-size: 20px;
 }
 
 .overview-card span {
@@ -190,7 +199,7 @@ h1 {
 
 .chart svg {
   width: 100%;
-  height: 150px;
+  height: 118px;
   overflow: visible;
 }
 
@@ -237,6 +246,7 @@ h1 {
 .sheet-card {
   margin-top: 12px;
   overflow: hidden;
+  background: #fff;
 }
 
 .table-wrap {
@@ -247,9 +257,9 @@ h1 {
 .finance-table {
   width: max-content;
   min-width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
+  border-collapse: collapse;
   background: #fff;
+  font-size: 12.5px;
 }
 
 .finance-table th,
@@ -264,10 +274,11 @@ h1 {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: #eaf0f5;
+  background: #eef2f6;
   color: #0a2035;
   font-weight: 800;
   text-align: left;
+  padding: 9px 8px;
 }
 
 .row-head,
@@ -312,13 +323,19 @@ h1 {
 }
 
 .cell-input {
-  width: 160px;
-  min-height: 34px;
+  width: 180px;
+  min-height: 35px;
   border: 0;
-  border-radius: 0;
-  padding: 7px 8px;
-  background: transparent;
+  border-radius: 6px;
+  margin: 5px;
+  padding: 7px 9px;
+  background: #d1e7dd;
   color: #06182a;
+}
+
+.cell-input.cell-empty {
+  background: #fff;
+  border: 1px solid #edf1f4;
 }
 
 .cell-input:focus {
@@ -411,8 +428,7 @@ dialog::backdrop {
 }
 
 @media (max-width: 900px) {
-  .finance-hero,
-  .finance-toolbar {
+  .finance-app-header {
     display: block;
   }
 
