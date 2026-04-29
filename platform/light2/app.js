@@ -113,8 +113,7 @@ function bindEvents() {
   DOM.addRowButton.addEventListener("click", () => {
     const sheet = getActiveSheet();
     if (!sheet) return;
-    const nextIndex = Math.max(0, ...sheet.rows.map((row) => row.index)) + 1;
-    sheet.rows.push({ index: nextIndex, cells: {} });
+    appendRowForActiveView(sheet);
     scheduleSave();
     renderActiveSheet();
   });
@@ -415,6 +414,21 @@ function renderActiveSheet() {
   const sheet = getActiveSheet();
   if (!sheet) return;
 
+  if (STATE.activeView === "balance") {
+    renderBalanceSheet(sheet);
+    return;
+  }
+
+  if (STATE.activeView === "calendar") {
+    renderCalendarSheet(sheet);
+    return;
+  }
+
+  if (STATE.activeView === "metrics") {
+    renderMetricsSheet(sheet);
+    return;
+  }
+
   const computed = buildComputedSheet(sheet);
   const layout = getSheetLayout(sheet, STATE.activeView);
   const rows = filterRows(sheet).filter((row) => !layout.hiddenRows.has(row.index));
@@ -450,6 +464,184 @@ function renderActiveSheet() {
 
   DOM.tableWrap.replaceChildren(table, ...renderDatalists(sheet));
 
+  bindRenderedSheetEvents(sheet);
+}
+
+function renderBalanceSheet(sheet) {
+  const computed = buildComputedSheet(sheet);
+  const summary = buildBalanceSectionsSummary(sheet);
+  const rowsLimit = STATE.rowLimit === "all" ? Infinity : Number(STATE.rowLimit || 100);
+
+  DOM.sheetMeta.textContent = `Баланс: ${sheet.rows.length} строк, формул: ${sheet.sourceFormulas || 0}`;
+
+  const content = `
+    <div class="finance-section-grid">
+      ${BALANCE_SECTION_CONFIG.map((section) => renderBalanceSection(sheet, computed, summary[section.key], section, rowsLimit)).join("")}
+    </div>
+  `;
+
+  DOM.tableWrap.replaceChildren(htmlToElement(content), ...renderFinanceDatalists());
+  bindRenderedSheetEvents(sheet);
+  bindFinanceActionEvents(sheet);
+}
+
+function renderBalanceSection(sheet, computed, summary, section, limit) {
+  const rows = filterRows(sheet)
+    .filter((row) => row.index >= 4)
+    .filter((row) => hasSectionContent(row, section))
+    .slice(0, limit);
+
+  return `
+    <article class="finance-block" data-balance-section="${escapeHtml(section.key)}">
+      <header class="finance-block__head">
+        <div>
+          <h3>${escapeHtml(section.title)}</h3>
+          <strong>${formatMoney(summary?.current || 0)}</strong>
+        </div>
+        <button type="button" class="mini-button" data-add-balance="${escapeHtml(section.key)}">+ Операция</button>
+      </header>
+      <div class="balance-totals">
+        <span>Приход: <b class="tone-income">${formatMoney(summary?.income || 0)}</b></span>
+        <span>Расход: <b class="tone-expense">${formatMoney(summary?.expense || 0)}</b></span>
+      </div>
+      <div class="finance-list finance-list--balance">
+        <div class="finance-list__row finance-list__row--head">
+          <span>Дата</span>
+          <span>Приход</span>
+          <span>Расход</span>
+          <span>Остаток</span>
+          <span>Комментарий</span>
+          <span></span>
+        </div>
+        ${
+          rows.length
+            ? rows
+                .map(
+                  (row) => `
+                    <div class="finance-list__row">
+                      ${renderFinanceCell(sheet, computed, row, section.startCol, { type: "date" })}
+                      ${renderFinanceCell(sheet, computed, row, section.incomeCol, { type: "money" })}
+                      ${renderFinanceCell(sheet, computed, row, section.expenseCol, { type: "money" })}
+                      ${renderFinanceCell(sheet, computed, row, section.balanceCol, { type: "money", readonly: true })}
+                      ${renderFinanceCell(sheet, computed, row, section.commentCol, { dictionary: "comment" })}
+                      <span></span>
+                    </div>
+                  `
+                )
+                .join("")
+            : '<div class="workspace-empty workspace-empty--tight">Нет операций по выбранному фильтру.</div>'
+        }
+      </div>
+    </article>
+  `;
+}
+
+function renderCalendarSheet(sheet) {
+  const computed = buildComputedSheet(sheet);
+  const summary = buildCalendarSummary(sheet);
+  const layout = getSheetLayout(sheet, "calendar");
+  const rowsLimit = STATE.rowLimit === "all" ? Infinity : Number(STATE.rowLimit || 100);
+  const rows = filterRows(sheet)
+    .filter((row) => !layout.hiddenRows.has(row.index))
+    .slice(0, rowsLimit);
+
+  DOM.sheetMeta.textContent = `Платежный календарь: ${summary.entriesCount} операций`;
+
+  const content = `
+    <div class="finance-toolbar-line">
+      <span>Приход: <b class="tone-income">${formatMoney(summary.incoming)}</b></span>
+      <span>Расход: <b class="tone-expense">${formatMoney(summary.outgoing)}</b></span>
+      <span>Операций: <b>${formatNumber(summary.entriesCount)}</b></span>
+    </div>
+    <div class="finance-list finance-list--calendar">
+      <div class="finance-list__row finance-list__row--head">
+        <span>Дата</span>
+        <span>Контрагент</span>
+        <span>Сумма</span>
+        <span>Тип</span>
+        <span>Статья</span>
+        <span>Счёт</span>
+        <span>Статус</span>
+        <span>Комментарий</span>
+        <span></span>
+      </div>
+      ${
+        rows.length
+          ? rows
+              .map(
+                (row) => `
+                  <div class="finance-list__row">
+                    ${renderFinanceCell(sheet, computed, row, 1, { type: "date" })}
+                    ${renderFinanceCell(sheet, computed, row, 2, { dictionary: "counterparty" })}
+                    ${renderFinanceCell(sheet, computed, row, 3, { type: "money" })}
+                    ${renderFinanceCell(sheet, computed, row, 4, { options: ["Приход", "Расход"] })}
+                    ${renderFinanceCell(sheet, computed, row, 5, { dictionary: "article" })}
+                    ${renderFinanceCell(sheet, computed, row, 6, { options: accountOptions() })}
+                    ${renderFinanceCell(sheet, computed, row, 7, { dictionary: "status", options: ["Платеж", "Поступление", "План", "Отложено"] })}
+                    ${renderFinanceCell(sheet, computed, row, 8, { dictionary: "comment" })}
+                    ${renderRowSelector(row.index)}
+                  </div>
+                `
+              )
+              .join("")
+          : '<div class="workspace-empty workspace-empty--tight">Операций нет.</div>'
+      }
+    </div>
+  `;
+
+  DOM.tableWrap.replaceChildren(htmlToElement(content), ...renderFinanceDatalists());
+  bindRenderedSheetEvents(sheet);
+}
+
+function renderMetricsSheet(sheet) {
+  const computed = buildComputedSheet(sheet);
+  const rowsLimit = STATE.rowLimit === "all" ? Infinity : Number(STATE.rowLimit || 100);
+  const metricRows = filterRows(sheet)
+    .filter((row) => row.index >= 4 && cleanText(getComputedDisplay(computed, row.index, 1)))
+    .slice(0, rowsLimit);
+
+  DOM.sheetMeta.textContent = `Метрики: ${metricRows.length} показателей, формул: ${sheet.sourceFormulas || 0}`;
+
+  const content = `
+    <div class="metrics-board">
+      ${metricRows.map((row) => renderMetricCard(sheet, computed, row)).join("")}
+    </div>
+  `;
+
+  DOM.tableWrap.replaceChildren(htmlToElement(content));
+  bindRenderedSheetEvents(sheet);
+}
+
+function renderMetricCard(sheet, computed, row) {
+  const columns = getSheetLayout(sheet, "metrics").columns
+    .filter((column) => column > 1)
+    .filter((column) => cleanText(getComputedDisplay(computed, row.index, column)) || cleanText(getComputedDisplay(computed, 2, column)))
+    .slice(-12);
+
+  return `
+    <article class="metric-card">
+      <header>
+        ${renderFinanceCell(sheet, computed, row, 1, { className: "metric-title" })}
+        ${renderRowSelector(row.index)}
+      </header>
+      <div class="metric-values">
+        ${columns
+          .map((column) => {
+            const period = [getComputedDisplay(computed, 2, column), getComputedDisplay(computed, 3, column)].filter(Boolean).join(" / ");
+            return `
+              <label>
+                <span>${escapeHtml(period || columnLabel(column))}</span>
+                ${renderFinanceCell(sheet, computed, row, column, { type: "money" })}
+              </label>
+            `;
+          })
+          .join("")}
+      </div>
+    </article>
+  `;
+}
+
+function bindRenderedSheetEvents(sheet) {
   DOM.tableWrap.querySelectorAll("[data-row-check]").forEach((checkbox) => {
     checkbox.addEventListener("change", () => {
       const rowIndex = Number(checkbox.dataset.rowCheck);
@@ -460,13 +652,171 @@ function renderActiveSheet() {
 
   DOM.tableWrap.querySelectorAll("[data-cell]").forEach((input) => {
     if (input.hasAttribute("readonly")) return;
-    input.addEventListener("input", () => {
+    const updateCell = () => {
       const [rowIndex, column] = input.dataset.cell.split(":").map(Number);
       setCell(sheet, rowIndex, column, input.value);
+      scheduleSave();
+    };
+    input.addEventListener("input", updateCell);
+    input.addEventListener("change", () => {
+      updateCell();
+      renderActiveSheet();
+    });
+  });
+}
+
+function bindFinanceActionEvents(sheet) {
+  DOM.tableWrap.querySelectorAll("[data-add-balance]").forEach((button) => {
+    button.addEventListener("click", () => {
+      appendBalanceRow(sheet, button.dataset.addBalance);
       scheduleSave();
       renderActiveSheet();
     });
   });
+}
+
+function renderFinanceCell(sheet, computed, row, column, options = {}) {
+  const cell = row.cells[String(column)] || { display: "", kind: "text", formula: "" };
+  const displayValue = getComputedDisplay(computed, row.index, column);
+  const formula = Boolean(cell.formula);
+  const readonly = options.readonly || formula;
+  const classes = ["finance-field", options.type === "money" ? "finance-field--number" : "", options.className || "", formula ? "finance-field--formula" : ""]
+    .filter(Boolean)
+    .join(" ");
+  const title = formula ? ` title="${escapeHtml(cell.formula)}"` : "";
+  const optionValues = options.options || mergedOptions(dictionaryOptions(options.dictionary || getColumnHeader(sheet, column)), sheetColumnValues(sheet, column));
+
+  if (optionValues.length && !readonly) {
+    return `
+      <select class="${classes}" data-cell="${row.index}:${column}"${title}>
+        ${renderSelectOptions(displayValue, optionValues)}
+      </select>
+    `;
+  }
+
+  const type = options.type === "date" ? "text" : "text";
+  const listId = options.dictionary ? ` list="dict-${slug(options.dictionary)}"` : "";
+  return `
+    <input class="${classes}" type="${type}" data-cell="${row.index}:${column}" value="${escapeHtml(displayValue)}"${listId}${readonly ? " readonly" : ""}${title}>
+  `;
+}
+
+function renderSelectOptions(value, values) {
+  const current = cleanText(value);
+  const unique = Array.from(new Set([current, ...values.map(cleanText)].filter(Boolean)));
+  return ['<option value=""></option>', ...unique.map((item) => `<option value="${escapeHtml(item)}"${sameText(item, current) ? " selected" : ""}>${escapeHtml(item)}</option>`)].join("");
+}
+
+function renderRowSelector(rowIndex) {
+  return `<label class="row-check"><input type="checkbox" ${STATE.selectedRows.has(rowIndex) ? "checked" : ""} data-row-check="${rowIndex}"><span></span></label>`;
+}
+
+function appendRowForActiveView(sheet) {
+  if (STATE.activeView === "balance") {
+    appendBalanceRow(sheet, "cash");
+    return;
+  }
+
+  const nextIndex = Math.max(0, ...sheet.rows.map((row) => row.index)) + 1;
+  const row = { index: nextIndex, cells: {} };
+
+  if (STATE.activeView === "calendar") {
+    row.cells = {
+      1: createCell(formatDateForInput(new Date())),
+      4: createCell("Расход"),
+      6: createCell("Наличные / карта"),
+      7: createCell("Платеж")
+    };
+  }
+
+  sheet.rows.push(row);
+}
+
+function appendBalanceRow(sheet, sectionKey) {
+  const section = BALANCE_SECTION_CONFIG.find((item) => item.key === sectionKey) || BALANCE_SECTION_CONFIG[0];
+  const nextIndex = Math.max(3, ...sheet.rows.map((row) => row.index)) + 1;
+  const row = { index: nextIndex, cells: {} };
+  row.cells[String(section.startCol)] = createCell(formatDateForInput(new Date()));
+  row.cells[String(section.incomeCol)] = createCell("");
+  row.cells[String(section.expenseCol)] = createCell("");
+  row.cells[String(section.balanceCol)] = createCell("", `=${columnLabel(section.balanceCol)}${nextIndex - 1}+${columnLabel(section.incomeCol)}${nextIndex}-${columnLabel(section.expenseCol)}${nextIndex}`);
+  row.cells[String(section.commentCol)] = createCell("");
+  sheet.rows.push(row);
+}
+
+function createCell(value, formula = "") {
+  return {
+    display: value,
+    raw: value,
+    kind: inferKind(value),
+    formula
+  };
+}
+
+function hasSectionContent(row, section) {
+  return [section.startCol, section.incomeCol, section.expenseCol, section.balanceCol, section.commentCol].some((column) =>
+    cleanText(row.cells?.[String(column)]?.display || row.cells?.[String(column)]?.raw)
+  );
+}
+
+function dictionaryOptions(keyOrKind) {
+  const key = cleanText(keyOrKind).toLowerCase();
+  const exact = Object.keys(STATE.dictionaries).find((item) => sameText(item, keyOrKind));
+  if (exact) return STATE.dictionaries[exact] || [];
+
+  if (key.includes("status") || key.includes("статус")) return STATE.dictionaries["Статус"] || [];
+  if (key.includes("article") || key.includes("статья")) return dictionaryByFragments(["статья", "категория"]);
+  if (key.includes("counterparty") || key.includes("контрагент")) return dictionaryByFragments(["контрагент", "партнер", "покупатель", "поставщик"]);
+  if (key.includes("comment") || key.includes("комментар")) return [];
+  return dictionaryByFragments([key]);
+}
+
+function mergedOptions(...groups) {
+  const values = [];
+  groups.flat().forEach((item) => {
+    const value = cleanText(item);
+    if (value && !values.includes(value)) values.push(value);
+  });
+  return values;
+}
+
+function sheetColumnValues(sheet, column) {
+  return (sheet?.rows || [])
+    .map((row) => cleanText(row.cells?.[String(column)]?.display || row.cells?.[String(column)]?.raw))
+    .filter(Boolean)
+    .slice(0, 300);
+}
+
+function dictionaryByFragments(fragments) {
+  const values = [];
+  Object.entries(STATE.dictionaries).forEach(([key, items]) => {
+    const lowerKey = key.toLowerCase();
+    if (fragments.some((fragment) => fragment && lowerKey.includes(fragment))) {
+      items.forEach((item) => {
+        if (item && !values.includes(item)) values.push(item);
+      });
+    }
+  });
+  return values;
+}
+
+function accountOptions() {
+  return ["Наличные / карта", "Счёт ООО", "Счёт ИП"];
+}
+
+function renderFinanceDatalists() {
+  return Object.entries(STATE.dictionaries).map(([key, values]) => {
+    const list = document.createElement("datalist");
+    list.id = `dict-${slug(key)}`;
+    list.innerHTML = (values || []).map((value) => `<option value="${escapeHtml(value)}"></option>`).join("");
+    return list;
+  });
+}
+
+function htmlToElement(html) {
+  const template = document.createElement("template");
+  template.innerHTML = html.trim();
+  return template.content.firstElementChild;
 }
 
 function renderCell(sheet, computed, row, column) {
@@ -830,6 +1180,12 @@ function formatDateTime(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value || "");
   return date.toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+}
+
+function formatDateForInput(value) {
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("ru-RU");
 }
 
 function columnLabel(column) {
