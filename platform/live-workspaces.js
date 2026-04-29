@@ -247,7 +247,7 @@ const EXTERNAL_SHARED_APPS = {
   sales: "sales-tracker",
   myCalculator: "moy-calculator",
   partnerCalculatorsPattern: "part-calculator%",
-  light2Metrics: "platform_light2_metrics_v1"
+  light2Metrics: "platform_finance_v1"
 };
 
 const LIGHT2_METRIC_SUMMARY_META = {
@@ -291,6 +291,39 @@ function normalizeLight2MetricsDoc(payload) {
 }
 
 function buildLight2MetricsSummary(payload) {
+  if (payload?.sheets?.metrics) {
+    const metricsSheet = payload.sheets.metrics;
+    const rows = Array.isArray(metricsSheet.rows) ? metricsSheet.rows : [];
+    const getCellText = (row, column) => String(row?.cells?.[String(column)]?.display || row?.cells?.[String(column)]?.raw || "").trim();
+    const parseMoney = (value) => {
+      const number = Number(String(value || "").replace(/\s/g, "").replace("%", "").replace(",", "."));
+      return Number.isFinite(number) ? number : 0;
+    };
+    const latestByLabel = (label) => {
+      const row = rows.find((entry) => getCellText(entry, 1).toLowerCase() === label.toLowerCase());
+      if (!row) return 0;
+      const values = Object.entries(row.cells || {})
+        .filter(([column]) => Number(column) > 1)
+        .map(([, cell]) => parseMoney(cell.display || cell.raw))
+        .filter((value) => Number.isFinite(value) && value !== 0);
+      return values.at(-1) || 0;
+    };
+    const totals = {
+      revenue: latestByLabel("Выручка"),
+      cost: latestByLabel("Себестоимость"),
+      gross_profit: latestByLabel("Валовая прибыль"),
+      operating_expenses: latestByLabel("Операционные расходы"),
+      net_profit: latestByLabel("Чистая прибыль"),
+      sales: latestByLabel("Продаж")
+    };
+    return {
+      entriesCount: rows.length,
+      monthCount: Math.max(0, metricsSheet.maxCol || 0),
+      latestMonthKey: "",
+      totals
+    };
+  }
+
   const entries = normalizeLight2MetricsDoc(payload);
   const months = Array.from(new Set(entries.map((entry) => entry.monthKey))).sort();
   const latestMonthKey = months.at(-1) || "";
@@ -312,6 +345,67 @@ function buildLight2MetricsSummary(payload) {
     monthCount: months.length,
     latestMonthKey,
     totals
+  };
+}
+
+async function fetchFinanceWorkbookSummary() {
+  try {
+    const response = await fetch(`./light2/workbook_snapshot.json?v=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) return null;
+    const snapshot = await response.json();
+    return buildFinanceWorkbookSummary(snapshot);
+  } catch {
+    return null;
+  }
+}
+
+function buildFinanceWorkbookSummary(snapshot) {
+  const sheets = Array.isArray(snapshot?.sheets) ? snapshot.sheets : [];
+  const findSheet = (name) => sheets.find((sheet) => compactText(sheet.name) === name);
+  const balanceSheet = findSheet("Баланс");
+  const calendarSheet = findSheet("Платежный календарь");
+  const metricsSheet = findSheet("Метрики");
+  const getCellText = (sheet, rowIndex, column) => {
+    const row = (sheet?.rows || []).find((entry) => Number(entry.index) === Number(rowIndex));
+    const cell = row?.cells?.[String(column)];
+    return compactText(cell?.display || cell?.raw || "");
+  };
+  const parseFinanceNumber = (value) => {
+    const number = Number(String(value || "").replace(/\s/g, "").replace("%", "").replace(",", "."));
+    return Number.isFinite(number) ? number : 0;
+  };
+  const balanceTotal = parseFinanceNumber(getCellText(balanceSheet, 1, 2));
+  const calendarRows = (calendarSheet?.rows || []).filter((row) => Number(row.index) >= 6);
+  const calendarIncoming = roundMoney(
+    calendarRows
+      .filter((row) => compactText(row.cells?.["4"]?.display || row.cells?.["4"]?.raw).toLowerCase() === "приход")
+      .reduce((sum, row) => sum + parseFinanceNumber(row.cells?.["3"]?.display || row.cells?.["3"]?.raw), 0)
+  );
+  const calendarOutgoing = roundMoney(
+    calendarRows
+      .filter((row) => compactText(row.cells?.["4"]?.display || row.cells?.["4"]?.raw).toLowerCase() === "расход")
+      .reduce((sum, row) => sum + parseFinanceNumber(row.cells?.["3"]?.display || row.cells?.["3"]?.raw), 0)
+  );
+  const metricsSummary = buildLight2MetricsSummary({
+    sheets: {
+      metrics: metricsSheet
+        ? {
+            name: metricsSheet.name,
+            maxCol: metricsSheet.maxCol || 0,
+            rows: metricsSheet.rows || []
+          }
+        : null
+    }
+  });
+
+  return {
+    light2: {
+      balanceTotal,
+      calendarEntriesCount: calendarRows.length,
+      calendarIncoming,
+      calendarOutgoing
+    },
+    light2Metrics: metricsSummary
   };
 }
 
@@ -5551,6 +5645,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       myCalculatorDoc,
       partnerCalculatorDocs,
       light2MetricsDoc,
+      financeWorkbookSummary,
       light2Settlements,
       light2BalanceEntries,
       light2CalendarEntries,
@@ -5566,6 +5661,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       ensureExternalDoc("myCalculator", true),
       ensureExternalDoc("partnerCalculators", true),
       ensureExternalDoc("light2Metrics", true),
+      fetchFinanceWorkbookSummary(),
       loadLight2Rows("light2_partner_settlements"),
       loadLight2Rows("light2_balance_entries"),
       loadLight2Rows("light2_payment_calendar_entries"),
@@ -5577,7 +5673,8 @@ function buildModeTabs(moduleKey, escapeFn) {
     const salesSnapshot = buildSalesSnapshot(salesRecord);
     const warehouseSnapshot = buildWarehouseSnapshot(warehouseDoc);
     const calculatorSnapshot = buildCalculatorDemandSnapshot(myCalculatorDoc, partnerCalculatorDocs || []);
-    const light2MetricsSummary = buildLight2MetricsSummary(light2MetricsDoc?.payload);
+    const savedLight2MetricsSummary = buildLight2MetricsSummary(light2MetricsDoc?.payload);
+    const light2MetricsSummary = savedLight2MetricsSummary?.entriesCount ? savedLight2MetricsSummary : financeWorkbookSummary?.light2Metrics;
     const taskSignals = await buildTaskSignalSnapshot(tasksDoc);
 
     const today = todayString();
@@ -5642,6 +5739,7 @@ function buildModeTabs(moduleKey, escapeFn) {
     const contourAssetsPaid = roundMoney(sumBy(light2AssetPayments || [], (entry) => entry.payment_amount));
     const contourAssetsRemaining = roundMoney(contourAssetsValue - contourAssetsPaid);
     const contourSuppliers = new Set((light2Purchases || []).map((entry) => compactText(entry.supplier_name)).filter(Boolean));
+    const financeLight2 = financeWorkbookSummary?.light2 || {};
 
     const activity = sortByDateDesc(
       [
@@ -5778,10 +5876,10 @@ function buildModeTabs(moduleKey, escapeFn) {
         openSettlementsCount: contourOpenSettlements.length,
         settlementsPayout: contourSettlementsPayout,
         balanceEntriesCount: (light2BalanceEntries || []).length,
-        balanceTotal: contourBalanceTotal,
-        calendarEntriesCount: (light2CalendarEntries || []).length,
-        calendarIncoming: contourCalendarIncoming,
-        calendarOutgoing: contourCalendarOutgoing,
+        balanceTotal: contourBalanceTotal || financeLight2.balanceTotal || 0,
+        calendarEntriesCount: (light2CalendarEntries || []).length || financeLight2.calendarEntriesCount || 0,
+        calendarIncoming: contourCalendarIncoming || financeLight2.calendarIncoming || 0,
+        calendarOutgoing: contourCalendarOutgoing || financeLight2.calendarOutgoing || 0,
         assetsCount: (light2Assets || []).length,
         assetsValue: contourAssetsValue,
         assetsRemaining: contourAssetsRemaining,
