@@ -426,6 +426,360 @@ body.platform-wide .view-section {
   display: none !important;
 }
 
+/* Platform shell restore: keep layout stable even if external bootstrap is unavailable. */
+body {
+  font-size: 13px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--text);
+  text-decoration: none;
+  padding: 10px 14px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+}
+
+.btn:hover {
+  border-color: rgba(127, 96, 56, 0.36);
+}
+
+.btn-sm {
+  padding: 8px 12px;
+  font-size: 0.84rem;
+  border-radius: 10px;
+}
+
+.btn-dark {
+  background: #16212d;
+  border-color: #16212d;
+  color: #fff;
+}
+
+.btn-outline-dark {
+  background: #fff;
+  border-color: #cdd7e0;
+  color: #16212d;
+}
+
+.btn-outline-secondary,
+.btn-link {
+  background: #fff;
+  border-color: #d9e3ea;
+  color: #5f7182;
+}
+
+.btn-link {
+  border: 0;
+  padding: 0;
+  text-decoration: none;
+}
+
+.btn-link:hover {
+  text-decoration: underline;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.form-control {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #fff;
+  color: var(--text);
+  outline: none;
+}
+
+.form-control:focus {
+  border-color: rgba(127, 96, 56, 0.34);
+  box-shadow: 0 0 0 3px rgba(166, 129, 79, 0.1);
+}
+
+.form-control-sm {
+  padding: 10px 12px;
+  border-radius: 12px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -6px;
+}
+
+.row > [class*="col-"] {
+  padding: 0 6px;
+}
+
+.col-12,
+.col-md-4,
+.col-md-6 {
+  width: 100%;
+}
+
+.g-3 {
+  row-gap: 12px;
+}
+
+.d-flex {
+  display: flex !important;
+}
+
+.flex-wrap {
+  flex-wrap: wrap !important;
+}
+
+.align-items-center {
+  align-items: center !important;
+}
+
+.align-items-end {
+  align-items: flex-end !important;
+}
+
+.justify-content-between {
+  justify-content: space-between !important;
+}
+
+.gap-2 {
+  gap: 8px !important;
+}
+
+.mt-3 {
+  margin-top: 12px !important;
+}
+
+.mb-2 {
+  margin-bottom: 8px !important;
+}
+
+.mb-3 {
+  margin-bottom: 12px !important;
+}
+
+.text-muted {
+  color: var(--muted) !important;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #e4ebf0;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.table-sm th,
+.table-sm td {
+  padding: 8px 10px;
+}
+
+#appShell.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(166, 129, 79, 0.08), transparent 22%),
+    linear-gradient(180deg, #eef3f8, #e7edf3);
+}
+
+#appShell.sidebar-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#appShell .shell-header {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(205, 217, 226, 0.95);
+  background: linear-gradient(180deg, #2e79bb, #2467a2);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+#appShell .brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#appShell .brand-block__logo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 5px;
+  flex: 0 0 auto;
+}
+
+#appShell .brand-block__copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+#appShell .brand-block__copy strong {
+  color: #fff;
+  font-size: 0.98rem;
+  line-height: 1.1;
+}
+
+#appShell .brand-block__copy span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.77rem;
+}
+
+#appShell .top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+#appShell .top-nav > * {
+  flex: 0 0 auto;
+}
+
+#appShell .top-nav-item,
+#appShell .top-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  min-width: 86px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+#appShell .top-nav-item.active,
+#appShell .top-nav button.active,
+#appShell .top-nav-item:hover,
+#appShell .top-nav button:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+#appShell .shell-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#appShell .content-shell {
+  grid-column: 1 / -1;
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px !important;
+  min-height: calc(100vh - 84px);
+  height: auto;
+  overflow: visible;
+}
+
+body.platform-wide #appShell .content-shell {
+  grid-template-columns: 280px minmax(0, 1fr);
+  padding: 14px !important;
+}
+
+#appShell.sidebar-collapsed .content-shell {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+#appShell .sidebar {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  height: auto;
+  max-height: calc(100vh - 112px);
+  overflow: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+#appShell .sidebar .section-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
+  border: 1px solid rgba(216, 224, 232, 0.95);
+  box-shadow: 0 18px 40px rgba(16, 28, 40, 0.08);
+}
+
+#appShell .workspace-main {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+#appShell .view-shell {
+  display: block;
+  min-width: 0;
+}
+
+#appShell .module-frame-wrap,
+#appShell .table-shell,
+#appShell .admin-panel,
+#appShell .workspace-panel,
+#appShell .section-card {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+@media (max-width: 1100px) {
+  #appShell .shell-header {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  #appShell .top-nav {
+    justify-content: flex-start;
+  }
+
+  #appShell .content-shell,
+  body.platform-wide #appShell .content-shell,
+  #appShell.sidebar-collapsed .content-shell {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell .sidebar {
+    position: static;
+    max-height: none;
+  }
+}
+
 #aiAssistantWidget,
 .placeholder-hero,
 #appShell .workspace-hero {
