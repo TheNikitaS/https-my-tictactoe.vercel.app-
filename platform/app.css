@@ -426,6 +426,194 @@ body.platform-wide .view-section {
   display: none !important;
 }
 
+/* Restore the original top header shell without touching module-local styling. */
+#appShell.app-shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at top left, rgba(166, 129, 79, 0.08), transparent 22%),
+    linear-gradient(180deg, #eef3f8, #e7edf3);
+}
+
+#appShell.sidebar-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+#appShell .shell-header {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(205, 217, 226, 0.95);
+  background: linear-gradient(180deg, #2e79bb, #2467a2);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+#appShell .brand-block {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#appShell .brand-block__logo {
+  width: 46px;
+  height: 46px;
+  object-fit: contain;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 5px;
+  flex: 0 0 auto;
+}
+
+#appShell .brand-block__copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+#appShell .brand-block__copy strong {
+  color: #fff;
+  font-size: 0.98rem;
+  line-height: 1.1;
+}
+
+#appShell .brand-block__copy span {
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.77rem;
+}
+
+#appShell .top-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+#appShell .top-nav > * {
+  flex: 0 0 auto;
+}
+
+#appShell .top-nav-item,
+#appShell .top-nav button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 52px;
+  min-width: 86px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+#appShell .top-nav-item.active,
+#appShell .top-nav button.active,
+#appShell .top-nav-item:hover,
+#appShell .top-nav button:hover {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.32);
+}
+
+#appShell .shell-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+#appShell .content-shell {
+  grid-column: 1 / -1;
+  display: grid !important;
+  grid-template-columns: 280px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px !important;
+  min-height: calc(100vh - 84px);
+  height: auto;
+  overflow: visible;
+}
+
+body.platform-wide #appShell .content-shell {
+  grid-template-columns: 280px minmax(0, 1fr);
+  padding: 14px !important;
+}
+
+#appShell.sidebar-collapsed .content-shell {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+#appShell .sidebar {
+  position: sticky;
+  top: 96px;
+  align-self: start;
+  height: auto;
+  max-height: calc(100vh - 112px);
+  overflow: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+#appShell .sidebar .section-card {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(248, 250, 252, 0.96));
+  border: 1px solid rgba(216, 224, 232, 0.95);
+  box-shadow: 0 18px 40px rgba(16, 28, 40, 0.08);
+}
+
+#appShell .workspace-main {
+  min-width: 0;
+  display: grid;
+  gap: 16px;
+  align-content: start;
+}
+
+#appShell .view-shell {
+  display: block;
+  min-width: 0;
+}
+
+#appShell .module-frame-wrap,
+#appShell .table-shell,
+#appShell .admin-panel,
+#appShell .workspace-panel,
+#appShell .section-card {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+@media (max-width: 1100px) {
+  #appShell .shell-header {
+    grid-template-columns: 1fr;
+    justify-items: stretch;
+  }
+
+  #appShell .top-nav {
+    justify-content: flex-start;
+  }
+
+  #appShell .content-shell,
+  body.platform-wide #appShell .content-shell,
+  #appShell.sidebar-collapsed .content-shell {
+    grid-template-columns: 1fr;
+  }
+
+  #appShell .sidebar {
+    position: static;
+    max-height: none;
+  }
+}
+
 #aiAssistantWidget,
 .placeholder-hero,
 #appShell .workspace-hero {
