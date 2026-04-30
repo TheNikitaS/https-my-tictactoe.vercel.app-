@@ -149,10 +149,11 @@
       <nav class="top-nav" id="moduleNav"></nav>
 
       <div class="shell-actions">
-        <button class="btn btn-outline-dark btn-sm" id="sidebarToggleButton" type="button">Меню</button>
-        <button class="btn btn-outline-dark btn-sm" id="wideModeButton" type="button">Ширина</button>
-        <button class="btn btn-outline-dark btn-sm" id="refreshButton" type="button">Обновить</button>
-        <button class="btn btn-dark btn-sm" id="signOutButton" type="button">Выйти</button>
+        <button class="btn btn-outline-dark btn-sm d-none" id="sidebarToggleButton" type="button">Меню</button>
+        <button class="btn btn-outline-dark btn-sm d-none" id="wideModeButton" type="button">Ширина</button>
+        <button class="btn btn-outline-dark btn-sm d-none" id="refreshButton" type="button">Обновить</button>
+        <button class="btn btn-dark btn-sm d-none" id="signOutButton" type="button">Выйти</button>
+        <div class="section-card" id="profileCard"></div>
       </div>
     </header>
 
@@ -161,10 +162,6 @@
     </section>
 
     <section class="content-shell">
-      <aside class="sidebar">
-        <div class="section-card" id="profileCard"></div>
-      </aside>
-
       <main class="workspace-main">
         <section class="workspace-hero d-none" aria-hidden="true">
           <h1 id="viewTitle"></h1>
@@ -178,7 +175,9 @@
         </section>
 
         <section class="view-shell d-none" id="embedView">
-          <iframe id="moduleFrame" title="Модуль платформы"></iframe>
+          <div class="module-frame-wrap">
+            <iframe class="module-frame" id="moduleFrame" title="Модуль платформы"></iframe>
+          </div>
         </section>
 
         <section class="view-shell d-none" id="adminView">

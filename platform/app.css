@@ -5934,3 +5934,28 @@ body {
 #appShell .ai-widget {
   display: none !important;
 }
+
+#appShell .content-shell,
+body.platform-wide #appShell .content-shell,
+#appShell.sidebar-collapsed .content-shell {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+#appShell .sidebar {
+  display: none !important;
+}
+
+#appShell .shell-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+#appShell .shell-actions > .d-none {
+  display: none !important;
+}
+
+#appShell .shell-actions #profileCard {
+  display: block;
+}
