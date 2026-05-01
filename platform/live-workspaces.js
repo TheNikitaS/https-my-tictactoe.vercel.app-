@@ -1569,6 +1569,17 @@ function buildModeTabs(moduleKey, escapeFn) {
     return data || null;
   }
 
+  function readLocalJsonState(storageKey) {
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (!raw) return null;
+      const payload = JSON.parse(raw);
+      return payload && typeof payload === "object" ? payload : null;
+    } catch {
+      return null;
+    }
+  }
+
   async function fetchSharedPayloadsByLike(pattern) {
     if (!schemaReady()) return [];
     const { data, error } = await supabase.from("shared_app_states").select("app_id, payload, updated_at").like("app_id", pattern).order("app_id", { ascending: true });
@@ -1580,6 +1591,16 @@ function buildModeTabs(moduleKey, escapeFn) {
     if (!force && externalDocs[key] !== null) return externalDocs[key];
     if (key === "sales") {
       externalDocs.sales = await fetchSharedPayload(EXTERNAL_SHARED_APPS.sales);
+      if (!externalDocs.sales?.payload?.orders?.length) {
+        const localSales = readLocalJsonState("LIGHT_SALES_APP_V2");
+        if (localSales?.orders?.length) {
+          externalDocs.sales = {
+            app_id: EXTERNAL_SHARED_APPS.sales,
+            payload: localSales,
+            updated_at: new Date(localSales.lastEditedAt || Date.now()).toISOString()
+          };
+        }
+      }
       return externalDocs.sales;
     }
     if (key === "myCalculator") {

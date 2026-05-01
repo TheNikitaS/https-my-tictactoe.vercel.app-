@@ -1061,7 +1061,7 @@ function evaluateFormula(formula, resolveRef) {
   let expression = source.slice(1);
   expression = expression.replace(/\$/g, "");
   expression = expression.replace(/([A-Z]+[0-9]+)/g, (match) => String(resolveRef(match)).replace(",", "."));
-  if (!/^[0-9+\-*/().,\s]+$/.test(expression)) return 0;
+  if (!isSafeFormulaExpression(expression)) return 0;
   expression = expression.replace(/,/g, ".");
   try {
     const value = Function(`"use strict"; return (${expression});`)();
@@ -1078,6 +1078,17 @@ function parseCellReference(reference) {
     column: columnNumber(match[1]),
     row: Number(match[2])
   };
+}
+
+function isSafeFormulaExpression(expression) {
+  const source = String(expression || "");
+  if (!source) return false;
+  const allowed = new Set(["+", "-", "*", "/", "(", ")", ".", ",", " "]);
+  for (const char of source) {
+    if ((char >= "0" && char <= "9") || allowed.has(char) || /\s/.test(char)) continue;
+    return false;
+  }
+  return true;
 }
 
 function columnNumber(label) {
