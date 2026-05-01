@@ -300,14 +300,18 @@ function buildLight2MetricsSummary(payload) {
       const number = Number(String(value || "").replace(/\s/g, "").replace("%", "").replace(",", "."));
       return Number.isFinite(number) ? number : 0;
     };
+    const lastMeaningfulValue = (values) => {
+      const meaningful = [...values].reverse().find((value) => Number.isFinite(value) && Math.abs(value) > 0.0001);
+      return meaningful ?? values.at(-1) ?? 0;
+    };
     const latestByLabel = (label) => {
       const row = rows.find((entry) => getCellText(entry, 1).toLowerCase() === label.toLowerCase());
       if (!row) return 0;
       const values = Object.entries(row.cells || {})
         .filter(([column]) => Number(column) > 1)
         .map(([, cell]) => parseMoney(cell.display || cell.raw))
-        .filter((value) => Number.isFinite(value) && value !== 0);
-      return values.at(-1) || 0;
+        .filter((value) => Number.isFinite(value));
+      return lastMeaningfulValue(values);
     };
     const findRow = (label) => rows.find((entry) => getCellText(entry, 1).toLowerCase() === label.toLowerCase());
     const revenueRow = findRow("Выручка");
@@ -1593,11 +1597,13 @@ function buildModeTabs(moduleKey, escapeFn) {
       externalDocs.sales = await fetchSharedPayload(EXTERNAL_SHARED_APPS.sales);
       if (!externalDocs.sales?.payload?.orders?.length) {
         const localSales = readLocalJsonState("LIGHT_SALES_APP_V2");
-        if (localSales?.orders?.length) {
+        const backupSales = readLocalJsonState("LIGHT_SALES_APP_V2_BACKUP");
+        const fallbackSales = localSales?.orders?.length ? localSales : backupSales?.orders?.length ? backupSales : null;
+        if (fallbackSales?.orders?.length) {
           externalDocs.sales = {
             app_id: EXTERNAL_SHARED_APPS.sales,
-            payload: localSales,
-            updated_at: new Date(localSales.lastEditedAt || Date.now()).toISOString()
+            payload: fallbackSales,
+            updated_at: new Date(fallbackSales.lastEditedAt || Date.now()).toISOString()
           };
         }
       }

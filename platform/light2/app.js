@@ -5,7 +5,7 @@ const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const FINANCE_APP_ID = "platform_finance_v1";
 const STORAGE_KEY = "dom-neona:finance:v1";
 const ACTIVE_VIEW_KEY = "dom-neona:finance:activeView";
-const SNAPSHOT_VERSION = "20260429-finance-rebuild";
+const SNAPSHOT_VERSION = "20260501-finance-fix-2";
 
 const TARGET_SHEETS = {
   balance: "Баланс",
@@ -220,8 +220,15 @@ function render() {
   DOM.sheetTools.hidden = isOverview;
   DOM.sheetView.hidden = isOverview;
 
-  if (isOverview) renderOverview();
-  else renderActiveSheet();
+  try {
+    if (isOverview) renderOverview();
+    else renderActiveSheet();
+  } catch (error) {
+    console.error("finance render failed", error);
+    DOM.tableWrap.replaceChildren();
+    DOM.overviewView.replaceChildren();
+    setStatus(error.message || "Не удалось отрисовать Финансы.", "error");
+  }
 }
 
 function renderOverview() {
@@ -660,7 +667,7 @@ function bindRenderedSheetEvents(sheet) {
     input.addEventListener("input", updateCell);
     input.addEventListener("change", () => {
       updateCell();
-      renderActiveSheet();
+      requestAnimationFrame(() => renderActiveSheet());
     });
   });
 }
@@ -1171,7 +1178,10 @@ function inferKind(value) {
 
 function lastMetricValue(row) {
   if (!row?.values?.length) return 0;
-  return row.values.at(-1).value || 0;
+  const meaningful = [...row.values]
+    .reverse()
+    .find((item) => Number.isFinite(item?.value) && Math.abs(Number(item.value) || 0) > 0.0001);
+  return meaningful?.value || row.values.at(-1)?.value || 0;
 }
 
 function roundMoney(value) {
