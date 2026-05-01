@@ -1,11 +1,11 @@
 ﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260429-finance-fix-3";
+import { createLiveWorkspaceController } from "./live-workspaces.js?v=20260501-dashboard-fix-1";
 import { createDomovoyNeonik } from "./domovoy-neonik.js?v=20260413-platform-suite49";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const REDIRECT_URL = window.location.href.split("#")[0];
-const PLATFORM_BUILD = "20260429-finance-fix-3";
+const PLATFORM_BUILD = "20260501-dashboard-fix-1";
 const PLATFORM_DATA_RESET_VERSION = "20260403-cleanstart-5";
 const PLATFORM_UI_KEYS = {
   wideMode: "dom-neona:platform:wideMode",
@@ -1432,6 +1432,7 @@ function renderProfileCard() {
     .join("")
     .slice(0, 2) || "DN";
 
+  DOM.profileCard.className = "profile-card";
   DOM.profileCard.innerHTML = `
     <div class="profile-card__inner">
       <div class="profile-card__avatar">${escapeHtml(initials)}</div>
