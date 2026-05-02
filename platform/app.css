@@ -5875,77 +5875,62 @@ body {
   font-size: 0.72rem;
 }
 
-/* Current requested shell tweaks only: shorter header, readable profile card,
-   and full-width work area for embedded modules. */
+/* Keep the original platform shell look, but force the workspace to stay wide
+   and stable for embedded modules. */
 #appShell .shell-header {
-  padding: 8px 18px;
+  padding: 12px 18px;
 }
 
 #appShell .brand-block__logo {
-  width: 40px;
-  height: 40px;
+  width: 56px;
+  height: 56px;
 }
 
 #appShell .top-nav-item,
 #appShell .top-nav button {
-  min-height: 42px;
-  min-width: 76px;
-  padding: 8px 10px;
+  min-height: 52px;
+  min-width: 86px;
+  padding: 10px 12px;
 }
 
 #appShell #profileCard.profile-card {
-  flex: 0 0 310px;
-  width: 310px;
-  min-width: 310px;
-  margin: 0;
-  padding: 8px 10px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.98);
-  border: 1px solid rgba(208, 217, 228, 0.95);
-  box-shadow: 0 12px 24px rgba(23, 48, 66, 0.1);
-  color: #12283d;
-}
-
-#appShell #profileCard .profile-card__avatar {
-  background: #edf3f8;
-  color: #17324a;
-}
-
-#appShell #profileCard .profile-card__meta strong,
-#appShell #profileCard .profile-card__meta > span,
-#appShell #profileCard .profile-card__scope {
-  color: #12283d;
-}
-
-#appShell #profileCard .profile-card__meta > span,
-#appShell #profileCard .profile-card__scope {
-  opacity: 1;
-}
-
-#appShell #profileCard .role-pill {
-  background: #f3e4ca;
-  border: 1px solid #e2cfaa;
-  color: #6a4918;
-}
-
-#appShell #profileCard .profile-card__menu-toggle {
-  background: #f5f8fb;
-  border-color: #d6e0ea;
-  color: #17324a;
+  flex: 0 0 312px;
+  width: 312px;
+  min-width: 312px;
+  margin: 0 0 0 auto;
 }
 
 #appShell .shell-actions {
   flex-wrap: nowrap;
 }
 
+#appShell .shell-actions > .btn {
+  flex: 0 0 auto;
+}
+
 #appShell .content-shell,
 body.platform-wide #appShell .content-shell {
   width: min(1920px, calc(100vw - 18px));
+  margin: 0 auto;
 }
 
+#appShell .workspace-main,
+#appShell .view-shell,
 #appShell #embedView,
 #appShell .module-frame-wrap,
 #appShell .module-frame {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   display: block;
+}
+
+#appShell .module-frame-wrap {
+  min-height: calc(100vh - 210px);
+  overflow: hidden;
+}
+
+#appShell .module-frame {
+  min-height: calc(100vh - 210px);
+  border: 0;
 }
