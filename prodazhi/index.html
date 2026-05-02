@@ -105,6 +105,7 @@
   <div class="mt-3">
     <ul class="nav nav-tabs" id="tabs">
       <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabOrders" type="button">Заказы</button></li>
+      <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabMontage" type="button">Монтажи</button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabSalary" type="button">ЗП</button></li>
       <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabLead" type="button">ЛИД</button></li>
     </ul>
@@ -150,6 +151,47 @@
               <button class="btn btn-primary btn-sm" id="btnSave">Сохранить</button>
               <button class="btn btn-outline-primary btn-sm" id="btnRecalc">Пересчитать</button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MONTAGE TAB -->
+      <div class="tab-pane fade" id="tabMontage">
+        <div class="table-wrap mt-3">
+          <div class="row g-2 align-items-end">
+            <div class="col-12 col-md-4">
+              <label class="form-label mb-1">Монтажник</label>
+              <select class="form-select form-select-sm" id="montageEmployeeFilter">
+                <option value="">Все монтажники</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <label class="form-label mb-1">Статус</label>
+              <select class="form-select form-select-sm" id="montageStatusFilter">
+                <option value="">Все статусы</option>
+              </select>
+            </div>
+            <div class="col-12 col-md-4">
+              <div class="small-note">Строка уходит из списка после отметки “Выполнено”. Статус заказа переводится в “Готово”.</div>
+            </div>
+          </div>
+
+          <div class="table-responsive mt-3">
+            <table class="table table-bordered table-hover table-sm align-middle">
+              <thead>
+                <tr>
+                  <th class="nowrap">Выполнено</th>
+                  <th class="nowrap">Номер заказ</th>
+                  <th>Название</th>
+                  <th>Адрес монтажа</th>
+                  <th class="nowrap">Статус</th>
+                  <th class="nowrap">Монтажник</th>
+                  <th class="right nowrap">Стоимость монтажа</th>
+                  <th class="right nowrap">ЗП монтажника</th>
+                </tr>
+              </thead>
+              <tbody id="montageBody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -1535,6 +1577,7 @@
       });
 
       renderLead();
+      renderMontages();
     }
 
     // =========================
@@ -1724,6 +1767,9 @@
     const salaryRows = document.getElementById("salaryRows");
     const btnMarkAllPaid = document.getElementById("btnMarkAllPaid");
     const btnUnmarkAllPaid = document.getElementById("btnUnmarkAllPaid");
+    const montageEmployeeFilter = document.getElementById("montageEmployeeFilter");
+    const montageStatusFilter = document.getElementById("montageStatusFilter");
+    const montageBody = document.getElementById("montageBody");
 
     function getAllEmployees() {
       const set = new Set();
@@ -1741,6 +1787,8 @@
 
     function refreshEmployeeSelects() {
       const prevEmployee = salaryEmployee.value;
+      const prevMontageEmployee = montageEmployeeFilter.value;
+      const prevMontageStatus = montageStatusFilter.value;
       const prevMonth = salaryMonth.value;
       const prevHalf = salaryHalf.value;
       const employees = getAllEmployees();
@@ -1751,9 +1799,111 @@
       salaryEmployee.innerHTML = options.join("");
       salaryEmployee.value = employees.includes(prevEmployee) ? prevEmployee : "";
 
+      const montageOptions = [`<option value="">Все монтажники</option>`];
+      (STATE.refs["Монтажник"] || []).forEach((employee) => {
+        if (employee && employee !== "Нет") {
+          montageOptions.push(`<option value="${escapeHtml(employee)}">${escapeHtml(employee)}</option>`);
+        }
+      });
+      montageEmployeeFilter.innerHTML = montageOptions.join("");
+      montageEmployeeFilter.value = (STATE.refs["Монтажник"] || []).includes(prevMontageEmployee) ? prevMontageEmployee : "";
+
+      const statusOptions = [`<option value="">Все статусы</option>`]
+        .concat((STATE.refs["Статус"] || []).map((status) => `<option value="${escapeHtml(status)}">${escapeHtml(status)}</option>`));
+      montageStatusFilter.innerHTML = statusOptions.join("");
+      montageStatusFilter.value = (STATE.refs["Статус"] || []).includes(prevMontageStatus) ? prevMontageStatus : "";
+
       const now = new Date();
       salaryMonth.value = prevMonth || `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
       salaryHalf.value = prevHalf || "H1";
+    }
+
+    function montageSalary(order) {
+      return toNumber(order?.cells?.[22]);
+    }
+
+    function montageCost(order) {
+      return toNumber(order?.cells?.[20]);
+    }
+
+    function hasMontageTask(order) {
+      return Boolean(
+        compactText(order?.cells?.[10]) ||
+        compactText(order?.cells?.[21]) ||
+        montageSalary(order) > 0 ||
+        montageCost(order) > 0
+      );
+    }
+
+    function renderMontages() {
+      const selectedEmployee = montageEmployeeFilter.value || "";
+      const selectedStatus = montageStatusFilter.value || "";
+      const rows = STATE.orders
+        .filter((order) => hasMontageTask(order))
+        .filter((order) => !order.montageDone)
+        .filter((order) => !selectedEmployee || String(order.cells[21] || "") === selectedEmployee)
+        .filter((order) => !selectedStatus || String(order.cells[2] || "") === selectedStatus);
+
+      montageBody.innerHTML = rows.length ? "" : `<tr><td colspan="8" class="muted">Активных монтажей пока нет.</td></tr>`;
+
+      rows.forEach((order) => {
+        const tr = document.createElement("tr");
+        const orderId = order.id;
+        const number = order.cells[0] ?? "";
+        const title = order.cells[1] ?? "";
+        const status = order.cells[2] ?? "";
+        const address = order.cells[10] ?? "";
+        const montageEmployee = order.cells[21] ?? "";
+        const montageSalaryValue = montageSalary(order);
+        const montageCostValue = montageCost(order);
+
+        const employeeOptions = [`<option value=""></option>`]
+          .concat((STATE.refs["Монтажник"] || []).map((item) => `<option value="${escapeHtml(item)}"${item === montageEmployee ? " selected" : ""}>${escapeHtml(item)}</option>`))
+          .join("");
+
+        tr.innerHTML = `
+          <td class="text-center"><input type="checkbox" data-montage-done="${escapeHtml(orderId)}"></td>
+          <td class="nowrap">${escapeHtml(String(number))}</td>
+          <td>${escapeHtml(String(title))}</td>
+          <td>${escapeHtml(String(address))}</td>
+          <td><span class="badge ${escapeHtml(statusClass(status))}">${escapeHtml(String(status || "—"))}</span></td>
+          <td>
+            <select class="form-select form-select-sm" data-montage-employee="${escapeHtml(orderId)}">
+              ${employeeOptions}
+            </select>
+          </td>
+          <td class="right nowrap">${escapeHtml(formatMoney(montageCostValue))}</td>
+          <td class="right nowrap">${escapeHtml(formatMoney(montageSalaryValue))}</td>
+        `;
+        montageBody.appendChild(tr);
+      });
+
+      montageBody.querySelectorAll("[data-montage-employee]").forEach((select) => {
+        select.addEventListener("change", () => {
+          const order = STATE.orders.find((item) => item.id === select.dataset.montageEmployee);
+          if (!order) return;
+          order.cells[21] = select.value;
+          markDirtyAndAutosave();
+          renderOrders();
+          refreshEmployeeSelects();
+          renderSalary();
+          renderMontages();
+        });
+      });
+
+      montageBody.querySelectorAll("[data-montage-done]").forEach((checkbox) => {
+        checkbox.addEventListener("change", () => {
+          if (!checkbox.checked) return;
+          const order = STATE.orders.find((item) => item.id === checkbox.dataset.montageDone);
+          if (!order) return;
+          order.montageDone = true;
+          order.cells[2] = "Готово";
+          markDirtyAndAutosave();
+          renderOrders();
+          renderSalary();
+          renderMontages();
+        });
+      });
     }
 
     function pushSalaryRow(rows, periodKey, filterEmployee, options, payload) {
@@ -2084,6 +2234,8 @@
     document.getElementById("searchInput").addEventListener("input", renderOrders);
     document.getElementById("toggleShowHidden").addEventListener("change", renderOrders);
     document.getElementById("statusFilter").addEventListener("change", renderOrders);
+    montageEmployeeFilter.addEventListener("change", renderMontages);
+    montageStatusFilter.addEventListener("change", renderMontages);
     leadMonthInput.addEventListener("change", renderLead);
     leadDateInput.addEventListener("change", renderLead);
 
@@ -2167,6 +2319,7 @@
         refreshEmployeeSelects();
         renderOrders();
         renderSalary();
+        renderMontages();
         alert("Импортировано ✅");
       } catch (e) {
         alert("Ошибка импорта: файл не похож на экспорт из этой системы.");
@@ -2190,6 +2343,7 @@
       refreshEmployeeSelects();
       renderOrders();
       renderSalary();
+      renderMontages();
       setSaveUI("idle","Готово");
       alert("Сброшено.");
     });
@@ -2202,6 +2356,7 @@
       refreshEmployeeSelects();
       renderOrders();
       renderSalary();
+      renderMontages();
       // При старте сразу сохраняем нормализованное состояние (чтобы не было "не сохранилось ни разу")
       try { saveState(STATE); } catch {}
       setSaveUI("idle","Готово");

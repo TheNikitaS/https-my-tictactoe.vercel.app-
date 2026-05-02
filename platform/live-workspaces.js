@@ -304,6 +304,48 @@ function buildLight2MetricsSummary(payload) {
       const meaningful = [...values].reverse().find((value) => Number.isFinite(value) && Math.abs(value) > 0.0001);
       return meaningful ?? values.at(-1) ?? 0;
     };
+    const aliasSummary = (() => {
+      const findRowByAliases = (aliases) => rows.find((entry) => matchesAnyAlias(getCellText(entry, 1), aliases));
+      const latestByAliases = (aliases) => {
+        const row = findRowByAliases(aliases);
+        if (!row) return 0;
+        const values = Object.entries(row.cells || {})
+          .filter(([column]) => Number(column) > 1)
+          .map(([, cell]) => parseMoney(cell.display || cell.raw))
+          .filter((value) => Number.isFinite(value));
+        return lastMeaningfulValue(values);
+      };
+      const revenueRowByAlias = findRowByAliases(LIGHT2_LABEL_ALIASES.revenue);
+      const seriesByAlias = Object.entries(revenueRowByAlias?.cells || {})
+        .map(([column, cell]) => {
+          const columnIndex = Number(column);
+          if (columnIndex <= 1) return null;
+          const kind = getCellText(rowByIndex.get(3), columnIndex).toLowerCase();
+          if (kind && kind !== "сумма" && kind !== "СЃСѓРјРјР°".toLowerCase()) return null;
+          const revenue = parseMoney(cell.display || cell.raw);
+          if (!Number.isFinite(revenue) || revenue === 0) return null;
+          const label = getCellText(rowByIndex.get(2), columnIndex) || `Период ${columnIndex}`;
+          return { label, fullLabel: label, revenue, orders: 0, invoices: 0 };
+        })
+        .filter(Boolean)
+        .slice(-12);
+      return {
+        entriesCount: rows.length,
+        monthCount: Math.max(0, metricsSheet.maxCol || 0),
+        latestMonthKey: "",
+        totals: {
+          revenue: latestByAliases(LIGHT2_LABEL_ALIASES.revenue),
+          cost: latestByAliases(LIGHT2_LABEL_ALIASES.cost),
+          gross_profit: latestByAliases(LIGHT2_LABEL_ALIASES.gross_profit),
+          operating_expenses: latestByAliases(LIGHT2_LABEL_ALIASES.operating_expenses),
+          net_profit: latestByAliases(LIGHT2_LABEL_ALIASES.net_profit),
+          sales: latestByAliases(LIGHT2_LABEL_ALIASES.sales),
+          average_check: latestByAliases(LIGHT2_LABEL_ALIASES.average_check)
+        },
+        series: seriesByAlias
+      };
+    })();
+    if (metricSummaryHasValues(aliasSummary)) return aliasSummary;
     const latestByLabel = (label) => {
       const row = rows.find((entry) => getCellText(entry, 1).toLowerCase() === label.toLowerCase());
       if (!row) return 0;
@@ -389,6 +431,126 @@ async function fetchFinanceWorkbookSummary() {
 
 function buildFinanceWorkbookSummary(snapshot) {
   const sheets = Array.isArray(snapshot?.sheets) ? snapshot.sheets : [];
+  const aliasBalanceSheet = sheets.find((sheet) => matchesAnyAlias(sheet?.name, LIGHT2_SHEET_ALIASES.balance));
+  const aliasCalendarSheet = sheets.find((sheet) => matchesAnyAlias(sheet?.name, LIGHT2_SHEET_ALIASES.calendar));
+  const aliasMetricsSheet = sheets.find((sheet) => matchesAnyAlias(sheet?.name, LIGHT2_SHEET_ALIASES.metrics));
+  if (aliasBalanceSheet || aliasCalendarSheet || aliasMetricsSheet) {
+    const parseFinanceNumber = (value) => {
+      const number = Number(String(value || "").replace(/\s/g, "").replace("%", "").replace(",", "."));
+      return Number.isFinite(number) ? number : 0;
+    };
+    const buildComputedSheet = (sheet) => {
+      const rowMap = new Map((sheet?.rows || []).map((row) => [Number(row.index), row]));
+      const memo = new Map();
+      const visiting = new Set();
+
+      const resolveNumber = (rowIndex, columnIndex) => {
+        const key = `${rowIndex}:${columnIndex}`;
+        if (memo.has(key)) return memo.get(key);
+        if (visiting.has(key)) return 0;
+        visiting.add(key);
+
+        const row = rowMap.get(Number(rowIndex));
+        const cell = row?.cells?.[String(columnIndex)];
+        if (!cell) {
+          visiting.delete(key);
+          memo.set(key, 0);
+          return 0;
+        }
+
+        let value = parseFinanceNumber(cell.display || cell.raw);
+        const formula = compactText(cell.formula || "");
+        if (formula.startsWith("=")) {
+          const variables = {};
+          const references = Array.from(new Set(formula.match(/[A-Z]+[0-9]+/g) || []));
+          references.forEach((reference) => {
+            const match = reference.match(/^([A-Z]+)(\d+)$/);
+            if (!match) return;
+            const [, letters, rowPart] = match;
+            let col = 0;
+            for (const char of letters) col = col * 26 + (char.charCodeAt(0) - 64);
+            variables[reference] = resolveNumber(Number(rowPart), col);
+          });
+          try {
+            const result = evaluateSafeFormula(formula.slice(1), { variables });
+            value = Number.isFinite(Number(result)) ? Number(result) : value;
+          } catch {
+            value = parseFinanceNumber(cell.display || cell.raw);
+          }
+        }
+        value = roundMoney(value);
+        memo.set(key, value);
+        visiting.delete(key);
+        return value;
+      };
+
+      return {
+        getText(rowIndex, columnIndex) {
+          const row = rowMap.get(Number(rowIndex));
+          const cell = row?.cells?.[String(columnIndex)];
+          return compactText(cell?.display || cell?.raw || "");
+        },
+        getNumber: resolveNumber
+      };
+    };
+
+    const balanceComputed = buildComputedSheet(aliasBalanceSheet);
+    const calendarComputed = buildComputedSheet(aliasCalendarSheet);
+    const balanceSections = [
+      { key: "cash", currentCol: 4, incomeCol: 2, expenseCol: 3 },
+      { key: "ooo", currentCol: 10, incomeCol: 8, expenseCol: 9 },
+      { key: "ip", currentCol: 16, incomeCol: 14, expenseCol: 15 }
+    ];
+    const balanceRows = (aliasBalanceSheet?.rows || []).filter((row) => Number(row.index) >= 4);
+    const sectionTotals = Object.fromEntries(
+      balanceSections.map((section) => [
+        section.key,
+        {
+          current: roundMoney(balanceComputed.getNumber(1, section.currentCol)),
+          income: roundMoney(sumBy(balanceRows, (row) => balanceComputed.getNumber(row.index, section.incomeCol))),
+          expense: roundMoney(sumBy(balanceRows, (row) => balanceComputed.getNumber(row.index, section.expenseCol)))
+        }
+      ])
+    );
+    const balanceTotal = roundMoney(
+      (sectionTotals.cash?.current || 0) +
+        (sectionTotals.ooo?.current || 0) +
+        (sectionTotals.ip?.current || 0)
+    );
+    const calendarRows = (aliasCalendarSheet?.rows || []).filter((row) => Number(row.index) >= 6);
+    const calendarIncoming = roundMoney(
+      calendarRows
+        .filter((row) => matchesAnyAlias(calendarComputed.getText(row.index, 4), LIGHT2_CALENDAR_TYPE_ALIASES.income))
+        .reduce((sum, row) => sum + calendarComputed.getNumber(row.index, 3), 0)
+    );
+    const calendarOutgoing = roundMoney(
+      calendarRows
+        .filter((row) => matchesAnyAlias(calendarComputed.getText(row.index, 4), LIGHT2_CALENDAR_TYPE_ALIASES.expense))
+        .reduce((sum, row) => sum + calendarComputed.getNumber(row.index, 3), 0)
+    );
+    return {
+      light2: {
+        balanceTotal,
+        cashBalance: sectionTotals.cash?.current || 0,
+        oooBalance: sectionTotals.ooo?.current || 0,
+        ipBalance: sectionTotals.ip?.current || 0,
+        calendarEntriesCount: calendarRows.length,
+        calendarIncoming,
+        calendarOutgoing
+      },
+      light2Metrics: buildLight2MetricsSummary({
+        sheets: {
+          metrics: aliasMetricsSheet
+            ? {
+                name: aliasMetricsSheet.name,
+                maxCol: aliasMetricsSheet.maxCol || 0,
+                rows: aliasMetricsSheet.rows || []
+              }
+            : null
+        }
+      })
+    };
+  }
   const findSheet = (name) => sheets.find((sheet) => compactText(sheet.name) === name);
   const balanceSheet = findSheet("Баланс");
   const calendarSheet = findSheet("Платежный календарь");
@@ -679,6 +841,40 @@ function sumBy(list, mapper) {
 
 function compactText(value) {
   return String(value || "").trim();
+}
+
+const LIGHT2_LABEL_ALIASES = {
+  revenue: ["Выручка", "Р’С‹СЂСѓС‡РєР°"],
+  cost: ["Себестоимость", "РЎРµР±РµСЃС‚РѕРёРјРѕСЃС‚СЊ"],
+  gross_profit: ["Валовая прибыль", "Р’Р°Р»РѕРІР°СЏ РїСЂРёР±С‹Р»СЊ"],
+  operating_expenses: ["Операционные расходы", "РћРїРµСЂР°С†РёРѕРЅРЅС‹Рµ СЂР°СЃС…РѕРґС‹"],
+  net_profit: ["Чистая прибыль", "Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ"],
+  sales: ["Продажи", "РџСЂРѕРґР°Р¶Рё"],
+  average_check: ["Чек", "Р§РµРє"]
+};
+
+const LIGHT2_SHEET_ALIASES = {
+  balance: ["Баланс", "Р‘Р°Р»Р°РЅСЃ"],
+  calendar: ["Платежный календарь", "РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ"],
+  metrics: ["Метрики", "РњРµС‚СЂРёРєРё"]
+};
+
+const LIGHT2_CALENDAR_TYPE_ALIASES = {
+  income: ["приход", "РїСЂРёС…РѕРґ"],
+  expense: ["расход", "СЂР°СЃС…РѕРґ"]
+};
+
+function matchesAnyAlias(value, aliases = []) {
+  const source = compactText(value).toLowerCase();
+  return aliases.some((alias) => compactText(alias).toLowerCase() === source);
+}
+
+function metricSummaryHasValues(summary) {
+  if (!summary) return false;
+  const totals = summary.totals || {};
+  const keys = ["revenue", "cost", "gross_profit", "net_profit", "sales", "average_check"];
+  if (keys.some((key) => Math.abs(toNumber(totals[key])) > 0.0001)) return true;
+  return Array.isArray(summary.series) && summary.series.some((point) => Math.abs(toNumber(point?.revenue)) > 0.0001 || Math.abs(toNumber(point?.orders)) > 0.0001);
 }
 
 function matchesSearch(haystack, needle) {
@@ -5744,13 +5940,19 @@ function buildModeTabs(moduleKey, escapeFn) {
         const billingKey = period === "year" ? billingDate.slice(0, 7) : billingDate;
         if (lookup.has(billingKey)) {
           const point = lookup.get(billingKey);
-          point.revenue += toNumber(order.paidAmount || order.amount || 0);
+          point.revenue += getSalesOrderWorkingAmount(order);
           if (order.invoiceDate) point.invoices += 1;
         }
       }
     });
 
     return points;
+  }
+
+  function getSalesOrderWorkingAmount(order) {
+    const paid = toNumber(order?.paidAmount);
+    const total = toNumber(order?.amount);
+    return paid > 0 ? paid : total;
   }
 
   async function getDashboardSnapshot() {
@@ -5806,7 +6008,9 @@ function buildModeTabs(moduleKey, escapeFn) {
     const warehouseSnapshot = buildWarehouseSnapshot(warehouseDoc);
     const calculatorSnapshot = buildCalculatorDemandSnapshot(myCalculatorDoc, partnerCalculatorDocs || []);
     const savedLight2MetricsSummary = buildLight2MetricsSummary(light2MetricsDoc?.payload);
-    const light2MetricsSummary = savedLight2MetricsSummary?.entriesCount ? savedLight2MetricsSummary : financeWorkbookSummary?.light2Metrics;
+    const light2MetricsSummary = metricSummaryHasValues(savedLight2MetricsSummary)
+      ? savedLight2MetricsSummary
+      : financeWorkbookSummary?.light2Metrics || savedLight2MetricsSummary;
     const taskSignals = await buildTaskSignalSnapshot(tasksDoc);
 
     const today = todayString();
@@ -5832,9 +6036,9 @@ function buildModeTabs(moduleKey, escapeFn) {
       return createdAt && createdAt.slice(0, 7) === currentMonthKey;
     });
 
-    const monthPaidOrders = salesSnapshot.orders.filter((order) => {
-      const paidDate = normalizeDateInput(order.paidDate);
-      return paidDate && paidDate.slice(0, 7) === currentMonthKey;
+    const monthBilledOrders = salesSnapshot.orders.filter((order) => {
+      const billingDate = normalizeDateInput(order.paidDate || order.invoiceDate || order.createdAt);
+      return billingDate && billingDate.slice(0, 7) === currentMonthKey;
     });
 
     const missingDemand = calculatorSnapshot.demand.filter((entry) => !findWarehouseMatch(warehouseSnapshot, entry.sku));
@@ -5968,7 +6172,7 @@ function buildModeTabs(moduleKey, escapeFn) {
       sales: {
         ordersCount: salesSnapshot.orders.length,
         monthOrdersCount: monthOrders.length,
-        monthRevenue: sumBy(monthPaidOrders, (order) => order.paidAmount || order.amount || 0),
+        monthRevenue: sumBy(monthBilledOrders, (order) => getSalesOrderWorkingAmount(order)),
         unpaidInvoicesCount: salesSnapshot.unpaidInvoices.length,
         unpaidInvoicesAmount: sumBy(salesSnapshot.unpaidInvoices, (order) => order.amount || 0),
         productionCount: salesSnapshot.productionOrders.length,

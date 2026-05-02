@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
 import warnings
 from datetime import date, datetime, time
 from pathlib import Path
@@ -14,6 +15,62 @@ from openpyxl import load_workbook
 
 
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
+
+SUSPECT_TOKENS_RE = re.compile(
+    r"(?:Р.|С.|вЂ.|Ð.|Ñ.|Ã.|Â.|�)"
+)
+CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
+
+
+def score_text(text: str) -> int:
+    if not text:
+        return 0
+    cyrillic = len(CYRILLIC_RE.findall(text))
+    suspicious = len(SUSPECT_TOKENS_RE.findall(text))
+    replacement_chars = text.count("�")
+    latin_noise = len(re.findall(r"[ÃÂÐÑ]", text))
+    return cyrillic * 2 - suspicious * 5 - replacement_chars * 8 - latin_noise * 4
+
+
+def normalize_punctuation(text: str) -> str:
+    return (
+        text.replace("в‚Ѕ", "₽")
+        .replace("â½", "₽")
+        .replace("â€”", "—")
+        .replace("â€“", "–")
+        .replace("â€¢", "•")
+        .replace("â„–", "№")
+        .replace("Â ", " ")
+    )
+
+
+def decode_candidate(value: str, encoding: str) -> str | None:
+    try:
+        return value.encode(encoding).decode("utf-8")
+    except Exception:
+        return None
+
+
+def repair_mojibake_text(value: str) -> str:
+    if not value:
+        return value
+
+    candidates = {normalize_punctuation(value)}
+    queue = [value]
+    for _ in range(2):
+        next_queue: list[str] = []
+        for current in queue:
+            for encoding in ("cp1251", "latin1"):
+                repaired = decode_candidate(current, encoding)
+                if repaired and repaired not in candidates:
+                    repaired = normalize_punctuation(repaired)
+                    candidates.add(repaired)
+                    next_queue.append(repaired)
+        if not next_queue:
+            break
+        queue = next_queue
+
+    return max(candidates, key=score_text)
 
 
 def format_number(value: float) -> str:
@@ -27,9 +84,7 @@ def infer_kind(value: Any, number_format: str) -> str:
     if isinstance(value, (datetime, date, time)):
         return "date"
     if isinstance(value, (int, float)):
-        if "%" in fmt:
-            return "percent"
-        return "number"
+        return "percent" if "%" in fmt else "number"
     return "text"
 
 
@@ -48,31 +103,27 @@ def serialize_raw(value: Any) -> Any:
         return None
     if value is None:
         return ""
-    return str(value)
+    return repair_mojibake_text(str(value))
 
 
 def format_display(value: Any, number_format: str) -> str:
     if value is None:
         return ""
-
     if isinstance(value, datetime):
         return value.strftime("%d.%m.%Y %H:%M")
     if isinstance(value, date):
         return value.strftime("%d.%m.%Y")
     if isinstance(value, time):
         return value.strftime("%H:%M:%S")
-
     if isinstance(value, bool):
         return "Да" if value else "Нет"
-
     if isinstance(value, (int, float)):
         fmt = (number_format or "").lower()
         numeric = float(value)
         if "%" in fmt:
-          return f"{numeric * 100:.2f}%".replace(".", ",")
+            return f"{numeric * 100:.2f}%".replace(".", ",")
         return format_number(numeric).replace(".", ",")
-
-    return str(value)
+    return repair_mojibake_text(str(value))
 
 
 def build_snapshot(source_path: Path) -> dict[str, Any]:
@@ -82,6 +133,7 @@ def build_snapshot(source_path: Path) -> dict[str, Any]:
     sheets_payload: list[dict[str, Any]] = []
 
     for sheet_formula in workbook_formula.worksheets:
+        sheet_title = repair_mojibake_text(sheet_formula.title)
         sheet_values = workbook_values[sheet_formula.title]
 
         sheet_rows: list[dict[str, Any]] = []
@@ -101,7 +153,8 @@ def build_snapshot(source_path: Path) -> dict[str, Any]:
                     formula = formula_cell.value
 
                 raw_value = value_cell.value
-                display_value = format_display(raw_value, value_cell.number_format or formula_cell.number_format)
+                number_format = value_cell.number_format or formula_cell.number_format
+                display_value = format_display(raw_value, number_format)
                 raw_serialized = serialize_raw(raw_value)
 
                 if raw_serialized == "" and display_value == "" and not formula:
@@ -115,7 +168,7 @@ def build_snapshot(source_path: Path) -> dict[str, Any]:
                 payload = {
                     "display": display_value,
                     "raw": raw_serialized,
-                    "kind": infer_kind(raw_value, value_cell.number_format or formula_cell.number_format)
+                    "kind": infer_kind(raw_value, number_format),
                 }
                 if formula:
                     payload["formula"] = formula
@@ -123,24 +176,23 @@ def build_snapshot(source_path: Path) -> dict[str, Any]:
                 row_cells[str(column_index)] = payload
 
             if row_cells:
-                sheet_rows.append({
-                    "index": row_index,
-                    "cells": row_cells
-                })
+                sheet_rows.append({"index": row_index, "cells": row_cells})
 
-        sheets_payload.append({
-            "name": sheet_formula.title,
-            "path": f"xlsx/{sheet_formula.title}",
-            "rows": sheet_rows,
-            "nonEmpty": non_empty,
-            "formulas": formulas,
-            "maxCol": max_col
-        })
+        sheets_payload.append(
+            {
+                "name": sheet_title,
+                "path": f"xlsx/{sheet_title}",
+                "rows": sheet_rows,
+                "nonEmpty": non_empty,
+                "formulas": formulas,
+                "maxCol": max_col,
+            }
+        )
 
     return {
         "generatedAt": datetime.now().isoformat(timespec="seconds"),
-        "workbook": source_path.stem,
-        "sheets": sheets_payload
+        "workbook": repair_mojibake_text(source_path.stem),
+        "sheets": sheets_payload,
     }
 
 

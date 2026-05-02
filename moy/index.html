@@ -1605,6 +1605,7 @@ function renderCalculator() {
         if (item.subcategory !== currentSubcategory) {
             currentSubcategory = item.subcategory;
             const groupItems = catalog.filter((entry) => !entry.hidden && !entry.deleted && entry.category === item.category && entry.subcategory === item.subcategory && !isItemSelectedForActiveTab(entry));
+            const useGroupPicker = item.subcategory === 'Неон' || item.subcategory === 'Блок питания';
             let subLabel = `${currentSubcategory}`;
             if (item.subcategory === 'Блок питания') subLabel += ` (Требуемая мощность: <span id="required-power-display">0</span>W)`;
             const encodedCategory = escapeAttr(item.category);
@@ -1616,6 +1617,7 @@ function renderCalculator() {
                         Добавить товар
                     </button>
                 </div>
+                ${useGroupPicker ? `
                 <div class="group-picker">
                     <select class="form-select form-select-sm" data-group-select="${encodedCategory}||${encodedSubcategory}">
                         <option value="">Выберите товар / услугу из группы</option>
@@ -1623,7 +1625,7 @@ function renderCalculator() {
                     </select>
                     <button type="button" class="btn btn-sm btn-outline-dark" data-group-pick="${encodedCategory}||${encodedSubcategory}">Добавить выбранное</button>
                     <span class="text-muted small">${groupItems.length ? `Скрыто в списке: ${groupItems.length}` : 'Все позиции группы уже в расчете'}</span>
-                </div>
+                </div>` : ``}
             `;
             container.innerHTML += subHeader;
             container.innerHTML += header;

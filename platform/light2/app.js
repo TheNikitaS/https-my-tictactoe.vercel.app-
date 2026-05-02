@@ -1,11 +1,11 @@
-import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+﻿import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
 
 const SUPABASE_URL = "https://cfmjxssilejlqmsbtbrv.supabase.co";
 const SUPABASE_KEY = "sb_publishable_ZLMLOM21dAYfchc7OW9TsA_vjTQ3sB3";
 const FINANCE_APP_ID = "platform_finance_v1";
 const STORAGE_KEY = "dom-neona:finance:v1";
 const ACTIVE_VIEW_KEY = "dom-neona:finance:activeView";
-const SNAPSHOT_VERSION = "20260501-finance-fix-2";
+const SNAPSHOT_VERSION = "20260502-finance-fix-4";
 
 const TARGET_SHEETS = {
   balance: "Баланс",
@@ -135,10 +135,34 @@ function bindEvents() {
   });
 }
 
+const SHEET_NAME_ALIASES = {
+  balance: ["Баланс", "Р‘Р°Р»Р°РЅСЃ"],
+  calendar: ["Платежный календарь", "РџР»Р°С‚РµР¶РЅС‹Р№ РєР°Р»РµРЅРґР°СЂСЊ"],
+  metrics: ["Метрики", "РњРµС‚СЂРёРєРё"],
+  data: ["Данные", "Р”Р°РЅРЅС‹Рµ"]
+};
+
+const METRIC_ROW_ALIASES = {
+  revenue: ["Выручка", "Р’С‹СЂСѓС‡РєР°"],
+  cost: ["Себестоимость", "РЎРµР±РµСЃС‚РѕРёРјРѕСЃС‚СЊ"],
+  gross_profit: ["Валовая прибыль", "Р’Р°Р»РѕРІР°СЏ РїСЂРёР±С‹Р»СЊ"],
+  net_profit: ["Чистая прибыль", "Р§РёСЃС‚Р°СЏ РїСЂРёР±С‹Р»СЊ"],
+  sales: ["Продажи", "РџСЂРѕРґР°Р¶Рё"]
+};
+
+function matchesAnyAlias(value, aliases = []) {
+  const source = cleanText(value).toLowerCase();
+  return aliases.some((alias) => cleanText(alias).toLowerCase() === source);
+}
+
+function findMetricRowByAliases(metricRows, aliases = []) {
+  return (metricRows || []).find((row) => matchesAnyAlias(row?.label, aliases)) || null;
+}
+
 function buildBaseSheets(snapshot) {
   const result = {};
   Object.entries(TARGET_SHEETS).forEach(([key, name]) => {
-    const source = (snapshot.sheets || []).find((sheet) => cleanText(sheet.name) === name);
+    const source = (snapshot.sheets || []).find((sheet) => matchesAnyAlias(sheet.name, SHEET_NAME_ALIASES[key] || [name]));
     if (!source) return;
     result[key] = normalizeSheet(source);
   });
@@ -178,7 +202,7 @@ function mergeSheets(baseSheets, savedSheets) {
 }
 
 function buildDictionaries(snapshot) {
-  const dataSheet = (snapshot.sheets || []).find((sheet) => cleanText(sheet.name) === "Данные");
+  const dataSheet = (snapshot.sheets || []).find((sheet) => matchesAnyAlias(sheet.name, SHEET_NAME_ALIASES.data));
   if (!dataSheet) return {};
 
   const matrix = rowsToMatrix(normalizeSheet(dataSheet));
@@ -239,13 +263,11 @@ function renderOverview() {
   const balanceSections = buildBalanceSectionsSummary(balanceSheet);
   const calendarSummary = buildCalendarSummary(calendarSheet);
   const metricRows = extractMetricRows(metricsSheet);
-  const metricIndex = Object.fromEntries(metricRows.map((row) => [row.label, row]));
-
-  const revenueRow = metricIndex["Выручка"];
-  const costRow = metricIndex["Себестоимость"];
-  const grossRow = metricIndex["Валовая прибыль"];
-  const netRow = metricIndex["Чистая прибыль"];
-  const salesRow = metricIndex["Продажи"];
+  const revenueRow = findMetricRowByAliases(metricRows, METRIC_ROW_ALIASES.revenue);
+  const costRow = findMetricRowByAliases(metricRows, METRIC_ROW_ALIASES.cost);
+  const grossRow = findMetricRowByAliases(metricRows, METRIC_ROW_ALIASES.gross_profit);
+  const netRow = findMetricRowByAliases(metricRows, METRIC_ROW_ALIASES.net_profit);
+  const salesRow = findMetricRowByAliases(metricRows, METRIC_ROW_ALIASES.sales);
 
   DOM.overviewView.innerHTML = `
     ${overviewCard("Баланс всего", formatMoney(balanceSections.total), "Сумма по наличным, ООО и ИП")}
@@ -395,12 +417,14 @@ function extractMetricRows(sheet) {
   const matrix = rowsToComputedMatrix(sheet, computed);
   const rows = [];
 
-  for (let row = 4; row < matrix.length; row += 1) {
-    const label = cleanText(matrix[row]?.[1]);
+  for (let row = 1; row < matrix.length; row += 1) {
+    const cells = matrix[row] || [];
+    const labelColumn = findMetricLabelColumn(cells, sheet?.maxCol || 1);
+    const label = labelColumn ? cleanText(cells[labelColumn]) : "";
     if (!label) continue;
 
     const values = [];
-    for (let column = 2; column <= (sheet?.maxCol || 1); column += 1) {
+    for (let column = labelColumn + 1; column <= (sheet?.maxCol || 1); column += 1) {
       const metricKind = cleanText(matrix[3]?.[column]).toLowerCase();
       if (metricKind && metricKind !== "сумма") continue;
       const value = parseNumber(matrix[row]?.[column]);
@@ -415,6 +439,19 @@ function extractMetricRows(sheet) {
   }
 
   return rows;
+}
+
+function findMetricLabelColumn(cells, maxCol) {
+  for (let column = 1; column <= maxCol; column += 1) {
+    const label = cleanText(cells?.[column]);
+    if (!label) continue;
+    const numeric = parseNumber(label);
+    if (Number.isFinite(numeric) && String(label).replace(/\s/g, "").length <= 12) continue;
+    const hasNumericToRight = Array.from({ length: Math.max(maxCol - column, 0) }, (_, index) => column + index + 1)
+      .some((nextColumn) => Number.isFinite(parseNumber(cells?.[nextColumn])));
+    if (hasNumericToRight) return column;
+  }
+  return 0;
 }
 
 function renderActiveSheet() {
@@ -604,14 +641,18 @@ function renderMetricsSheet(sheet) {
   const computed = buildComputedSheet(sheet);
   const rowsLimit = STATE.rowLimit === "all" ? Infinity : Number(STATE.rowLimit || 100);
   const metricRows = filterRows(sheet)
-    .filter((row) => row.index >= 4 && cleanText(getComputedDisplay(computed, row.index, 1)))
+    .map((row) => ({
+      row,
+      labelColumn: findMetricLabelColumnForRow(sheet, computed, row)
+    }))
+    .filter((entry) => entry.labelColumn)
     .slice(0, rowsLimit);
 
   DOM.sheetMeta.textContent = `Метрики: ${metricRows.length} показателей, формул: ${sheet.sourceFormulas || 0}`;
 
   const content = `
     <div class="metrics-board">
-      ${metricRows.map((row) => renderMetricCard(sheet, computed, row)).join("")}
+      ${metricRows.map(({ row, labelColumn }) => renderMetricCard(sheet, computed, row, labelColumn)).join("")}
     </div>
   `;
 
@@ -619,16 +660,24 @@ function renderMetricsSheet(sheet) {
   bindRenderedSheetEvents(sheet);
 }
 
-function renderMetricCard(sheet, computed, row) {
+function findMetricLabelColumnForRow(sheet, computed, row) {
+  const cells = [];
+  for (let column = 1; column <= (sheet?.maxCol || 1); column += 1) {
+    cells[column] = getComputedDisplay(computed, row.index, column);
+  }
+  return findMetricLabelColumn(cells, sheet?.maxCol || 1);
+}
+
+function renderMetricCard(sheet, computed, row, labelColumn = 1) {
   const columns = getSheetLayout(sheet, "metrics").columns
-    .filter((column) => column > 1)
+    .filter((column) => column > labelColumn)
     .filter((column) => cleanText(getComputedDisplay(computed, row.index, column)) || cleanText(getComputedDisplay(computed, 2, column)))
     .slice(-12);
 
   return `
     <article class="metric-card">
       <header>
-        ${renderFinanceCell(sheet, computed, row, 1, { className: "metric-title" })}
+        ${renderFinanceCell(sheet, computed, row, labelColumn, { className: "metric-title" })}
         ${renderRowSelector(row.index)}
       </header>
       <div class="metric-values">
@@ -665,10 +714,7 @@ function bindRenderedSheetEvents(sheet) {
       scheduleSave();
     };
     input.addEventListener("input", updateCell);
-    input.addEventListener("change", () => {
-      updateCell();
-      requestAnimationFrame(() => renderActiveSheet());
-    });
+    input.addEventListener("change", updateCell);
   });
 }
 
@@ -1092,7 +1138,7 @@ function isSafeFormulaExpression(expression) {
   if (!source) return false;
   const allowed = new Set(["+", "-", "*", "/", "(", ")", ".", ",", " "]);
   for (const char of source) {
-    if ((char >= "0" && char <= "9") || allowed.has(char) || /\s/.test(char)) continue;
+    if ((char >= "0" && char <= "9") || allowed.has(char) || char === "\t" || char === "\n" || char === "\r") continue;
     return false;
   }
   return true;
